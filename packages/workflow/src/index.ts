@@ -1,3 +1,4 @@
+import { roundCount, type RoundCount } from './round-count.js';
 import type { Context } from 'cordis';
 import { interruptedRun, stopped } from './services.js';
 import type {
@@ -12,6 +13,8 @@ import { TaskRun } from './task-run.js';
 import { ArchitectRun } from './architect-run.js';
 import { RefinementRun } from './refinement-run.js';
 import type { RunObserver } from './observer.js';
+
+export type { RoundCount } from './round-count.js';
 
 export type {
   ActivityCheckpoint,
@@ -88,11 +91,12 @@ export class Workflow {
   /** Run repeatable Planner, Architect and priority-ordered goal assessments under one writer. */
   async refine(
     directory: string,
-    rounds: number,
+    rounds: RoundCount,
     observer: TaskObserver,
     signal: AbortSignal,
   ): Promise<TaskOutcome> {
-    if (!Number.isInteger(rounds) || rounds < 1)
+    const total = roundCount(rounds);
+    if (!total)
       return stopped('invalid', 'Round count must be a positive integer');
     if (signal.aborted) return stopped('cancelled', 'Task cancelled before admission');
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
@@ -105,7 +109,7 @@ export class Workflow {
         session,
         reporting,
         signal,
-        rounds,
+        total,
         (child, parent) => this.run(child, reporting, signal, parent),
         (root, output, cancellation, parent, scope) =>
           this.update(root, undefined, output, cancellation, parent, scope),
