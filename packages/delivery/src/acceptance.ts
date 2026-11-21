@@ -39,3 +39,23 @@ export function acceptedIdentity(
   validateVerdict(plan, { ...candidate, verification: identity }, verdict);
   return identity;
 }
+
+/** Require fresh assessment when retained publication no longer matches the current capture. */
+export function currentAcceptance(
+  task: HostTask,
+  digest: string,
+  identity?: VerificationIdentity,
+) {
+  const accepted = task.history().findLast((event) => 'verdict' in event);
+  if (!identity || accepted?.verdict.kind !== 'accepted' || accepted.candidate.digest !== digest)
+    return false;
+  try {
+    return isDeepStrictEqual(
+      identity,
+      acceptedIdentity(task, accepted.candidate, accepted.verdict),
+    );
+  } catch (error) {
+    task.note({ publicationReconciliation: { reason: String(error), identity } });
+    return false;
+  }
+}
