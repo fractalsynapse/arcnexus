@@ -216,6 +216,15 @@ export function verificationContext(
   };
 }
 
+/** Keep ordinary caller continuity on its original base while independent review uses the current capture. */
+export function callerRevision(task: InboxTask, selection: ActivitySelection) {
+  const verifier = task.capture.project.verifier;
+  if (selection.component === verifier?.component && selection.activity === verifier.activity)
+    return;
+  return task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
+    ?.baseRevision;
+}
+
 /** Preserve caller answers across approved in-run adoption; exact host gates also bind their proposal baseline. */
 export function inboxIdentity(
   task: InboxTask,
