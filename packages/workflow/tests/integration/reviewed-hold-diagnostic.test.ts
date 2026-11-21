@@ -96,13 +96,14 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
 /** Require the new exact failure at native revision and preserve full historical context. */
 function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   const current = f.holds.at(-1)!;
-  assert(current.failure.diagnostic.includes(current.failure.check!.log));
+  assert.equal(current.failure.diagnostic, 'Operation owner-tests exited 37; expected pass');
   assert.equal(current.failure.check!.status, 37);
   assert(f.fixture.checks.some((check) => check.log === log));
   const actual = f.fixture.checks.find((check) => check.log === current.failure.check!.log)!;
   assert.equal(actual.diagnostic, undefined);
   assert.equal(actual.status, 37);
-  assert(readFileSync(actual.log, 'utf8').includes(f.diagnostic));
+  assert.equal(readFileSync(actual.log, 'utf8'), f.diagnostic + '\n');
+  assert.equal(f.fixture.task.readFile(log).text, f.diagnostic + '\n');
   assert.notEqual(current.progress.identity, held.progress.identity);
   assert.deepEqual(current.progress.inputs, held.progress.inputs);
   assert.deepEqual(current.task, held.task);
