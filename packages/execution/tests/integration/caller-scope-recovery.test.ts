@@ -47,15 +47,20 @@ class CallerRecoveryScenario {
   /** Seed independent rejection before the accepted corrective plan is recorded. */
   constructor(private readonly context: TestContext) {
     this.fixture = new PreparedRecoveryFixture(context);
+    this.fixture.plan.milestones.push({
+      ...milestone,
+      id: 'accepted-work-reference',
+      steps: milestone.steps.map((step) => ({ ...step, checklist: [], inapplicable: 'Already supplied reference' })),
+    });
     this.supplier = {
       kind: 'supplier' as const,
       owner: 'reviewer',
-      milestone: milestone.id,
+      milestone: 'accepted-work-reference',
       reason: 'Retained legacy handoff must return to its actual caller.',
       question: 'Keep the original supplier diagnostic.\nDo not silently replan.',
       requester: milestone.id,
     };
-    this.diagnostic = supplierLinkDiagnostic(recoveryPlan(), this.supplier)!;
+    this.diagnostic = supplierLinkDiagnostic(this.fixture.plan, this.supplier)!;
     assert(this.diagnostic, 'The explicit legacy handoff must be invalid');
     this.fixture.answerQuestion = (question) =>
       question.startsWith(pendingQuestion) ? pendingAnswer : undefined;
