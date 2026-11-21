@@ -20,6 +20,7 @@ export class Clarifications {
     private readonly task: HostTask,
     private readonly selection: ActivitySelection,
     private readonly signal: AbortSignal,
+    private readonly revision?: string,
   ) {}
 
   /** Resolve any retained gate before invoking the actor again. */
@@ -28,7 +29,7 @@ export class Clarifications {
     invoke: (data: Assignment) => Promise<unknown>,
     accepts?: (answer: string) => boolean,
   ) {
-    const scope = inboxIdentity(this.task, this.selection, data);
+    const scope = inboxIdentity(this.task, this.selection, data, this.revision);
     const answers = this.retained(scope);
     while (true) {
       for (const [question, gate] of answers)
@@ -47,7 +48,7 @@ export class Clarifications {
 
   /** Read answered questions for the original activation without including other gates. */
   answers(data: Assignment) {
-    return [...this.retained(inboxIdentity(this.task, this.selection, data)).values()].flatMap(
+    return [...this.retained(inboxIdentity(this.task, this.selection, data, this.revision)).values()].flatMap(
       ({ question, answer }) => (answer === undefined ? [] : [{ question, answer }]),
     );
   }
