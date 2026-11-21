@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
-import { ActivationTools } from '../../src/activation-tools.js';
 import { answer, checked, criterion, PreparedRecoveryFixture } from '../fixtures/prepared-recovery.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
@@ -118,8 +117,10 @@ test('another staging advance requires a second recovery before activation', asy
   const fixture = new PreparedRecoveryFixture(t);
   await interrupt(fixture);
   const first = fixture.advance();
-  const prepare = ExecutionPreparation(fixture);
-  await prepare();
+  fixture.interruptNext = true;
+  const stopped = await fixture.run();
+  assert.equal(stopped.kind, 'failed');
+  assert.match(stopped.reason, /Interrupted after checked receipt and verbatim answer/);
   const second = fixture.advance('staging.txt', 'second staging contribution\n');
   const resumed = await fixture.run();
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
