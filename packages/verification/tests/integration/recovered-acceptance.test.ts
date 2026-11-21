@@ -39,7 +39,18 @@ test('new assessment exposes recovered base and active capture independently of 
   fixture.resume(base, current);
   const recovered = await fixture.assemble();
   assert.equal(recovered.digest, before.digest);
-  assert.equal((await fixture.run(recovered)).kind, 'accepted');
+  const verdict = await fixture.run(recovered);
+  assert.equal(verdict.kind, 'accepted');
+  assert(verdict.kind === 'accepted');
+  const observation = fixture.task
+    .observations<{ verification?: { identity: unknown; checks: unknown } }>()
+    .findLast(({ verification }) => verification)?.verification;
+  assert(observation);
+  assert.deepEqual(observation.identity, verdict.verification);
+  assert.deepEqual(observation.checks, fixture.checks);
+  assert.equal(verdict.verification?.tree, recovered.digest);
+  assert.equal(verdict.verification?.base, base.source.revision);
+  assert.equal(verdict.verification?.capture, current.source.revision);
   const assignment = JSON.stringify(fixture.requests.at(-1)!.assignment);
   assert(assignment.includes(recovered.digest), 'Assessment must identify the assembled tree');
   assert(assignment.includes(base.source.revision), 'Assessment lost recovered staging parent');
