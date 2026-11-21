@@ -17,7 +17,7 @@ export const suite = {
  * consume that observation through Execution before native Direction correction.
  * An equivalent recheck with a new log must not renew an automatic attempt.
  * Real Git/SQLite retains identity, answers, rejection, receipts and acceptance;
- * controlled command diagnostics and review do not establish live inference.
+ * Production HostTask.check runs the declared confined command and leaves ordinary\n * failure diagnostics in its complete log, without synthesizing a diagnostic field.\n * Controlled command inputs and review do not establish live inference.
  */
 test('restart consumes a distinct failing recheck without changed secured bytes', async (t) => {
   const f = new ReviewedWorkflow(t, 'diagnostic');
@@ -33,8 +33,9 @@ test('restart consumes a distinct failing recheck without changed secured bytes'
   f.diagnostic = 'Error: distinct reviewed assertion B fails\nPreserve the schema decision.';
   const checked = await f.recheck();
   assert.equal(checked.status, 37);
-  assert.equal(checked.diagnostic, f.diagnostic);
+  assert.equal(checked.diagnostic, undefined, 'Ordinary production failures carry status and log');
   assert(f.fixture.task.readFile(checked.log).text.includes(f.diagnostic));
+  assert.equal(f.fixture.task.pendingCheck({ owner: 'owner', activity: 'implementation' })?.diagnostic, undefined);
   assert.notEqual(checked.log, held.failure.check!.log);
   assertContinuity(f, held);
   const resumed = await f.run();
@@ -50,9 +51,9 @@ async function equivalentRecheck(f: ReviewedWorkflow, held: HoldContext) {
   assertContinuity(f, held);
   const checked = await f.recheck();
   assert.equal(checked.status, 37);
-  assert.equal(checked.diagnostic, held.failure.diagnostic);
+  assert.equal(checked.diagnostic, undefined);
   assert.notEqual(checked.log, held.failure.check!.log);
-  assert(f.fixture.task.readFile(checked.log).text.includes(held.failure.diagnostic));
+  assert.equal(f.fixture.task.readFile(checked.log).text, f.fixture.task.readFile(held.failure.check!.log).text);
   assertContinuity(f, held);
   const before = [...f.calls];
   const stopped = await f.run();
@@ -87,11 +88,11 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
 /** Require the new exact failure at native revision and preserve full historical context. */
 function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   const current = f.holds.at(-1)!;
-  assert.equal(current.failure.diagnostic, f.diagnostic);
+  assert(current.failure.diagnostic.includes(current.failure.check!.log));
   assert.equal(current.failure.check!.status, 37);
   assert(f.fixture.checks.some((check) => check.log === log));
   const actual = f.fixture.checks.find((check) => check.log === current.failure.check!.log)!;
-  assert.equal(actual.diagnostic, f.diagnostic);
+  assert.equal(actual.diagnostic, undefined);
   assert.equal(actual.status, 37);
   assert(readFileSync(actual.log, 'utf8').includes(f.diagnostic));
   assert.notEqual(current.progress.identity, held.progress.identity);
