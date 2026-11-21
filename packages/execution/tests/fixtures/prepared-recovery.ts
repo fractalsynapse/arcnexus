@@ -40,6 +40,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   private interrupted = false;
   interruptNext = false;
   recoveryContinuation?: 'replay' | 'question';
+  plan = recoveryPlan();
   beforePlan?: (task: HostTask) => void;
   afterActivation?: (task: HostTask) => Promise<void>;
   answerQuestion?: (question: string) => string | undefined;
@@ -75,7 +76,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         plan: async () => {
           this.plans += 1;
           this.beforePlan?.(this.tasks.at(-1)!);
-          return { kind: 'plan', plan: recoveryPlan() };
+          return { kind: 'plan', plan: this.plan };
         },
         revise: async (_session, _plan, feedback) =>
           assert.fail('Recovery must retain the accepted plan: ' + JSON.stringify(feedback)),
