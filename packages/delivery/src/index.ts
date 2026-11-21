@@ -1,12 +1,10 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import { hostTask, type HostTask } from '../../execution/src/index.js';
 import type { Candidate, Verdict } from '../../verification/src/index.js';
 import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
 import { PublicationCheckFailure } from './check-failure.js';
-import { acceptedIdentity } from './acceptance.js';
+import { acceptedIdentity, currentAcceptance } from './acceptance.js';
 
 export { publish, type Publication } from './publication.js';
 export { PublicationCheckFailure } from './check-failure.js';
@@ -22,7 +20,7 @@ export async function integrate(
   if (candidate.digest !== verdict.candidate)
     throw new Error('Delivery requires an accepting verdict for this candidate');
   const task = hostTask(session);
-  acceptedIdentity(task, candidate, verdict);
+  const verification = acceptedIdentity(task, candidate, verdict);
   const { branch, issue, head } = task.commit(candidate);
   const publication = {
     target: task.config.base,
@@ -30,6 +28,7 @@ export async function integrate(
     issue,
     head,
     candidate: candidate.digest,
+    verification,
     parent: task.config.capture.source.revision,
   };
   task.note({ publication });
@@ -62,38 +61,28 @@ export async function resume(
   return deliver(task, publication, signal);
 }
 
-/** Observe an unmerged effect before handing changed authority or work back to Execution. */
+/** Observe PR and branch facts before continuing publication or returning to engineering. */
 async function refreshUnmerged(task: HostTask, publication: Publication, signal: AbortSignal) {
   const provider = task.provider(signal);
   const pull = await provider.publication(publication.branch);
   task.note({ publicationObserved: { branch: publication.branch, pull: pull ?? null } });
   if (pull && pull.target !== publication.target)
     throw new Error(`GitHub publication target changed: ${pull.url}`);
-  if (pull && pull.head !== publication.head)
+  const confirmed = task.observations<{ confirmed?: string }>()
+    .findLast((event) => event.confirmed)?.confirmed;
+  const known = [publication.head, confirmed];
+  if (pull && !known.includes(pull.head))
     throw new Error(`GitHub publication does not match the retained candidate: ${pull.url}`);
   if (pull && pull.state !== 'open') return false;
   const remote = await provider.remoteHead(publication.branch);
   task.note({ publicationObserved: { branch: publication.branch, head: remote ?? null } });
-  if (remote !== publication.head)
+  if ((pull || remote) && !known.includes(remote))
     throw new Error(`Remote publication branch changed: ${publication.branch}`);
-  const sameHead = !pull || pull.head === publication.head;
-  if (sameHead && publication.parent === task.config.capture.source.revision) {
-    const accepted = task.history().findLast((event) => 'verdict' in event);
-    if (accepted?.verdict.kind === 'accepted') {
-      try {
-        acceptedIdentity(task, accepted.candidate, accepted.verdict);
-        return false;
-      } catch { /* Recovered work requires fresh checks and independent acceptance. */ }
-    }
-  }
-  if (pull && sameHead && task.config.fresh) {
-    try {
-      await provider.verify(pull.url, publication.head, publication.target);
-    } catch (error) {
-      throw recordedFailure(task, publication, error);
-    }
-  }
-  return true;
+  if (pull && remote !== pull.head)
+    throw new Error(`GitHub PR and issue branch conflict: ${pull.url}`);
+  return remote && remote !== publication.head
+    ? true
+    : !currentAcceptance(task, publication.candidate, publication.verification);
 }
 
 /** Validate the original acceptance and adapt the publication artifact used before journaling. */
@@ -107,9 +96,11 @@ function recover(
     verdict?: Verdict;
   }[];
   const saved = events.findLast((event) => event.publication)?.publication;
-  const publication = saved ?? legacy(task, dirname(retained.worktree));
+  const publication = saved;
   if (!publication) return undefined;
-  const accepted = events.findLast((event) => event.verdict?.kind === 'accepted');
+  const accepted = events.findLast((event) =>
+    event.verdict?.kind === 'accepted' && event.candidate?.digest === publication.candidate,
+  );
   if (
     accepted?.candidate?.digest !== publication.candidate ||
     accepted?.verdict?.kind !== 'accepted' ||
@@ -123,15 +114,6 @@ function recover(
   )
     throw new Error('The retained publication has no matching accepted candidate');
   return publication;
-}
-
-/** Read former runtime evidence without changing the retained run. */
-function legacy(task: HostTask, directory: string): Publication | undefined {
-  if (!existsSync(directory)) return undefined;
-  const files = readdirSync(directory).filter((name) => /^\d+-publication\.json$/.test(name));
-  if (files.length !== 1) return undefined;
-  const record = JSON.parse(readFileSync(join(directory, files[0]!), 'utf8'));
-  return { ...record, parent: task.publicationParent(record.head) };
 }
 
 /** Retain provider facts and the verified staging result for this attempt. */
