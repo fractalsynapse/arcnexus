@@ -21,8 +21,10 @@ export class PublicationProvider {
   ) {
     this.observe();
     this.effects();
-    this.t.mock.method(this.fixture.provider, 'merge', async (url: string, head: string, issue: string) =>
-      this.merge(url, head, issue),
+    this.t.mock.method(
+      this.fixture.provider,
+      'merge',
+      async (url: string, head: string, issue: string) => this.merge(url, head, issue),
     );
   }
 
