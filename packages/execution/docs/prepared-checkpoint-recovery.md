@@ -23,6 +23,52 @@ observations; it does not relabel an earlier verdict, overwrite a historical bas
 or replace the accepted plan to escape an unresolved obligation. A checkpoint push
 secures progress; it establishes neither final acceptance nor staging delivery.
 
+## Caller knowledge across recovery
+
+The correction intent for `recovered-caller-knowledge-correction` is to use the
+existing [`callerRevision` policy](../src/research.ts) consistently for ordinary
+callers, including the public [`HostTask.inboxScope`](../src/index.ts) accessor.
+Activation tools, clarification replay, research replay and public inbox consumers
+must identify the same actual caller conversation before and after staging moves.
+Ordinary caller continuity uses the original recorded task base; it does not
+replace the newly captured engineering base or authority.
+
+This includes the consumers that reconstruct
+[hold context](../src/hold-context.ts) and
+[retained supplier diagnostics](../src/supplier-context.ts). A recovered hold must
+retain complete verbatim answered questions, actual unanswered clarification gates,
+research results and their evidence under that caller's canonical identity.
+An unanswered gate must remain actionable, and a rejected supplier request must
+still return its exact diagnostic to its original caller. Keeping those records
+in the journal is insufficient if these consumers cannot select them.
+
+Retained knowledge remains task input. Current captured ownership, activities,
+operations and applicable acceptance govern continuation; continuity grants no
+write permission or approval. Preserve the exact proposal, baseline, actor and
+question binding of host-owned approval gates through `requestDecision` and
+`decisionRecord`. Preserve independent review's candidate, owner-evidence,
+capture and acceptance bindings. Do not apply ordinary original-base continuity
+to either boundary in a way that reuses stale authorization or verdicts.
+
+The independent rejection in `129-3-independent-caller-scope-recovery.md` supplies
+the distinguishing public Git/SQLite/executable-provider/MCP regression. Its
+retained branch is `f3263ec4ee08965bc10691fd09ea6a9c768b7af2`; the relevant
+Execution sources matched tested snapshot
+`84c010940d1f8d9abafe704f5d4a84bdc1a0c7f3`. The public scope agrees with the actual
+MCP question before staging advances, then fails afterward with
+`Public caller scope differs from its actual MCP conversation`. This is observed
+controlled-provider recovery evidence, with controlled final delivery.
+
+For `recovery-history-preserved` and `recovery-current-capture`, the correction
+must verify that public scope matches the actual MCP conversation after recovery
+and that the consumers receive complete answers, pending gates, research evidence
+and supplier diagnostics. Assert the distinguishable multiline answer exactly,
+without another prompt or duplicate acknowledged edit. Also retain assertions
+that changed ownership prevents unauthorized continuation and that earlier
+host approval or independent review cannot authorize the recovered candidate.
+The earlier numeric-check correction remains accepted retained work. This note
+records intent before correction; it does not claim the caller regression passes.
+
 ## Capture before continuation
 
 Observe current staging and issue-branch state before effects. Reconcile uncertain
