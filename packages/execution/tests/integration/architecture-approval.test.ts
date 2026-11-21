@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { architectureGate } from '../../../architecture/src/index.js';
 import { ArchitectureFixture } from '../fixtures/architecture.js';
 import { applyArchitecture, approvedArchitecture } from '../../src/architecture-edits.js';
 import { applyEdits } from '../../src/edits.js';
@@ -95,25 +96,18 @@ test('a retained original base cannot carry a host approval into a new capture',
   const { parent } = fixture;
   parent.note({ baseRevision: parent.capture.source.revision });
   const receipt = await fixture.decide('approve');
-  writeFileSync(join(fixture.workspace, 'staging.txt'), 'Independent staging contribution');
-  git(fixture.workspace, 'add', 'staging.txt');
-  git(fixture.workspace, 'commit', '-m', 'Advance staging for approval characterization');
+  const selection = parent.capture.project.architect!;
+  const gate = architectureGate(fixture.proposal);
+  assert.deepEqual(parent.decisionRecord(selection, gate, receipt.question), receipt);
+  git(fixture.workspace, 'commit', '--allow-empty', '-m', 'Advance staging');
   const capture = {
     ...parent.capture,
     source: { ...parent.capture.source, revision: git(fixture.workspace, 'rev-parse', 'HEAD') },
   };
   const recovered = new HostTask({ ...parent.config, capture }, parent.goal, parent.journal);
-  assert.equal(
-    recovered.decisionRecord(capture.project.architect!, fixture.proposal.id, receipt.question),
-    undefined,
-  );
+  assert.equal(recovered.decisionRecord(selection, gate, receipt.question), undefined);
   await assert.rejects(
-    recovered.requestDecision(
-      capture.project.architect!,
-      fixture.proposal.id,
-      receipt.question,
-      signal,
-    ),
+    recovered.requestDecision(selection, gate, receipt.question, signal),
     /Architecture proposal/,
   );
 });
