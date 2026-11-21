@@ -20,6 +20,7 @@ import {
   question,
   selection,
 } from '../../../execution/tests/fixtures/reviewed-hold.js';
+import { controlledCheckLaunch } from './reviewed-check-process.js';
 import { holdFiles } from '../../../execution/tests/fixtures/reviewed-hold-project.js';
 
 const signal = new AbortController().signal;
@@ -43,6 +44,7 @@ export class ReviewedTask {
 
   /** Capture committed authority before retaining an independent rejection and its correction plan. */
   constructor(t: TestContext) {
+    controlledCheckLaunch(t);
     mkdirSync(this.root);
     this.source();
     this.task = this.open(t);
@@ -133,6 +135,7 @@ export class ReviewedTask {
     t.mock.method(task, 'provider', () => provider);
     return task;
   }
+
   /** Persist an independent verdict and its Direction revision using production event shapes. */
   private recordReview() {
     const original = { ...correction, id: 'original' };
