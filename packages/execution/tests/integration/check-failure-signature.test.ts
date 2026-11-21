@@ -34,7 +34,10 @@ class SignatureScenario {
       'expected complete retained answer',
       'expected secured edit receipt',
     );
-    assert.notEqual(this.signature(first), this.signature(this.log('different-detail.log', detail)));
+    assert.notEqual(
+      this.signature(first),
+      this.signature(this.log('different-detail.log', detail)),
+    );
   }
 
   /** Distinguish ordinary errors even when their check title and status stay unchanged. */
