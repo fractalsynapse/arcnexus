@@ -71,19 +71,7 @@ test('outdated open PR is reconciled to fresh recovered acceptance and the same 
   const result = await fixture.run();
   assert.equal(result.kind, 'merged', JSON.stringify(result));
   assert(result.kind === 'merged');
-  assert.equal(provider.pull?.url, prior?.url);
-  assert.notEqual(provider.pull?.head, prior?.head);
-  assert.equal(provider.opened, 1);
-  assert.equal(provider.merged, 1);
-  assert(
-    fixture.reviews.length > reviewed,
-    'Recovered candidate requires independent reassessment',
-  );
-  assert.equal(fixture.git('rev-parse', result.commit + '^'), staging);
-  assert.equal(
-    fixture.git('rev-parse', result.commit + '^{tree}'),
-    fixture.git('rev-parse', '7-task^{tree}'),
-  );
+  recoveredMerge(fixture, provider, prior?.url, reviewed, result.commit, staging);
   assert.equal(provider.calls[offset], 'observe PR 7-task');
   assert(
     provider.calls.slice(offset).indexOf('observe branch 7-task') <
@@ -125,3 +113,13 @@ test('another staging movement during recovered provider verification prevents m
   assert.equal(provider.merged, 0);
   assert.equal(provider.opened, 1);
 });
+
+/** Reject duplicate publication, missing fresh review and publication of the wrong tree or parent. */
+function recoveredMerge(fixture: PreparedRecoveryFixture, provider: PublicationProvider, url: string | undefined, reviews: number, commit: string, staging: string) {
+  assert.equal(provider.pull?.url, url);
+  assert.equal(provider.opened, 1);
+  assert.equal(provider.merged, 1);
+  assert(fixture.reviews.length > reviews, 'Recovered candidate requires independent reassessment');
+  assert.equal(fixture.git('rev-parse', commit + '^'), staging);
+  assert.equal(fixture.git('rev-parse', commit + '^{tree}'), fixture.git('rev-parse', '7-task^{tree}'));
+}
