@@ -93,7 +93,7 @@ class ScopeVerification {
       this.task,
       'activate',
       async (...[, , data]: Parameters<HostTask['activate']>) => ({
-        ...data.assignment.accepted,
+        ...(data.assignment as { accepted: Record<string, unknown> }).accepted,
         criteria: ['works'],
         evidence: [...this.task.evidence],
       }),
