@@ -7,6 +7,9 @@ import { BindingScenario, identity, plan, type Assignment } from './binding-fixt
 
 export const suite = { owner: 'reviewer', level: 'integration', tags: ['regression'] } as const;
 
+const originalReport = 'Original report\nDistinct finding before recovery.\n';
+const originalAnswer = 'Preserve the original issue.\n  Keep this exact condition.\n';
+
 // Real caller: Verification supplies this binding. A template missing even one field must fail.
 for (const kind of ['accepted', 'rejected'] as const) {
   test(`assess exposes unchanged verification in the assignment and ${kind} template`, async (t) => {
@@ -96,14 +99,8 @@ test('an unbound caller receives no fabricated verification assignment or templa
 for (const kind of ['accepted', 'rejected'] as const) {
   test(`citation-only repair retains the full ${kind} determination and complete history`, async (t) => {
     const fixture = new BindingScenario(t);
-    const report = fixture.task.store(
-      'original-report.txt',
-      'Original report\nDistinct finding before recovery.\n',
-    );
-    const answer = fixture.task.store(
-      'human-answer.txt',
-      'Preserve the original issue.\n  Keep this exact condition.\n',
-    );
+    const report = fixture.task.store('original-report.txt', originalReport);
+    const answer = fixture.task.store('human-answer.txt', originalAnswer);
     const result = await fixture.run((_input, visit) => {
       const reply = fixture.verdict(kind);
       return visit === 1 ? invalidCitation(reply) : reply;
@@ -116,14 +113,8 @@ for (const kind of ['accepted', 'rejected'] as const) {
     assert.deepEqual(assignment(fixture, 1).checks, fixture.checks);
     assert.deepEqual(fixture.requests[1]!.acceptance, fixture.requests[0]!.acceptance);
     assertHistory(fixture, [report, answer]);
-    assert.equal(
-      readFileSync(answer, 'utf8'),
-      'Preserve the original issue.\n  Keep this exact condition.\n',
-    );
-    assert.equal(
-      readFileSync(report, 'utf8'),
-      'Original report\nDistinct finding before recovery.\n',
-    );
+    assert.equal(readFileSync(answer, 'utf8'), originalAnswer);
+    assert.equal(readFileSync(report, 'utf8'), originalReport);
   });
 
   test(`citation repair cannot change a submitted ${kind} binding even for an unbound caller`, async (t) => {
