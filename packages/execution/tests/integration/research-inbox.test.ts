@@ -56,8 +56,16 @@ class ResearchScenario {
     mkdirSync(this.root);
     execFileSync('git', ['init', '-q', this.root]);
     execFileSync('git', [
-      '-C', this.root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
-      'commit', '--allow-empty', '-qm', 'Committed research fixture',
+      '-C',
+      this.root,
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.com',
+      'commit',
+      '--allow-empty',
+      '-qm',
+      'Committed research fixture',
     ]);
     this.capture = researchCapture(this.root, operations);
   }
@@ -111,10 +119,18 @@ class ResearchScenario {
     assert(input, 'Review checks need clean committed fixture inputs');
     if (reusableCheck(task.observations(), input)) return;
     this.checks++;
-    const log = task.store('build.log', 'Controlled checklist observation; no native execution claimed');
+    const log = task.store(
+      'build.log',
+      'Controlled checklist observation; no native execution claimed',
+    );
     const check = {
-      id: 'build', log, status: 0, command: '/usr/bin/true',
-      args: [], cwd: this.root, durationMs: 0,
+      id: 'build',
+      log,
+      status: 0,
+      command: '/usr/bin/true',
+      args: [],
+      cwd: this.root,
+      durationMs: 0,
     };
     task.note({ check, checkInput: input });
   }
@@ -164,27 +180,32 @@ class ResearchScenario {
 /** Capture the explicit review operation and actors against the fixture's committed source. */
 function researchCapture(root: string, operations: string[]): Capture {
   return {
-      project: {
-        knowledgeRoot: '.arc',
-        verifier: { component: 'reviewer', activity: 'assessment' },
-        checks: { acceptance: ['build'] },
+    project: {
+      knowledgeRoot: '.arc',
+      verifier: { component: 'reviewer', activity: 'assessment' },
+      checks: { acceptance: ['build'] },
+    },
+    contracts: [],
+    components: researchComponents(operations),
+    operations: {
+      build: {
+        id: 'build',
+        kind: 'check',
+        category: 'build',
+        command: '/usr/bin/true',
+        args: [],
+        network: false,
       },
-      contracts: [],
-      components: researchComponents(operations),
-      operations: {
-        build: {
-          id: 'build', kind: 'check', category: 'build', command: '/usr/bin/true',
-          args: [], network: false,
-        },
-        'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
-        'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
-      },
-      source: {
-        root: root,
-        revision: execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-        paths: [], remote: 'https://example.com',
-      },
-    } as unknown as Capture;
+      'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
+      'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
+    },
+    source: {
+      root: root,
+      revision: execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+      paths: [],
+      remote: 'https://example.com',
+    },
+  } as unknown as Capture;
 }
 
 /** Give each generic actor the same explicit read-only research capability. */
