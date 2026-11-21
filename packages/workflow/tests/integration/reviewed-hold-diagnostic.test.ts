@@ -52,6 +52,19 @@ test('restart consumes a distinct failing recheck without changed secured bytes'
   assert.equal(JSON.stringify(f.holds.slice(0, 2)), original);
 });
 
+/** Require a real Node subprocess at a selected path containing spaces, with exact ordinary output. */
+function assertInterpreterLaunch(f: ReviewedWorkflow) {
+  const checked = f.fixture.checks.at(-1)!;
+  assert(checked.command.endsWith('/.git/selected node'));
+  assert.notEqual(checked.command, '/usr/bin/node');
+  assert.deepEqual(readFileSync(checked.command), readFileSync(process.execPath));
+  assert(checked.args[0]!.endsWith('/.git/reviewed-command.mjs'));
+  assert(!readFileSync(checked.args[0]!, 'utf8').startsWith('#!'));
+  assert.equal(checked.status, 37);
+  assert.equal(checked.diagnostic, undefined);
+  assert.equal(readFileSync(checked.log, 'utf8'), f.diagnostic + '\n');
+}
+
 /** Reopen and recheck the same bytes; a new artifact alone must leave the task stopped. */
 async function equivalentRecheck(f: ReviewedWorkflow, held: HoldContext) {
   await f.reopen();
