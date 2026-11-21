@@ -59,28 +59,7 @@ class ResearchScenario {
       '-C', this.root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
       'commit', '--allow-empty', '-qm', 'Committed research fixture',
     ]);
-    this.capture = {
-      project: {
-        knowledgeRoot: '.arc',
-        verifier: { component: 'reviewer', activity: 'assessment' },
-        checks: { acceptance: ['build'] },
-      },
-      contracts: [],
-      components: researchComponents(operations),
-      operations: {
-        build: {
-          id: 'build', kind: 'check', category: 'build', command: '/usr/bin/true',
-          args: [], network: false,
-        },
-        'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
-        'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
-      },
-      source: {
-        root: this.root,
-        revision: execFileSync('git', ['-C', this.root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-        paths: [], remote: 'https://example.com',
-      },
-    } as unknown as Capture;
+    this.capture = researchCapture(this.root, operations);
   }
 
   /** Run an actor and capture the actual selections and supplied research evidence. */
@@ -180,6 +159,32 @@ class ResearchScenario {
     if (reply instanceof Error) throw reply;
     return typeof reply === 'function' ? reply(input) : reply;
   }
+}
+
+/** Capture the explicit review operation and actors against the fixture's committed source. */
+function researchCapture(root: string, operations: string[]): Capture {
+  return {
+      project: {
+        knowledgeRoot: '.arc',
+        verifier: { component: 'reviewer', activity: 'assessment' },
+        checks: { acceptance: ['build'] },
+      },
+      contracts: [],
+      components: researchComponents(operations),
+      operations: {
+        build: {
+          id: 'build', kind: 'check', category: 'build', command: '/usr/bin/true',
+          args: [], network: false,
+        },
+        'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
+        'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
+      },
+      source: {
+        root: root,
+        revision: execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+        paths: [], remote: 'https://example.com',
+      },
+    } as unknown as Capture;
 }
 
 /** Give each generic actor the same explicit read-only research capability. */
