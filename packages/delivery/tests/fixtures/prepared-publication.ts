@@ -157,6 +157,11 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         assert(!('kind' in task), JSON.stringify(task));
         const admitted = hostTask(task);
         this.tasks.push(admitted);
+        const close = admitted.close.bind(admitted);
+        this.context.mock.method(admitted, 'close', () => {
+          this.observed.push(admitted.observations());
+          close();
+        });
         this.context.mock.method(admitted, 'provider', () => this.provider);
         this.controlReviewer(admitted);
         return admitted;
