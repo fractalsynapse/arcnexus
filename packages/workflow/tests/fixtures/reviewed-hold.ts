@@ -118,7 +118,9 @@ export class ReviewedWorkflow {
       task,
       'check',
       async (id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) =>
-        this.check(id, signal, scope),
+        this.productionChecks
+          ? this.productionCheck(id, signal, scope)
+          : this.check(id, signal, scope),
     );
   }
 
@@ -133,14 +135,16 @@ export class ReviewedWorkflow {
     });
   }
 
+  /** Retain the actual production result without synthesizing ordinary failure diagnostics. */
+  private async productionCheck(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
+    const result = await HostTask.prototype.check.call(this.fixture.task, id, signal, scope);
+    this.fixture.checks.push(result);
+    return result;
+  }
+
   /** Execute a real subprocess and persist its exact log, exit and relevant input identity. */
   private async check(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
     const task = this.fixture.task;
-    if (this.productionChecks) {
-      const result = await HostTask.prototype.check.call(task, id, signal, scope);
-      this.fixture.checks.push(result);
-      return result;
-    }
     const log = task.artifact('reviewed-check.log');
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
