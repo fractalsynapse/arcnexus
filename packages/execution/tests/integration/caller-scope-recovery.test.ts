@@ -47,11 +47,11 @@ class CallerRecoveryScenario {
   /** Seed independent rejection before the accepted corrective plan is recorded. */
   constructor(private readonly context: TestContext) {
     this.fixture = new PreparedRecoveryFixture(context);
-    this.fixture.plan.milestones.push({
+    this.fixture.plan = { ...this.fixture.plan, milestones: [...this.fixture.plan.milestones, {
       ...milestone,
       id: 'accepted-work-reference',
       steps: milestone.steps.map((step) => ({ ...step, checklist: [], inapplicable: 'Already supplied reference' })),
-    });
+    }] };
     this.supplier = {
       kind: 'supplier' as const,
       owner: 'reviewer',
