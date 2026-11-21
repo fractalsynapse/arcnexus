@@ -15,7 +15,7 @@ export interface Clarification {
 
 /** Resume the requesting actor with human answers from the task journal. */
 export class Clarifications {
-  /** Bind questions to one actor, activity and retained task position. */
+  /** Bind the caller to its explicit continuity revision, or the exact admission for host gates. */
   constructor(
     private readonly task: HostTask,
     private readonly selection: ActivitySelection,
@@ -48,9 +48,9 @@ export class Clarifications {
 
   /** Read answered questions for the original activation without including other gates. */
   answers(data: Assignment) {
-    return [...this.retained(inboxIdentity(this.task, this.selection, data, this.revision)).values()].flatMap(
-      ({ question, answer }) => (answer === undefined ? [] : [{ question, answer }]),
-    );
+    return [
+      ...this.retained(inboxIdentity(this.task, this.selection, data, this.revision)).values(),
+    ].flatMap(({ question, answer }) => (answer === undefined ? [] : [{ question, answer }]));
   }
 
   /** Use the ordinary durable conversation for a host-owned approval question. */
