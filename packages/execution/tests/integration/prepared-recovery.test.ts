@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
-import { answer, checked, criterion, PreparedRecoveryFixture } from '../fixtures/prepared-recovery.js';
+import {
+  answer,
+  checked,
+  criterion,
+  PreparedRecoveryFixture,
+} from '../fixtures/prepared-recovery.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
@@ -36,7 +41,11 @@ async function interrupt(fixture: PreparedRecoveryFixture) {
 function assertCapture(fixture: PreparedRecoveryFixture, staging: string) {
   const resumed = fixture.tasks[1]!;
   assert.equal(resumed.capture.source.revision, staging);
-  assert.deepEqual(resumed.capture.components.work!.owns, ['baseline', 'checked.txt', 'staging.txt']);
+  assert.deepEqual(resumed.capture.components.work!.owns, [
+    'baseline',
+    'checked.txt',
+    'staging.txt',
+  ]);
   assert.deepEqual(resumed.capture.project.checks!.acceptance, ['fixture-check', 'current-check']);
   const probe = fixture.probes(resumed).at(-1);
   assert.deepEqual(probe.data.acceptance, [criterion]);
@@ -48,12 +57,20 @@ function assertCapture(fixture: PreparedRecoveryFixture, staging: string) {
 }
 
 /** Reject current-attempt-only history and rewritten receipt or original acceptance. */
-function assertHistory(fixture: PreparedRecoveryFixture, original: Awaited<ReturnType<typeof interrupt>>) {
+function assertHistory(
+  fixture: PreparedRecoveryFixture,
+  original: Awaited<ReturnType<typeof interrupt>>,
+) {
   const current = fixture.observed[1]! as Retained[];
   assert(current.some((event) => event.baseRevision === original.task.capture.source.revision));
-  assert.deepEqual(current.flatMap((event) => event.editReceipt ?? []), [original.receipt]);
-  assert.deepEqual(current.filter((event) => event.clarification?.answer !== undefined),
-    original.history.filter((event) => event.clarification?.answer !== undefined));
+  assert.deepEqual(
+    current.flatMap((event) => event.editReceipt ?? []),
+    [original.receipt],
+  );
+  assert.deepEqual(
+    current.filter((event) => event.clarification?.answer !== undefined),
+    original.history.filter((event) => event.clarification?.answer !== undefined),
+  );
   assert.deepEqual(current.find((event) => event.plan)?.plan?.milestones[0]!.criteria, [criterion]);
   assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
   assert.equal(fixture.tasks[1]!.issue, '7');
@@ -71,31 +88,46 @@ test('recovered activation receives the verbatim answer and original receipt und
   assertCapture(fixture, staging);
   assertHistory(fixture, original);
   const probe = fixture.probes(fixture.tasks[1]!).at(-1);
-  assert.deepEqual(probe.data.assignment.clarifications, [{
-    question: original.gate.question, answer,
-  }], 'Recovered caller must receive the complete previously answered question');
+  assert.deepEqual(
+    probe.data.assignment.clarifications,
+    [
+      {
+        question: original.gate.question,
+        answer,
+      },
+    ],
+    'Recovered caller must receive the complete previously answered question',
+  );
   assert.equal(fixture.git('merge-base', '7-task', checkpoint), checkpoint);
   assert.equal(fixture.git('merge-base', '7-task', staging), staging);
   assert(!existsSync(join(fixture.root, 'checked.txt')));
 });
 
 for (const unavailable of [false, true]) {
-  test('a newly captured ' + (unavailable ? 'missing activity' : 'changed owner') + ' refuses continuation', async (t) => {
-    const fixture = new PreparedRecoveryFixture(t);
-    const original = await interrupt(fixture);
-    const { checkpoint } = fixture.advance();
-    fixture.changeOwner(unavailable);
-    const held = await fixture.run();
-    assert.equal(held.kind, 'failed', JSON.stringify(held));
-    assert.match(held.reason, unavailable
-      ? /Accepted pending activity is unavailable: work\/implementation/
-      : /Retained checked owner changed: checked.txt/);
-    assert.equal(fixture.git('rev-parse', '7-task'), checkpoint);
-    assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
-    assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
-    assert.equal(fixture.probes(fixture.tasks[1]!).length, fixture.probes(original.task).length);
-    assert.equal(fixture.prompts.length, 1);
-  });
+  test(
+    'a newly captured ' +
+      (unavailable ? 'missing activity' : 'changed owner') +
+      ' refuses continuation',
+    async (t) => {
+      const fixture = new PreparedRecoveryFixture(t);
+      const original = await interrupt(fixture);
+      const { checkpoint } = fixture.advance();
+      fixture.changeOwner(unavailable);
+      const held = await fixture.run();
+      assert.equal(held.kind, 'failed', JSON.stringify(held));
+      assert.match(
+        held.reason,
+        unavailable
+          ? /Accepted pending activity is unavailable: work\/implementation/
+          : /Retained checked owner changed: checked.txt/,
+      );
+      assert.equal(fixture.git('rev-parse', '7-task'), checkpoint);
+      assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
+      assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
+      assert.equal(fixture.probes(fixture.tasks[1]!).length, fixture.probes(original.task).length);
+      assert.equal(fixture.prompts.length, 1);
+    },
+  );
 }
 
 test('conflicting checked bytes remain secured with complete conflict diagnostics', async (t) => {
