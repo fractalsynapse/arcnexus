@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {
-  appendFileSync,
+  copyFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,6 +44,7 @@ export class ReviewedTask {
   readonly directory = mkdtempSync(join(tmpdir(), 'arcnexus-workflow-hold-'));
   readonly root = join(this.directory, 'project');
   readonly storage = join(this.directory, 'state');
+  readonly interpreter = join(this.root, '.git', 'selected node');
   task: HostTask;
   readonly checks: CheckResult[] = [];
   readonly receipts: unknown[] = [];
@@ -96,11 +98,10 @@ export class ReviewedTask {
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
     const command = join(this.root, '.git', 'reviewed-command.mjs');
+    copyFileSync(process.execPath, this.interpreter);
     writeFileSync(
       command,
-      `#!${process.execPath}\n` +
-        readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'),
-      { mode: 0o700 },
+      readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'),
     );
     writeFileSync(join(this.root, '.git', 'diagnostic'), 'Error: reviewed behavior still fails');
     const files = {
@@ -108,8 +109,8 @@ export class ReviewedTask {
       '.arc/architecture/operations/owner-tests.yaml': JSON.stringify({
         id: 'owner-tests',
         category: 'test',
-        command,
-        args: ['fixture.txt', '', join(this.root, '.git', 'diagnostic')],
+        command: this.interpreter,
+        args: [command, 'fixture.txt', '', join(this.root, '.git', 'diagnostic')],
         network: false,
       }),
     };
@@ -208,10 +209,8 @@ export class ReviewedTask {
    */
   reobserve(diagnostic: string) {
     writeFileSync(join(this.root, '.git', 'diagnostic'), diagnostic);
-    appendFileSync(
-      join(this.root, '.git', 'reviewed-command.mjs'),
-      '\n// Host command environment reobserved.\n',
-    );
+    unlinkSync(this.interpreter);
+    copyFileSync(process.execPath, this.interpreter);
   }
 
   /** Read secured checkpoint identity directly from Git. */
