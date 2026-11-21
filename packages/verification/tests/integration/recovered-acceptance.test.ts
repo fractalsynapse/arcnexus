@@ -16,16 +16,24 @@ for (const identity of ['tree', 'base', 'capture', 'acceptance'] as const) {
     const historical = structuredClone(fixture.task.observations());
     const head = identity === 'tree' ? fixture.changeCandidate() : fixture.checkpoint;
     const current = fixture.advance(identity === 'capture' ? 'capture' : 'base');
-    fixture.resume(identity === 'base' ? current : fixture.original,
-      identity === 'capture' ? current : fixture.original, head);
-    if (identity === 'acceptance') fixture.plan = {
-      ...fixture.plan,
-      milestones: fixture.plan.milestones.map((milestone) => ({
-        ...milestone, criteria: [{
-          id: 'continuity', description: originalRequirement + '; also retain new approved obligation',
-        }],
-      })),
-    };
+    fixture.resume(
+      identity === 'base' ? current : fixture.original,
+      identity === 'capture' ? current : fixture.original,
+      head,
+    );
+    if (identity === 'acceptance')
+      fixture.plan = {
+        ...fixture.plan,
+        milestones: fixture.plan.milestones.map((milestone) => ({
+          ...milestone,
+          criteria: [
+            {
+              id: 'continuity',
+              description: originalRequirement + '; also retain new approved obligation',
+            },
+          ],
+        })),
+      };
     const recovered = await fixture.assemble();
     assert.equal(recovered.digest === originalCandidate.digest, identity !== 'tree');
     assert.deepEqual(fixture.task.observations().slice(0, historical.length), historical);
@@ -43,7 +51,10 @@ test('new assessment exposes recovered base and active capture independently of 
   assert.equal((await fixture.run(recovered)).kind, 'accepted');
   const assignment = JSON.stringify(fixture.requests.at(-1)!.assignment);
   assert(assignment.includes(recovered.digest), 'Assessment must identify the assembled tree');
-  assert(assignment.includes(current.source.revision), 'Assessment lost recovered staging/capture identity');
+  assert(
+    assignment.includes(current.source.revision),
+    'Assessment lost recovered staging/capture identity',
+  );
   fixture.assertHistory();
 });
 
@@ -70,14 +81,18 @@ for (const change of ['mapping', 'required'] as const) {
     assert.equal((await fixture.run()).kind, 'accepted');
     const request = fixture.requests.at(-1)!;
     const assignment = request.assignment as { checks: typeof fixture.checks };
-    assert.deepEqual(assignment.checks.map(({ id }) => id),
-      current.project.checks!.acceptance);
+    assert.deepEqual(
+      assignment.checks.map(({ id }) => id),
+      current.project.checks!.acceptance,
+    );
     const required = assignment.checks.find(({ id }) => id === 'required')!;
     assert.deepEqual(required.args, ['%s', change === 'mapping' ? 'current-tag' : 'original-tag']);
     assert.equal(required.cwd, fixture.task.worktree);
     assert.notEqual(required.log, oldLog);
-    assert.match(fixture.task.readFile(required.log).text,
-      change === 'mapping' ? /current-tag/ : /original-tag/);
+    assert.match(
+      fixture.task.readFile(required.log).text,
+      change === 'mapping' ? /current-tag/ : /original-tag/,
+    );
     if (change === 'required') {
       const added = assignment.checks.find(({ id }) => id === 'newly-required')!;
       assert.deepEqual(added.args, ['%s', 'new-tag']);
@@ -92,15 +107,22 @@ test('incomplete retained checklist cannot silently omit newly required evidence
   const current = fixture.advance('required');
   fixture.resume(current, current);
   const candidate = await fixture.assemble();
-  fixture.task.note({ researchingVerification: {
-    candidate: candidate.digest, ownerEvidenceDigest: candidate.ownerEvidenceDigest,
-    revision: current.source.revision, checks: [],
-  } });
+  fixture.task.note({
+    researchingVerification: {
+      candidate: candidate.digest,
+      ownerEvidenceDigest: candidate.ownerEvidenceDigest,
+      revision: current.source.revision,
+      checks: [],
+    },
+  });
   const result = await fixture.run(candidate);
-  const checked = fixture.requests.at(-1)?.assignment as { checks?: typeof fixture.checks } | undefined;
-  assert(result.kind !== 'accepted' ||
-    checked?.checks?.some(({ id, status }) => id === 'newly-required' && status === 0),
-  'An empty retained checklist bypassed the required recovered check');
+  const checked = fixture.requests.at(-1)?.assignment as
+    { checks?: typeof fixture.checks } | undefined;
+  assert(
+    result.kind !== 'accepted' ||
+      checked?.checks?.some(({ id, status }) => id === 'newly-required' && status === 0),
+    'An empty retained checklist bypassed the required recovered check',
+  );
 });
 
 for (const [name, state] of [
@@ -109,21 +131,24 @@ for (const [name, state] of [
   ['skipped', { status: 'not-applicable' }],
   ['scope-invalid', { status: 0, diagnostic: 'Explicit recovered selection matched no cases' }],
 ] satisfies Array<[string, CheckState]>) {
-  test(name + ' required recovered evidence prevents acceptance with its exact log retained', async (context) => {
-    const fixture = new RecoveredAssessment(context);
-    await fixture.interrupt();
-    const current = fixture.advance('required');
-    fixture.resume(current, current);
-    fixture.checkState = state;
-    const result = await fixture.run();
-    assert.equal(result.kind, 'blocked');
-    assert(result.evidence.length);
-    assert(result.evidence.every((path) => fixture.task.evidence.includes(path)));
-    const observed = fixture.checks.at(-1)!;
-    assert.equal(observed.status, state.status);
-    assert.equal(observed.diagnostic, state.diagnostic);
-    assert.match(fixture.task.readFile(observed.log).text, /Controlled check:/);
-  });
+  test(
+    name + ' required recovered evidence prevents acceptance with its exact log retained',
+    async (context) => {
+      const fixture = new RecoveredAssessment(context);
+      await fixture.interrupt();
+      const current = fixture.advance('required');
+      fixture.resume(current, current);
+      fixture.checkState = state;
+      const result = await fixture.run();
+      assert.equal(result.kind, 'blocked');
+      assert(result.evidence.length);
+      assert(result.evidence.every((path) => fixture.task.evidence.includes(path)));
+      const observed = fixture.checks.at(-1)!;
+      assert.equal(observed.status, state.status);
+      assert.equal(observed.diagnostic, state.diagnostic);
+      assert.match(fixture.task.readFile(observed.log).text, /Controlled check:/);
+    },
+  );
 }
 
 test('unchanged interrupted assessment reuses exact complete check observations and preserves all historical sources', async (context) => {
