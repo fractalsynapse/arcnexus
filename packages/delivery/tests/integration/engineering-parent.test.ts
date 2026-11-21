@@ -39,7 +39,10 @@ class EngineeringPublication {
     );
     context.mock.method(this.provider, 'confirm', async (commit: string, tree: string) => {
       assert.equal(fixture.git(fixture.root, 'rev-parse', commit + '^{tree}'), tree);
-      assert.equal(fixture.git(fixture.root, 'rev-parse', commit + '^'), fixture.original.source.revision);
+      assert.equal(
+        fixture.git(fixture.root, 'rev-parse', commit + '^'),
+        fixture.original.source.revision,
+      );
       this.confirmed = commit;
     });
   }
@@ -63,7 +66,13 @@ class EngineeringPublication {
     const fixture = this.fixture;
     const tree = fixture.git(fixture.root, 'rev-parse', head + '^{tree}');
     const commit = fixture.git(
-      fixture.root, 'commit-tree', tree, '-p', 'staging', '-m', 'Accepted fixture #7',
+      fixture.root,
+      'commit-tree',
+      tree,
+      '-p',
+      'staging',
+      '-m',
+      'Accepted fixture #7',
     );
     fixture.git(fixture.root, 'update-ref', 'refs/heads/staging', commit);
     this.merged++;
@@ -99,7 +108,8 @@ test('accepted production assembly publishes and confirms its engineering parent
   fixture.task.record({ candidate, verdict });
   const result = await integrate(fixture.task, candidate, verdict, new AbortController().signal);
   assert(result.kind === 'merged', JSON.stringify(result));
-  const publication = fixture.task.observations<{ publication?: Publication }>()
+  const publication = fixture.task
+    .observations<{ publication?: Publication }>()
     .findLast((event) => event.publication)?.publication;
   assert.equal(publication?.parent, fixture.original.source.revision);
   assert.notEqual(publication?.parent, authority);
