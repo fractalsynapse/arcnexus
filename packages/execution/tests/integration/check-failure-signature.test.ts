@@ -121,6 +121,12 @@ function characterize(t: TestContext, signature: Signature) {
   scenario.readFailures();
 }
 
+// canonical-check-signature-public: Workflow's reviewed-hold consumer must resolve the
+// same canonical function through Execution's entry; a copied comparator or wrapper fails identity.
+// canonical-check-signature-evidence: actual retained-file comparisons reject raw path/text
+// hashing, constant signatures, title-only comparisons, lost multiline detail and empty fallback.
+// Exact digests pin SHA-256; read failures reject treating diagnostic text as file contents or
+// swallowing unavailable evidence. Original log bytes remain readable after comparison.
 // This passing baseline is characterization, not behavioral red for a missing export.
 test('existing canonical retained-log semantics remain characterized independently of export availability', (t) => {
   characterize(t, checkFailureSignature);
