@@ -127,7 +127,7 @@ function assertNewFinding(f: ReviewedWorkflow, held: HoldContext, log: string) {
   assert.equal(actual.diagnostic, undefined);
   assert.equal(actual.status, 37);
   assert.equal(readFileSync(actual.log, 'utf8'), f.diagnostic + '\n');
-  assert.equal(f.fixture.task.readFile(log).text, f.diagnostic + '\n');
+  assert.equal(readFileSync(log, 'utf8'), f.diagnostic + '\n');
   assert.notEqual(current.progress.identity, held.progress.identity);
   assert.deepEqual(current.progress.inputs, held.progress.inputs);
   assert.deepEqual(current.task, held.task);
