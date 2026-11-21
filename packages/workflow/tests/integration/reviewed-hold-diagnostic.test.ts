@@ -17,7 +17,9 @@ export const suite = {
  * consume that observation through Execution before native Direction correction.
  * An equivalent recheck with a new log must not renew an automatic attempt.
  * Real Git/SQLite retains identity, answers, rejection, receipts and acceptance;
- * Production HostTask.check runs the declared confined command and leaves ordinary\n * failure diagnostics in its complete log, without synthesizing a diagnostic field.\n * Controlled command inputs and review do not establish live inference.
+ * Production HostTask.check runs with a controlled confinement launcher and leaves ordinary
+ * failure diagnostics in its complete log, without synthesizing a diagnostic field.
+ * Controlled command inputs and review do not establish live inference.
  */
 test('restart consumes a distinct failing recheck without changed secured bytes', async (t) => {
   const f = new ReviewedWorkflow(t, 'diagnostic', true);
