@@ -68,7 +68,8 @@ async function refreshUnmerged(task: HostTask, publication: Publication, signal:
   task.note({ publicationObserved: { branch: publication.branch, pull: pull ?? null } });
   if (pull && pull.target !== publication.target)
     throw new Error(`GitHub publication target changed: ${pull.url}`);
-  const confirmed = task.observations<{ confirmed?: string }>()
+  const confirmed = task
+    .observations<{ confirmed?: string }>()
     .findLast((event) => event.confirmed)?.confirmed;
   const known = [publication.head, confirmed];
   if (pull && !known.includes(pull.head))
@@ -99,8 +100,9 @@ function recover(
   const saved = events.findLast((event) => event.publication)?.publication;
   const publication = saved;
   if (!publication) return undefined;
-  const accepted = events.findLast((event) =>
-    event.verdict?.kind === 'accepted' && event.candidate?.digest === publication.candidate,
+  const accepted = events.findLast(
+    (event) =>
+      event.verdict?.kind === 'accepted' && event.candidate?.digest === publication.candidate,
   );
   if (
     accepted?.candidate?.digest !== publication.candidate ||
