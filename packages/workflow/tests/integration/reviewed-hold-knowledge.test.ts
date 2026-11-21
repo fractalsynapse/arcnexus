@@ -43,7 +43,12 @@ for (const kind of ['clarification', 'research'] as const) {
     assert.equal(JSON.stringify(f.holds.slice(0, 2)), historical);
     assertCompletedKnowledge(f);
     assert.deepEqual(f.calls.slice(4), [
-      correction.id, 'Direction', 'part-2', correction.id, 'Review', 'Delivery',
+      correction.id,
+      'Direction',
+      'part-2',
+      correction.id,
+      'Review',
+      'Delivery',
     ]);
   });
 }
@@ -53,15 +58,19 @@ async function duplicateAnswer(f: ReviewedWorkflow, held: HoldContext) {
   await f.reopen();
   const task = f.fixture.task;
   const existing = held.answers.find((entry) => entry.question === question)!;
-  task.note({ clarification: {
-    ...existing,
-    evidence: task.store('duplicate-answer.json', JSON.stringify(existing)),
-  } });
-  task.note({ clarification: {
-    scope: task.inboxScope({ component: 'other', activity: 'implementation' }, context()),
-    question: 'Foreign caller knowledge',
-    answer: 'Complete but unrelated answer',
-  } });
+  task.note({
+    clarification: {
+      ...existing,
+      evidence: task.store('duplicate-answer.json', JSON.stringify(existing)),
+    },
+  });
+  task.note({
+    clarification: {
+      scope: task.inboxScope({ component: 'other', activity: 'implementation' }, context()),
+      question: 'Foreign caller knowledge',
+      answer: 'Complete but unrelated answer',
+    },
+  });
   assertContinuity(f, held);
   const calls = [...f.calls];
   assert.equal((await f.run()).kind, 'blocked');
@@ -74,23 +83,32 @@ async function completeKnowledge(f: ReviewedWorkflow, kind: 'clarification' | 'r
   const task = f.fixture.task;
   const signal = new AbortController().signal;
   if (kind === 'clarification') {
-    task.ask = async () => '  Preserve schema A.\n\nCorrect the reviewed input using the complete answer.  ';
-    await new Clarifications(task, selection, signal).decide(context(), 'How should correction proceed?');
+    task.ask = async () =>
+      '  Preserve schema A.\n\nCorrect the reviewed input using the complete answer.  ';
+    await new Clarifications(task, selection, signal).decide(
+      context(),
+      'How should correction proceed?',
+    );
     return;
   }
-  const evidence = task.store('completed-research.md', 'Complete research: correct fixture.txt under schema A.\n');
-  task.note({ researchResult: {
-    request: {
-      id: 'reviewed-knowledge',
-      inbox: task.inboxScope(selection, context()),
-      requestedBy: selection,
-      question: 'Which correction preserves the rejected schema?',
-      decision: 'Repair the original criterion without changing authority',
+  const evidence = task.store(
+    'completed-research.md',
+    'Complete research: correct fixture.txt under schema A.\n',
+  );
+  task.note({
+    researchResult: {
+      request: {
+        id: 'reviewed-knowledge',
+        inbox: task.inboxScope(selection, context()),
+        requestedBy: selection,
+        question: 'Which correction preserves the rejected schema?',
+        decision: 'Repair the original criterion without changing authority',
+      },
+      component: 'owner',
+      evidence,
+      digest: task.readFile(evidence).sha256,
     },
-    component: 'owner',
-    evidence,
-    digest: task.readFile(evidence).sha256,
-  } });
+  });
 }
 
 /** Confirm each new answer/report reaches Execution intact alongside the original complete answer. */
@@ -111,7 +129,9 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
   assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
   for (const input of held.progress.inputs)
     assert.equal(task.readFile(input.path).sha256, input.digest);
-  const latest = task.observations<{ check?: { log: string } }>().findLast((event) => event.check)?.check;
+  const latest = task
+    .observations<{ check?: { log: string } }>()
+    .findLast((event) => event.check)?.check;
   assert.equal(latest?.log, held.failure.check!.log, 'No new check may release this restart');
   const events = task.history();
   const plan = events.findLast((event) => 'plan' in event)!.plan!;
@@ -119,7 +139,11 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
   assert.deepEqual(events.findLast((event) => 'position' in event)!.position, held.position);
   assert.deepEqual(held.rejection, f.holds[0]!.rejection);
   for (const receipt of held.receipts)
-    assert(task.observations<{ editReceipt?: { id: string } }>().some((e) => e.editReceipt?.id === receipt.id));
+    assert(
+      task
+        .observations<{ editReceipt?: { id: string } }>()
+        .some((e) => e.editReceipt?.id === receipt.id),
+    );
 }
 
 /** Select the same public retained caller scope used for the original complete answer. */
