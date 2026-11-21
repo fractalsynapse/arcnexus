@@ -104,15 +104,16 @@ test('a retained original base cannot carry a host approval into a new capture',
   };
   const recovered = new HostTask({ ...parent.config, capture }, parent.goal, parent.journal);
   assert.equal(
-    recovered.decisionRecord(
-      capture.project.architect!,
-      fixture.proposal.id,
-      receipt.question,
-    ),
+    recovered.decisionRecord(capture.project.architect!, fixture.proposal.id, receipt.question),
     undefined,
   );
   await assert.rejects(
-    recovered.requestDecision(capture.project.architect!, fixture.proposal.id, receipt.question, signal),
+    recovered.requestDecision(
+      capture.project.architect!,
+      fixture.proposal.id,
+      receipt.question,
+      signal,
+    ),
     /Architecture proposal/,
   );
 });
