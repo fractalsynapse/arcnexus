@@ -89,3 +89,30 @@ test('unanswered approval retains the exact question and does not touch source',
     fixture.proposal.id,
   );
 });
+
+test('a retained original base cannot carry a host approval into a new capture', async (t) => {
+  const fixture = new ArchitectureFixture(t);
+  const { parent } = fixture;
+  parent.note({ baseRevision: parent.capture.source.revision });
+  const receipt = await fixture.decide('approve');
+  writeFileSync(join(fixture.workspace, 'staging.txt'), 'Independent staging contribution');
+  git(fixture.workspace, 'add', 'staging.txt');
+  git(fixture.workspace, 'commit', '-m', 'Advance staging for approval characterization');
+  const capture = {
+    ...parent.capture,
+    source: { ...parent.capture.source, revision: git(fixture.workspace, 'rev-parse', 'HEAD') },
+  };
+  const recovered = new HostTask({ ...parent.config, capture }, parent.goal, parent.journal);
+  assert.equal(
+    recovered.decisionRecord(
+      capture.project.architect!,
+      fixture.proposal.id,
+      receipt.question,
+    ),
+    undefined,
+  );
+  await assert.rejects(
+    recovered.requestDecision(capture.project.architect!, fixture.proposal.id, receipt.question, signal),
+    /Architecture proposal/,
+  );
+});
