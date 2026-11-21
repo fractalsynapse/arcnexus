@@ -21,10 +21,14 @@ export const identity: VerificationIdentity = {
 
 export const plan: Plan = {
   focus: { purpose: 'Preserve recovered review identity', objectives: [], constraints: [] },
-  milestones: [{
-    id: 'recovered-work', owner: 'reviewer', steps: [],
-    criteria: [{ id: 'binding', description: 'Assess the recovered candidate' }],
-  }],
+  milestones: [
+    {
+      id: 'recovered-work',
+      owner: 'reviewer',
+      steps: [],
+      criteria: [{ id: 'binding', description: 'Assess the recovered candidate' }],
+    },
+  ],
 };
 
 export interface Assignment {
@@ -48,35 +52,66 @@ export class BindingScenario {
   readonly artifacts: string[] = [];
   readonly checks: { id: string; status: number; log: string }[];
   readonly evidence: string;
-  private script: Script = () => { throw new Error('Response script not installed'); };
+  private script: Script = () => {
+    throw new Error('Response script not installed');
+  };
 
   /** Admit isolated storage and install the controlled boundary without native inference. */
   constructor(t: TestContext, bound = true) {
     this.task = this.admit();
-    this.evidence = this.task.store('checks.log', 'Recovered checks: exit 0\nAll scoped assertions ran.\n');
+    this.evidence = this.task.store(
+      'checks.log',
+      'Recovered checks: exit 0\nAll scoped assertions ran.\n',
+    );
     this.checks = [{ id: 'recovered-owner-tests', status: 0, log: this.evidence }];
     this.candidate = {
-      digest: identity.tree, ownerEvidenceDigest: 'recovered-owner-evidence',
-      evidence: [this.evidence], ...(bound ? { verification: { ...identity } } : {}),
+      digest: identity.tree,
+      ownerEvidenceDigest: 'recovered-owner-evidence',
+      evidence: [this.evidence],
+      ...(bound ? { verification: { ...identity } } : {}),
     };
-    t.after(() => { this.task.close(); rmSync(this.root, { recursive: true, force: true }); });
-    t.mock.method(this.task, 'check', () => { throw new Error('assess must reuse supplied checks'); });
-    t.mock.method(this.task, 'activate', async (_agent: Agent, _selection: unknown, data: TaskContext) =>
-      this.respond(data));
+    t.after(() => {
+      this.task.close();
+      rmSync(this.root, { recursive: true, force: true });
+    });
+    t.mock.method(this.task, 'check', () => {
+      throw new Error('assess must reuse supplied checks');
+    });
+    t.mock.method(
+      this.task,
+      'activate',
+      async (_agent: Agent, _selection: unknown, data: TaskContext) => this.respond(data),
+    );
   }
 
   /** Supply every capture field read by assess; native activation is intentionally controlled. */
   private admit() {
     const capture = {
-      source: { root: this.root, revision: identity.capture, remote: 'https://example.com/binding.git' },
+      source: {
+        root: this.root,
+        revision: identity.capture,
+        remote: 'https://example.com/binding.git',
+      },
       project: { verifier: { component: 'reviewer', activity: 'assessment' } },
       operations: {},
     } as unknown as Capture;
-    const journal = new Coordination(this.root).admit(capture.source.remote, 'Original goal\nKeep exact requirements.');
+    const journal = new Coordination(this.root).admit(
+      capture.source.remote,
+      'Original goal\nKeep exact requirements.',
+    );
     assert('close' in journal);
-    return new HostTask({
-      capture, common: this.root, executable: '', base: 'staging', fresh: true, storage: this.root,
-    }, 'Original goal\nKeep exact requirements.', journal);
+    return new HostTask(
+      {
+        capture,
+        common: this.root,
+        executable: '',
+        base: 'staging',
+        fresh: true,
+        storage: this.root,
+      },
+      'Original goal\nKeep exact requirements.',
+      journal,
+    );
   }
 
   /** Retain distinct complete request and response artifacts, with controlled profile observations. */
@@ -86,10 +121,15 @@ export class BindingScenario {
     const request = this.task.store('controlled-request.json', JSON.stringify(data));
     const reply = this.script(data.assignment as Assignment, visit);
     const response = this.task.store('controlled-response.json', JSON.stringify(reply));
-    const profile = this.task.store('controlled-profile.json', JSON.stringify({
-      profile: 'reviewer-assessment', visit, usage: { input: visit * 13, output: visit * 7 },
-      provider: 'controlled-fixture',
-    }));
+    const profile = this.task.store(
+      'controlled-profile.json',
+      JSON.stringify({
+        profile: 'reviewer-assessment',
+        visit,
+        usage: { input: visit * 13, output: visit * 7 },
+        provider: 'controlled-fixture',
+      }),
+    );
     this.artifacts.push(request, response, profile);
     this.task.note({ controlledAttempt: { visit, request, response, profile } });
     return reply;
@@ -98,17 +138,35 @@ export class BindingScenario {
   /** Run only the public Reviewer boundary with supplied candidate and actual-shaped observations. */
   run(script: Script) {
     this.script = script;
-    return assess({} as Agent, this.task, plan, this.candidate, this.checks, new AbortController().signal);
+    return assess(
+      {} as Agent,
+      this.task,
+      plan,
+      this.candidate,
+      this.checks,
+      new AbortController().signal,
+    );
   }
 
   /** Build an explicit supplied binding independently of the templates being tested. */
-  verdict(kind: 'accepted' | 'rejected', verification: VerificationIdentity | undefined = identity): Verdict {
+  verdict(
+    kind: 'accepted' | 'rejected',
+    verification: VerificationIdentity | undefined = identity,
+  ): Verdict {
     const common = { candidate: identity.tree, ...(verification ? { verification } : {}) };
     return kind === 'accepted'
       ? { ...common, kind, criteria: ['binding'], evidence: [this.evidence] }
-      : { ...common, kind, findings: [{
-        criterion: 'binding', owner: 'reviewer', reason: 'Recovered evidence misses the promised behavior.',
-        evidence: [this.evidence],
-      }] };
+      : {
+          ...common,
+          kind,
+          findings: [
+            {
+              criterion: 'binding',
+              owner: 'reviewer',
+              reason: 'Recovered evidence misses the promised behavior.',
+              evidence: [this.evidence],
+            },
+          ],
+        };
   }
 }
