@@ -1,4 +1,5 @@
 import { editFingerprint, HostTask, type HoldContext } from '../../execution/src/index.js';
+import { checkFailureSignature } from '../../execution/src/steward-check.js';
 import type { RevisionFeedback } from '../../direction/src/index.js';
 import {
   stopped,
@@ -99,8 +100,8 @@ function observedHeldCheckProgress(
   return Boolean(
     !latest.prerequisite &&
     pending?.log === latest.log &&
-    pending.diagnostic &&
-    pending.diagnostic !== held.failure.diagnostic,
+    pending.expected === held.failure.expected &&
+    checkFailureSignature(latest.log) !== checkFailureSignature(check.log),
   );
 }
 
