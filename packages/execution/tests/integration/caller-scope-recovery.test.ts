@@ -41,6 +41,7 @@ class CallerRecoveryScenario {
   readonly scopes: Array<{ actual: string; public: string }> = [];
   readonly research: ResearchResult[] = [];
   readonly gates: Clarification[] = [];
+  private readonly sources = new Map<string, string>();
   readonly supplier;
   private readonly diagnostic: string;
 
@@ -125,6 +126,16 @@ class CallerRecoveryScenario {
     invocation.mock.restore();
     assert('holdContext' in outcome && outcome.holdContext, JSON.stringify(outcome));
     this.held.push(outcome.holdContext as HoldContext);
+    this.readKnowledge(task);
+  }
+
+  /** Read complete original and current artifacts through the live host's authorized boundary. */
+  private readKnowledge(task: HostTask) {
+    for (const held of this.held)
+      for (const entry of [...held.answers, ...held.gates, ...held.research]) {
+        assert(entry.evidence);
+        this.sources.set(entry.evidence, task.readFile(entry.evidence).text);
+      }
   }
 
   /** Record distinguishable complete reports once under the actual MCP conversation. */
@@ -199,7 +210,7 @@ class CallerRecoveryScenario {
       for (const gate of held.answers) {
         assert(gate.evidence);
         assert.equal(
-          JSON.parse(this.fixture.tasks[1]!.readFile(gate.evidence).text).answer,
+          JSON.parse(this.sources.get(gate.evidence)!).answer,
           gate.answer,
         );
       }
@@ -216,7 +227,7 @@ class CallerRecoveryScenario {
         evidence: [this.gates[index]!.evidence],
       });
       assert.equal(
-        JSON.parse(this.fixture.tasks[1]!.readFile(held.gates[0]!.evidence!).text).question,
+        JSON.parse(this.sources.get(held.gates[0]!.evidence!)!).question,
         this.gates[index]!.question,
       );
     }
@@ -227,7 +238,7 @@ class CallerRecoveryScenario {
     assert.deepEqual(this.held[0]!.research, this.research.slice(0, 1));
     assert.deepEqual(this.held[1]!.research, this.research);
     assert.deepEqual(
-      this.held[1]!.research.map(({ evidence }) => this.fixture.tasks[1]!.readFile(evidence).text),
+      this.held[1]!.research.map(({ evidence }) => this.sources.get(evidence)),
       reports,
     );
   }
