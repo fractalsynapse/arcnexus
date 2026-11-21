@@ -10,19 +10,32 @@ class PreparedRecoveryProvider {
     const taskSection = input.split('\n## Activity\n')[0]!;
     const data = parse('assignment:' + taskSection.split('\nassignment:')[1]!);
     const tools = await this.rpc('tools/list');
-    this.emit({ type: 'fixture.prepared', input, data, tools: tools.tools,
-      node: process.version, args: process.argv.slice(2), executable: process.argv[1],
-      cwd: process.cwd() });
+    this.emit({
+      type: 'fixture.prepared',
+      input,
+      data,
+      tools: tools.tools,
+      node: process.version,
+      args: process.argv.slice(2),
+      executable: process.argv[1],
+      cwd: process.cwd(),
+    });
     if (!existsSync('checked.txt')) {
-      const receipt = await this.rpc('tools/call', { name: 'checked-edit', arguments: {
-        path: 'checked.txt',
-        expected: null,
-        content: 'secured checked bytes café\nsecond line\n',
-      } });
+      const receipt = await this.rpc('tools/call', {
+        name: 'checked-edit',
+        arguments: {
+          path: 'checked.txt',
+          expected: null,
+          content: 'secured checked bytes café\nsecond line\n',
+        },
+      });
       this.emit({ type: 'fixture.receipt', receipt });
-      await this.rpc('tools/call', { name: 'ask-question', arguments: {
-        question: 'Which requirement must recovery preserve?',
-      } });
+      await this.rpc('tools/call', {
+        name: 'ask-question',
+        arguments: {
+          question: 'Which requirement must recovery preserve?',
+        },
+      });
       return this.reply({});
     }
     this.reply({ kind: 'completed' });
