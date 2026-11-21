@@ -22,6 +22,7 @@ import {
   reviewKey,
 } from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
+import { reviewedHold, supersededReviewedHold } from './reviewed-hold.js';
 import type {
   ActivityCheckpoint,
   ActivityRepair,
@@ -170,6 +171,7 @@ export class TaskRun {
         )
       )
         continue;
+      if (await supersededReviewedHold(this.session, event.activation, this.signal)) continue;
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
     }
@@ -350,7 +352,7 @@ export class TaskRun {
     }
     if (outcome.kind === 'repair') return this.repair(activation);
     if (outcome.kind === 'blocked') {
-      return stopped('blocked', outcome.reason, outcome.evidence);
+      return reviewedHold(this.session, activation, (feedback) => this.revise(feedback));
     }
     if (outcome.kind === 'question') {
       const feedback = await this.answer(outcome);

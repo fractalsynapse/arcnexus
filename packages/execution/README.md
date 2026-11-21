@@ -144,6 +144,15 @@ refusals and complete supplier answers. The
 exercise each editable target and cancellation after the durable rewind.
 Deterministic scenarios are distinct from live qualification.
 
+## Holds after independent rejection
+
+The [retained hold context intent](docs/reviewed-hold-recovery.md) defines the
+Execution evidence needed by Workflow and Direction for #699: exact diagnostics,
+check results and edit receipts tied to the original rejection, criterion and
+secured task identity. It distinguishes relevant checked progress from unchanged
+repetition and observed prerequisites from model claims. Implementation and
+assembled recovery verification remain pending.
+
 ## Checkpoints and evidence
 
 An acknowledged MCP edit is secured before its receipt is returned. Cancellation

@@ -109,12 +109,22 @@ export function checkFailureSignature(log: string) {
 }
 
 /** Recognize checked task-input changes, including supplier contributions, since the diagnosis. */
-export function correctionMadeProgress(events: readonly unknown[], log: string) {
+export function correctionMadeProgress(
+  events: readonly unknown[],
+  log: string,
+  paths?: readonly string[],
+) {
   const recorded = events as readonly CheckEvent[];
   const observed = recorded.findLastIndex(({ check }) => check?.log === log);
-  return recorded
-    .slice(observed + 1)
-    .some(({ edits }) => edits?.some(({ before, after }) => before !== after));
+  const edits = recorded.slice(observed + 1).flatMap((event) => event.edits ?? []);
+  if (!paths) return edits.some(({ before, after }) => before !== after);
+  const changes = new Map<string, { before: string | null; after: string | null }>();
+  for (const edit of edits) {
+    if (!paths.includes(edit.path)) continue;
+    const original = changes.get(edit.path);
+    changes.set(edit.path, { before: original ? original.before : edit.before, after: edit.after });
+  }
+  return [...changes.values()].some(({ before, after }) => before !== after);
 }
 
 /** Identify the latest secured task edit inputs without copying their contents. */

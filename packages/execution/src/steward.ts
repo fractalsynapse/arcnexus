@@ -6,6 +6,7 @@ import {
   type StewardCheckFailure,
 } from '../../direction/src/index.js';
 import {
+  ClarificationRequired,
   localRepairIndex,
   localRepairTargets,
   type ActivityOutcome,
@@ -36,6 +37,8 @@ import { stewardProgress } from './steward-progress.js';
 import { retainedTesting } from './testing-rewind.js';
 import { establishedTestingRed } from './testing-red.js';
 import { retainedEvidence } from './context-evidence.js';
+import { retainStewardHold, reviewedReplyInput, type StewardOutcome } from './hold-context.js';
+import { checkedCorrectionProgress } from './hold-progress.js';
 import { operationID } from '../../architecture/src/index.js';
 
 const correctionInstruction =
@@ -61,32 +64,66 @@ export async function steward(
   milestone: Milestone,
   activity: StewardScope['activity'],
   signal: AbortSignal,
-): Promise<ActivityOutcome> {
+): Promise<StewardOutcome> {
   const task = hostTask(session);
   if (!task.worktree) throw new Error('Steward activation requires a prepared worktree');
   const before = task.evidence.length;
   const scope = { owner: milestone.owner, activity };
   const correction = task.pendingCheck(scope);
-  const result = await requestSteward(task, agent, milestone, scope, signal);
-  if (result.kind !== 'completed')
-    return {
-      ...result,
-      evidence: task.evidence.slice(before),
-      ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
-    };
+  const result = await requestSteward(task, agent, milestone, scope, signal).catch(
+    (error: unknown) => stewardQuestionOutcome(task, milestone, error, signal),
+  );
+  const outcome =
+    result.kind === 'completed'
+      ? await completeSteward(task, milestone, scope, result, correction, signal, before)
+      : {
+          ...result,
+          evidence: task.evidence.slice(before),
+          ...(result.kind === 'repair' ? { input: stewardInput(task.observations()) } : {}),
+        };
+  return retainStewardHold(task, milestone, scope, outcome);
+}
+
+/** Expose an actual unanswered host gate following rejection without treating other errors as holds. */
+function stewardQuestionOutcome(
+  task: HostTask,
+  milestone: Milestone,
+  error: unknown,
+  signal: AbortSignal,
+): Extract<ActivityOutcome, { kind: 'blocked' }> {
+  if (
+    signal.aborted ||
+    !(error instanceof ClarificationRequired) ||
+    correctionFinding(task.history(), milestone)?.kind !== 'rejection'
+  )
+    throw error;
+  return { kind: 'blocked', reason: error.message, evidence: error.evidence };
+}
+
+/** Reconcile requested effects and mandatory verification before reporting contribution completion. */
+async function completeSteward(
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+  result: Extract<StewardResult, { kind: 'completed' }>,
+  correction: StewardCheckFailure | undefined,
+  signal: AbortSignal,
+  before: number,
+): Promise<ActivityOutcome> {
   const failed =
     (await perform(task, scope, result, correction, signal)) ??
     (await reconcileCheck(task, scope, correction, signal)) ??
     (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
   return failed
-    ? stewardCheckOutcome(task, failed, correction, evidence)
+    ? stewardCheckOutcome(task, milestone, failed, correction, evidence)
     : { kind: 'completed', evidence, ...(result.answer ? { answer: result.answer } : {}) };
 }
 
 /** Return failed checks to their caller and hold unchanged failures without new progress. */
 function stewardCheckOutcome(
   task: HostTask,
+  milestone: Milestone,
   failed: StewardCheckFailure,
   correction: StewardCheckFailure | undefined,
   evidence: readonly string[],
@@ -94,7 +131,10 @@ function stewardCheckOutcome(
   const reason =
     failed.diagnostic ??
     `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
-  if (correction?.id === failed.id && !correctionMadeProgress(task.observations(), correction.log))
+  if (
+    correction?.id === failed.id &&
+    !checkedCorrectionProgress(task, milestone, correction.log, failed.log)
+  )
     return {
       kind: 'blocked',
       reason,
@@ -130,23 +170,48 @@ async function requestSteward(
     } catch (error) {
       if (!repairableReply(error)) throw error;
       signal.throwIfAborted();
-      if (seen.has(replyRepairIdentity(error, task)))
+      if (seen.has(replyRepairIdentity(error, task, milestone, scope)))
         return {
           kind: 'blocked',
           reason: `Steward reply repair failed: ${error.message}`,
           evidence: [],
         };
       diagnostic = error.message;
-      seen.add(replyRepairIdentity(error, task));
-      task.note({ stewardRepair: { scope, diagnostic, evidence: task.evidence.at(-1) } });
+      seen.add(replyRepairIdentity(error, task, milestone, scope));
+      recordReplyRepair(task, scope, error);
     }
   }
 }
 
+/** Retain the exact response or checked-edit refusal before returning it to the caller. */
+function recordReplyRepair(task: HostTask, scope: StewardScope, error: Error) {
+  const edit = error instanceof CheckedEditOwnershipRefusal || error instanceof StaleCheckedEdit;
+  task.note({
+    stewardRepair: {
+      scope,
+      diagnostic: error.message,
+      evidence: task.evidence.at(-1),
+      operation: edit ? 'checked-edit' : 'steward-response',
+      ...(error instanceof CheckedEditOwnershipRefusal
+        ? { path: error.path, owners: error.owners }
+        : {}),
+    },
+  });
+}
+
 /** Match a rejected reply class against checked progress rather than repeated prose. */
-function replyRepairIdentity(error: Error, task: HostTask) {
+function replyRepairIdentity(
+  error: Error,
+  task: HostTask,
+  milestone: Milestone,
+  scope: StewardScope,
+) {
   const finding = error instanceof InvalidAgentResponse ? error.identity : error.message;
-  return JSON.stringify([finding, stewardReplyInput(task.observations())]);
+  const input =
+    correctionFinding(task.history(), milestone)?.kind === 'rejection'
+      ? reviewedReplyInput(task, milestone, scope)
+      : stewardReplyInput(task.observations());
+  return JSON.stringify([finding, input]);
 }
 
 /** Restrict retries to rejected replies with no checked edits applied. */

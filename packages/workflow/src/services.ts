@@ -1,3 +1,4 @@
+import type { HoldContext } from '../../execution/src/index.js';
 import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
 import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
@@ -81,6 +82,7 @@ export type TaskEvent =
   | { candidate: Candidate; verdict: Verdict }
   | { feedback: Feedback }
   | { activation: ActivityCheckpoint }
+  | { reviewedHold: HoldContext }
   | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
@@ -147,6 +149,7 @@ export type ActivityOutcome =
       reason: string;
       evidence: readonly string[];
       failedCheck?: StewardCheckFailure;
+      holdContext?: HoldContext;
     };
 
 /** Identify an explicit link to the requester while preserving host-generated check corrections. */

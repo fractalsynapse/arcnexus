@@ -478,5 +478,7 @@ export const executionPlugin = {
 };
 
 export { steward } from './steward.js';
+export { checkFailureSignature } from './steward-check.js';
+export type { HoldContext, StewardOutcome } from './hold-context.js';
 
 export { approvedArchitecture } from './architecture-edits.js';
