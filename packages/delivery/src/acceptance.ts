@@ -22,7 +22,8 @@ export function acceptedIdentity(
   verdict: Extract<Verdict, { kind: 'accepted' }>,
 ) {
   const plan = task.history().findLast((event) => 'plan' in event)?.plan;
-  const assessment = task.observations<{ verification?: Assessment }>()
+  const assessment = task
+    .observations<{ verification?: Assessment }>()
     .findLast((event) => event.verification)?.verification;
   if (!plan || !assessment || !verdict.verification)
     throw new Error('Delivery requires an accepting verdict with a verification identity');
@@ -43,11 +44,7 @@ export function acceptedIdentity(
 }
 
 /** Require fresh assessment when retained publication no longer matches the current capture. */
-export function currentAcceptance(
-  task: HostTask,
-  digest: string,
-  identity?: VerificationIdentity,
-) {
+export function currentAcceptance(task: HostTask, digest: string, identity?: VerificationIdentity) {
   const accepted = task.history().findLast((event) => 'verdict' in event);
   if (!identity || accepted?.verdict.kind !== 'accepted' || accepted.candidate.digest !== digest)
     return false;
@@ -72,17 +69,21 @@ export function validateRetainedAcceptance(
   }[],
 ) {
   const identity = publication.verification;
-  const accepted = events.findLast((event) =>
-    event.verdict?.kind === 'accepted' &&
-    event.candidate?.digest === publication.candidate &&
-    isDeepStrictEqual(event.verdict.verification, identity),
+  const accepted = events.findLast(
+    (event) =>
+      event.verdict?.kind === 'accepted' &&
+      event.candidate?.digest === publication.candidate &&
+      isDeepStrictEqual(event.verdict.verification, identity),
   );
   const assessment = events.findLast((event) =>
     isDeepStrictEqual(event.verification?.identity, identity),
   )?.verification;
   if (
-    !identity || !accepted || !assessment ||
-    identity.tree !== publication.candidate || identity.base !== publication.parent ||
+    !identity ||
+    !accepted ||
+    !assessment ||
+    identity.tree !== publication.candidate ||
+    identity.base !== publication.parent ||
     assessment.checks.some(({ status, diagnostic }) => status !== 0 || diagnostic)
   )
     throw new Error('The retained publication has no matching accepting verification identity');
