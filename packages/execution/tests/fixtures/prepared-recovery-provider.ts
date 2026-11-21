@@ -6,20 +6,7 @@ import { parse } from 'yaml';
 class PreparedRecoveryProvider {
   /** Record the received assignment, secure one edit, and ask once through production MCP. */
   async run() {
-    const input = readFileSync(0, 'utf8');
-    const taskSection = input.split('\n## Activity\n')[0]!;
-    const data = parse('assignment:' + taskSection.split('\nassignment:')[1]!);
-    const tools = await this.rpc('tools/list');
-    this.emit({
-      type: 'fixture.prepared',
-      input,
-      data,
-      tools: tools.tools,
-      node: process.version,
-      args: process.argv.slice(2),
-      executable: process.argv[1],
-      cwd: process.cwd(),
-    });
+    await this.observeRequest();
     if (!existsSync('checked.txt')) {
       const receipt = await this.rpc('tools/call', {
         name: 'checked-edit',
@@ -39,6 +26,24 @@ class PreparedRecoveryProvider {
       return this.reply({});
     }
     this.reply({ kind: 'completed' });
+  }
+
+  /** Capture the complete actual request and available tools independently of effect replies. */
+  private async observeRequest() {
+    const input = readFileSync(0, 'utf8');
+    const taskSection = input.split('\n## Activity\n')[0]!;
+    const data = parse('assignment:' + taskSection.split('\nassignment:')[1]!);
+    const tools = await this.rpc('tools/list');
+    this.emit({
+      type: 'fixture.prepared',
+      input,
+      data,
+      tools: tools.tools,
+      node: process.version,
+      args: process.argv.slice(2),
+      executable: process.argv[1],
+      cwd: process.cwd(),
+    });
   }
 
   /** Invoke the exact local tool mapping and reject an actual host refusal. */
