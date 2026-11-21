@@ -152,8 +152,7 @@ async function checkedPublication(task: HostTask, publication: Publication, sign
 
 /** Preserve provider diagnostics without turning them into an engineering verdict. */
 function recordedFailure(task: HostTask, publication: Publication, error: unknown) {
-  if (!(error instanceof GitHubCheckFailure))
-    throw retainProviderFailure(task, publication, error);
+  if (!(error instanceof GitHubCheckFailure)) throw retainProviderFailure(task, publication, error);
   const evidence = [task.store('publication-check-failure.log', error.log)];
   task.note({
     publicationCheckFailure: {
