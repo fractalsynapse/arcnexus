@@ -39,17 +39,19 @@ export function activateActor(
     actorInvoker(task, agent, selection, signal, refresh),
     signal,
   );
-  const verifier = capture.project.verifier;
-  const reviewing =
-    selection.component === verifier?.component && selection.activity === verifier.activity;
-  const originalBase = reviewing
-    ? undefined
-    : task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
-        ?.baseRevision;
-  return new Clarifications(task, selection, signal, originalBase).run(
-    { ...data, evidence },
-    (input) => inbox.run(selection, input),
+  const revision = clarificationRevision(task, selection);
+  return new Clarifications(task, selection, signal, revision).run({ ...data, evidence }, (input) =>
+    inbox.run(selection, input),
   );
+}
+
+/** Keep ordinary caller answers on their original base while review stays bound to its capture. */
+function clarificationRevision(task: HostTask, selection: ActivitySelection) {
+  const verifier = task.capture.project.verifier;
+  if (selection.component === verifier?.component && selection.activity === verifier.activity)
+    return;
+  return task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
+    ?.baseRevision;
 }
 
 /** Refresh only the returning original caller while preserving inbox-owned answer enrichment. */
