@@ -29,6 +29,7 @@ import {
   answer,
   correction,
   question,
+  ReviewedHoldFixture,
   selection,
 } from '../../../execution/tests/fixtures/reviewed-hold.js';
 import { ReviewedTask } from './reviewed-task.js';
@@ -46,7 +47,7 @@ export const gateAnswer =
 
 /** Continue Execution's real rejected-task fixture through Workflow and native Direction reconstruction. */
 export class ReviewedWorkflow {
-  readonly fixture: ReviewedTask;
+  readonly fixture: ReviewedTask | ReviewedHoldFixture;
   readonly calls: string[] = [];
   readonly gateEvents: string[] = [];
   readonly holds: HoldContext[] = [];
@@ -63,8 +64,11 @@ export class ReviewedWorkflow {
   constructor(
     private readonly t: TestContext,
     readonly scenario: Scenario,
+    private readonly productionChecks = false,
   ) {
-    this.fixture = new ReviewedTask(t);
+    this.fixture = productionChecks
+      ? new ReviewedTask(t)
+      : new ReviewedHoldFixture(t, scenario === 'external', 'arguments');
     const task = this.fixture.task;
     const prior = task.history().findLast((event) => 'plan' in event)!.plan!;
     const completed = prior.milestones.slice(1).map((milestone) => ({
@@ -132,7 +136,7 @@ export class ReviewedWorkflow {
   /** Execute a real subprocess and persist its exact log, exit and relevant input identity. */
   private async check(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
     const task = this.fixture.task;
-    if (this.scenario === 'diagnostic') {
+    if (this.productionChecks) {
       const result = await HostTask.prototype.check.call(task, id, signal, scope);
       this.fixture.checks.push(result);
       return result;
@@ -365,7 +369,7 @@ export class ReviewedWorkflow {
 
   /** Observe new checked progress through Execution before re-entering the retained Workflow cursor. */
   async recheck() {
-    if (this.scenario === 'diagnostic')
+    if (this.productionChecks)
       writeFileSync(join(this.fixture.root, '.git', 'diagnostic'), this.diagnostic);
     const tools = new ActivationTools(
       this.fixture.task,
