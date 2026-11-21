@@ -137,8 +137,9 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       milestone: { id: 'recover' }, acceptance: [criterion], evidence: [],
     }, signal);
     this.observed.push(task.observations());
-    if (!this.interrupted) {
+    if (!this.interrupted || this.interruptNext) {
       this.interrupted = true;
+      this.interruptNext = false;
       throw new Error('Interrupted after checked receipt and verbatim answer');
     }
     assert.deepEqual(result, { kind: 'completed', edits: [], checks: [] });
