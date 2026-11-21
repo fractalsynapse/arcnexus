@@ -373,8 +373,7 @@ export class ReviewedWorkflow {
 
   /** Observe new checked progress through Execution before re-entering the retained Workflow cursor. */
   async recheck() {
-    if (this.productionChecks)
-      writeFileSync(join(this.fixture.root, '.git', 'diagnostic'), this.diagnostic);
+    if (this.fixture instanceof ReviewedTask) this.fixture.reobserve(this.diagnostic);
     const tools = new ActivationTools(
       this.fixture.task,
       selection,
