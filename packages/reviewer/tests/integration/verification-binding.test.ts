@@ -39,7 +39,8 @@ for (const field of ['tree', 'base', 'capture', 'acceptance', 'inputs'] as const
     const fixture = new BindingScenario(t);
     const stale = { ...identity, [field]: `earlier-${field}` };
     const result = await fixture.run((_assignment, visit) =>
-      fixture.verdict('accepted', visit === 1 ? stale : identity));
+      fixture.verdict('accepted', visit === 1 ? stale : identity),
+    );
     assert.deepEqual(result, fixture.verdict('accepted'));
     assert.equal(fixture.requests.length, 2);
     assertRepairInputs(fixture);
@@ -64,11 +65,14 @@ test('assess repairs a missing binding instead of silently attaching the current
 test('unchanged stale or missing responses retain a hold with complete failed observations', async (t) => {
   for (const missing of [false, true]) {
     const fixture = new BindingScenario(t);
-    await assert.rejects(fixture.run(() => {
-      const reply = rejection(fixture);
-      reply.verification = missing ? undefined : { ...identity, capture: 'old-capture' };
-      return reply;
-    }), /Reviewer repeated an unchanged finding:.*different verification identity/);
+    await assert.rejects(
+      fixture.run(() => {
+        const reply = rejection(fixture);
+        reply.verification = missing ? undefined : { ...identity, capture: 'old-capture' };
+        return reply;
+      }),
+      /Reviewer repeated an unchanged finding:.*different verification identity/,
+    );
     assert.equal(fixture.requests.length, 2);
     assert.equal(fixture.artifacts.length, 6);
     assert(fixture.artifacts.every((path) => fixture.task.evidence.includes(path)));
@@ -92,8 +96,14 @@ test('an unbound caller receives no fabricated verification assignment or templa
 for (const kind of ['accepted', 'rejected'] as const) {
   test(`citation-only repair retains the full ${kind} determination and complete history`, async (t) => {
     const fixture = new BindingScenario(t);
-    const report = fixture.task.store('original-report.txt', 'Original report\nDistinct finding before recovery.\n');
-    const answer = fixture.task.store('human-answer.txt', 'Preserve the original issue.\n  Keep this exact condition.\n');
+    const report = fixture.task.store(
+      'original-report.txt',
+      'Original report\nDistinct finding before recovery.\n',
+    );
+    const answer = fixture.task.store(
+      'human-answer.txt',
+      'Preserve the original issue.\n  Keep this exact condition.\n',
+    );
     const result = await fixture.run((_input, visit) => {
       const reply = fixture.verdict(kind);
       return visit === 1 ? invalidCitation(reply) : reply;
@@ -106,8 +116,14 @@ for (const kind of ['accepted', 'rejected'] as const) {
     assert.deepEqual(assignment(fixture, 1).checks, fixture.checks);
     assert.deepEqual(fixture.requests[1]!.acceptance, fixture.requests[0]!.acceptance);
     assertHistory(fixture, [report, answer]);
-    assert.equal(readFileSync(answer, 'utf8'), 'Preserve the original issue.\n  Keep this exact condition.\n');
-    assert.equal(readFileSync(report, 'utf8'), 'Original report\nDistinct finding before recovery.\n');
+    assert.equal(
+      readFileSync(answer, 'utf8'),
+      'Preserve the original issue.\n  Keep this exact condition.\n',
+    );
+    assert.equal(
+      readFileSync(report, 'utf8'),
+      'Original report\nDistinct finding before recovery.\n',
+    );
   });
 
   test(`citation repair cannot change a submitted ${kind} binding even for an unbound caller`, async (t) => {
@@ -120,15 +136,23 @@ for (const kind of ['accepted', 'rejected'] as const) {
     assert.deepEqual(result, fixture.verdict(kind));
     assert.equal(fixture.requests.length, 3);
     assert.match(assignment(fixture, 2).citationRepair!.diagnostic, /changed the assessment/);
-    assert.deepEqual(assignment(fixture, 2).citationRepair!.verdict, invalidCitation(fixture.verdict(kind)));
+    assert.deepEqual(
+      assignment(fixture, 2).citationRepair!.verdict,
+      invalidCitation(fixture.verdict(kind)),
+    );
   });
 }
 
 test('citation repair refuses repeated changed bindings rather than accepting a fresh identity', async (t) => {
   const fixture = new BindingScenario(t, false);
-  await assert.rejects(fixture.run((_input, visit) => visit === 1
-    ? invalidCitation(fixture.verdict('accepted'))
-    : fixture.verdict('accepted', { ...identity, base: 'other-parent' })), AgentActivityHold);
+  await assert.rejects(
+    fixture.run((_input, visit) =>
+      visit === 1
+        ? invalidCitation(fixture.verdict('accepted'))
+        : fixture.verdict('accepted', { ...identity, base: 'other-parent' }),
+    ),
+    AgentActivityHold,
+  );
   assert.equal(fixture.requests.length, 3);
 });
 
@@ -152,25 +176,38 @@ function assertRepairInputs(fixture: BindingScenario) {
 
 /** Replace citations alone, preserving every engineering field including verification identity. */
 function invalidCitation(reply: Verdict): Verdict {
-  return reply.kind === 'accepted' ? { ...reply, evidence: ['not-retained.log'] }
-    : reply.kind === 'rejected' ? {
-      ...reply, findings: reply.findings.map((finding) => ({ ...finding, evidence: ['not-retained.log'] })),
-    } : reply;
+  return reply.kind === 'accepted'
+    ? { ...reply, evidence: ['not-retained.log'] }
+    : reply.kind === 'rejected'
+      ? {
+          ...reply,
+          findings: reply.findings.map((finding) => ({
+            ...finding,
+            evidence: ['not-retained.log'],
+          })),
+        }
+      : reply;
 }
 
 /** Read canonical artifacts and journal records, without recursively embedding prior transcripts. */
 function assertHistory(fixture: BindingScenario, original: string[]) {
-  const index = (fixture.requests[1]!.evidence as string[]).find((path) => path.includes('-retained-evidence-'));
+  const index = (fixture.requests[1]!.evidence as string[]).find((path) =>
+    path.includes('-retained-evidence-'),
+  );
   assert(index);
   const references: string[] = readJson(index).references;
-  assert([...original, ...fixture.artifacts.slice(0, 3)].every((path) => references.includes(path)));
+  assert(
+    [...original, ...fixture.artifacts.slice(0, 3)].every((path) => references.includes(path)),
+  );
   const events = fixture.task.observations<{ controlledAttempt?: unknown }>();
   assert.equal(events.filter((event) => event.controlledAttempt).length, 2);
   for (const visit of [1, 2]) {
     const offset = (visit - 1) * 3;
     assert.deepEqual(readJson(fixture.artifacts[offset]!), fixture.requests[visit - 1]);
     assert.deepEqual(readJson(fixture.artifacts[offset + 2]!), {
-      profile: 'reviewer-assessment', visit, usage: { input: visit * 13, output: visit * 7 },
+      profile: 'reviewer-assessment',
+      visit,
+      usage: { input: visit * 13, output: visit * 7 },
       provider: 'controlled-fixture',
     });
   }
