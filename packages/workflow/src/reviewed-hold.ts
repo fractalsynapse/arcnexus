@@ -44,25 +44,32 @@ export function supersededReviewedHold(session: TaskSession, activation: Activit
     !session.worktree
   )
     return false;
-  const receipts = session.observations<{
+  return (
+    observedHeldEditProgress(session, activation, held) ||
+    observedHeldCheckProgress(session, activation, held) ||
+    observedHeldKnowledgeProgress(session, activation, held)
+  );
+}
+
+/** Only secured relevant bytes matching the current worktree supersede a historical hold. */
+function observedHeldEditProgress(
+  task: HostTask,
+  activation: ActivityCheckpoint,
+  held: HoldContext,
+) {
+  const receipts = task.observations<{
     editReceipt?: HoldContext['receipts'][number];
     checkpoint?: { head: string };
   }>();
-  const changed = held.progress.inputs.some(({ path, digest }) =>
+  return held.progress.inputs.some(({ path, digest }) =>
     receipts.some(({ editReceipt, checkpoint }) =>
       Boolean(
         checkpoint &&
         editReceipt?.path === path &&
         editReceipt.after !== digest &&
-        editReceipt.after ===
-          editFingerprint(session.worktree!, session.capture, activation.owner, path),
+        editReceipt.after === editFingerprint(task.worktree!, task.capture, activation.owner, path),
       ),
     ),
-  );
-  return (
-    changed ||
-    observedHeldCheckProgress(session, activation, held) ||
-    observedHeldKnowledgeProgress(session, activation, held)
   );
 }
 
