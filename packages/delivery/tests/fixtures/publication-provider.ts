@@ -63,6 +63,7 @@ export class PublicationProvider {
         this.calls.push('push ' + head);
         assert.equal(branch, '7-task');
         this.head = head;
+        if (this.pull?.state === 'open') this.pull = { ...this.pull, head };
         this.fixture.checkpoints.push(head);
         this.lost('push');
       },
