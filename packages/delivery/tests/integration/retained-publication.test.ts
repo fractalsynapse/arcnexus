@@ -106,10 +106,18 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
     assert.equal(provider.merged, 0);
     assert(result.evidence.length);
     if (conflict === 'unavailable') {
-      const diagnostic = result.evidence.find((path) => path.endsWith('publication-provider-failure.log'));
+      const diagnostic = result.evidence.find((path) =>
+        path.endsWith('publication-provider-failure.log'),
+      );
       assert(diagnostic, 'Unavailable provider facts require retained complete diagnostics');
-      assert.match(readFileSync(diagnostic, 'utf8'), /Complete provider observation stdout\n  retained detail\n/);
-      assert.match(readFileSync(diagnostic, 'utf8'), /Complete provider observation stderr\n  restore credentials\n/);
+      assert.match(
+        readFileSync(diagnostic, 'utf8'),
+        /Complete provider observation stdout\n  retained detail\n/,
+      );
+      assert.match(
+        readFileSync(diagnostic, 'utf8'),
+        /Complete provider observation stderr\n  restore credentials\n/,
+      );
     }
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
     preserved(fixture, original);
