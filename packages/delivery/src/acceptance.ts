@@ -11,7 +11,7 @@ import type { Publication } from './publication.js';
 
 interface Assessment {
   identity: VerificationIdentity;
-  checks: Array<{ id: string; status: unknown; diagnostic?: string }>;
+  checks: Awaited<ReturnType<HostTask['check']>>[];
 }
 
 export interface PublicationHistory {
