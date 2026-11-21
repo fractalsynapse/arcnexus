@@ -30,9 +30,15 @@ class PreparedRecoveryProvider {
     const url = JSON.parse(setting.split('url=')[1]!.split(',required=')[0]!);
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+      },
       body: JSON.stringify({
-        jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args },
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name, arguments: args },
       }),
     });
     const body = (await response.json()) as any;
@@ -42,7 +48,10 @@ class PreparedRecoveryProvider {
 
   /** Emit a documented final provider message without embedding prior transcripts. */
   private reply(value: unknown) {
-    this.emit({ type: 'item.completed', item: { type: 'agent_message', text: JSON.stringify(value) } });
+    this.emit({
+      type: 'item.completed',
+      item: { type: 'agent_message', text: JSON.stringify(value) },
+    });
   }
 
   /** Retain complete authored observations through Execution's ordinary transcript. */
