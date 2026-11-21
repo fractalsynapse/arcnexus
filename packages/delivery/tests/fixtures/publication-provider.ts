@@ -21,6 +21,9 @@ export class PublicationProvider {
   ) {
     this.observe();
     this.effects();
+    this.t.mock.method(this.fixture.provider, 'merge', async (url: string, head: string, issue: string) =>
+      this.merge(url, head, issue),
+    );
   }
 
   /** Observe complete upstream identities before any missing effect can be retried. */
@@ -76,9 +79,6 @@ export class PublicationProvider {
       this.lost('open');
       return this.pull.url;
     });
-    mock.method(this.fixture.provider, 'merge', async (url: string, head: string, issue: string) =>
-      this.merge(url, head, issue),
-    );
   }
 
   /** Create a real squash commit with the exact upstream head tree and staging parent. */
