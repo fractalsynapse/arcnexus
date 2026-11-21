@@ -256,7 +256,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 /** Preserve original requirements and the real ordered plan shape through every retry. */
 function recoveryPlan(): Plan {
   return {
-    focus: { purpose: goal, objectives: ['Keep the original requirement'], constraints: [] },
+    focus: { purpose: goal, objectives: ['Keep the original requirement'], constraints: ['Retain the original issue and acceptance'] },
     milestones: [
       {
         id: 'recover',
