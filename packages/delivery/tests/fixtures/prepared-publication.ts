@@ -13,6 +13,8 @@ import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js'
 import { Execution, hostTask, type HostTask } from '../../../execution/src/index.js';
 import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round-consumption.js';
 
+import { resolveOperation } from '../../../architecture/src/index.js';
+import { checkInput } from '../../../execution/src/check-cache.js';
 import { verify } from '../../../verification/src/index.js';
 import { integrate, resume } from '../../src/index.js';
 
@@ -164,6 +166,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         });
         this.context.mock.method(admitted, 'provider', () => this.provider);
         this.controlReviewer(admitted);
+        this.controlChecks(admitted);
         return admitted;
       },
       prepare: (task, issue, cancellation) => execution.prepare(task, issue, cancellation),
@@ -171,6 +174,30 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         execution.checkpoint(task, activity, cancellation),
       assemble: (task, cancellation) => execution.assemble(task, cancellation),
     };
+  }
+
+  /** Control process responses while retaining resolved operations and exact candidate input evidence. */
+  private controlChecks(task: HostTask) {
+    this.context.mock.method(task, 'check', async (id: string) => {
+      const operation = resolveOperation(task.capture, id);
+      const input = checkInput(task, id);
+      assert(input, 'Checks require the actual clean recovered candidate');
+      const log = task.store(
+        id + '.log',
+        'Controlled process result: ' + JSON.stringify({ operation, input, status: 0 }) + '\n',
+      );
+      const result = {
+        id,
+        command: operation.command!,
+        args: operation.args,
+        cwd: task.worktree!,
+        durationMs: 1,
+        log,
+        status: 0,
+      };
+      task.note({ check: result, checkInput: input });
+      return result;
+    });
   }
 
   /** Replace only the external review response, retaining the real identity and citation validators. */
