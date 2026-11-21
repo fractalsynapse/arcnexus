@@ -184,6 +184,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         assert(!('kind' in task), JSON.stringify(task));
         const admitted = hostTask(task);
         this.tasks.push(admitted);
+        this.onAdmit?.(admitted);
         this.context.mock.method(admitted, 'provider', () => this.provider);
         return admitted;
       },
@@ -211,6 +212,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       signal,
     );
     this.observed.push(task.observations());
+    await this.afterActivation?.(task);
     if (!this.interrupted || this.interruptNext) {
       this.interrupted = true;
       this.interruptNext = false;
@@ -297,7 +299,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 }
 
 /** Preserve original requirements and the real ordered plan shape through every retry. */
-function recoveryPlan(): Plan {
+export function recoveryPlan(): Plan {
   return {
     focus: {
       purpose: goal,
