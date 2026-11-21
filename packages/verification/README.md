@@ -31,6 +31,9 @@ inapplicable, even if criterion IDs and source bytes remain identical. Compare t
 captured requirements, not just their names. Obtain a fresh independent assessment
 against the recovered identity after its required evidence is available. Approval
 of the earlier candidate or capture does not authorize the recovered candidate.
+Only a matching complete assessment identity, evidence and environment can recover
+the same retained verdict without another assessment. A new worktree path alone
+does not change those inputs.
 
 Retain the original base, capture, criteria, evidence and verdict with their actual
 identities in [Coordination](../coordination/contract.md). Append the recovered
