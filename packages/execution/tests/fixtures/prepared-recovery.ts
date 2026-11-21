@@ -73,10 +73,12 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       },
       agent: { execute: async (session) => this.activate(hostTask(session), agent) },
       ...this.gates(),
-    }).run({ directory: this.root, goal }, this.observer(), signal).then((outcome) => {
-      this.retainArtifacts();
-      return outcome;
-    });
+    })
+      .run({ directory: this.root, goal }, this.observer(), signal)
+      .then((outcome) => {
+        this.retainArtifacts();
+        return outcome;
+      });
   }
 
   /** Retain each native source artifact once in the enclosing check log before temporary cleanup. */
@@ -85,9 +87,11 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       for (const path of task.evidence) {
         if (this.retainedArtifacts.has(path) || path.endsWith('run-timeline.jsonl')) continue;
         this.retainedArtifacts.add(path);
-        this.context.diagnostic(JSON.stringify({
-          controlledRecoveryArtifact: { path, text: readFileSync(path, 'utf8') },
-        }));
+        this.context.diagnostic(
+          JSON.stringify({
+            controlledRecoveryArtifact: { path, text: readFileSync(path, 'utf8') },
+          }),
+        );
       }
     }
   }
@@ -280,7 +284,11 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 /** Preserve original requirements and the real ordered plan shape through every retry. */
 function recoveryPlan(): Plan {
   return {
-    focus: { purpose: goal, objectives: ['Keep the original requirement'], constraints: ['Retain the original issue and acceptance'] },
+    focus: {
+      purpose: goal,
+      objectives: ['Keep the original requirement'],
+      constraints: ['Retain the original issue and acceptance'],
+    },
     milestones: [
       {
         id: 'recover',
