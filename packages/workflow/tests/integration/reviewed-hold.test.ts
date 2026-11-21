@@ -186,26 +186,47 @@ for (const scenario of ['human', 'external'] as const) {
   });
 }
 
-/** Reopen unchanged gates first, then observe a complete decision or real external artifact. */
+/**
+ * Reopen the real retained task with the prerequisite still absent.
+ * Activation and complete receipt equality reject work hidden behind a blocked terminal.
+ */
 async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   await f.reopen();
   assert.equal(f.fixture.checkpoint(), checkpoint);
   const before = [...f.calls];
   const held = f.holds.at(-1)!;
-  const receipts = f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt);
+  const receipts = gateReceipts(f);
   assert.equal((await f.run()).kind, 'blocked');
-  assert.deepEqual(f.calls, before, 'An unavailable prerequisite cannot reactivate dependent stewards');
   await f.reopen();
-  assert.equal(f.fixture.checkpoint(), checkpoint);
+  assertUnchangedGate(f, held, receipts);
+  assert.deepEqual(f.calls, before, 'An unavailable prerequisite cannot reactivate dependent stewards');
+  assert.equal((await f.run()).kind, 'blocked');
+  assert.deepEqual(f.calls, before);
+  await resumeSatisfiedGate(f);
+}
+
+/** Compare complete retained effects and cursor before allowing any dependent continuation. */
+function assertUnchangedGate(f: ReviewedWorkflow, held: HoldContext, receipts: unknown[]) {
+  assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
   assert.deepEqual(f.fixture.task.history().findLast((event) => 'position' in event)!.position, held.position);
-  assert.deepEqual(f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt), receipts);
+  assert.deepEqual(gateReceipts(f), receipts);
+  assert.equal(f.fixture.task.taskID, held.task.id);
   assert.equal(f.fixture.task.issue, held.task.issue);
   assert.equal(f.fixture.task.branch, held.task.branch);
   assert.equal(f.revisions.length, 0);
   assert.equal(f.reviews.length, 0);
+  assert(!f.calls.includes('Delivery'));
+  assert.deepEqual(f.holds.at(-1)!.prerequisite, held.prerequisite);
+}
+
+/** Select full checked-edit observations, preserving their original receipt and checkpoint associations. */
+function gateReceipts(f: ReviewedWorkflow) {
+  return f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt);
+}
+
+/** Observe an actual artifact or complete human answer before dependent correction may resume. */
+async function resumeSatisfiedGate(f: ReviewedWorkflow) {
   const start = f.gateEvents.length;
-  // The preceding reopen still owns the writer; close it through the ordinary held run.
-  assert.equal((await f.run()).kind, 'blocked');
   await f.reopen(true);
   const resumed = await f.run({
     progress() {},
@@ -219,7 +240,8 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   if (f.scenario === 'external') {
     const events = f.gateEvents.slice(start);
     assert(events.indexOf('prerequisite-available') >= 0);
-    assert(events.indexOf('prerequisite-available') < events.indexOf('steward'), 'Host prerequisite satisfaction must precede dependent activation');
+    assert(events.indexOf('prerequisite-available') < events.indexOf('steward'),
+      'Host prerequisite satisfaction must precede dependent activation');
   }
   if (f.scenario === 'human') {
     const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
