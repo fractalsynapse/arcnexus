@@ -112,8 +112,10 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       progress() {},
       answer: async (question: string) => {
         this.prompts.push(question);
-        return this.answerQuestion?.(question) ??
-          (question === continuationQuestion ? continuationAnswer : answer);
+        return (
+          this.answerQuestion?.(question) ??
+          (question === continuationQuestion ? continuationAnswer : answer)
+        );
       },
     };
   }
