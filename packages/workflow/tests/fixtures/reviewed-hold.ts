@@ -29,9 +29,9 @@ import {
   answer,
   correction,
   question,
-  ReviewedHoldFixture,
   selection,
 } from '../../../execution/tests/fixtures/reviewed-hold.js';
+import { ReviewedTask } from './reviewed-task.js';
 import {
   Workflow,
   type ActivityCheckpoint,
@@ -46,7 +46,7 @@ export const gateAnswer =
 
 /** Continue Execution's real rejected-task fixture through Workflow and native Direction reconstruction. */
 export class ReviewedWorkflow {
-  readonly fixture: ReviewedHoldFixture;
+  readonly fixture: ReviewedTask;
   readonly calls: string[] = [];
   readonly holds: HoldContext[] = [];
   readonly revisions: unknown[] = [];
@@ -63,7 +63,7 @@ export class ReviewedWorkflow {
     private readonly t: TestContext,
     readonly scenario: Scenario,
   ) {
-    this.fixture = new ReviewedHoldFixture(t, scenario === 'external', 'arguments');
+    this.fixture = new ReviewedTask(t);
     const task = this.fixture.task;
     const prior = task.history().findLast((event) => 'plan' in event)!.plan!;
     const completed = prior.milestones.slice(1).map((milestone) => ({
@@ -131,6 +131,11 @@ export class ReviewedWorkflow {
   /** Execute a real subprocess and persist its exact log, exit and relevant input identity. */
   private async check(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
     const task = this.fixture.task;
+    if (this.scenario === 'diagnostic') {
+      const result = await HostTask.prototype.check.call(task, id, signal, scope);
+      this.fixture.checks.push(result);
+      return result;
+    }
     const log = task.artifact('reviewed-check.log');
     const args = [
       join(import.meta.dirname, 'reviewed-hold-command.js'),
@@ -356,6 +361,8 @@ export class ReviewedWorkflow {
 
   /** Observe new checked progress through Execution before re-entering the retained Workflow cursor. */
   async recheck() {
+    if (this.scenario === 'diagnostic')
+      writeFileSync(join(this.fixture.root, '.git', 'diagnostic'), this.diagnostic);
     const tools = new ActivationTools(
       this.fixture.task,
       selection,
