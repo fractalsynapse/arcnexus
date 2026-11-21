@@ -14,7 +14,10 @@ import { RoundConsumptionFixture } from './round-consumption.js';
 
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
 export const checked = 'secured checked bytes café\nsecond line\n';
-export const criterion = { id: 'continuity', description: 'Preserve checked bytes and exact answers' };
+export const criterion = {
+  id: 'continuity',
+  description: 'Preserve checked bytes and exact answers',
+};
 const catalog = '.arc/architecture';
 const signal = new AbortController().signal;
 const goal = 'Recover one prepared task after staging moves';
@@ -37,17 +40,24 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     super(context);
     this.configure();
     const source = readFileSync(
-      fileURLToPath(new URL('./prepared-recovery-provider.js', import.meta.url)), 'utf8',
+      fileURLToPath(new URL('./prepared-recovery-provider.js', import.meta.url)),
+      'utf8',
     );
     const executable = join(this.root, '.git', 'prepared-provider.mjs');
-    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), { mode: 0o700 });
+    writeFileSync(executable, source.replace(/^#![^\n]*/, '#!' + process.execPath), {
+      mode: 0o700,
+    });
     this.write('.git/bindings.yaml', { schemaVersion: 1, tools: { codex: executable } });
     this.mockProvider();
   }
 
   /** Reopen production services against the same durable project identity. */
   run() {
-    const execution = new Execution(this.architecture, new Coordination(this.storage), this.storage);
+    const execution = new Execution(
+      this.architecture,
+      new Coordination(this.storage),
+      this.storage,
+    );
     const agent = new Agent(this.architecture);
     return new Workflow({
       execution: this.execution(execution),
@@ -70,7 +80,9 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     const checkpoint = this.git('rev-parse', '7-task');
     this.write(path, content);
     this.write(catalog + '/operations/current-read.yaml', {
-      id: 'current-read', category: 'read', tool: 'read',
+      id: 'current-read',
+      category: 'read',
+      tool: 'read',
     });
     const owner = this.definition('components/work');
     owner.activities.implementation.operations.push('current-read');
@@ -79,8 +91,12 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     project.checks.acceptance.push('current-check');
     this.write(catalog + '/project.yaml', project);
     this.write(catalog + '/operations/current-check.yaml', {
-      id: 'current-check', category: 'check', tool: 'check',
-      command: process.execPath, args: ['--version'], network: false,
+      id: 'current-check',
+      category: 'check',
+      tool: 'check',
+      command: process.execPath,
+      args: ['--version'],
+      network: false,
     });
     this.git('add', '.');
     this.git('commit', '-m', 'Advance accepted staging capture');
@@ -104,9 +120,15 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 
   /** Retrieve complete native observations from their canonical artifacts. */
   probes(task: HostTask) {
-    return task.evidence.filter((path) => path.endsWith('codex.jsonl')).flatMap((path) =>
-      readFileSync(path, 'utf8').trim().split('\n').map((line) => JSON.parse(line)),
-    ).filter((event) => event.type === 'fixture.prepared');
+    return task.evidence
+      .filter((path) => path.endsWith('codex.jsonl'))
+      .flatMap((path) =>
+        readFileSync(path, 'utf8')
+          .trim()
+          .split('\n')
+          .map((line) => JSON.parse(line)),
+      )
+      .filter((event) => event.type === 'fixture.prepared');
   }
 
   /** Preserve production admission and preparation while isolating hosted transport. */
@@ -125,17 +147,25 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         return admitted;
       },
       prepare: (task, issue, cancellation) => execution.prepare(task, issue, cancellation),
-      checkpoint: (task, activity, cancellation) => execution.checkpoint(task, activity, cancellation),
+      checkpoint: (task, activity, cancellation) =>
+        execution.checkpoint(task, activity, cancellation),
       assemble: (task, cancellation) => execution.assemble(task, cancellation),
     };
   }
 
   /** Interrupt after the answer is durable but before activity completion is acknowledged. */
   private async activate(task: HostTask, agent: Agent) {
-    const result = await task.activate(agent, { component: 'work', activity: 'implementation' }, {
-      assignment: { instructions: 'Continue the original checked contribution' },
-      milestone: { id: 'recover' }, acceptance: [criterion], evidence: [],
-    }, signal);
+    const result = await task.activate(
+      agent,
+      { component: 'work', activity: 'implementation' },
+      {
+        assignment: { instructions: 'Continue the original checked contribution' },
+        milestone: { id: 'recover' },
+        acceptance: [criterion],
+        evidence: [],
+      },
+      signal,
+    );
     this.observed.push(task.observations());
     if (!this.interrupted || this.interruptNext) {
       this.interrupted = true;
@@ -151,12 +181,17 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     return {
       verification: {
         assess: async (_session, _plan, candidate) => ({
-          kind: 'accepted', candidate: candidate.digest, criteria: [criterion.id], evidence: [],
+          kind: 'accepted',
+          candidate: candidate.digest,
+          criteria: [criterion.id],
+          evidence: [],
         }),
       },
       delivery: {
         integrate: async (_session, candidate) => ({
-          kind: 'merged', commit: candidate.digest, evidence: [],
+          kind: 'merged',
+          commit: candidate.digest,
+          evidence: [],
         }),
       },
     };
@@ -167,7 +202,10 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     const mock = this.context.mock;
     mock.method(this.provider, 'publication', async () => undefined);
     mock.method(this.provider, 'findIssue', async () => undefined);
-    mock.method(this.provider, 'issue', async () => { this.issues += 1; return '7'; });
+    mock.method(this.provider, 'issue', async () => {
+      this.issues += 1;
+      return '7';
+    });
     mock.method(this.provider, 'verifyIssue', async (issue: string) => assert.equal(issue, '7'));
     mock.method(this.provider, 'remoteHead', async (branch: string) =>
       branch === 'staging' ? this.git('rev-parse', 'HEAD') : this.head,
@@ -183,13 +221,20 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   private configure() {
     const work = this.definition('components/work');
     work.owns = ['baseline', 'checked.txt', 'staging.txt'];
-    work.activities = { implementation: {
-      role: 'assessor', profile: 'work', instructions: ['Preserve original acceptance'],
-      operations: ['checked-edit', 'ask-question'], standards: [],
-    } };
+    work.activities = {
+      implementation: {
+        role: 'assessor',
+        profile: 'work',
+        instructions: ['Preserve original acceptance'],
+        operations: ['checked-edit', 'ask-question'],
+        standards: [],
+      },
+    };
     this.write(catalog + '/components/work.yaml', work);
     this.write(catalog + '/operations/checked-edit.yaml', {
-      id: 'checked-edit', category: 'read', tool: 'edit',
+      id: 'checked-edit',
+      category: 'read',
+      tool: 'edit',
     });
     this.git('add', '.');
     this.git('commit', '-m', 'Explicit prepared recovery activity');
@@ -211,14 +256,22 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 function recoveryPlan(): Plan {
   return {
     focus: { purpose: goal, objectives: ['Keep the original requirement'], constraints: [] },
-    milestones: [{
-      id: 'recover', owner: 'work', criteria: [criterion],
-      steps: activities.map((activity) => ({
-        activity,
-        ...(activity === 'implementation'
-          ? { checklist: [{ id: 'recover', criteria: [criterion.id], expected: criterion.description }] }
-          : { checklist: [], inapplicable: 'Outside this Execution regression' }),
-      })),
-    }],
+    milestones: [
+      {
+        id: 'recover',
+        owner: 'work',
+        criteria: [criterion],
+        steps: activities.map((activity) => ({
+          activity,
+          ...(activity === 'implementation'
+            ? {
+                checklist: [
+                  { id: 'recover', criteria: [criterion.id], expected: criterion.description },
+                ],
+              }
+            : { checklist: [], inapplicable: 'Outside this Execution regression' }),
+        })),
+      },
+    ],
   };
 }
