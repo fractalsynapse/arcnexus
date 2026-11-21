@@ -17,7 +17,7 @@ export class PublicationCheckFailure extends Error {
 /** Preserve full provider diagnostics and the reconciliation action without asserting absence. */
 export function retainProviderFailure(task: HostTask, publication: Publication, error: unknown) {
   const failure = error as { stdout?: string | Buffer; stderr?: string | Buffer } | undefined;
-  const diagnostic = error instanceof Error ? error.stack ?? error.message : String(error);
+  const diagnostic = error instanceof Error ? (error.stack ?? error.message) : String(error);
   const log = [diagnostic, failure?.stdout?.toString(), failure?.stderr?.toString()]
     .filter((text) => text !== undefined)
     .join('\n');
@@ -29,7 +29,8 @@ export function retainProviderFailure(task: HostTask, publication: Publication, 
       candidate: publication.candidate,
       diagnostic,
       evidence,
-      requiredAction: 'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
+      requiredAction:
+        'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
     },
   });
   return error;
