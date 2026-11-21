@@ -15,7 +15,8 @@ import { RoundConsumptionFixture } from './round-consumption.js';
 
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
 export const continuationQuestion = 'Which newly captured requirement governs this continuation?';
-export const continuationAnswer = '  Use the newly captured ownership.\n\nRetain original café requirements.  \n';
+export const continuationAnswer =
+  '  Use the newly captured ownership.\n\nRetain original café requirements.  \n';
 export const checked = 'secured checked bytes café\nsecond line\n';
 export const criterion = {
   id: 'continuity',
