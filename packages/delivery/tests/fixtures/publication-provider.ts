@@ -33,7 +33,11 @@ export class PublicationProvider {
     const mock = this.t.mock;
     mock.method(this.fixture.provider, 'publication', async (branch: string) => {
       this.calls.push('observe PR ' + branch);
-      if (this.unavailable) throw new Error('Credential unavailable: restore provider access');
+      if (this.unavailable)
+        throw Object.assign(new Error('Credential unavailable: restore provider access'), {
+          stdout: 'Complete provider observation stdout\n  retained detail\n',
+          stderr: 'Complete provider observation stderr\n  restore credentials\n',
+        });
       return this.pull && { ...this.pull };
     });
     mock.method(this.fixture.provider, 'remoteHead', async (branch: string) => {
