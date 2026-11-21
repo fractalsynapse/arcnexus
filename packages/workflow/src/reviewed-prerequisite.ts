@@ -24,7 +24,8 @@ export async function releasedReviewedPrerequisite(
       activity: activation.step,
       expected: held.failure.expected,
     });
-    return !observed.prerequisite;
+    if (observed.prerequisite || typeof observed.status !== 'number') return false;
+    return !held.gates.length || resolveHumanGates(session, activation, held, signal);
   }
   return resolveHumanGates(session, activation, held, signal);
 }
