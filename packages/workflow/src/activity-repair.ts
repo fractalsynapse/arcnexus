@@ -85,7 +85,7 @@ export function replayableActivity(
 ) {
   return (
     (activation.outcome.kind !== 'blocked' ||
-      Boolean(activation.outcome.holdContext && !activation.outcome.holdContext.prerequisite)) &&
+      Boolean(activation.outcome.holdContext)) &&
     !selfLinkedSupplier(activation.outcome, activation.milestone) &&
     !invalidRetainedRepair(capture, milestone, activation)
   );
