@@ -42,6 +42,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   recoveryContinuation?: 'replay' | 'question';
   onAdmit?: (task: HostTask) => void;
   afterActivation?: (task: HostTask) => Promise<void>;
+  answerQuestion?: (question: string) => string | undefined;
 
   /** Commit explicit tools and ownership and bind an executable deterministic provider. */
   constructor(private readonly context: TestContext) {
@@ -110,7 +111,8 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       progress() {},
       answer: async (question: string) => {
         this.prompts.push(question);
-        return question === continuationQuestion ? continuationAnswer : answer;
+        return this.answerQuestion?.(question) ??
+          (question === continuationQuestion ? continuationAnswer : answer);
       },
     };
   }
