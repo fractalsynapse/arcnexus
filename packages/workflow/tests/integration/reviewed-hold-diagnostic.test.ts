@@ -35,7 +35,10 @@ test('restart consumes a distinct failing recheck without changed secured bytes'
   assert.equal(checked.status, 37);
   assert.equal(checked.diagnostic, undefined, 'Ordinary production failures carry status and log');
   assert(f.fixture.task.readFile(checked.log).text.includes(f.diagnostic));
-  assert.equal(f.fixture.task.pendingCheck({ owner: 'owner', activity: 'implementation' })?.diagnostic, undefined);
+  assert.equal(
+    f.fixture.task.pendingCheck({ owner: 'owner', activity: 'implementation' })?.diagnostic,
+    undefined,
+  );
   assert.notEqual(checked.log, held.failure.check!.log);
   assertContinuity(f, held);
   const resumed = await f.run();
@@ -53,7 +56,10 @@ async function equivalentRecheck(f: ReviewedWorkflow, held: HoldContext) {
   assert.equal(checked.status, 37);
   assert.equal(checked.diagnostic, undefined);
   assert.notEqual(checked.log, held.failure.check!.log);
-  assert.equal(f.fixture.task.readFile(checked.log).text, f.fixture.task.readFile(held.failure.check!.log).text);
+  assert.equal(
+    f.fixture.task.readFile(checked.log).text,
+    f.fixture.task.readFile(held.failure.check!.log).text,
+  );
   assertContinuity(f, held);
   const before = [...f.calls];
   const stopped = await f.run();
