@@ -20,7 +20,7 @@ export const suite = {
  * Production HostTask.check runs the declared confined command and leaves ordinary\n * failure diagnostics in its complete log, without synthesizing a diagnostic field.\n * Controlled command inputs and review do not establish live inference.
  */
 test('restart consumes a distinct failing recheck without changed secured bytes', async (t) => {
-  const f = new ReviewedWorkflow(t, 'diagnostic');
+  const f = new ReviewedWorkflow(t, 'diagnostic', true);
   await f.prepare();
   assert.equal((await f.run()).kind, 'blocked');
   const held = f.holds.at(-1)!;
@@ -32,7 +32,7 @@ test('restart consumes a distinct failing recheck without changed secured bytes'
   assertContinuity(f, held);
   f.diagnostic = 'Error: distinct reviewed assertion B fails\nPreserve the schema decision.';
   const checked = await f.recheck();
-  assert.equal(checked.status, 37);
+  assert.equal(checked.status, 37, f.fixture.task.readFile(checked.log).text);
   assert.equal(checked.diagnostic, undefined, 'Ordinary production failures carry status and log');
   assert(f.fixture.task.readFile(checked.log).text.includes(f.diagnostic));
   assert.equal(
@@ -53,7 +53,7 @@ async function equivalentRecheck(f: ReviewedWorkflow, held: HoldContext) {
   await f.reopen();
   assertContinuity(f, held);
   const checked = await f.recheck();
-  assert.equal(checked.status, 37);
+  assert.equal(checked.status, 37, f.fixture.task.readFile(checked.log).text);
   assert.equal(checked.diagnostic, undefined);
   assert.notEqual(checked.log, held.failure.check!.log);
   assert.equal(
