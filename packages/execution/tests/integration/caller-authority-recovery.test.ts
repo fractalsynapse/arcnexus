@@ -48,7 +48,10 @@ class CallerAuthorityScenario {
     const ask = task.ask;
     task.ask = async () => 'approve';
     this.approval = await task.requestDecision(
-      architect, proposal, question, new AbortController().signal,
+      architect,
+      proposal,
+      question,
+      new AbortController().signal,
     );
     task.ask = ask;
     assert.deepEqual(task.decisionRecord(architect, proposal, question), this.approval);
@@ -63,7 +66,11 @@ class CallerAuthorityScenario {
     assert.equal((await this.fixture.run()).kind, 'merged');
     assert(this.approval);
     assert.equal(this.reviewScopes.length, 2);
-    assert.notEqual(this.reviewScopes[0], this.reviewScopes[1], 'Earlier review must not follow caller continuity');
+    assert.notEqual(
+      this.reviewScopes[0],
+      this.reviewScopes[1],
+      'Earlier review must not follow caller continuity',
+    );
   }
 }
 
