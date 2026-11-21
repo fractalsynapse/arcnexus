@@ -8,6 +8,7 @@ import { Architecture } from '../../../architecture/src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
 import type { Plan } from '../../../direction/src/index.js';
+import type { ActivityOutcome } from '../../src/index.js';
 import { ActivationTools } from '../../../execution/src/activation-tools.js';
 import type { CheckResult } from '../../../execution/src/check.js';
 import { git } from '../../../execution/src/git.js';
