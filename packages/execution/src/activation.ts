@@ -7,7 +7,7 @@ import type {
 import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
 import type { HostTask } from './index.js';
-import { ResearchInbox } from './research.js';
+import { callerRevision, ResearchInbox } from './research.js';
 import { Clarifications } from './clarifications.js';
 import { ActivationTools } from './activation-tools.js';
 import { LocalMcp } from './mcp.js';
@@ -39,19 +39,10 @@ export function activateActor(
     actorInvoker(task, agent, selection, signal, refresh),
     signal,
   );
-  const revision = clarificationRevision(task, selection);
+  const revision = callerRevision(task, selection);
   return new Clarifications(task, selection, signal, revision).run({ ...data, evidence }, (input) =>
     inbox.run(selection, input),
   );
-}
-
-/** Keep ordinary caller answers on their original base while review stays bound to its capture. */
-function clarificationRevision(task: HostTask, selection: ActivitySelection) {
-  const verifier = task.capture.project.verifier;
-  if (selection.component === verifier?.component && selection.activity === verifier.activity)
-    return;
-  return task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
-    ?.baseRevision;
 }
 
 /** Refresh only the returning original caller while preserving inbox-owned answer enrichment. */
