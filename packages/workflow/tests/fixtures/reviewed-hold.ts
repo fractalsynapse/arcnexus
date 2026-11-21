@@ -21,6 +21,7 @@ import {
   type StewardOutcome,
 } from '../../../execution/src/index.js';
 import { ActivationTools } from '../../../execution/src/activation-tools.js';
+import type { CheckResult } from '../../../execution/src/check.js';
 import { checkpoint } from '../../../execution/src/checkpoint.js';
 import { git } from '../../../execution/src/git.js';
 import { execute } from '../../../execution/src/process.js';
@@ -169,6 +170,13 @@ export class ReviewedWorkflow {
       ...(actual.status ? { diagnostic: actual.stderr.trim() } : {}),
       ...externalPrerequisite(this.scenario, this.fixture.root),
     };
+    this.recordControlledCheck(check, scope);
+    return check;
+  }
+
+  /** Retain controlled check evidence and an ordered host prerequisite observation. */
+  private recordControlledCheck(check: CheckResult, scope?: Parameters<HostTask['check']>[2]) {
+    const task = this.fixture.task;
     task.note({
       check,
       scope,
@@ -179,7 +187,6 @@ export class ReviewedWorkflow {
       this.gateEvents.push(
         check.prerequisite ? 'prerequisite-unavailable' : 'prerequisite-available',
       );
-    return check;
   }
 
   /** Supply only provider responses; the native Director reconstructs and validates every pending proposal. */
