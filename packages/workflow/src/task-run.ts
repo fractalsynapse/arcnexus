@@ -23,6 +23,7 @@ import {
 } from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
 import { reviewedHold, supersededReviewedHold } from './reviewed-hold.js';
+import { releasedReviewedPrerequisite } from './reviewed-prerequisite.js';
 import type {
   ActivityCheckpoint,
   ActivityRepair,
@@ -171,6 +172,7 @@ export class TaskRun {
         )
       )
         continue;
+      if (await releasedReviewedPrerequisite(this.session, event.activation, this.signal)) continue;
       if (supersededReviewedHold(this.session, event.activation)) continue;
       const interrupted = await this.applyActivity(event.activation);
       if (interrupted) return interrupted;
