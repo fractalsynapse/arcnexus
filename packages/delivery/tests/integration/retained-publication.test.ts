@@ -12,7 +12,7 @@ async function prepared(fixture: PreparedRecoveryFixture) {
   assert.equal(result.kind, 'failed');
   assert.match(result.reason, /Interrupted after checked receipt and verbatim answer/);
   const task = fixture.tasks[0]!;
-  const history = task.observations();
+  const history = fixture.observed.at(-1)!;
   assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
   assert(history.some((event) => JSON.stringify(event).includes(answer.replace(/\n/g, '\\n'))));
   return { task: task.taskID, history, checkpoint: fixture.git('rev-parse', '7-task') };
@@ -28,7 +28,7 @@ function preserved(
   assert.equal(fixture.plans, 1);
   assert.deepEqual(fixture.prompts, ['Which requirement must recovery preserve?']);
   assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
-  const history = fixture.tasks.at(-1)!.observations();
+  const history = fixture.observed.at(-1)!;
   for (const event of original.history)
     assert(history.some((current) => JSON.stringify(current) === JSON.stringify(event)));
   assert.equal(fixture.git('merge-base', '7-task', original.checkpoint), original.checkpoint);
