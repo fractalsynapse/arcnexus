@@ -217,7 +217,12 @@ export function verificationContext(
 }
 
 /** Preserve caller answers across approved in-run adoption; exact host gates also bind their proposal baseline. */
-export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+export function inboxIdentity(
+  task: InboxTask,
+  selection: ActivitySelection,
+  data: Assignment,
+  revision = task.config?.capture.source.revision ?? task.capture.source.revision,
+) {
   const intent =
     selection.component === 'planner' &&
     selection.activity === 'planning' &&
