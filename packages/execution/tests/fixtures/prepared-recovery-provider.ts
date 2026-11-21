@@ -51,7 +51,7 @@ class PreparedRecoveryProvider {
       arguments: {
         path: 'checked.txt',
         expected: null,
-        content: 'secured checked bytes café\\nsecond line\\n',
+        content: 'secured checked bytes café\nsecond line\n',
       },
     });
     this.emit({ type: 'fixture.replayed', receipt });
