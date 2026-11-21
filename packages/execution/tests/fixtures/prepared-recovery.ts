@@ -25,6 +25,7 @@ const goal = 'Recover one prepared task after staging moves';
 /** Exercise real admission, preparation, activation, SQLite and Git with controlled publication. */
 export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   readonly tasks: HostTask[] = [];
+  private readonly retainedArtifacts = new Set<string>();
   readonly observed: Array<ReturnType<HostTask['observations']>> = [];
   readonly prompts: string[] = [];
   readonly checkpoints: string[] = [];
@@ -72,7 +73,23 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       },
       agent: { execute: async (session) => this.activate(hostTask(session), agent) },
       ...this.gates(),
-    }).run({ directory: this.root, goal }, this.observer(), signal);
+    }).run({ directory: this.root, goal }, this.observer(), signal).then((outcome) => {
+      this.retainArtifacts();
+      return outcome;
+    });
+  }
+
+  /** Retain each native source artifact once in the enclosing check log before temporary cleanup. */
+  private retainArtifacts() {
+    for (const task of this.tasks) {
+      for (const path of task.evidence) {
+        if (this.retainedArtifacts.has(path) || path.endsWith('run-timeline.jsonl')) continue;
+        this.retainedArtifacts.add(path);
+        this.context.diagnostic(JSON.stringify({
+          controlledRecoveryArtifact: { path, text: readFileSync(path, 'utf8') },
+        }));
+      }
+    }
   }
 
   /** Supply the actual foreground answer handler that Workflow binds to each admitted session. */
