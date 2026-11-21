@@ -23,7 +23,14 @@ function preserved(
   fixture: PreparedRecoveryFixture,
   original: Awaited<ReturnType<typeof prepared>>,
 ) {
-  assert(fixture.tasks.every((task) => task.taskID === original.task && task.issue === '7'));
+  assert(fixture.tasks.every((task) => task.taskID === original.task));
+  for (const history of fixture.observed) {
+    const issues = history.flatMap((event) => {
+      const record = event as { issue?: string; publication?: { issue: string } };
+      return [record.issue, record.publication?.issue].filter(Boolean);
+    });
+    assert(issues.length && issues.every((issue) => issue === '7'));
+  }
   assert.equal(fixture.issues, 1);
   assert.equal(fixture.plans, 1);
   assert.deepEqual(fixture.prompts, ['Which requirement must recovery preserve?']);
