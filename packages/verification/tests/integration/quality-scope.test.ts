@@ -89,9 +89,8 @@ class ScopeVerification {
       this.task.note({ check: result });
       return result;
     });
-    context.mock.method(this.task, 'activate', async () => ({
-      kind: 'accepted',
-      candidate: this.candidate.digest,
+    context.mock.method(this.task, 'activate', async (_agent, _selection, data) => ({
+      ...data.assignment.accepted,
       criteria: ['works'],
       evidence: [...this.task.evidence],
     }));
