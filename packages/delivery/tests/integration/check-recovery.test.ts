@@ -213,7 +213,7 @@ test('Delivery retains complete CI diagnostics for the actual assembled candidat
 });
 
 for (const change of ['base', 'head'] as const) {
-  test(`an observed unmerged ${change} change returns to normal preparation without publication`, async (t) => {
+  test(`an observed unmerged ${change} change cannot reuse prior publication approval`, async (t) => {
     const scenario = new CheckScenario(t);
     await scenario.failPublication();
     scenario.reopen(change);
