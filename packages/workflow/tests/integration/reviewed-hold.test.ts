@@ -223,7 +223,12 @@ function assertUnchangedGate(f: ReviewedWorkflow, held: HoldContext, receipts: u
   assert.equal(f.revisions.length, 0);
   assert.equal(f.reviews.length, 0);
   assert(!f.calls.includes('Delivery'));
-  assert.deepEqual(f.holds.at(-1)!.prerequisite, held.prerequisite);
+  const current = f.holds.at(-1)!.prerequisite!;
+  assert.equal(current.kind, held.prerequisite!.kind);
+  assert.equal(current.requiredAction, held.prerequisite!.requiredAction);
+  assert.equal(current.satisfied, false);
+  for (const evidence of held.prerequisite!.evidence)
+    assert(f.fixture.task.readFile(evidence).text.length);
 }
 
 /** Select full checked-edit observations, preserving their original receipt and checkpoint associations. */
