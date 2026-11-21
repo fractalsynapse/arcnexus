@@ -20,8 +20,8 @@ candidate and deliver it through the ordinary staging path.
 
 ## Verification identity through assess
 
-The following is the intended behavior for the Reviewer identity propagation
-contribution; implementation and public regression evidence remain pending.
+Reviewer propagates the host-supplied verification identity through its public
+assessment boundary and preserves it throughout response and citation repair.
 This reference is for maintainers of the public `assess` boundary and consumers
 interpreting its verdicts. It applies the existing
 [Reviewer contract](../contract.md) and
