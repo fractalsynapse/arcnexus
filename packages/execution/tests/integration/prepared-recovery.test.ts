@@ -5,6 +5,8 @@ import test from 'node:test';
 import {
   answer,
   checked,
+  continuationAnswer,
+  continuationQuestion,
   criterion,
   PreparedRecoveryFixture,
 } from '../fixtures/prepared-recovery.js';
@@ -212,3 +214,59 @@ test('recovery inspects and removes the abandoned checkpoint workspace before re
   assert(!existsSync(fresh));
   assertHistory(fixture, original);
 });
+
+test('identical checked-edit replay after staging moves returns the original receipt', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  fixture.recoveryContinuation = 'replay';
+  const original = await interrupt(fixture);
+  const { staging } = fixture.advance();
+  const resumed = await fixture.run();
+  const events = fixture.events(fixture.tasks[1]!);
+  const acknowledged = events.find((event) => event.type === 'fixture.receipt');
+  const replayed = events.find((event) => event.type === 'fixture.replayed');
+  assert(acknowledged);
+  assert(replayed, 'Recovered identical edit must return its receipt: ' + JSON.stringify(resumed));
+  assert.deepEqual(replayed.receipt, acknowledged.receipt);
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assertCapture(fixture, staging);
+  assertHistory(fixture, original);
+});
+
+test('a distinct MCP question after staging moves resumes with its exact new answer', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  fixture.recoveryContinuation = 'question';
+  const original = await interrupt(fixture);
+  const { staging } = fixture.advance();
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', 'Newly answered recovered caller must resume: ' + JSON.stringify(resumed));
+  assertCapture(fixture, staging);
+  assert.deepEqual(fixture.prompts, [original.gate.question, continuationQuestion]);
+  const probe = fixture.probes(fixture.tasks[1]!).at(-1);
+  assert.deepEqual(probe.data.assignment.clarifications, [
+    { question: original.gate.question, answer },
+    { question: continuationQuestion, answer: continuationAnswer },
+  ]);
+  assertNewAnswerHistory(fixture, original);
+});
+
+/** Reject a transient answer, another receipt, or loss of the original caller's durable answer. */
+function assertNewAnswerHistory(
+  fixture: PreparedRecoveryFixture,
+  original: Awaited<ReturnType<typeof interrupt>>,
+) {
+  const history = fixture.observed[1]! as Retained[];
+  assert.deepEqual(history.flatMap((event) => event.editReceipt ?? []), [original.receipt]);
+  const gates = history.flatMap((event) =>
+    event.clarification?.answer === undefined ? [] : [event.clarification],
+  );
+  assert.deepEqual(gates.filter((gate) => gate.question === original.gate.question), [original.gate]);
+  const current = gates.filter((gate) => gate.question === continuationQuestion);
+  assert.equal(current.length, 1);
+  assert.equal(current[0]!.answer, continuationAnswer);
+  assert(current[0]!.evidence);
+  assert.equal(JSON.parse(readFileSync(current[0]!.evidence, 'utf8')).answer, continuationAnswer);
+  assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
+  assert.equal(fixture.tasks[1]!.issue, '7');
+  assert.equal(fixture.issues, 1);
+  assert.equal(fixture.plans, 1);
+}
