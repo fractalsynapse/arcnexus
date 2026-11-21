@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
 import { Agent } from '../../../agent/src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
+import { textDigest } from '../../../foundation/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { activities, track, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
@@ -87,9 +88,10 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       for (const path of task.evidence) {
         if (this.retainedArtifacts.has(path) || path.endsWith('run-timeline.jsonl')) continue;
         this.retainedArtifacts.add(path);
+        const text = readFileSync(path, 'utf8');
         this.context.diagnostic(
           JSON.stringify({
-            controlledRecoveryArtifact: { path, text: readFileSync(path, 'utf8') },
+            controlledRecoveryArtifact: { path, sha256: textDigest(text), text },
           }),
         );
       }
