@@ -89,12 +89,15 @@ class ScopeVerification {
       this.task.note({ check: result });
       return result;
     });
-    context.mock.method(this.task, 'activate', async () => ({
-      kind: 'accepted',
-      candidate: this.candidate.digest,
-      criteria: ['works'],
-      evidence: [...this.task.evidence],
-    }));
+    context.mock.method(
+      this.task,
+      'activate',
+      async (...[, , data]: Parameters<HostTask['activate']>) => ({
+        ...(data.assignment as { accepted: Record<string, unknown> }).accepted,
+        criteria: ['works'],
+        evidence: [...this.task.evidence],
+      }),
+    );
   }
 
   /** Exercise the public final gate, not a replicated predicate or a fake verifier. */

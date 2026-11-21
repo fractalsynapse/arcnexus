@@ -52,7 +52,7 @@ export class ResearchInbox {
     const { capture } = this.task;
     if (selection.activity === 'research' || !canResearch(capture, selection.component))
       return this.invoke(selection, data);
-    const inbox = inboxIdentity(this.task, selection, data);
+    const inbox = inboxIdentity(this.task, selection, data, callerRevision(this.task, selection));
     const requests = this.task
       .observations<Observation>()
       .flatMap(({ researchRequest }) =>
@@ -182,7 +182,7 @@ function researchInput(request: Request, data: Assignment, diagnostic?: string):
 
 /** List the exact reports attached to this candidate's assessment. */
 export function usedResearch(task: InboxTask, selection: ActivitySelection, data: Assignment) {
-  const id = inboxIdentity(task, selection, data);
+  const id = inboxIdentity(task, selection, data, callerRevision(task, selection));
   return task
     .observations<Observation>()
     .flatMap(({ researchResult }) =>
@@ -216,17 +216,29 @@ export function verificationContext(
   };
 }
 
+/** Keep ordinary caller continuity on its original base while independent review uses the current capture. */
+export function callerRevision(task: InboxTask, selection: ActivitySelection) {
+  const verifier = task.capture.project.verifier;
+  if (selection.component === verifier?.component && selection.activity === verifier.activity)
+    return;
+  return task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
+    ?.baseRevision;
+}
+
 /** Preserve caller answers across approved in-run adoption; exact host gates also bind their proposal baseline. */
-export function inboxIdentity(task: InboxTask, selection: ActivitySelection, data: Assignment) {
+export function inboxIdentity(
+  task: InboxTask,
+  selection: ActivitySelection,
+  data: Assignment,
+  revision = task.config?.capture.source.revision ?? task.capture.source.revision,
+) {
   const intent =
     selection.component === 'planner' &&
     selection.activity === 'planning' &&
     object(data.assignment)?.mode === 'human objective';
   return identity([
     task.taskID,
-    intent
-      ? 'human objective'
-      : (task.config?.capture.source.revision ?? task.capture.source.revision),
+    intent ? 'human objective' : revision,
     selection.component,
     selection.activity,
     data.milestone,

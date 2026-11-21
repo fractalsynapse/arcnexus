@@ -6,6 +6,11 @@ governs publication identity, reconciliation, gates and recorded results.
 The scenarios below state intended behavior and required regression evidence;
 they do not establish that a real delivery has occurred.
 
+[Publication recovery](docs/check-recovery.md) records the intended continuation
+after staging movement or lost provider responses: preserve the task and its
+history, require acceptance for the recovered identity, inspect provider facts
+before effects, and reconcile the existing PR without a second delivery.
+
 ## Retained publication identity
 
 The [public entry](src/index.ts) exposes publication with a retained staging

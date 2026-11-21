@@ -1,0 +1,282 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import test from 'node:test';
+import {
+  answer,
+  checked,
+  continuationAnswer,
+  continuationQuestion,
+  criterion,
+  PreparedRecoveryFixture,
+} from '../fixtures/prepared-recovery.js';
+
+export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
+
+interface Retained {
+  baseRevision?: string;
+  editReceipt?: { id: string; path: string; before: string | null; after: string | null };
+  clarification?: { scope: string; question: string; answer?: string; evidence?: string };
+  plan?: { milestones: Array<{ criteria: unknown[] }> };
+}
+
+/** Establish a real acknowledged file and exact answer before staging can move. */
+async function interrupt(fixture: PreparedRecoveryFixture) {
+  const first = await fixture.run();
+  assert.equal(first.kind, 'failed', JSON.stringify(first));
+  assert.match(first.reason, /Interrupted after checked receipt and verbatim answer/);
+  const task = fixture.tasks[0]!;
+  const history = fixture.observed[0]! as Retained[];
+  const receipt = history.find((event) => event.editReceipt)?.editReceipt;
+  const gate = history.find((event) => event.clarification?.answer !== undefined)?.clarification;
+  assert(receipt && gate?.evidence);
+  assert.equal(receipt.path, 'checked.txt');
+  assert.equal(gate.answer, answer);
+  assert.equal(JSON.parse(readFileSync(gate.evidence, 'utf8')).answer, answer);
+  assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
+  assert.equal(task.worktree, undefined);
+  assert.equal(fixture.probes(task).at(-1).data.assignment.clarifications[0].answer, answer);
+  return { task, history, receipt, gate };
+}
+
+/** Check the recovered source and request against actual new captured authority. */
+function assertCapture(fixture: PreparedRecoveryFixture, staging: string) {
+  const resumed = fixture.tasks[1]!;
+  assert.equal(resumed.capture.source.revision, staging);
+  assert.deepEqual(resumed.capture.components.work!.owns, [
+    'baseline',
+    'checked.txt',
+    'staging.txt',
+  ]);
+  assert.deepEqual(resumed.capture.project.checks!.acceptance, ['fixture-check', 'current-check']);
+  const probe = fixture.probes(resumed).at(-1);
+  assert.deepEqual(probe.data.acceptance, [criterion]);
+  assert(probe.input.includes('revision: ' + staging));
+  assert.deepEqual(
+    probe.tools.map((tool: { name: string }) => tool.name),
+    ['checked-edit', 'ask-question', 'current-read'],
+  );
+  assert.equal(probe.args[probe.args.indexOf('--model') + 1], 'explicit-work');
+  assert.equal(probe.executable, resumed.config.executable);
+  assert.equal(probe.node, process.version);
+  assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
+  assert.equal(fixture.git('show', '7-task:staging.txt'), 'independent staging contribution');
+}
+
+/** Reject current-attempt-only history and rewritten receipt or original acceptance. */
+function assertHistory(
+  fixture: PreparedRecoveryFixture,
+  original: Awaited<ReturnType<typeof interrupt>>,
+) {
+  const current = fixture.observed[1]! as Retained[];
+  assert(current.some((event) => event.baseRevision === original.task.capture.source.revision));
+  assert.deepEqual(
+    current.flatMap((event) => event.editReceipt ?? []),
+    [original.receipt],
+  );
+  assert.deepEqual(
+    current.filter((event) => event.clarification?.answer !== undefined),
+    original.history.filter((event) => event.clarification?.answer !== undefined),
+  );
+  assert.deepEqual(current.find((event) => event.plan)?.plan?.milestones[0]!.criteria, [criterion]);
+  assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
+  assert.equal(fixture.tasks[1]!.issue, '7');
+  assert.equal(fixture.issues, 1);
+  assert.equal(fixture.plans, 1);
+  assert.deepEqual(fixture.prompts, ['Which requirement must recovery preserve?']);
+}
+
+test('recovered activation receives the verbatim answer and original receipt under the new capture', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const original = await interrupt(fixture);
+  const { checkpoint, staging } = fixture.advance();
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assertCapture(fixture, staging);
+  assertHistory(fixture, original);
+  const probe = fixture.probes(fixture.tasks[1]!).at(-1);
+  assert.deepEqual(
+    probe.data.assignment.clarifications,
+    [
+      {
+        question: original.gate.question,
+        answer,
+      },
+    ],
+    'Recovered caller must receive the complete previously answered question',
+  );
+  assert.equal(
+    fixture.git('rev-parse', '7-task:checked.txt'),
+    fixture.git('rev-parse', checkpoint + ':checked.txt'),
+  );
+  assert.equal(fixture.git('merge-base', '7-task', checkpoint), checkpoint);
+  assert.equal(fixture.git('merge-base', '7-task', staging), staging);
+  assert(!existsSync(join(fixture.root, 'checked.txt')));
+});
+
+for (const unavailable of [false, true]) {
+  test(
+    'a newly captured ' +
+      (unavailable ? 'missing activity' : 'changed owner') +
+      ' refuses continuation',
+    async (t) => {
+      const fixture = new PreparedRecoveryFixture(t);
+      const original = await interrupt(fixture);
+      const { checkpoint } = fixture.advance();
+      fixture.changeOwner(unavailable);
+      const held = await fixture.run();
+      assert.equal(held.kind, 'failed', JSON.stringify(held));
+      assert.match(
+        held.reason,
+        unavailable
+          ? /Accepted pending activity is unavailable: work\/implementation/
+          : /Retained checked owner changed: checked.txt/,
+      );
+      assert.equal(fixture.git('rev-parse', '7-task'), checkpoint);
+      assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
+      assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
+      assert.equal(fixture.probes(fixture.tasks[1]!).length, fixture.probes(original.task).length);
+      assert.equal(fixture.prompts.length, 1);
+    },
+  );
+}
+
+test('conflicting checked bytes remain secured with complete conflict diagnostics', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  await interrupt(fixture);
+  const { checkpoint, staging } = fixture.advance('checked.txt', 'conflicting staging bytes\n');
+  const held = await fixture.run();
+  assert.equal(held.kind, 'failed', JSON.stringify(held));
+  assert.match(held.reason, /CONFLICT \(add\/add\): Merge conflict in checked.txt/);
+  assert.match(held.reason, /Auto-merging checked.txt/);
+  assert(held.reason.includes(conflictOutput(fixture, checkpoint, staging)));
+  assert.equal(fixture.git('rev-parse', '7-task'), checkpoint);
+  assert.equal(fixture.git('show', checkpoint + ':checked.txt') + '\n', checked);
+  assert.equal(fixture.git('show', staging + ':checked.txt'), 'conflicting staging bytes');
+  assert.equal(fixture.checkpoints.at(-1), checkpoint);
+  assert.equal(fixture.prompts.length, 1);
+});
+
+test('another staging advance requires a second recovery before activation', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  await interrupt(fixture);
+  const first = fixture.advance();
+  fixture.interruptNext = true;
+  const stopped = await fixture.run();
+  assert.equal(stopped.kind, 'failed');
+  assert.match(stopped.reason, /Interrupted after checked receipt and verbatim answer/);
+  const second = fixture.advance('staging.txt', 'second staging contribution\n');
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assert.equal(fixture.tasks.at(-1)!.capture.source.revision, second.staging);
+  assert.equal(fixture.git('merge-base', '7-task', first.staging), first.staging);
+  assert.equal(fixture.git('merge-base', '7-task', second.staging), second.staging);
+  assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
+  assert.equal(fixture.git('show', '7-task:staging.txt'), 'second staging contribution');
+});
+
+/** Compare the entire real Git conflict record, including all stage entries and messages. */
+function conflictOutput(fixture: PreparedRecoveryFixture, checkpoint: string, staging: string) {
+  try {
+    fixture.git('merge-tree', '--write-tree', checkpoint, staging);
+    assert.fail('The authored overlapping changes must conflict');
+  } catch (error) {
+    const output = (error as { stdout?: string | Buffer }).stdout?.toString().trim();
+    assert(output);
+    return output;
+  }
+}
+
+test('unchanged staging reuses the exact answer without another prompt or acknowledged edit', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const original = await interrupt(fixture);
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assertHistory(fixture, original);
+  assert.deepEqual(fixture.probes(fixture.tasks[1]!).at(-1).data.assignment.clarifications, [
+    { question: original.gate.question, answer },
+  ]);
+});
+
+test('recovery inspects and removes the abandoned checkpoint workspace before reconstructing', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const original = await interrupt(fixture);
+  const abandoned = fixture.probes(original.task).at(-1).cwd;
+  fixture.git('worktree', 'add', abandoned, '7-task');
+  assert(existsSync(abandoned));
+  assert.equal(readFileSync(join(abandoned, 'checked.txt'), 'utf8'), checked);
+  fixture.advance();
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  const fresh = fixture.probes(fixture.tasks[1]!).at(-1).cwd;
+  assert.notEqual(fresh, abandoned);
+  assert(!existsSync(abandoned));
+  assert(!existsSync(fresh));
+  assertHistory(fixture, original);
+});
+
+test('identical checked-edit replay after staging moves returns the original receipt', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  fixture.recoveryContinuation = 'replay';
+  const original = await interrupt(fixture);
+  const { staging } = fixture.advance();
+  const resumed = await fixture.run();
+  const events = fixture.events(fixture.tasks[1]!);
+  const acknowledged = events.find((event) => event.type === 'fixture.receipt');
+  const replayed = events.find((event) => event.type === 'fixture.replayed');
+  assert(acknowledged);
+  assert(replayed, 'Recovered identical edit must return its receipt: ' + JSON.stringify(resumed));
+  assert.deepEqual(replayed.receipt, acknowledged.receipt);
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assertCapture(fixture, staging);
+  assertHistory(fixture, original);
+});
+
+test('a distinct MCP question after staging moves resumes with its exact new answer', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  fixture.recoveryContinuation = 'question';
+  const original = await interrupt(fixture);
+  const { staging } = fixture.advance();
+  const resumed = await fixture.run();
+  assert.equal(
+    resumed.kind,
+    'merged',
+    'Newly answered recovered caller must resume: ' + JSON.stringify(resumed),
+  );
+  assertCapture(fixture, staging);
+  assert.deepEqual(fixture.prompts, [original.gate.question, continuationQuestion]);
+  const probe = fixture.probes(fixture.tasks[1]!).at(-1);
+  assert.deepEqual(probe.data.assignment.clarifications, [
+    { question: original.gate.question, answer },
+    { question: continuationQuestion, answer: continuationAnswer },
+  ]);
+  assertNewAnswerHistory(fixture, original);
+});
+
+/** Reject a transient answer, another receipt, or loss of the original caller's durable answer. */
+function assertNewAnswerHistory(
+  fixture: PreparedRecoveryFixture,
+  original: Awaited<ReturnType<typeof interrupt>>,
+) {
+  const history = fixture.observed[1]! as Retained[];
+  assert.deepEqual(
+    history.flatMap((event) => event.editReceipt ?? []),
+    [original.receipt],
+  );
+  const gates = history.flatMap((event) =>
+    event.clarification?.answer === undefined ? [] : [event.clarification],
+  );
+  assert.deepEqual(
+    gates.filter((gate) => gate.question === original.gate.question),
+    [original.gate],
+  );
+  const current = gates.filter((gate) => gate.question === continuationQuestion);
+  assert.equal(current.length, 1);
+  assert.equal(current[0]!.answer, continuationAnswer);
+  assert(current[0]!.evidence);
+  assert.equal(JSON.parse(readFileSync(current[0]!.evidence, 'utf8')).answer, continuationAnswer);
+  assert.equal(fixture.tasks[1]!.taskID, original.task.taskID);
+  assert.equal(fixture.tasks[1]!.issue, '7');
+  assert.equal(fixture.issues, 1);
+  assert.equal(fixture.plans, 1);
+}

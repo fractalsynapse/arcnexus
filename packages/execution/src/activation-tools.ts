@@ -12,7 +12,7 @@ import { supplierLinkDiagnostic } from '../../direction/src/index.js';
 import { selfLinkedSupplier, type ActivityCheckpoint } from '../../workflow/src/index.js';
 import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
-import { inboxIdentity, researchFields } from './research.js';
+import { callerRevision, inboxIdentity, researchFields } from './research.js';
 import { decodeEdit } from './steward-response.js';
 import { listToolDirectory, readToolFile } from './tool-files.js';
 import { repairCheckExpectation, type StewardScope } from './steward-check.js';
@@ -49,7 +49,7 @@ export class ActivationTools {
     input: TaskContext,
     private readonly signal: AbortSignal,
   ) {
-    this.scope = inboxIdentity(task, selection, input);
+    this.scope = inboxIdentity(task, selection, input, callerRevision(task, selection));
     this.milestone = (input.milestone as { id?: string } | undefined)?.id;
     this.handoff = this.pendingRequest();
   }

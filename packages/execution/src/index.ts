@@ -10,7 +10,7 @@ import { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
 import type { TaskEvent, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { activateActor, type ContextRefresh } from './activation.js';
-import { inboxIdentity, usedResearch } from './research.js';
+import { callerRevision, inboxIdentity, usedResearch } from './research.js';
 import { formatterPreview } from './formatter.js';
 import { observePreparedPublication, recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
@@ -119,9 +119,9 @@ export class HostTask implements TaskSession {
     return readToolFile(this, path, offset);
   }
 
-  /** Identify the durable inbox of an actual captured actor without exposing a model-selected scope. */
+  /** Match actual caller continuity while independent review remains bound to its current capture. */
   inboxScope(selection: ActivitySelection, data: Omit<TaskContext, 'goal' | 'worktree'>) {
-    return inboxIdentity(this, selection, data);
+    return inboxIdentity(this, selection, data, callerRevision(this, selection));
   }
 
   /** Resolve a legacy publication's parent from the retained Git object. */

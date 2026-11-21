@@ -1,5 +1,6 @@
 import { AgentActivityHold, InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
 import { resolve } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import type { Plan } from '../../direction/src/index.js';
 import { hostTask, retainedEvidence } from '../../execution/src/index.js';
 import { validateVerdict, type Candidate, type Verdict } from '../../verification/src/index.js';
@@ -94,9 +95,9 @@ class ReviewRepair {
   /** Validate response semantics before citations and preserve a pending citation-only decision. */
   validate(reply: Verdict) {
     const verdict = this.bind(reply);
-    if (this.verdict && reviewPosition(verdict) !== reviewPosition(this.verdict))
+    if (this.verdict && !isDeepStrictEqual(reviewPosition(verdict), reviewPosition(this.verdict)))
       throw new ReviewerResponseError(
-        'Reviewer citation repair changed the assessment decision, candidate or criteria',
+        'Reviewer citation repair changed the assessment decision, candidate, verification or criteria',
       );
     try {
       return validateCitations(
@@ -155,7 +156,7 @@ function citationRepairInput(
     diagnostic,
     verdict,
     instructions:
-      'Correct only the evidence citations. Copy exact paths from the evidence list and preserve the decision, candidate, criteria and findings.',
+      'Correct only the evidence citations. Copy exact paths from the evidence list and preserve the decision, candidate, verification identity, criteria and findings.',
   };
   return {
     ...data,
@@ -170,27 +171,38 @@ function reviewPosition(verdict: CitedVerdict) {
     verdict.kind === 'accepted'
       ? [...verdict.criteria].sort()
       : verdict.findings.map(({ criterion, owner, reason }) => [criterion, owner, reason]);
-  return JSON.stringify([verdict.kind, verdict.candidate, criteria]);
+  return [verdict.kind, verdict.candidate, verdict.verification, criteria];
 }
 
 /** Describe the candidate-bound verdict and its required evidence. */
 function responseShape(candidate: Candidate, checks: unknown) {
+  const binding = {
+    candidate: candidate.digest,
+    ...(candidate.verification ? { verification: candidate.verification } : {}),
+  };
   return {
+    ...binding,
+    ...responseVerdicts(binding),
     instructions:
       'Read the candidate diff and trusted check evidence to assess the engineering criteria and engineering goal. The ownerChecks field contains exact host operations and statuses. An observation with a candidate tree and captured operation binds to that checkpoint. Compare its tree with the candidate being reviewed. Owner checks run in a networkless overlay. Observations before the last edit remain historical. The host observes GitHub checks, configured PR review, and the staging merge after independent acceptance. Unperformed Release gates remain future delivery observations. When publicationFailure is present, read its complete evidence and assess whether the actual reported engineering defect remains in the current candidate; reject its affected criteria and name the accountable owner. Preserve historical failure evidence after a correction. Use ask-question if human clarification is required. Once the assessment is complete, return one JSON verdict without code fences. Evidence includes complete retained-task-evidence index files and current artifact paths. Read an index to discover the original references, read the relevant complete artifacts, and cite their exact retained paths.',
-    candidate: candidate.digest,
     ownerEvidenceDigest: candidate.ownerEvidenceDigest,
     diagnostic: undefined as string | undefined,
     checks,
+  };
+}
+
+/** Build accepted and rejected templates from the same host-supplied binding. */
+function responseVerdicts(binding: Pick<CitedVerdict, 'candidate' | 'verification'>) {
+  return {
     accepted: {
       kind: 'accepted',
-      candidate: candidate.digest,
+      ...binding,
       criteria: ['all accepted criterion IDs'],
       evidence: ['evidence paths'],
     },
     rejected: {
       kind: 'rejected',
-      candidate: candidate.digest,
+      ...binding,
       findings: [
         {
           criterion: 'criterion ID',

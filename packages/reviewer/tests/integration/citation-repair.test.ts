@@ -8,7 +8,7 @@ import type { Capture, TaskContext } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import type { Plan } from '../../../direction/src/index.js';
 import { HostTask } from '../../../execution/src/index.js';
-import { verify } from '../../../verification/src/index.js';
+import { verificationIdentity, verify } from '../../../verification/src/index.js';
 
 export const suite = { owner: 'reviewer', level: 'integration', tags: ['regression'] } as const;
 
@@ -50,15 +50,7 @@ class CitationScenario {
     });
     t.mock.method(this.task, 'check', async (id: string) => {
       this.checks++;
-      return {
-        id,
-        status: 0,
-        command: 'fixture',
-        args: [],
-        cwd: this.root,
-        durationMs: 1,
-        log: this.checkLog,
-      };
+      return { ...this.observedCheck(), id };
     });
     t.mock.method(
       this.task,
@@ -101,11 +93,13 @@ class CitationScenario {
   private respond(data: TaskContext) {
     this.requests.push(data);
     const visit = this.requests.length;
+    const verification = verificationIdentity(this.task, plan, candidate, [this.observedCheck()]);
     if (this.repair === 'native' && visit === 1)
       throw new InvalidAgentResponse('Malformed native JSON');
     if (this.repair === 'successive' && visit <= 2)
       return {
         kind: 'accepted',
+        verification,
         candidate: candidate.digest,
         criteria: ['scope'],
         evidence: [`missing-${visit}.log`],
@@ -113,6 +107,7 @@ class CitationScenario {
     const repairing = visit > 1;
     return {
       kind: 'accepted',
+      verification,
       candidate:
         repairing &&
         (this.repair === 'different' || (this.repair === 'changed-then-corrected' && visit === 2))
@@ -120,6 +115,19 @@ class CitationScenario {
           : candidate.digest,
       criteria: ['scope'],
       evidence: [repairing && this.repair !== 'invalid' ? this.checkLog : invalid],
+    };
+  }
+
+  /** Describe the exact controlled check observation consumed by Verification. */
+  observedCheck() {
+    return {
+      id: 'fixture',
+      status: 0,
+      command: 'fixture',
+      args: [],
+      cwd: this.root,
+      durationMs: 1,
+      log: this.checkLog,
     };
   }
 
@@ -135,6 +143,7 @@ test('Reviewer repairs an invalid citation on the same candidate and original ch
   assert.deepEqual(verdict, {
     kind: 'accepted',
     candidate: candidate.digest,
+    verification: verificationIdentity(fixture.task, plan, candidate, [fixture.observedCheck()]),
     criteria: ['scope'],
     evidence: [fixture.checkLog],
   });

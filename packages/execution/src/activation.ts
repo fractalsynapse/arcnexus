@@ -7,7 +7,7 @@ import type {
 import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
 import type { HostTask } from './index.js';
-import { ResearchInbox } from './research.js';
+import { callerRevision, ResearchInbox } from './research.js';
 import { Clarifications } from './clarifications.js';
 import { ActivationTools } from './activation-tools.js';
 import { LocalMcp } from './mcp.js';
@@ -39,7 +39,8 @@ export function activateActor(
     actorInvoker(task, agent, selection, signal, refresh),
     signal,
   );
-  return new Clarifications(task, selection, signal).run({ ...data, evidence }, (input) =>
+  const revision = callerRevision(task, selection);
+  return new Clarifications(task, selection, signal, revision).run({ ...data, evidence }, (input) =>
     inbox.run(selection, input),
   );
 }

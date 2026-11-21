@@ -9,7 +9,8 @@ import { GitHubCheckFailure, type GitHub } from '../../../collaboration/src/inde
 import { Coordination } from '../../../coordination/src/index.js';
 import { Execution, HostTask } from '../../../execution/src/index.js';
 import { integrate, resume, PublicationCheckFailure } from '../../src/index.js';
-import type { Candidate } from '../../../verification/src/index.js';
+import { verificationIdentity, type Candidate } from '../../../verification/src/index.js';
+import { activities, type Plan } from '../../../direction/src/index.js';
 
 export const suite = { owner: 'delivery', level: 'integration', tags: ['regression'] } as const;
 const remote = 'https://github.com/example/check-recovery.git';
@@ -120,8 +121,13 @@ class CheckScenario {
   async failPublication() {
     const execution = new Execution({} as Architecture, this.coordination, this.storage);
     const candidate = await execution.assemble(this.task, this.signal);
+    const plan = publicationPlan();
+    const verification = verificationIdentity(this.task, plan, candidate, []);
+    this.task.record({ plan });
+    this.task.note({ verification: { identity: verification, checks: [] } });
     const verdict = {
       kind: 'accepted' as const,
+      verification,
       candidate: candidate.digest,
       criteria: ['behavior'],
       evidence: candidate.evidence,
@@ -207,12 +213,39 @@ test('Delivery retains complete CI diagnostics for the actual assembled candidat
 });
 
 for (const change of ['base', 'head'] as const) {
-  test(`an observed unmerged ${change} change returns to normal preparation without publication`, async (t) => {
+  test(`an observed unmerged ${change} change cannot reuse prior publication approval`, async (t) => {
     const scenario = new CheckScenario(t);
     await scenario.failPublication();
     scenario.reopen(change);
-    assert.equal(await resume(scenario.task, scenario.signal, () => {}), undefined);
+    if (change === 'base')
+      assert.equal(await resume(scenario.task, scenario.signal, () => {}), undefined);
+    else
+      await assert.rejects(
+        resume(scenario.task, scenario.signal, () => {}),
+        /match the retained candidate/,
+      );
     assert.equal(scenario.merged, 0);
     assert.equal(scenario.opened, 0);
   });
+}
+
+/** Supply the explicit accepted plan used by the journaled verification identity. */
+function publicationPlan(): Plan {
+  return {
+    focus: { purpose: 'Deliver the fixture', objectives: [], constraints: [] },
+    milestones: [
+      {
+        id: 'delivery',
+        owner: 'work',
+        criteria: [
+          { id: 'behavior', description: 'Preserve diagnostics and retained publication' },
+        ],
+        steps: activities.map((activity) => ({
+          activity,
+          checklist: [],
+          inapplicable: 'Controlled publication fixture',
+        })),
+      },
+    ],
+  };
 }
