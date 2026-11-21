@@ -57,7 +57,7 @@ class CallerRecoveryScenario {
     this.diagnostic = supplierLinkDiagnostic(recoveryPlan(), this.supplier)!;
     assert(this.diagnostic, 'The explicit legacy handoff must be invalid');
     this.fixture.answerQuestion = (question) => question.startsWith(pendingQuestion) ? pendingAnswer : undefined;
-    this.fixture.onAdmit = (task) => this.recordRejection(task);
+    this.fixture.beforePlan = (task) => this.recordRejection(task);
     this.fixture.afterActivation = (task) => this.observeConsumers(task);
   }
 
