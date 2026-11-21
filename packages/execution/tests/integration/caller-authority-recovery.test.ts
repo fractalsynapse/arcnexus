@@ -16,19 +16,36 @@ test('caller continuity keeps host approvals exact and independent review bound 
     const reviewer = task.capture.project.verifier!;
     const review = { acceptance: [criterion], assignment: candidate };
     reviewScopes.push(task.inboxScope(reviewer, review));
-    assert.notEqual(task.inboxScope(reviewer, review), task.inboxScope(reviewer, {
-      ...review, assignment: { ...candidate, candidate: 'changed-tree' },
-    }));
-    assert.notEqual(task.inboxScope(reviewer, review), task.inboxScope(reviewer, {
-      ...review, assignment: { ...candidate, ownerEvidenceDigest: 'changed-owner-evidence' },
-    }));
-    assert.notEqual(task.inboxScope(reviewer, review), task.inboxScope(reviewer, {
-      ...review, acceptance: [{ ...criterion, description: 'Changed acceptance' }],
-    }));
+    assert.notEqual(
+      task.inboxScope(reviewer, review),
+      task.inboxScope(reviewer, {
+        ...review,
+        assignment: { ...candidate, candidate: 'changed-tree' },
+      }),
+    );
+    assert.notEqual(
+      task.inboxScope(reviewer, review),
+      task.inboxScope(reviewer, {
+        ...review,
+        assignment: { ...candidate, ownerEvidenceDigest: 'changed-owner-evidence' },
+      }),
+    );
+    assert.notEqual(
+      task.inboxScope(reviewer, review),
+      task.inboxScope(reviewer, {
+        ...review,
+        acceptance: [{ ...criterion, description: 'Changed acceptance' }],
+      }),
+    );
     if (reviewScopes.length === 1) {
       const ask = task.ask;
       task.ask = async () => 'approve';
-      approval = await task.requestDecision(architect, proposal, question, new AbortController().signal);
+      approval = await task.requestDecision(
+        architect,
+        proposal,
+        question,
+        new AbortController().signal,
+      );
       task.ask = ask;
       assert.deepEqual(task.decisionRecord(architect, proposal, question), approval);
       assert.equal(task.decisionRecord(architect, 'changed-proposal', question), undefined);
@@ -42,5 +59,9 @@ test('caller continuity keeps host approvals exact and independent review bound 
   assert.equal((await fixture.run()).kind, 'merged');
   assert(approval);
   assert.equal(reviewScopes.length, 2);
-  assert.notEqual(reviewScopes[0], reviewScopes[1], 'Earlier review must not follow caller continuity');
+  assert.notEqual(
+    reviewScopes[0],
+    reviewScopes[1],
+    'Earlier review must not follow caller continuity',
+  );
 });
