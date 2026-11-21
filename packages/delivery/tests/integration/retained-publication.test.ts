@@ -80,10 +80,10 @@ test('outdated open PR is reconciled to fresh recovered acceptance and the same 
   assert(result.kind === 'merged');
   recoveredMerge(fixture, provider, prior?.url, reviewed, result.commit, staging);
   assert.equal(provider.calls[offset], 'observe PR 7-task');
-  assert(
-    provider.calls.slice(offset).indexOf('observe branch 7-task') <
-      provider.calls.slice(offset).findIndex((call) => call.startsWith('push ')),
-  );
+  const resumed = provider.calls.slice(offset);
+  const observed = resumed.indexOf('observe branch 7-task');
+  const pushed = resumed.findIndex((call) => call.startsWith('push '));
+  assert(observed >= 0 && pushed > observed);
   preserved(fixture, original);
 });
 
@@ -134,9 +134,32 @@ function recoveredMerge(
   assert.equal(provider.opened, 1);
   assert.equal(provider.merged, 1);
   assert(fixture.reviews.length > reviews, 'Recovered candidate requires independent reassessment');
+  recoveredAcceptance(fixture, staging, commit);
   assert.equal(fixture.git('rev-parse', commit + '^'), staging);
   assert.equal(
     fixture.git('rev-parse', commit + '^{tree}'),
     fixture.git('rev-parse', '7-task^{tree}'),
+  );
+}
+
+/** Bind recovered checks and independent acceptance to the resulting tree and newly captured base. */
+function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, commit: string) {
+  const history = fixture.observed.at(-1)! as Array<{
+    verification?: {
+      identity: import('../../../verification/src/index.js').VerificationIdentity;
+      checks: Array<{ id: string; status: number }>;
+    };
+    verdict?: import('../../../verification/src/index.js').Verdict;
+  }>;
+  const assessment = history.findLast((event) => event.verification)?.verification;
+  const verdict = history.findLast((event) => event.verdict)?.verdict;
+  assert(assessment && verdict?.kind === 'accepted');
+  assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
+  assert.equal(assessment.identity.base, staging);
+  assert.deepEqual(verdict.verification, assessment.identity);
+  assert.deepEqual(verdict.criteria, ['continuity']);
+  assert.deepEqual(
+    assessment.checks.map(({ id, status }) => ({ id, status })),
+    [{ id: 'fixture-check', status: 0 }, { id: 'current-check', status: 0 }],
   );
 }
