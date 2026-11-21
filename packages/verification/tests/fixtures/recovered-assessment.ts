@@ -1,12 +1,22 @@
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import { Agent, AgentActivityHold } from '../../../agent/src/index.js';
-import { type ActivitySelection, type TaskContext, resolveOperation } from '../../../architecture/src/index.js';
+import {
+  type ActivitySelection,
+  type TaskContext,
+  resolveOperation,
+} from '../../../architecture/src/index.js';
 import { activities, type Plan } from '../../../direction/src/index.js';
 import type { HostTask } from '../../../execution/src/index.js';
 import { verificationContext } from '../../../execution/src/research.js';
 import { verify, type Candidate, type Verdict } from '../../src/index.js';
-import { answer, goal, originalRequirement, RecoveredProject, signal } from './recovered-project.js';
+import {
+  answer,
+  goal,
+  originalRequirement,
+  RecoveredProject,
+  signal,
+} from './recovered-project.js';
 
 type Request = Omit<TaskContext, 'goal' | 'worktree'>;
 type CheckResult = Awaited<ReturnType<HostTask['check']>>;
@@ -27,7 +37,10 @@ export class RecoveredAssessment extends RecoveredProject {
     super(context);
     this.retain('original-plan.json', JSON.stringify({ goal, plan: this.plan }));
     this.retain('original-answer.txt', answer);
-    this.retain('original-review.txt', 'Original attempt finding: preserve boundary.\nFull second line.\n');
+    this.retain(
+      'original-review.txt',
+      'Original attempt finding: preserve boundary.\nFull second line.\n',
+    );
     this.task.note({ plan: this.plan });
     this.control();
   }
@@ -36,13 +49,20 @@ export class RecoveredAssessment extends RecoveredProject {
   resume(...args: Parameters<RecoveredProject['reopen']>) {
     this.reopen(...args);
     this.control();
-    this.retain('resumed-finding.txt', 'Resumed attempt finding: inspect current checks.\nDifferent final line.\n');
+    this.retain(
+      'resumed-finding.txt',
+      'Resumed attempt finding: inspect current checks.\nDifferent final line.\n',
+    );
   }
 
   /** Assess the actual assembled record through Verification and its independent Reviewer boundary. */
   async run(candidate?: Candidate) {
     return verify(
-      new Agent(this.architecture), this.task, this.plan, candidate ?? await this.assemble(), signal,
+      new Agent(this.architecture),
+      this.task,
+      this.plan,
+      candidate ?? (await this.assemble()),
+      signal,
     );
   }
 
@@ -58,10 +78,17 @@ export class RecoveredAssessment extends RecoveredProject {
     this.replay = verdict;
     try {
       const result = await this.run();
-      assert.notEqual(result.kind, 'accepted', 'Earlier acceptance authorized a changed recovery identity');
+      assert.notEqual(
+        result.kind,
+        'accepted',
+        'Earlier acceptance authorized a changed recovery identity',
+      );
     } catch (error) {
       assert(error instanceof AgentActivityHold, String(error));
-      assert.match(error.message, /Reviewer|verification|identity|candidate|acceptance|capture|base/i);
+      assert.match(
+        error.message,
+        /Reviewer|verification|identity|candidate|acceptance|capture|base/i,
+      );
     }
   }
 
@@ -76,8 +103,12 @@ export class RecoveredAssessment extends RecoveredProject {
       assert(references.includes(path), 'Reviewer lost historical artifact ' + path);
       assert.equal(this.task.readFile(path).text, expected);
     }
-    assert.deepEqual(request.acceptance, this.plan.milestones.flatMap(({ owner, criteria }) =>
-      criteria.map((criterion) => ({ owner, ...criterion }))));
+    assert.deepEqual(
+      request.acceptance,
+      this.plan.milestones.flatMap(({ owner, criteria }) =>
+        criteria.map((criterion) => ({ owner, ...criterion })),
+      ),
+    );
     assert.equal(this.task.goal, goal);
   }
 
@@ -90,16 +121,26 @@ export class RecoveredAssessment extends RecoveredProject {
   private control() {
     this.context.mock.method(this.task, 'check', async (id: string) => {
       const operation = resolveOperation(this.task.capture, id);
-      const log = this.task.store(id + '.log', 'Controlled check: ' + JSON.stringify(operation) + '\n');
+      const log = this.task.store(
+        id + '.log',
+        'Controlled check: ' + JSON.stringify(operation) + '\n',
+      );
       const result: CheckResult = {
-        id, command: operation.command!, args: operation.args,
-        cwd: this.task.worktree!, durationMs: 1, log, ...this.checkState,
+        id,
+        command: operation.command!,
+        args: operation.args,
+        cwd: this.task.worktree!,
+        durationMs: 1,
+        log,
+        ...this.checkState,
       };
       this.checks.push(result);
       this.task.note({ check: result });
       return result;
     });
-    this.context.mock.method(this.task, 'activate',
+    this.context.mock.method(
+      this.task,
+      'activate',
       async (_agent: Agent, selection: ActivitySelection, data: Request) => {
         assert.deepEqual(selection, this.task.capture.project.verifier);
         this.requests.push(structuredClone(data));
@@ -108,14 +149,16 @@ export class RecoveredAssessment extends RecoveredProject {
           throw new Error('Controlled interruption before independent verdict');
         }
         return this.replay ?? this.accept(data);
-      });
+      },
+    );
   }
 
   /** Echo the host's requested binding so tests do not invent a future verdict identity schema. */
   private accept(data: Request) {
     const assignment = data.assignment as { accepted: Record<string, unknown> };
     return {
-      ...assignment.accepted, kind: 'accepted',
+      ...assignment.accepted,
+      kind: 'accepted',
       criteria: this.plan.milestones.flatMap(({ criteria }) => criteria.map(({ id }) => id)),
       evidence: [...this.task.evidence],
     };
@@ -126,16 +169,26 @@ export class RecoveredAssessment extends RecoveredProject {
 function recoveryPlan(): Plan {
   return {
     focus: {
-      purpose: goal, objectives: [originalRequirement], constraints: ['Retain original authority history'],
+      purpose: goal,
+      objectives: [originalRequirement],
+      constraints: ['Retain original authority history'],
     },
-    milestones: [{
-      id: 'recover', owner: 'work', criteria: [{ id: 'continuity', description: originalRequirement }],
-      steps: activities.map((activity) => ({
-        activity,
-        checklist: activity === 'implementation'
-          ? [{ id: 'preserve', criteria: ['continuity'], expected: originalRequirement }] : [],
-        ...(activity === 'implementation' ? {} : { inapplicable: 'Outside this verification fixture' }),
-      })),
-    }],
+    milestones: [
+      {
+        id: 'recover',
+        owner: 'work',
+        criteria: [{ id: 'continuity', description: originalRequirement }],
+        steps: activities.map((activity) => ({
+          activity,
+          checklist:
+            activity === 'implementation'
+              ? [{ id: 'preserve', criteria: ['continuity'], expected: originalRequirement }]
+              : [],
+          ...(activity === 'implementation'
+            ? {}
+            : { inapplicable: 'Outside this verification fixture' }),
+        })),
+      },
+    ],
   };
 }
