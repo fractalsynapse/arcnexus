@@ -8,6 +8,7 @@ import {
 } from '../../../architecture/src/index.js';
 import { activities, type Plan } from '../../../direction/src/index.js';
 import type { HostTask } from '../../../execution/src/index.js';
+import { checkInput } from '../../../execution/src/check-cache.js';
 import { verificationContext } from '../../../execution/src/research.js';
 import { verify, type Candidate, type Verdict } from '../../src/index.js';
 import {
@@ -76,20 +77,15 @@ export class RecoveredAssessment extends RecoveredProject {
   /** A stale external verdict must be refused, either as a hold or as a nonaccepting gate result. */
   async refuseReplay(verdict: Verdict) {
     this.replay = verdict;
+    let result: Verdict;
     try {
-      const result = await this.run();
-      assert.notEqual(
-        result.kind,
-        'accepted',
-        'Earlier acceptance authorized a changed recovery identity',
-      );
+      result = await this.run();
     } catch (error) {
       assert(error instanceof AgentActivityHold, String(error));
-      assert.match(
-        error.message,
-        /Reviewer|verification|identity|candidate|acceptance|capture|base/i,
-      );
+      assert.match(error.message, /Reviewer|verification|identity|candidate|acceptance|capture|base/i);
+      return;
     }
+    assert.notEqual(result.kind, 'accepted', 'Earlier acceptance authorized a changed recovery identity');
   }
 
   /** Retrieve full authorized artifacts through the same file boundary available to assessment. */
@@ -140,9 +136,11 @@ export class RecoveredAssessment extends RecoveredProject {
   /** Resolve current command data and retain the controlled process observation with its complete log. */
   private observeCheck(id: string) {
     const operation = resolveOperation(this.task.capture, id);
+    const input = checkInput(this.task, id);
+    assert(input, 'Controlled execution still requires real clean candidate inputs');
     const log = this.task.store(
       id + '.log',
-      'Controlled check: ' + JSON.stringify(operation) + '\n',
+      'Controlled check: ' + JSON.stringify({ operation, input, result: this.checkState }) + '\n',
     );
     const result: CheckResult = {
       id,
@@ -154,7 +152,7 @@ export class RecoveredAssessment extends RecoveredProject {
       ...this.checkState,
     };
     this.checks.push(result);
-    this.task.note({ check: result });
+    this.task.note({ check: result, checkInput: input });
     return result;
   }
 
