@@ -103,8 +103,10 @@ test('recovered activation receives the verbatim answer and original receipt und
     ],
     'Recovered caller must receive the complete previously answered question',
   );
-  assert.equal(fixture.git('rev-parse', '7-task:checked.txt'),
-    fixture.git('rev-parse', checkpoint + ':checked.txt'));
+  assert.equal(
+    fixture.git('rev-parse', '7-task:checked.txt'),
+    fixture.git('rev-parse', checkpoint + ':checked.txt'),
+  );
   assert.equal(fixture.git('merge-base', '7-task', checkpoint), checkpoint);
   assert.equal(fixture.git('merge-base', '7-task', staging), staging);
   assert(!existsSync(join(fixture.root, 'checked.txt')));
