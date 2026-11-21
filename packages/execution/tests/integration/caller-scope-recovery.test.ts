@@ -57,7 +57,8 @@ class CallerRecoveryScenario {
     };
     this.diagnostic = supplierLinkDiagnostic(recoveryPlan(), this.supplier)!;
     assert(this.diagnostic, 'The explicit legacy handoff must be invalid');
-    this.fixture.answerQuestion = (question) => question.startsWith(pendingQuestion) ? pendingAnswer : undefined;
+    this.fixture.answerQuestion = (question) =>
+      question.startsWith(pendingQuestion) ? pendingAnswer : undefined;
     this.fixture.beforePlan = (task) => this.recordRejection(task);
     this.fixture.afterActivation = (task) => this.observeConsumers(task);
   }
@@ -80,24 +81,42 @@ class CallerRecoveryScenario {
     task.record({
       feedback: {
         kind: 'rejection',
-        findings: [{ owner: 'work', criterion: criterion.id, reason: 'Caller continuity', evidence: [evidence] }],
+        findings: [
+          {
+            owner: 'work',
+            criterion: criterion.id,
+            reason: 'Caller continuity',
+            evidence: [evidence],
+          },
+        ],
       },
     });
   }
 
   /** Capture actual caller identity and run its hold and supplier consumers before workspace cleanup. */
   private async observeConsumers(task: HostTask) {
-    const actual = task.observations<{ clarification?: Clarification }>()
+    const actual = task
+      .observations<{ clarification?: Clarification }>()
       .findLast(({ clarification }) => clarification?.answer !== undefined)!.clarification!;
     this.scopes.push({ actual: actual.scope, public: task.inboxScope(selection, data) });
     this.recordResearch(task, actual.scope);
     if (this.held.length === 0) this.recordSupplier(task);
     const pending = await this.openGate(task);
-    const invocation = this.context.mock.method(task, 'activate', async (_agent: Agent, _selection: ActivitySelection, input: TaskContext) => {
-      this.repairs.push((input.assignment as { responseRepair?: string }).responseRepair);
-      throw pending;
-    });
-    const outcome = await steward(new Agent(this.fixture.architecture), task, milestone, 'implementation', signal);
+    const invocation = this.context.mock.method(
+      task,
+      'activate',
+      async (_agent: Agent, _selection: ActivitySelection, input: TaskContext) => {
+        this.repairs.push((input.assignment as { responseRepair?: string }).responseRepair);
+        throw pending;
+      },
+    );
+    const outcome = await steward(
+      new Agent(this.fixture.architecture),
+      task,
+      milestone,
+      'implementation',
+      signal,
+    );
     invocation.mock.restore();
     assert('holdContext' in outcome && outcome.holdContext, JSON.stringify(outcome));
     this.held.push(outcome.holdContext as HoldContext);
@@ -108,7 +127,13 @@ class CallerRecoveryScenario {
     const index = this.research.length;
     const evidence = task.store('caller-research.md', reports[index]!);
     const result: ResearchResult = {
-      request: { id: 'report-' + index, inbox, requestedBy: selection, question: 'Research ' + index, decision: 'Preserve caller knowledge' },
+      request: {
+        id: 'report-' + index,
+        inbox,
+        requestedBy: selection,
+        question: 'Research ' + index,
+        decision: 'Preserve caller knowledge',
+      },
       component: 'work',
       evidence,
       summary: 'Distinct report ' + index,
@@ -121,7 +146,10 @@ class CallerRecoveryScenario {
   private recordSupplier(task: HostTask) {
     const assignment = {
       ...data,
-      milestone: { id: milestone.id, step: milestone.steps.find((step) => step.activity === 'implementation') },
+      milestone: {
+        id: milestone.id,
+        step: milestone.steps.find((step) => step.activity === 'implementation'),
+      },
     };
     const scope = inboxIdentity(task, selection, assignment, callerRevision(task, selection));
     task.note({ projectRequest: { ...this.supplier, scope } });
@@ -132,12 +160,18 @@ class CallerRecoveryScenario {
     const ask = task.ask;
     task.ask = async () => undefined;
     const question = pendingQuestion + ' attempt ' + this.held.length;
-    const clarifications = new Clarifications(task, selection, signal, callerRevision(task, selection));
+    const clarifications = new Clarifications(
+      task,
+      selection,
+      signal,
+      callerRevision(task, selection),
+    );
     try {
       await clarifications.run(data, async () => ({ kind: 'question', question }));
       assert.fail('An unanswered gate must stop the caller');
     } catch (error) {
-      const gate = task.observations<{ clarification?: Clarification }>()
+      const gate = task
+        .observations<{ clarification?: Clarification }>()
         .findLast(({ clarification }) => clarification?.question === question)!.clarification!;
       this.gates.push(gate);
       return error;
@@ -148,12 +182,21 @@ class CallerRecoveryScenario {
 
   /** Compare complete public answers and their canonical artifacts across staging recovery. */
   assertAnswers() {
-    assert.deepEqual(this.held[0]!.answers.map(({ answer }) => answer), [answer]);
-    assert.deepEqual(this.held[1]!.answers.map(({ answer }) => answer), [answer, pendingAnswer, continuationAnswer]);
+    assert.deepEqual(
+      this.held[0]!.answers.map(({ answer }) => answer),
+      [answer],
+    );
+    assert.deepEqual(
+      this.held[1]!.answers.map(({ answer }) => answer),
+      [answer, pendingAnswer, continuationAnswer],
+    );
     for (const held of this.held)
       for (const gate of held.answers) {
         assert(gate.evidence);
-        assert.equal(JSON.parse(this.fixture.tasks[1]!.readFile(gate.evidence).text).answer, gate.answer);
+        assert.equal(
+          JSON.parse(this.fixture.tasks[1]!.readFile(gate.evidence).text).answer,
+          gate.answer,
+        );
       }
   }
 
@@ -162,10 +205,15 @@ class CallerRecoveryScenario {
     for (const [index, held] of this.held.entries()) {
       assert.deepEqual(held.gates, [this.gates[index]]);
       assert.deepEqual(held.prerequisite, {
-        kind: 'human-decision', satisfied: false, requiredAction: this.gates[index]!.question,
+        kind: 'human-decision',
+        satisfied: false,
+        requiredAction: this.gates[index]!.question,
         evidence: [this.gates[index]!.evidence],
       });
-      assert.equal(JSON.parse(this.fixture.tasks[1]!.readFile(held.gates[0]!.evidence!).text).question, this.gates[index]!.question);
+      assert.equal(
+        JSON.parse(this.fixture.tasks[1]!.readFile(held.gates[0]!.evidence!).text).question,
+        this.gates[index]!.question,
+      );
     }
   }
 
@@ -173,7 +221,10 @@ class CallerRecoveryScenario {
   assertResearch() {
     assert.deepEqual(this.held[0]!.research, this.research.slice(0, 1));
     assert.deepEqual(this.held[1]!.research, this.research);
-    assert.deepEqual(this.held[1]!.research.map(({ evidence }) => this.fixture.tasks[1]!.readFile(evidence).text), reports);
+    assert.deepEqual(
+      this.held[1]!.research.map(({ evidence }) => this.fixture.tasks[1]!.readFile(evidence).text),
+      reports,
+    );
   }
 
   /** Require the original diagnostic in the actual prepared steward assignment after reopening. */
@@ -186,7 +237,11 @@ test('public caller scope matches actual executable-provider MCP before and afte
   const scenario = new CallerRecoveryScenario(t);
   await scenario.run();
   assert.equal(scenario.scopes[0]!.public, scenario.scopes[0]!.actual);
-  assert.equal(scenario.scopes[1]!.public, scenario.scopes[1]!.actual, 'Public caller scope differs from its actual MCP conversation');
+  assert.equal(
+    scenario.scopes[1]!.public,
+    scenario.scopes[1]!.actual,
+    'Public caller scope differs from its actual MCP conversation',
+  );
 });
 
 for (const consumer of ['Answers', 'Gates', 'Research', 'Supplier'] as const) {
