@@ -8,7 +8,7 @@ import {
 } from '../../../architecture/src/index.js';
 import { activities, type Plan } from '../../../direction/src/index.js';
 import type { HostTask } from '../../../execution/src/index.js';
-import { checkInput } from '../../../execution/src/check-cache.js';
+import { checkInput, reusableCheck } from '../../../execution/src/check-cache.js';
 import { verificationContext } from '../../../execution/src/research.js';
 import { verify, type Candidate, type Verdict } from '../../src/index.js';
 import {
@@ -145,6 +145,11 @@ export class RecoveredAssessment extends RecoveredProject {
     const operation = resolveOperation(this.task.capture, id);
     const input = checkInput(this.task, id);
     assert(input, 'Controlled execution still requires real clean candidate inputs');
+    const reused = reusableCheck(this.task.observations(), input);
+    if (reused) {
+      this.task.note({ check: reused, checkInput: input, reusedFrom: reused.log });
+      return reused;
+    }
     const log = this.task.store(
       id + '.log',
       'Controlled check: ' + JSON.stringify({ operation, input, result: this.checkState }) + '\n',
