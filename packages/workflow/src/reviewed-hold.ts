@@ -97,6 +97,59 @@ function observedHeldCheckProgress(
   );
 }
 
+/** Compare completed inbox content, never new artifact names or unrelated caller knowledge. */
+function observedHeldKnowledgeProgress(
+  task: HostTask,
+  activation: ActivityCheckpoint,
+  held: HoldContext,
+) {
+  const scopes = heldKnowledgeScopes(task, activation, held);
+  const answers = new Map<string, HoldContext['answers'][number]>();
+  const research = new Map<string, HoldContext['research'][number]>();
+  for (const { clarification, researchResult } of task.observations<{
+    clarification?: HoldContext['answers'][number];
+    researchResult?: HoldContext['research'][number];
+  }>()) {
+    if (clarification && scopes.includes(clarification.scope))
+      answers.set(clarification.question, clarification);
+    if (researchResult && scopes.includes(researchResult.request.inbox))
+      research.set(researchResult.request.id, researchResult);
+  }
+  return (
+    knowledgeContent([...answers.values()], [...research.values()]) !==
+    knowledgeContent(held.answers, held.research)
+  );
+}
+
+/** Resolve both host conversations and prepared activations through Execution's durable inbox boundary. */
+function heldKnowledgeScopes(task: HostTask, activation: ActivityCheckpoint, held: HoldContext) {
+  const selection = { component: activation.owner, activity: activation.step };
+  const data = { milestone: { id: held.milestone }, acceptance: held.acceptance };
+  const plan = task.history().findLast((event) => 'plan' in event)?.plan;
+  const step = plan?.milestones
+    .find((milestone) => milestone.id === held.milestone)
+    ?.steps.find((step) => step.activity === activation.step);
+  return [
+    task.inboxScope(selection, data),
+    task.inboxScope(selection, { ...data, milestone: { ...data.milestone, step } }),
+  ];
+}
+
+/** Exclude incomplete questions and duplicate evidence while preserving complete answer bytes. */
+function knowledgeContent(answers: HoldContext['answers'], research: HoldContext['research']) {
+  const entries = [
+    ...answers
+      .filter((answer) => answer.answer !== undefined)
+      .map(({ scope, question, answer }) =>
+        JSON.stringify(['clarification', scope, question, answer]),
+      ),
+    ...research.map(({ request, digest, unavailable }) =>
+      JSON.stringify(['research', request.id, digest, unavailable]),
+    ),
+  ];
+  return JSON.stringify([...new Set(entries)].sort());
+}
+
 /** Compare host-observed relevant inputs and finding, excluding incidental artifact allocation. */
 function sameHold(previous: HoldContext, current: HoldContext) {
   return (
