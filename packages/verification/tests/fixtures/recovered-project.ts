@@ -91,6 +91,16 @@ export class RecoveredProject {
     return this.commit(this.task.worktree!, 'Issue #7 corrected candidate');
   }
 
+  /** Replace installed dependency identity outside the candidate, as a changed assessment environment. */
+  changeEnvironment() {
+    const directory = join(this.root, 'node_modules');
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(
+      join(directory, '.package-lock.json'),
+      JSON.stringify({ fixture: 'changed installation' }),
+    );
+  }
+
   /** Commit fixture data without depending on global Git identity or a remote network. */
   commit(directory: string, message: string) {
     this.git(directory, 'add', '-A');
