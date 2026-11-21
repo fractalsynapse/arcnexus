@@ -20,6 +20,7 @@ const signal = new AbortController().signal;
 const milestone = recoveryPlan().milestones[0]!;
 const data = { milestone: { id: milestone.id }, acceptance: milestone.criteria };
 const pendingQuestion = 'Which approved boundary permits the remaining change?';
+const pendingAnswer = '  Approved boundary A.\n\nKeep the unresolved follow-up separate.  \n';
 const reports = [
   'Original research A\n\nPreserve café, original authority and trailing spaces.  \n',
   'Recovered research B\n\nUse current ownership; retain the original requirement.\n',
@@ -55,6 +56,7 @@ class CallerRecoveryScenario {
     };
     this.diagnostic = supplierLinkDiagnostic(recoveryPlan(), this.supplier)!;
     assert(this.diagnostic, 'The explicit legacy handoff must be invalid');
+    this.fixture.answerQuestion = (question) => question.startsWith(pendingQuestion) ? pendingAnswer : undefined;
     this.fixture.onAdmit = (task) => this.recordRejection(task);
     this.fixture.afterActivation = (task) => this.observeConsumers(task);
   }
@@ -128,13 +130,14 @@ class CallerRecoveryScenario {
   private async openGate(task: HostTask) {
     const ask = task.ask;
     task.ask = async () => undefined;
+    const question = pendingQuestion + ' attempt ' + this.held.length;
     const clarifications = new Clarifications(task, selection, signal, callerRevision(task, selection));
     try {
-      await clarifications.run(data, async () => ({ kind: 'question', question: pendingQuestion }));
+      await clarifications.run(data, async () => ({ kind: 'question', question }));
       assert.fail('An unanswered gate must stop the caller');
     } catch (error) {
       const gate = task.observations<{ clarification?: Clarification }>()
-        .findLast(({ clarification }) => clarification?.question === pendingQuestion)!.clarification!;
+        .findLast(({ clarification }) => clarification?.question === question)!.clarification!;
       this.gates.push(gate);
       return error;
     } finally {
@@ -145,7 +148,7 @@ class CallerRecoveryScenario {
   /** Compare complete public answers and their canonical artifacts across staging recovery. */
   assertAnswers() {
     assert.deepEqual(this.held[0]!.answers.map(({ answer }) => answer), [answer]);
-    assert.deepEqual(this.held[1]!.answers.map(({ answer }) => answer), [answer, continuationAnswer]);
+    assert.deepEqual(this.held[1]!.answers.map(({ answer }) => answer), [answer, pendingAnswer, continuationAnswer]);
     for (const held of this.held)
       for (const gate of held.answers) {
         assert(gate.evidence);
@@ -158,10 +161,10 @@ class CallerRecoveryScenario {
     for (const [index, held] of this.held.entries()) {
       assert.deepEqual(held.gates, [this.gates[index]]);
       assert.deepEqual(held.prerequisite, {
-        kind: 'human-decision', satisfied: false, requiredAction: pendingQuestion,
+        kind: 'human-decision', satisfied: false, requiredAction: this.gates[index]!.question,
         evidence: [this.gates[index]!.evidence],
       });
-      assert.equal(JSON.parse(this.fixture.tasks[1]!.readFile(held.gates[0]!.evidence!).text).question, pendingQuestion);
+      assert.equal(JSON.parse(this.fixture.tasks[1]!.readFile(held.gates[0]!.evidence!).text).question, this.gates[index]!.question);
     }
   }
 
