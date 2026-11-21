@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Recover steward holds after independent rejection through Direction’s existing correction plan, preserving the original criterion and finding, issue, branch, secured checkpoint, complete answers, exact diagnostics and retained check exits/logs or checked-edit receipts. Allow smaller sequential corrections with retained evidence and assessment against the original acceptance, without widening authority. Continue meaningful progress; stop unchanged repetition with the unresolved criterion, diagnostic, evidence and required next action. Preserve human-decision and external-prerequisite gates until satisfaction is observed, and never report held work as accepted or delivered ([#699](https://github.com/fractalsynapse/arcnexus/issues/699)).
+  Controlled-provider regressions with real Git/SQLite persistence cover correction, sequential splits, restart, progress and prerequisite gates. These observations do not establish live qualification, assembled independent acceptance, hosted CI or staging delivery.
+
 - Preserve the exact selected check operation, independent review criterion or delivery observation in goal mapping reports alongside the verified run ID and evaluated revision. Keep source coverage distinct from observed results, reject unknown or stale verified citations, and keep standing goals free of component ownership and execution results ([#697](https://github.com/fractalsynapse/arcnexus/issues/697)).
 
 - Distinguish missing test ownership from ownership collisions, naming the source path and every conflicting component ID. Preserve catalog-derived owner selection and emitted suite paths, with regressions covering source/built parity, owners without suites, and invalid placement or metadata refused before filtering or execution ([#695](https://github.com/fractalsynapse/arcnexus/issues/695)).
