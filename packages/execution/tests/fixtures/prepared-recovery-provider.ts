@@ -9,22 +9,27 @@ class PreparedRecoveryProvider {
     const input = readFileSync(0, 'utf8');
     const taskSection = input.split('\n## Activity\n')[0]!;
     const data = parse('assignment:' + taskSection.split('\nassignment:')[1]!);
-    this.emit({ type: 'fixture.prepared', input, data, node: process.version });
+    const tools = await this.rpc('tools/list');
+    this.emit({ type: 'fixture.prepared', input, data, tools: tools.tools,
+      node: process.version, args: process.argv.slice(2), executable: process.argv[1],
+      cwd: process.cwd() });
     if (!existsSync('checked.txt')) {
-      const receipt = await this.call('checked-edit', {
+      const receipt = await this.rpc('tools/call', { name: 'checked-edit', arguments: {
         path: 'checked.txt',
         expected: null,
         content: 'secured checked bytes café\nsecond line\n',
-      });
+      } });
       this.emit({ type: 'fixture.receipt', receipt });
-      await this.call('ask-question', { question: 'Which requirement must recovery preserve?' });
+      await this.rpc('tools/call', { name: 'ask-question', arguments: {
+        question: 'Which requirement must recovery preserve?',
+      } });
       return this.reply({});
     }
     this.reply({ kind: 'completed' });
   }
 
   /** Invoke the exact local tool mapping and reject an actual host refusal. */
-  private async call(name: string, args: unknown) {
+  private async rpc(method: string, params?: unknown) {
     const setting = process.argv.find((arg) => arg.startsWith('mcp_servers='));
     if (!setting) throw new Error('Missing local MCP binding');
     const url = JSON.parse(setting.split('url=')[1]!.split(',required=')[0]!);
@@ -37,8 +42,8 @@ class PreparedRecoveryProvider {
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
-        method: 'tools/call',
-        params: { name, arguments: args },
+        method,
+        params,
       }),
     });
     const body = (await response.json()) as any;
