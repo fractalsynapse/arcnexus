@@ -1,6 +1,7 @@
 import { editFingerprint, HostTask, type HoldContext } from '../../execution/src/index.js';
 import { checkFailureSignature } from '../../execution/src/steward-check.js';
 import type { RevisionFeedback } from '../../direction/src/index.js';
+import { releasedReviewedPrerequisite } from './reviewed-prerequisite.js';
 import {
   stopped,
   type ActivityCheckpoint,
@@ -34,8 +35,13 @@ export function reviewedHold(
   return revise(holdFeedback(held, activation));
 }
 
-/** Re-enter the retained caller when secured relevant bytes or a resolved check supersede its hold. */
-export function supersededReviewedHold(session: TaskSession, activation: ActivityCheckpoint) {
+/** Reobserve prerequisites first, then reopen only for satisfied gates or relevant host progress. */
+export async function supersededReviewedHold(
+  session: TaskSession,
+  activation: ActivityCheckpoint,
+  signal: AbortSignal,
+) {
+  if (await releasedReviewedPrerequisite(session, activation, signal)) return true;
   const outcome = activation.outcome;
   const held = outcome.kind === 'blocked' ? outcome.holdContext : undefined;
   if (!(session instanceof HostTask) || !held || held.prerequisite) return false;
