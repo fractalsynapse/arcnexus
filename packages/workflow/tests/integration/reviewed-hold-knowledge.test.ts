@@ -81,19 +81,7 @@ async function duplicateAnswer(f: ReviewedWorkflow, held: HoldContext) {
 /** Complete a real clarification or inject an explicit completed report at the retained inbox boundary. */
 async function completeKnowledge(f: ReviewedWorkflow, kind: 'clarification' | 'research') {
   const task = f.fixture.task;
-  const signal = new AbortController().signal;
-  if (kind === 'clarification') {
-    task.ask = async () =>
-      '  Preserve schema A.\n\nCorrect the reviewed input using the complete answer.  ';
-    const gates = new Clarifications(task, selection, signal);
-    const question = 'How should correction proceed?';
-    await gates.run(context(), async () =>
-      gates.answers(context()).some((gate) => gate.question === question)
-        ? { kind: 'completed', edits: [], checks: [] }
-        : { kind: 'question', question },
-    );
-    return;
-  }
+  if (kind === 'clarification') return completeClarification(f);
   const evidence = task.store(
     'completed-research.md',
     'Complete research: correct fixture.txt under schema A.\n',
@@ -152,4 +140,19 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
 /** Select the same public retained caller scope used for the original complete answer. */
 function context() {
   return { milestone: { id: correction.id }, acceptance: correction.criteria };
+}
+
+/** Use the real conversation loop to complete a distinct question in an already answered inbox. */
+async function completeClarification(f: ReviewedWorkflow) {
+  const task = f.fixture.task;
+  const signal = new AbortController().signal;
+  task.ask = async () =>
+    '  Preserve schema A.\n\nCorrect the reviewed input using the complete answer.  ';
+  const gates = new Clarifications(task, selection, signal);
+  const question = 'How should correction proceed?';
+  await gates.run(context(), async () =>
+    gates.answers(context()).some((gate) => gate.question === question)
+      ? { kind: 'completed', edits: [], checks: [] }
+      : { kind: 'question', question },
+  );
 }
