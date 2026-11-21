@@ -105,20 +105,7 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
     assert.equal(provider.opened, 1);
     assert.equal(provider.merged, 0);
     assert(result.evidence.length);
-    if (conflict === 'unavailable') {
-      const diagnostic = result.evidence.find((path) =>
-        path.endsWith('publication-provider-failure.log'),
-      );
-      assert(diagnostic, 'Unavailable provider facts require retained complete diagnostics');
-      assert.match(
-        readFileSync(diagnostic, 'utf8'),
-        /Complete provider observation stdout\n  retained detail\n/,
-      );
-      assert.match(
-        readFileSync(diagnostic, 'utf8'),
-        /Complete provider observation stderr\n  restore credentials\n/,
-      );
-    }
+    if (conflict === 'unavailable') unavailableEvidence(result.evidence);
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
     preserved(fixture, original);
   });
@@ -180,4 +167,13 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
       { id: 'current-check', status: 0 },
     ],
   );
+}
+
+/** Distinguish the newest unavailable observation from the retained lost-effect diagnostic. */
+function unavailableEvidence(evidence: readonly string[]) {
+  const diagnostic = evidence.findLast((path) => path.endsWith('publication-provider-failure.log'));
+  assert(diagnostic, 'Unavailable provider facts require retained complete diagnostics');
+  const log = readFileSync(diagnostic, 'utf8');
+  assert(log.includes('Complete provider observation stdout\n  retained detail\n'));
+  assert(log.includes('Complete provider observation stderr\n  restore credentials\n'));
 }
