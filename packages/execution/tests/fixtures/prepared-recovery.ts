@@ -14,6 +14,8 @@ import { Execution, hostTask, type HostTask } from '../../src/index.js';
 import { RoundConsumptionFixture } from './round-consumption.js';
 
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
+export const continuationQuestion = 'Which newly captured requirement governs this continuation?';
+export const continuationAnswer = '  Use the newly captured ownership.\n\nRetain original café requirements.  \n';
 export const checked = 'secured checked bytes café\nsecond line\n';
 export const criterion = {
   id: 'continuity',
@@ -36,6 +38,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   private head?: string;
   private interrupted = false;
   interruptNext = false;
+  recoveryContinuation?: 'replay' | 'question';
 
   /** Commit explicit tools and ownership and bind an executable deterministic provider. */
   constructor(private readonly context: TestContext) {
@@ -104,7 +107,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       progress() {},
       answer: async (question: string) => {
         this.prompts.push(question);
-        return answer;
+        return question === continuationQuestion ? continuationAnswer : answer;
       },
     };
   }
@@ -155,6 +158,11 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 
   /** Retrieve complete native observations from their canonical artifacts. */
   probes(task: HostTask) {
+    return this.events(task).filter((event) => event.type === 'fixture.prepared');
+  }
+
+  /** Read complete provider events to compare replay acknowledgments with the original receipt. */
+  events(task: HostTask) {
     return task.evidence
       .filter((path) => path.endsWith('codex.jsonl'))
       .flatMap((path) =>
@@ -162,8 +170,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
           .trim()
           .split('\n')
           .map((line) => JSON.parse(line)),
-      )
-      .filter((event) => event.type === 'fixture.prepared');
+      );
   }
 
   /** Preserve production admission and preparation while isolating hosted transport. */
@@ -190,7 +197,10 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       agent,
       { component: 'work', activity: 'implementation' },
       {
-        assignment: { instructions: 'Continue the original checked contribution' },
+        assignment: {
+          instructions: 'Continue the original checked contribution',
+          recoveryContinuation: this.recoveryContinuation,
+        },
         milestone: { id: 'recover' },
         acceptance: [criterion],
         evidence: [],
