@@ -160,6 +160,9 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
   assert.deepEqual(verdict.criteria, ['continuity']);
   assert.deepEqual(
     assessment.checks.map(({ id, status }) => ({ id, status })),
-    [{ id: 'fixture-check', status: 0 }, { id: 'current-check', status: 0 }],
+    [
+      { id: 'fixture-check', status: 0 },
+      { id: 'current-check', status: 0 },
+    ],
   );
 }
