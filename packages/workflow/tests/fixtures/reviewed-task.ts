@@ -13,7 +13,12 @@ import type { CheckResult } from '../../../execution/src/check.js';
 import { git } from '../../../execution/src/git.js';
 import { Clarifications, HostTask, steward } from '../../../execution/src/index.js';
 import { textDigest } from '../../../foundation/src/index.js';
-import { answer, correction, question, selection } from '../../../execution/tests/fixtures/reviewed-hold.js';
+import {
+  answer,
+  correction,
+  question,
+  selection,
+} from '../../../execution/tests/fixtures/reviewed-hold.js';
 import { holdFiles } from '../../../execution/tests/fixtures/reviewed-hold-project.js';
 
 const signal = new AbortController().signal;
@@ -57,7 +62,12 @@ export class ReviewedTask {
           owner: 'owner',
           criterion: 'original-criterion',
           reason: 'Reviewed context A is lost',
-          evidence: [this.task.store('independent-review.md', 'Independent rejection A\nKeep the exact originating finding.\n')],
+          evidence: [
+            this.task.store(
+              'independent-review.md',
+              'Independent rejection A\nKeep the exact originating finding.\n',
+            ),
+          ],
         },
         {
           owner: 'other',
@@ -75,13 +85,15 @@ export class ReviewedTask {
     git(this.root, 'config', 'user.name', 'Hold fixture');
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
-    const command = join(this.root, '.git', 'reviewed-command.cjs');
+    const command = join(this.root, '.git', 'reviewed-command.mjs');
     writeFileSync(command, readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js')));
     writeFileSync(join(this.root, '.git', 'diagnostic'), 'Error: reviewed behavior still fails');
     const files = {
       ...holdFiles,
       '.arc/architecture/operations/owner-tests.yaml': JSON.stringify({
-        id: 'owner-tests', category: 'test', command: '/usr/bin/node',
+        id: 'owner-tests',
+        category: 'test',
+        command: '/usr/bin/node',
         args: [command, 'fixture.txt', '', join(this.root, '.git', 'diagnostic')],
         network: false,
       }),
@@ -99,10 +111,18 @@ export class ReviewedTask {
     const capture = new Architecture().capture(this.root);
     const journal = new Coordination(this.storage).admit(remote, focus.purpose);
     assert(journal instanceof Journal);
-    const task = new HostTask({
-      capture, common: join(this.root, '.git'), executable: '', base: 'staging',
-      fresh: true, storage: this.storage,
-    }, focus.purpose, journal);
+    const task = new HostTask(
+      {
+        capture,
+        common: join(this.root, '.git'),
+        executable: '',
+        base: 'staging',
+        fresh: true,
+        storage: this.storage,
+      },
+      focus.purpose,
+      journal,
+    );
     const provider = new GitHub(remote, signal);
     t.mock.method(provider, 'remoteHead', async () => this.head);
     t.mock.method(provider, 'publication', async () => undefined);
@@ -138,7 +158,8 @@ export class ReviewedTask {
     await this.task.setupWorkspace('699', signal);
     this.task.ask = async () => answer;
     await new Clarifications(this.task, selection, signal).decide(
-      { milestone: { id: correction.id }, acceptance: correction.criteria }, question,
+      { milestone: { id: correction.id }, acceptance: correction.criteria },
+      question,
     );
     await this.edit('unrelated.txt', 'acknowledged before hold');
   }
@@ -162,13 +183,7 @@ export class ReviewedTask {
 
   /** Produce a host hold through the public Execution steward boundary, never a model blocked claim. */
   run(): Promise<ActivityOutcome> {
-    return steward(
-      new Agent(new Architecture()),
-      this.task,
-      correction,
-      'implementation',
-      signal,
-    );
+    return steward(new Agent(new Architecture()), this.task, correction, 'implementation', signal);
   }
 
   /** Read secured checkpoint identity directly from Git. */
