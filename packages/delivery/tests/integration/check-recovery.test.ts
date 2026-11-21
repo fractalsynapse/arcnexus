@@ -220,7 +220,10 @@ for (const change of ['base', 'head'] as const) {
     if (change === 'base')
       assert.equal(await resume(scenario.task, scenario.signal, () => {}), undefined);
     else
-      await assert.rejects(resume(scenario.task, scenario.signal, () => {}), /match the retained candidate/);
+      await assert.rejects(
+        resume(scenario.task, scenario.signal, () => {}),
+        /match the retained candidate/,
+      );
     assert.equal(scenario.merged, 0);
     assert.equal(scenario.opened, 0);
   });
@@ -230,15 +233,19 @@ for (const change of ['base', 'head'] as const) {
 function publicationPlan(): Plan {
   return {
     focus: { purpose: 'Deliver the fixture', objectives: [], constraints: [] },
-    milestones: [{
-      id: 'delivery',
-      owner: 'work',
-      criteria: [{ id: 'behavior', description: 'Preserve diagnostics and retained publication' }],
-      steps: activities.map((activity) => ({
-        activity,
-        checklist: [],
-        inapplicable: 'Controlled publication fixture',
-      })),
-    }],
+    milestones: [
+      {
+        id: 'delivery',
+        owner: 'work',
+        criteria: [
+          { id: 'behavior', description: 'Preserve diagnostics and retained publication' },
+        ],
+        steps: activities.map((activity) => ({
+          activity,
+          checklist: [],
+          inapplicable: 'Controlled publication fixture',
+        })),
+      },
+    ],
   };
 }
