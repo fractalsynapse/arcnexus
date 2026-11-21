@@ -82,6 +82,37 @@ operation or interpreting a zero exit with no relevant cases as proof. Preserve
 expected-red and deliberate refusal observations with their original interpretation;
 historical red does not replace required current passing evidence.
 
+### Route observed failures to correction
+
+For `recovered-check-applicability`, the intended correction distinguishes an
+ordinary numeric check failure from missing, skipped or unavailable required
+evidence. A completed assembled check with a nonzero numeric status must reach
+independent assessment with its complete diagnostics, current resolved inputs and
+retained history. Verification must not return a terminal `blocked` result for
+that ordinary failure before the Reviewer can assess it. Missing, skipped or
+unavailable required evidence retains its explicit hold and exact prerequisite.
+
+Reaching assessment does not make failed evidence acceptable. Preserve the
+failed-check acceptance guard: an accepting response cannot authorize delivery
+while a current required check fails. A valid independent rejection names the
+deficient accepted criterion, accountable owner and supporting evidence.
+[Workflow](../workflow/contract.md) passes that rejection to
+[Direction](../direction/contract.md) for correction within the existing task.
+Ordinary component feedback failures still return to their accountable activity;
+they do not independently invoke Direction. Invalid Reviewer responses return to
+the same assessor for response repair. Preserve the original acceptance and all
+historical observations through each route.
+
+The distinguishing public regression uses the actual assembled Verification entry
+with real Git and SQLite records, a controlled numeric failed check and a valid
+criterion-linked independent rejection. It must observe the Reviewer receiving
+the failed evidence and Verification returning `rejected`, allowing the existing
+correction lifecycle to proceed. Companion assertions must refuse acceptance over
+that failed check and retain explicit holds for missing, skipped or unavailable
+required evidence. Keep stale-identity refusal and recovered-check applicability
+coverage intact. These are intended observations for Testing and Implementation;
+this documentation does not establish that the runtime correction has passed.
+
 ## Give the independent Reviewer complete inputs
 
 Retain each operation's binding and override provenance, command and arguments,
