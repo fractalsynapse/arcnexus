@@ -38,9 +38,11 @@ async function resolveHumanGates(
 ) {
   const selection = { component: activation.owner, activity: activation.step };
   const data = { milestone: { id: held.milestone }, acceptance: held.acceptance };
-  const step = task.history().findLast((event) => 'plan' in event)?.plan?.milestones
-    .find((milestone) => milestone.id === held.milestone)?.steps
-    .find((step) => step.activity === activation.step);
+  const step = task
+    .history()
+    .findLast((event) => 'plan' in event)
+    ?.plan?.milestones.find((milestone) => milestone.id === held.milestone)
+    ?.steps.find((step) => step.activity === activation.step);
   const contexts = [data, { ...data, milestone: { ...data.milestone, step } }];
   if (!held.gates.length) return false;
   for (const gate of held.gates) {
