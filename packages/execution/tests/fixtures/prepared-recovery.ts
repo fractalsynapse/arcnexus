@@ -67,7 +67,8 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
           this.plans += 1;
           return { kind: 'plan', plan: recoveryPlan() };
         },
-        revise: async () => assert.fail('Recovery must retain the accepted plan'),
+        revise: async (_session, _plan, feedback) =>
+          assert.fail('Recovery must retain the accepted plan: ' + JSON.stringify(feedback)),
       },
       agent: { execute: async (session) => this.activate(hostTask(session), agent) },
       ...this.gates(),
