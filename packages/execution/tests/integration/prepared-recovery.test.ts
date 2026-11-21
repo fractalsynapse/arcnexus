@@ -103,6 +103,8 @@ test('recovered activation receives the verbatim answer and original receipt und
     ],
     'Recovered caller must receive the complete previously answered question',
   );
+  assert.equal(fixture.git('rev-parse', '7-task:checked.txt'),
+    fixture.git('rev-parse', checkpoint + ':checked.txt'));
   assert.equal(fixture.git('merge-base', '7-task', checkpoint), checkpoint);
   assert.equal(fixture.git('merge-base', '7-task', staging), staging);
   assert(!existsSync(join(fixture.root, 'checked.txt')));
@@ -143,6 +145,7 @@ test('conflicting checked bytes remain secured with complete conflict diagnostic
   assert.equal(held.kind, 'failed', JSON.stringify(held));
   assert.match(held.reason, /CONFLICT \(add\/add\): Merge conflict in checked.txt/);
   assert.match(held.reason, /Auto-merging checked.txt/);
+  assert(held.reason.includes(conflictOutput(fixture, checkpoint, staging)));
   assert.equal(fixture.git('rev-parse', '7-task'), checkpoint);
   assert.equal(fixture.git('show', checkpoint + ':checked.txt') + '\n', checked);
   assert.equal(fixture.git('show', staging + ':checked.txt'), 'conflicting staging bytes');
@@ -167,3 +170,15 @@ test('another staging advance requires a second recovery before activation', asy
   assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
   assert.equal(fixture.git('show', '7-task:staging.txt'), 'second staging contribution');
 });
+
+/** Compare the entire real Git conflict record, including all stage entries and messages. */
+function conflictOutput(fixture: PreparedRecoveryFixture, checkpoint: string, staging: string) {
+  try {
+    fixture.git('merge-tree', '--write-tree', checkpoint, staging);
+    assert.fail('The authored overlapping changes must conflict');
+  } catch (error) {
+    const output = (error as { stdout?: string | Buffer }).stdout?.toString().trim();
+    assert(output);
+    return output;
+  }
+}
