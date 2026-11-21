@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -89,7 +96,12 @@ export class ReviewedTask {
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
     const command = join(this.root, '.git', 'reviewed-command.mjs');
-    writeFileSync(command, '#!/usr/bin/node\n' + readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'), { mode: 0o700 });
+    writeFileSync(
+      command,
+      '#!/usr/bin/node\n' +
+        readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'),
+      { mode: 0o700 },
+    );
     writeFileSync(join(this.root, '.git', 'diagnostic'), 'Error: reviewed behavior still fails');
     const files = {
       ...holdFiles,
@@ -196,7 +208,10 @@ export class ReviewedTask {
    */
   reobserve(diagnostic: string) {
     writeFileSync(join(this.root, '.git', 'diagnostic'), diagnostic);
-    appendFileSync(join(this.root, '.git', 'reviewed-command.mjs'), '\n// Host command environment reobserved.\n');
+    appendFileSync(
+      join(this.root, '.git', 'reviewed-command.mjs'),
+      '\n// Host command environment reobserved.\n',
+    );
   }
 
   /** Read secured checkpoint identity directly from Git. */
