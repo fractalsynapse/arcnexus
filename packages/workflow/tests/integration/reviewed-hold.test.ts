@@ -190,9 +190,22 @@ for (const scenario of ['human', 'external'] as const) {
 async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   await f.reopen();
   assert.equal(f.fixture.checkpoint(), checkpoint);
+  const before = [...f.calls];
+  const held = f.holds.at(-1)!;
+  const receipts = f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt);
   assert.equal((await f.run()).kind, 'blocked');
+  assert.deepEqual(f.calls, before, 'An unavailable prerequisite cannot reactivate dependent stewards');
+  await f.reopen();
+  assert.equal(f.fixture.checkpoint(), checkpoint);
+  assert.deepEqual(f.fixture.task.history().findLast((event) => 'position' in event)!.position, held.position);
+  assert.deepEqual(f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt), receipts);
+  assert.equal(f.fixture.task.issue, held.task.issue);
+  assert.equal(f.fixture.task.branch, held.task.branch);
   assert.equal(f.revisions.length, 0);
   assert.equal(f.reviews.length, 0);
+  const start = f.gateEvents.length;
+  // The preceding reopen still owns the writer; close it through the ordinary held run.
+  assert.equal((await f.run()).kind, 'blocked');
   await f.reopen(true);
   const resumed = await f.run({
     progress() {},
@@ -203,6 +216,11 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   });
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
   assert.equal(f.reviews.length, 1);
+  if (f.scenario === 'external') {
+    const events = f.gateEvents.slice(start);
+    assert(events.indexOf('prerequisite-available') >= 0);
+    assert(events.indexOf('prerequisite-available') < events.indexOf('steward'), 'Host prerequisite satisfaction must precede dependent activation');
+  }
   if (f.scenario === 'human') {
     const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
     assert.equal(answered?.answer, gateAnswer);
