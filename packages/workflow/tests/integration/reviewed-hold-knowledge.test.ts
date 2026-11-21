@@ -85,9 +85,12 @@ async function completeKnowledge(f: ReviewedWorkflow, kind: 'clarification' | 'r
   if (kind === 'clarification') {
     task.ask = async () =>
       '  Preserve schema A.\n\nCorrect the reviewed input using the complete answer.  ';
-    await new Clarifications(task, selection, signal).decide(
-      context(),
-      'How should correction proceed?',
+    const gates = new Clarifications(task, selection, signal);
+    const question = 'How should correction proceed?';
+    await gates.run(context(), async () =>
+      gates.answers(context()).some((gate) => gate.question === question)
+        ? { kind: 'completed', edits: [], checks: [] }
+        : { kind: 'question', question },
     );
     return;
   }
