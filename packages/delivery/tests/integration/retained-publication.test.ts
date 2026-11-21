@@ -87,7 +87,7 @@ test('outdated open PR is reconciled to fresh recovered acceptance and the same 
   preserved(fixture, original);
 });
 
-for (const conflict of ['head', 'target', 'unavailable'] as const) {
+for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
   test('retained publication ' + conflict + ' refuses effects and retains evidence', async (t) => {
     const fixture = new PreparedRecoveryFixture(t);
     const provider = new PublicationProvider(fixture, t);
@@ -95,6 +95,7 @@ for (const conflict of ['head', 'target', 'unavailable'] as const) {
     provider.lose = 'open';
     assert.equal((await fixture.run()).kind, 'failed');
     if (conflict === 'unavailable') provider.unavailable = true;
+    else if (conflict === 'branch') provider.head = 'unrelated-branch-head';
     else provider.pull = { ...provider.pull!, [conflict]: 'unrelated-identity' };
     const offset = provider.calls.length;
     const result = await fixture.run();
@@ -104,6 +105,12 @@ for (const conflict of ['head', 'target', 'unavailable'] as const) {
     assert.equal(provider.opened, 1);
     assert.equal(provider.merged, 0);
     assert(result.evidence.length);
+    if (conflict === 'unavailable') {
+      const diagnostic = result.evidence.find((path) => path.endsWith('publication-provider-failure.log'));
+      assert(diagnostic, 'Unavailable provider facts require retained complete diagnostics');
+      assert.match(readFileSync(diagnostic, 'utf8'), /Complete provider observation stdout\n  retained detail\n/);
+      assert.match(readFileSync(diagnostic, 'utf8'), /Complete provider observation stderr\n  restore credentials\n/);
+    }
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
     preserved(fixture, original);
   });
