@@ -72,7 +72,18 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       },
       agent: { execute: async (session) => this.activate(hostTask(session), agent) },
       ...this.gates(),
-    }).run({ directory: this.root, goal }, { progress() {} }, signal);
+    }).run({ directory: this.root, goal }, this.observer(), signal);
+  }
+
+  /** Supply the actual foreground answer handler that Workflow binds to each admitted session. */
+  private observer() {
+    return {
+      progress() {},
+      answer: async (question: string) => {
+        this.prompts.push(question);
+        return answer;
+      },
+    };
   }
 
   /** Move staging with a committed contribution, new operation and new applicable check. */
@@ -141,10 +152,6 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         const admitted = hostTask(task);
         this.tasks.push(admitted);
         this.context.mock.method(admitted, 'provider', () => this.provider);
-        admitted.ask = async (question) => {
-          this.prompts.push(question);
-          return answer;
-        };
         return admitted;
       },
       prepare: (task, issue, cancellation) => execution.prepare(task, issue, cancellation),
