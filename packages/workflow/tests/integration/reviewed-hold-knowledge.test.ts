@@ -53,6 +53,29 @@ for (const kind of ['clarification', 'research'] as const) {
   });
 }
 
+test('duplicate completed research with a new artifact remains stopped after reopening', async (t) => {
+  const f = new ReviewedWorkflow(t, 'diagnostic');
+  await f.prepare();
+  await completeKnowledge(f, 'research');
+  assert.equal((await f.run()).kind, 'blocked');
+  const held = f.holds.at(-1)!;
+  assert.equal(held.research.length, 1);
+  await f.reopen();
+  await completeKnowledge(f, 'research');
+  const result = f.fixture.task
+    .observations<{
+      researchResult?: HoldContext['research'][number];
+    }>()
+    .findLast((event) => event.researchResult)!.researchResult!;
+  assert.notEqual(result.evidence, held.research[0]!.evidence);
+  assert.equal(result.digest, held.research[0]!.digest);
+  assertContinuity(f, held);
+  const calls = [...f.calls];
+  assert.equal((await f.run()).kind, 'blocked');
+  assert.deepEqual(f.calls, calls);
+  assert.equal(f.reviews.length, 0);
+});
+
 /** Repeated completed knowledge and another caller's answer cannot manufacture progress. */
 async function duplicateAnswer(f: ReviewedWorkflow, held: HoldContext) {
   await f.reopen();
