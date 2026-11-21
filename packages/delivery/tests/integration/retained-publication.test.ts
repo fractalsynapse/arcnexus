@@ -19,14 +19,18 @@ async function prepared(fixture: PreparedRecoveryFixture) {
 }
 
 /** Assert exact durable inputs, rather than accepting a generic merged status as recovery. */
-function preserved(fixture: PreparedRecoveryFixture, original: Awaited<ReturnType<typeof prepared>>) {
+function preserved(
+  fixture: PreparedRecoveryFixture,
+  original: Awaited<ReturnType<typeof prepared>>,
+) {
   assert(fixture.tasks.every((task) => task.taskID === original.task && task.issue === '7'));
   assert.equal(fixture.issues, 1);
   assert.equal(fixture.plans, 1);
   assert.deepEqual(fixture.prompts, ['Which requirement must recovery preserve?']);
   assert.equal(fixture.git('show', '7-task:checked.txt') + '\n', checked);
   const history = fixture.tasks.at(-1)!.observations();
-  for (const event of original.history) assert(history.some((current) => JSON.stringify(current) === JSON.stringify(event)));
+  for (const event of original.history)
+    assert(history.some((current) => JSON.stringify(current) === JSON.stringify(event)));
   assert.equal(fixture.git('merge-base', '7-task', original.checkpoint), original.checkpoint);
 }
 
@@ -71,11 +75,20 @@ test('outdated open PR is reconciled to fresh recovered acceptance and the same 
   assert.notEqual(provider.pull?.head, prior?.head);
   assert.equal(provider.opened, 1);
   assert.equal(provider.merged, 1);
-  assert(fixture.reviews.length > reviewed, 'Recovered candidate requires independent reassessment');
+  assert(
+    fixture.reviews.length > reviewed,
+    'Recovered candidate requires independent reassessment',
+  );
   assert.equal(fixture.git('rev-parse', result.commit + '^'), staging);
-  assert.equal(fixture.git('rev-parse', result.commit + '^{tree}'), fixture.git('rev-parse', '7-task^{tree}'));
+  assert.equal(
+    fixture.git('rev-parse', result.commit + '^{tree}'),
+    fixture.git('rev-parse', '7-task^{tree}'),
+  );
   assert.equal(provider.calls[offset], 'observe PR 7-task');
-  assert(provider.calls.slice(offset).indexOf('observe branch 7-task') < provider.calls.slice(offset).findIndex((call) => call.startsWith('push ')));
+  assert(
+    provider.calls.slice(offset).indexOf('observe branch 7-task') <
+      provider.calls.slice(offset).findIndex((call) => call.startsWith('push ')),
+  );
   preserved(fixture, original);
 });
 
