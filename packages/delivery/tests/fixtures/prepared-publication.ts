@@ -50,7 +50,9 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     super(context);
     this.configure();
     const source = readFileSync(
-      fileURLToPath(new URL('../../../execution/tests/fixtures/prepared-recovery-provider.js', import.meta.url)),
+      fileURLToPath(
+        new URL('../../../execution/tests/fixtures/prepared-recovery-provider.js', import.meta.url),
+      ),
       'utf8',
     );
     const executable = join(this.root, '.git', 'prepared-provider.mjs');
@@ -204,7 +206,12 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       if (selection.component !== 'reviewer') return activate(agent, selection, data, cancellation);
       const assignment = data.assignment as { accepted: Record<string, unknown> };
       this.reviews.push(structuredClone(data));
-      return { ...assignment.accepted, kind: 'accepted', criteria: [criterion.id], evidence: task.evidence };
+      return {
+        ...assignment.accepted,
+        kind: 'accepted',
+        criteria: [criterion.id],
+        evidence: task.evidence,
+      };
     });
   }
 
