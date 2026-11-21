@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
+import type { ActivitySelection, TaskContext } from '../../../architecture/src/index.js';
 import { Agent } from '../../../agent/src/index.js';
 import { supplierLinkDiagnostic } from '../../../direction/src/index.js';
 import { Clarifications, steward, type HostTask, type HoldContext } from '../../src/index.js';
@@ -92,7 +93,7 @@ class CallerRecoveryScenario {
     this.recordResearch(task, actual.scope);
     if (this.held.length === 0) this.recordSupplier(task);
     const pending = await this.openGate(task);
-    const invocation = this.context.mock.method(task, 'activate', async (_agent, _selection, input) => {
+    const invocation = this.context.mock.method(task, 'activate', async (_agent: Agent, _selection: ActivitySelection, input: TaskContext) => {
       this.repairs.push((input.assignment as { responseRepair?: string }).responseRepair);
       throw pending;
     });
