@@ -116,7 +116,7 @@ export class BindingScenario {
 
   /** Retain distinct complete request and response artifacts, with controlled profile observations. */
   private respond(data: TaskContext) {
-    this.requests.push(structuredClone(data));
+    this.requests.push(JSON.parse(JSON.stringify(data)) as TaskContext);
     const visit = this.requests.length;
     const request = this.task.store('controlled-request.json', JSON.stringify(data));
     const reply = this.script(data.assignment as Assignment, visit);
