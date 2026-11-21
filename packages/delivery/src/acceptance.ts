@@ -8,6 +8,8 @@ import {
   type VerificationIdentity,
 } from '../../verification/src/index.js';
 
+import type { Publication } from './publication.js';
+
 interface Assessment {
   identity: VerificationIdentity;
   checks: Array<{ id: string; status: unknown; diagnostic?: string }>;
@@ -58,4 +60,30 @@ export function currentAcceptance(
     task.note({ publicationReconciliation: { reason: String(error), identity } });
     return false;
   }
+}
+
+/** Preserve historical approval only as evidence for the exact retained publication. */
+export function validateRetainedAcceptance(
+  publication: Publication,
+  events: readonly {
+    verification?: Assessment;
+    candidate?: Candidate;
+    verdict?: Verdict;
+  }[],
+) {
+  const identity = publication.verification;
+  const accepted = events.findLast((event) =>
+    event.verdict?.kind === 'accepted' &&
+    event.candidate?.digest === publication.candidate &&
+    isDeepStrictEqual(event.verdict.verification, identity),
+  );
+  const assessment = events.findLast((event) =>
+    isDeepStrictEqual(event.verification?.identity, identity),
+  )?.verification;
+  if (
+    !identity || !accepted || !assessment ||
+    identity.tree !== publication.candidate || identity.base !== publication.parent ||
+    assessment.checks.some(({ status, diagnostic }) => status !== 0 || diagnostic)
+  )
+    throw new Error('The retained publication has no matching accepting verification identity');
 }
