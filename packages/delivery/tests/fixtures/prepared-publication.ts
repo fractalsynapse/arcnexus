@@ -13,6 +13,9 @@ import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js'
 import { Execution, hostTask, type HostTask } from '../../../execution/src/index.js';
 import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round-consumption.js';
 
+import { verify } from '../../../verification/src/index.js';
+import { integrate, resume } from '../../src/index.js';
+
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
 export const continuationQuestion = 'Which newly captured requirement governs this continuation?';
 export const continuationAnswer =
@@ -22,8 +25,6 @@ export const criterion = {
   id: 'continuity',
   description: 'Preserve checked bytes and exact answers',
 };
-import { verify } from '../../../verification/src/index.js';
-import { integrate, resume } from '../../src/index.js';
 
 const catalog = '.arc/architecture';
 const signal = new AbortController().signal;
@@ -148,38 +149,6 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     return { oldBase, checkpoint, staging: this.git('rev-parse', 'HEAD') };
   }
 
-  /** Commit changed ownership or missing activity instead of mutating a synthetic capture. */
-  changeOwner(unavailable = false) {
-    const owner = this.definition('components/work');
-    if (unavailable) owner.activities = {};
-    else owner.owns = ['baseline'];
-    this.write(catalog + '/components/work.yaml', owner);
-    if (!unavailable) {
-      const reviewer = this.definition('components/reviewer');
-      reviewer.owns.push('checked.txt', 'staging.txt');
-      this.write(catalog + '/components/reviewer.yaml', reviewer);
-    }
-    this.git('add', '.');
-    this.git('commit', '-m', 'Change current captured authority');
-  }
-
-  /** Retrieve complete native observations from their canonical artifacts. */
-  probes(task: HostTask) {
-    return this.events(task).filter((event) => event.type === 'fixture.prepared');
-  }
-
-  /** Read complete provider events to compare replay acknowledgments with the original receipt. */
-  events(task: HostTask) {
-    return task.evidence
-      .filter((path) => path.endsWith('codex.jsonl'))
-      .flatMap((path) =>
-        readFileSync(path, 'utf8')
-          .trim()
-          .split('\n')
-          .map((line) => JSON.parse(line)),
-      );
-  }
-
   /** Preserve production admission and preparation while isolating hosted transport. */
   private execution(execution: Execution): WorkflowServices['execution'] {
     return {
@@ -202,7 +171,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   /** Replace only the external review response, retaining the real identity and citation validators. */
   private controlReviewer(task: HostTask) {
     const activate = task.activate.bind(task);
-    this.context.mock.method(task, 'activate', async (agent, selection, data, cancellation) => {
+    this.context.mock.method(task, 'activate', async (...[agent, selection, data, cancellation]: Parameters<HostTask['activate']>) => {
       if (selection.component !== 'reviewer') return activate(agent, selection, data, cancellation);
       const assignment = data.assignment as { accepted: Record<string, unknown> };
       this.reviews.push(structuredClone(data));
