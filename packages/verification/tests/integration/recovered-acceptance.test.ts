@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Plan } from '../../../direction/src/index.js';
+import { checkInput } from '../../../execution/src/check-cache.js';
 import type { Candidate } from '../../src/index.js';
 import { originalRequirement } from '../fixtures/recovered-project.js';
 import { RecoveredAssessment, type CheckState } from '../fixtures/recovered-assessment.js';
@@ -181,8 +182,11 @@ test('a changed dependency environment invalidates interrupted check evidence on
   const old = fixture.checks[0]!;
   const candidate = await fixture.assemble();
   const capture = fixture.task.capture.source.revision;
+  const input = checkInput(fixture.task, 'required');
+  assert(input);
   fixture.changeEnvironment();
   fixture.resume();
+  assert.notEqual(checkInput(fixture.task, 'required'), input);
   assert.equal(fixture.task.capture.source.revision, capture);
   assert.equal((await fixture.assemble()).digest, candidate.digest);
   assert.equal((await fixture.run()).kind, 'accepted');
