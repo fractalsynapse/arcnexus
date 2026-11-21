@@ -23,9 +23,15 @@ test('ordinary failed recovered checks reach independent rejection with exact ev
   assert.equal(result.verification?.capture, current.source.revision);
   assert.deepEqual(fixture.checks.slice(0, historical.length), historical);
   const expected = fixture.checks.slice(historical.length);
-  assert.deepEqual(expected.map(({ id }) => id), current.project.checks!.acceptance);
+  assert.deepEqual(
+    expected.map(({ id }) => id),
+    current.project.checks!.acceptance,
+  );
   assert(expected.every(({ status }) => status === 1));
-  assert.deepEqual(result.findings[0]!.evidence, expected.map(({ log }) => log));
+  assert.deepEqual(
+    result.findings[0]!.evidence,
+    expected.map(({ log }) => log),
+  );
 });
 
 /** Require the actual failed payload and readable history before issuing a bound substantive rejection. */
@@ -38,7 +44,10 @@ function rejectFailedChecks(context: TestContext, fixture: RecoveredAssessment) 
     };
     const checks = fixture.checks.filter(({ status }) => status === 1);
     assert.deepEqual(assignment.checks, checks);
-    assert.deepEqual(checks.map(({ id }) => id), ['required', 'newly-required']);
+    assert.deepEqual(
+      checks.map(({ id }) => id),
+      ['required', 'newly-required'],
+    );
     for (const check of checks) {
       assert.equal(check.cwd, fixture.task.worktree);
       assert(fixture.task.evidence.includes(check.log));
@@ -51,12 +60,14 @@ function rejectFailedChecks(context: TestContext, fixture: RecoveredAssessment) 
     fixture.assertHistory(data);
     return {
       ...assignment.rejected,
-      findings: [{
-        criterion: fixture.plan.milestones[0]!.criteria[0]!.id,
-        owner: fixture.plan.milestones[0]!.owner,
-        reason: 'Current recovered required assertions failed',
-        evidence: checks.map(({ log }) => log),
-      }],
+      findings: [
+        {
+          criterion: fixture.plan.milestones[0]!.criteria[0]!.id,
+          owner: fixture.plan.milestones[0]!.owner,
+          reason: 'Current recovered required assertions failed',
+          evidence: checks.map(({ log }) => log),
+        },
+      ],
     };
   });
 }
