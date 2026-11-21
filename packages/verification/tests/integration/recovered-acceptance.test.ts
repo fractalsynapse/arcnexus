@@ -33,13 +33,15 @@ for (const identity of ['tree', 'base', 'capture', 'acceptance'] as const) {
 test('new assessment exposes recovered base and active capture independently of equal tree bytes', async (context) => {
   const fixture = new RecoveredAssessment(context);
   const before = await fixture.assemble();
+  const base = fixture.advance('base');
   const current = fixture.advance('capture');
-  fixture.resume(current, current);
+  fixture.resume(base, current);
   const recovered = await fixture.assemble();
   assert.equal(recovered.digest, before.digest);
   assert.equal((await fixture.run(recovered)).kind, 'accepted');
   const assignment = JSON.stringify(fixture.requests.at(-1)!.assignment);
   assert(assignment.includes(recovered.digest), 'Assessment must identify the assembled tree');
+  assert(assignment.includes(base.source.revision), 'Assessment lost recovered staging parent');
   assert(
     assignment.includes(current.source.revision),
     'Assessment lost recovered staging/capture identity',
@@ -47,16 +49,18 @@ test('new assessment exposes recovered base and active capture independently of 
   fixture.assertHistory();
 });
 
-test('matching assessment identity survives a different checkout path without changing the requested verdict binding', async (context) => {
+test('a different checkout path preserves the candidate and complete evidence for a fresh assessment', async (context) => {
   const fixture = new RecoveredAssessment(context);
-  await fixture.run();
-  const first = fixture.requests.at(-1)!.assignment as { accepted: unknown };
+  const original = await fixture.assemble();
+  await fixture.run(original);
   const oldPath = fixture.task.worktree;
   fixture.resume();
-  await fixture.run();
-  const second = fixture.requests.at(-1)!.assignment as { accepted: unknown };
+  const recovered = await fixture.assemble();
+  const verdict = await fixture.run(recovered);
   assert.notEqual(fixture.task.worktree, oldPath);
-  assert.deepEqual(second.accepted, first.accepted);
+  assert.equal(recovered.digest, original.digest);
+  assert.equal(verdict.kind, 'accepted');
+  if (verdict.kind === 'accepted') assert.equal(verdict.candidate, recovered.digest);
   fixture.assertHistory();
 });
 
@@ -170,3 +174,21 @@ function additionalObligation(plan: Plan): Plan {
     })),
   };
 }
+
+test('a changed dependency environment invalidates interrupted check evidence on the same tree and capture', async (context) => {
+  const fixture = new RecoveredAssessment(context);
+  await fixture.interrupt();
+  const old = fixture.checks[0]!;
+  const candidate = await fixture.assemble();
+  const capture = fixture.task.capture.source.revision;
+  fixture.changeEnvironment();
+  fixture.resume();
+  assert.equal(fixture.task.capture.source.revision, capture);
+  assert.equal((await fixture.assemble()).digest, candidate.digest);
+  assert.equal((await fixture.run()).kind, 'accepted');
+  const request = fixture.requests.at(-1)!;
+  const current = (request.assignment as { checks: typeof fixture.checks }).checks;
+  assert.notEqual(current[0]!.log, old.log, 'Changed dependencies reused an earlier environment observation');
+  assert.equal(current[0]!.status, 0);
+  assert.notEqual(fixture.task.readFile(current[0]!.log).text, fixture.task.readFile(old.log).text);
+});
