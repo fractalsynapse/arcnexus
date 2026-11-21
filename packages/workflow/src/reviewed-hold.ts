@@ -59,7 +59,11 @@ export function supersededReviewedHold(session: TaskSession, activation: Activit
       ),
     ),
   );
-  return changed || observedHeldCheckProgress(session, activation, held);
+  return (
+    changed ||
+    observedHeldCheckProgress(session, activation, held) ||
+    observedHeldKnowledgeProgress(session, activation, held)
+  );
 }
 
 /** Re-enter Execution for newer scoped findings; its canonical hold identity still rejects repetition. */
