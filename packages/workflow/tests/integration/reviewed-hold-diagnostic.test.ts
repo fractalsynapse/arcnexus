@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import type { HoldContext } from '../../../execution/src/index.js';
+import { git } from '../../../execution/src/git.js';
 import { correction } from '../../../execution/tests/fixtures/reviewed-hold.js';
 import { ReviewedWorkflow } from '../fixtures/reviewed-hold.js';
 
@@ -81,6 +82,8 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
   assert.equal(task.issue, held.task.issue);
   assert.equal(task.branch, held.task.branch);
   assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
+  assert.equal(git(task.worktree!, 'status', '--porcelain'), '');
+  assertRetainedKnowledge(f, held);
   for (const input of held.progress.inputs)
     assert.equal(task.readFile(input.path).sha256, input.digest);
   const events = task.history();
@@ -91,6 +94,22 @@ function assertContinuity(f: ReviewedWorkflow, held: HoldContext) {
   for (const finding of held.rejection.findings)
     for (const evidence of finding.evidence)
       assert(task.readFile(evidence).text.includes('Independent rejection'));
+}
+
+/** Require complete original answers and identical acknowledged receipts after reopening SQLite. */
+function assertRetainedKnowledge(f: ReviewedWorkflow, held: HoldContext) {
+  const events = f.fixture.task.observations<{
+    clarification?: HoldContext['answers'][number];
+    editReceipt?: HoldContext['receipts'][number];
+    checkpoint?: { head: string };
+  }>();
+  for (const answer of held.answers)
+    assert(events.some((event) => JSON.stringify(event.clarification) === JSON.stringify(answer)));
+  for (const receipt of held.receipts)
+    assert(events.some((event) => JSON.stringify(event.editReceipt) === JSON.stringify(receipt)));
+  for (const secured of held.receiptCheckpoints)
+    assert(events.some((event) => event.editReceipt?.id === secured.receipt &&
+      event.checkpoint?.head === secured.checkpoint));
 }
 
 /** Require the new exact failure at native revision and preserve full historical context. */
