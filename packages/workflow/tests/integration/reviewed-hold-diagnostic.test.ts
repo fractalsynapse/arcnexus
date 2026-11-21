@@ -108,8 +108,13 @@ function assertRetainedKnowledge(f: ReviewedWorkflow, held: HoldContext) {
   for (const receipt of held.receipts)
     assert(events.some((event) => JSON.stringify(event.editReceipt) === JSON.stringify(receipt)));
   for (const secured of held.receiptCheckpoints)
-    assert(events.some((event) => event.editReceipt?.id === secured.receipt &&
-      event.checkpoint?.head === secured.checkpoint));
+    assert(
+      events.some(
+        (event) =>
+          event.editReceipt?.id === secured.receipt &&
+          event.checkpoint?.head === secured.checkpoint,
+      ),
+    );
 }
 
 /** Require the new exact failure at native revision and preserve full historical context. */
