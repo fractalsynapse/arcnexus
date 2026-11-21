@@ -12,7 +12,12 @@ function main() {
   }
   const input = readFileSync('fixture.txt', 'utf8');
   if (input === 'corrected') return;
-  console.error(process.argv[4] || 'Error: reviewed behavior still fails');
+  const diagnostic = process.argv[4];
+  console.error(
+    diagnostic && existsSync(diagnostic)
+      ? readFileSync(diagnostic, 'utf8')
+      : diagnostic || 'Error: reviewed behavior still fails',
+  );
   process.exitCode = 37;
 }
 
