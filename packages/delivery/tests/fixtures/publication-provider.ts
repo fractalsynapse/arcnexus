@@ -15,7 +15,10 @@ export class PublicationProvider {
   moveDuringVerify = false;
 
   /** Bind only external operations while real task services retain their own records. */
-  constructor(private readonly fixture: PreparedRecoveryFixture, private readonly t: TestContext) {
+  constructor(
+    private readonly fixture: PreparedRecoveryFixture,
+    private readonly t: TestContext,
+  ) {
     this.observe();
     this.effects();
   }
@@ -48,24 +51,34 @@ export class PublicationProvider {
   /** Apply each effect before optionally losing its acknowledgment. */
   private effects() {
     const mock = this.t.mock;
-    mock.method(this.fixture.provider, 'push', async (_root: string, branch: string, head: string) => {
-      this.calls.push('push ' + head);
-      assert.equal(branch, '7-task');
-      this.head = head;
-      this.fixture.checkpoints.push(head);
-      this.lost('push');
-    });
+    mock.method(
+      this.fixture.provider,
+      'push',
+      async (_root: string, branch: string, head: string) => {
+        this.calls.push('push ' + head);
+        assert.equal(branch, '7-task');
+        this.head = head;
+        this.fixture.checkpoints.push(head);
+        this.lost('push');
+      },
+    );
     mock.method(this.fixture.provider, 'pull', async (target: string, branch: string) => {
       this.calls.push('open ' + branch);
       assert.equal(this.pull, undefined, 'A second PR would abandon retained publication');
       this.opened++;
-      this.pull = { url: 'https://github.com/example/round-consumption/pull/17', target,
-        head: this.head!, state: 'open', commit: null };
+      this.pull = {
+        url: 'https://github.com/example/round-consumption/pull/17',
+        target,
+        head: this.head!,
+        state: 'open',
+        commit: null,
+      };
       this.lost('open');
       return this.pull.url;
     });
     mock.method(this.fixture.provider, 'merge', async (url: string, head: string, issue: string) =>
-      this.merge(url, head, issue));
+      this.merge(url, head, issue),
+    );
   }
 
   /** Create a real squash commit with the exact upstream head tree and staging parent. */
@@ -75,7 +88,14 @@ export class PublicationProvider {
     assert.equal(url, this.pull?.url);
     assert.equal(head, this.head);
     const tree = this.fixture.git('rev-parse', head + '^{tree}');
-    const commit = this.fixture.git('commit-tree', tree, '-p', 'staging', '-m', 'Fixture squash #7');
+    const commit = this.fixture.git(
+      'commit-tree',
+      tree,
+      '-p',
+      'staging',
+      '-m',
+      'Fixture squash #7',
+    );
     this.fixture.git('reset', '--hard', commit);
     this.merged++;
     this.pull = { ...this.pull!, state: 'merged', head, commit };
