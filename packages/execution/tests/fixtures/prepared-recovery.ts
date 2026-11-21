@@ -30,6 +30,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   plans = 0;
   private head?: string;
   private interrupted = false;
+  interruptNext = false;
 
   /** Commit explicit tools and ownership and bind an executable deterministic provider. */
   constructor(private readonly context: TestContext) {
