@@ -25,6 +25,7 @@ export const suite = {
 test('restart consumes a distinct failing recheck without changed secured bytes', async (t) => {
   const f = new ReviewedWorkflow(t, 'diagnostic', true);
   await f.prepare();
+  assertInterpreterLaunch(f);
   assert.equal((await f.run()).kind, 'blocked');
   const held = f.holds.at(-1)!;
   const original = JSON.stringify(f.holds);
