@@ -127,6 +127,12 @@ export class RecoveredProject {
       owns: ['checked.txt', 'baseline.txt'],
       activities: {},
     });
+    this.configureAssessment();
+    this.operation('required', 'original-tag');
+  }
+
+  /** Declare independent assessment role, profile and read-only activity together. */
+  private configureAssessment() {
     this.write('.arc/architecture/components/auditor.yaml', {
       id: 'auditor',
       purpose: 'Independently assess',
@@ -152,7 +158,6 @@ export class RecoveredProject {
       webSearch: 'disabled',
       operationCategories: ['read'],
     });
-    this.operation('required', 'original-tag');
   }
 
   /** Declare assembled operations independently of optional owner test suites. */
