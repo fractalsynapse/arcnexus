@@ -6,7 +6,7 @@ import { parse } from 'yaml';
 class PreparedRecoveryProvider {
   /** Record the received assignment, secure one edit, and ask once through production MCP. */
   async run() {
-    await this.observeRequest();
+    const { data, tools } = await this.observeRequest();
     if (!existsSync('checked.txt')) {
       const receipt = await this.rpc('tools/call', {
         name: 'checked-edit',
@@ -25,7 +25,33 @@ class PreparedRecoveryProvider {
       });
       return this.reply({});
     }
+    const continuation = data.assignment.recoveryContinuation;
+    const recovered = tools.tools.some((tool: { name: string }) => tool.name === 'current-read');
+    if (recovered && continuation === 'replay') await this.replayEdit();
+    if (recovered && continuation === 'question') {
+      const question = 'Which newly captured requirement governs this continuation?';
+      const answered = data.assignment.clarifications?.some(
+        (gate: { question: string }) => gate.question === question,
+      );
+      if (!answered) {
+        await this.rpc('tools/call', { name: 'ask-question', arguments: { question } });
+        return this.reply({});
+      }
+    }
     this.reply({ kind: 'completed' });
+  }
+
+  /** Replay the identical acknowledged request and expose its complete original receipt. */
+  private async replayEdit() {
+    const receipt = await this.rpc('tools/call', {
+      name: 'checked-edit',
+      arguments: {
+        path: 'checked.txt',
+        expected: null,
+        content: 'secured checked bytes café\\nsecond line\\n',
+      },
+    });
+    this.emit({ type: 'fixture.replayed', receipt });
   }
 
   /** Capture the complete actual request and available tools independently of effect replies. */
@@ -44,6 +70,7 @@ class PreparedRecoveryProvider {
       executable: process.argv[1],
       cwd: process.cwd(),
     });
+    return { data, tools };
   }
 
   /** Invoke the exact local tool mapping and reject an actual host refusal. */
