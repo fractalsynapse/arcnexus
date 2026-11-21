@@ -115,11 +115,21 @@ test('another staging movement during recovered provider verification prevents m
 });
 
 /** Reject duplicate publication, missing fresh review and publication of the wrong tree or parent. */
-function recoveredMerge(fixture: PreparedRecoveryFixture, provider: PublicationProvider, url: string | undefined, reviews: number, commit: string, staging: string) {
+function recoveredMerge(
+  fixture: PreparedRecoveryFixture,
+  provider: PublicationProvider,
+  url: string | undefined,
+  reviews: number,
+  commit: string,
+  staging: string,
+) {
   assert.equal(provider.pull?.url, url);
   assert.equal(provider.opened, 1);
   assert.equal(provider.merged, 1);
   assert(fixture.reviews.length > reviews, 'Recovered candidate requires independent reassessment');
   assert.equal(fixture.git('rev-parse', commit + '^'), staging);
-  assert.equal(fixture.git('rev-parse', commit + '^{tree}'), fixture.git('rev-parse', '7-task^{tree}'));
+  assert.equal(
+    fixture.git('rev-parse', commit + '^{tree}'),
+    fixture.git('rev-parse', '7-task^{tree}'),
+  );
 }
