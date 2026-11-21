@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -89,15 +89,15 @@ export class ReviewedTask {
     git(this.root, 'config', 'user.email', 'hold@example.invalid');
     git(this.root, 'remote', 'add', 'origin', remote);
     const command = join(this.root, '.git', 'reviewed-command.mjs');
-    writeFileSync(command, readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js')));
+    writeFileSync(command, '#!/usr/bin/node\n' + readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'), { mode: 0o700 });
     writeFileSync(join(this.root, '.git', 'diagnostic'), 'Error: reviewed behavior still fails');
     const files = {
       ...holdFiles,
       '.arc/architecture/operations/owner-tests.yaml': JSON.stringify({
         id: 'owner-tests',
         category: 'test',
-        command: '/usr/bin/node',
-        args: [command, 'fixture.txt', '', join(this.root, '.git', 'diagnostic')],
+        command,
+        args: ['fixture.txt', '', join(this.root, '.git', 'diagnostic')],
         network: false,
       }),
     };
@@ -188,6 +188,15 @@ export class ReviewedTask {
   /** Produce a host hold through the public Execution steward boundary, never a model blocked claim. */
   run(): Promise<ActivityOutcome> {
     return steward(new Agent(new Architecture()), this.task, correction, 'implementation', signal);
+  }
+
+  /**
+   * Refresh an external command input so production checks execute instead of reusing cached evidence.
+   * Neither captured source, acceptance nor secured bytes change; equivalent output still must stop.
+   */
+  reobserve(diagnostic: string) {
+    writeFileSync(join(this.root, '.git', 'diagnostic'), diagnostic);
+    appendFileSync(join(this.root, '.git', 'reviewed-command.mjs'), '\n// Host command environment reobserved.\n');
   }
 
   /** Read secured checkpoint identity directly from Git. */
