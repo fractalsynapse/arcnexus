@@ -229,9 +229,7 @@ export function inboxIdentity(
     object(data.assignment)?.mode === 'human objective';
   return identity([
     task.taskID,
-    intent
-      ? 'human objective'
-      : (task.config?.capture.source.revision ?? task.capture.source.revision),
+    intent ? 'human objective' : revision,
     selection.component,
     selection.activity,
     data.milestone,
