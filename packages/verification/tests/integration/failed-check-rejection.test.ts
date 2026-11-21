@@ -36,27 +36,13 @@ test('ordinary failed recovered checks reach independent rejection with exact ev
 
 /** Require the actual failed payload and readable history before issuing a bound substantive rejection. */
 function rejectFailedChecks(context: TestContext, fixture: RecoveredAssessment) {
-  return context.mock.method(fixture.task, 'activate', async (_agent, selection, data) => {
+  return context.mock.method(fixture.task, 'activate', async (...[, selection, data]: Parameters<RecoveredAssessment['task']['activate']>) => {
     assert.deepEqual(selection, fixture.task.capture.project.verifier);
     const assignment = data.assignment as {
       checks: typeof fixture.checks;
       rejected: Record<string, unknown>;
     };
-    const checks = fixture.checks.filter(({ status }) => status === 1);
-    assert.deepEqual(assignment.checks, checks);
-    assert.deepEqual(
-      checks.map(({ id }) => id),
-      ['required', 'newly-required'],
-    );
-    for (const check of checks) {
-      assert.equal(check.cwd, fixture.task.worktree);
-      assert(fixture.task.evidence.includes(check.log));
-      const log = fixture.task.readFile(check.log).text;
-      assert(log.startsWith('Controlled check: '));
-      const observation = JSON.parse(log.slice('Controlled check: '.length));
-      assert.deepEqual(observation.result, { status: 1 });
-      assert.deepEqual(observation.operation.args, check.args);
-    }
+    const checks = assertFailedEvidence(fixture, assignment.checks);
     fixture.assertHistory(data);
     return {
       ...assignment.rejected,
@@ -70,4 +56,21 @@ function rejectFailedChecks(context: TestContext, fixture: RecoveredAssessment) 
       ],
     };
   });
+}
+
+/** Compare the full current check payload with retained readable observations rather than status alone. */
+function assertFailedEvidence(fixture: RecoveredAssessment, supplied: typeof fixture.checks) {
+  const checks = fixture.checks.filter(({ status }) => status === 1);
+  assert.deepEqual(supplied, checks);
+  assert.deepEqual(checks.map(({ id }) => id), ['required', 'newly-required']);
+  for (const check of checks) {
+    assert.equal(check.cwd, fixture.task.worktree);
+    assert(fixture.task.evidence.includes(check.log));
+    const log = fixture.task.readFile(check.log).text;
+    assert(log.startsWith('Controlled check: '));
+    const observation = JSON.parse(log.slice('Controlled check: '.length));
+    assert.deepEqual(observation.result, { status: 1 });
+    assert.deepEqual(observation.operation.args, check.args);
+  }
+  return checks;
 }
