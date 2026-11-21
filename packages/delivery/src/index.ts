@@ -3,7 +3,7 @@ import type { Candidate, Verdict } from '../../verification/src/index.js';
 import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
-import { PublicationCheckFailure } from './check-failure.js';
+import { PublicationCheckFailure, retainProviderFailure } from './check-failure.js';
 import {
   acceptedIdentity,
   currentAcceptance,
@@ -58,7 +58,11 @@ export async function resume(
   if (!retained) return stale;
   const publication = recover(task, retained);
   if (!publication) return undefined;
-  if (await refreshUnmerged(task, publication, signal)) return stale;
+  try {
+    if (await refreshUnmerged(task, publication, signal)) return stale;
+  } catch (error) {
+    throw retainProviderFailure(task, publication, error);
+  }
   progress({
     phase: 'delivery',
     message: `Reconciling retained GitHub publication ${publication.branch}`,
@@ -148,7 +152,8 @@ async function checkedPublication(task: HostTask, publication: Publication, sign
 
 /** Preserve provider diagnostics without turning them into an engineering verdict. */
 function recordedFailure(task: HostTask, publication: Publication, error: unknown) {
-  if (!(error instanceof GitHubCheckFailure)) throw error;
+  if (!(error instanceof GitHubCheckFailure))
+    throw retainProviderFailure(task, publication, error);
   const evidence = [task.store('publication-check-failure.log', error.log)];
   task.note({
     publicationCheckFailure: {
