@@ -48,11 +48,21 @@ class CallerRecoveryScenario {
   /** Seed independent rejection before the accepted corrective plan is recorded. */
   constructor(private readonly context: TestContext) {
     this.fixture = new PreparedRecoveryFixture(context);
-    this.fixture.plan = { ...this.fixture.plan, milestones: [...this.fixture.plan.milestones, {
-      ...milestone,
-      id: 'accepted-work-reference',
-      steps: milestone.steps.map((step) => ({ ...step, checklist: [], inapplicable: 'Already supplied reference' })),
-    }] };
+    this.fixture.plan = {
+      ...this.fixture.plan,
+      milestones: [
+        ...this.fixture.plan.milestones,
+        {
+          ...milestone,
+          id: 'accepted-work-reference',
+          steps: milestone.steps.map((step) => ({
+            ...step,
+            checklist: [],
+            inapplicable: 'Already supplied reference',
+          })),
+        },
+      ],
+    };
     this.supplier = {
       kind: 'supplier' as const,
       owner: 'reviewer',
@@ -209,10 +219,7 @@ class CallerRecoveryScenario {
     for (const held of this.held)
       for (const gate of held.answers) {
         assert(gate.evidence);
-        assert.equal(
-          JSON.parse(this.sources.get(gate.evidence)!).answer,
-          gate.answer,
-        );
+        assert.equal(JSON.parse(this.sources.get(gate.evidence)!).answer, gate.answer);
       }
   }
 
