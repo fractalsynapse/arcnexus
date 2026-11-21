@@ -4,7 +4,7 @@ import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
 import { PublicationCheckFailure } from './check-failure.js';
-import { acceptedIdentity, currentAcceptance } from './acceptance.js';
+import { acceptedIdentity, currentAcceptance, validateRetainedAcceptance } from './acceptance.js';
 
 export { publish, type Publication } from './publication.js';
 export { PublicationCheckFailure } from './check-failure.js';
@@ -91,6 +91,7 @@ function recover(
   retained: NonNullable<ReturnType<HostTask['retainedPublication']>>,
 ): Publication | undefined {
   const events = retained.events as {
+    verification?: Parameters<typeof validateRetainedAcceptance>[1][number]['verification'];
     publication?: Publication;
     candidate?: Candidate;
     verdict?: Verdict;
@@ -113,6 +114,7 @@ function recover(
     )
   )
     throw new Error('The retained publication has no matching accepted candidate');
+  validateRetainedAcceptance(publication, events);
   return publication;
 }
 
