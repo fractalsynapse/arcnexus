@@ -103,6 +103,66 @@ without prescribing the plan. Their assembled candidate still needs assessment
 against original acceptance. Held or stopped work is never accepted or delivered;
 final publication belongs to [Delivery](../../delivery/contract.md).
 
+## Canonical retained-log comparison for Workflow
+
+The supplier milestone `expose-canonical-check-failure-signature` supports
+Workflow's `correct-reviewed-hold-restart` correction of the original
+`reviewed-hold-progress-stop` criterion. Its accepted public-boundary criteria
+are `canonical-check-signature-public` and
+`canonical-check-signature-evidence`. Reuse the completed
+`retain-reviewed-hold-context` contribution and its evidence; this contribution
+does not reopen that work or replace the original recovery acceptance.
+
+The intended public boundary is `checkFailureSignature(log: string): string`,
+exported from [Execution's public entry](../src/index.ts). Workflow's public
+import is intended to be
+`import { checkFailureSignature } from '../../execution/src/index.js';`.
+At this documentation stage the entry does not yet export it. Implementation
+must re-export the existing [canonical function](../src/steward-check.ts),
+without a second comparator or changes to its semantics. Consumers must not
+import the private implementation, as required by the
+[project contract](../../../docs/interface/arcnexus-project.md#obligations).
+
+Here, `log` is the retained log-file **path**, not diagnostic text. The function
+synchronously reads that file as UTF-8. It selects TAP `not ok` lines,
+TypeScript error lines and lines beginning with optional whitespace followed by
+`error:`, `Error:` or `FAIL` at a word boundary. When those lines exist,
+it combines them with matching two-space-indented `error:` blocks and their
+four-space-indented or blank continuation lines; otherwise it uses the complete
+log text.
+
+It then removes incidental TAP numbering, parenthesized numeric source
+locations, absolute path prefixes through `worktree/` or
+`measure-worktree/`, and colon-separated line/column locations. Matching
+`/tmp/` names become `/tmp/<temporary>`. After trimming surrounding whitespace,
+it returns the SHA-256 hexadecimal digest of the normalized content. These
+normalizations define comparison identity; they do not rewrite or replace the
+retained original log. Recognized failure lines take precedence over unrelated
+transcript text, while logs without recognized failure lines retain their
+ordinary content for comparison. This is a comparison of selected diagnostics,
+not a claim that every byte difference denotes a different failure.
+
+File-read failures propagate to the caller. The function does not substitute an
+empty signature, manufacture diagnostic fields, decide check success or attest
+that a prerequisite is satisfied. Callers retain exact diagnostic, operation,
+exit and readable log evidence alongside the signature.
+
+Public-boundary evidence must invoke the exported function with actual retained
+log files. Equivalent failures differing in incidental TAP numbering and matching
+transient paths must yield the same signature. Genuinely different ordinary
+failure content must yield different signatures, including the complete-text
+fallback when no recognized failure line exists. Preserve read-error propagation.
+These are required observations for the later Testing and Implementation
+activities, not results established by this documentation edit.
+
+The supplier answer must identify the actual public import, preserved semantics,
+secured implementation receipt and applicable evidence so Workflow can replace
+its private import and refresh its affected observations. It must preserve the
+same issue, checkpoint, complete answers, original rejection, acceptance and
+cursor. Check scope and expectations, host prerequisite observation and captured
+authority stay governed by their existing boundaries. Only subsequent assembled
+checks and independent review can establish the original recovery acceptance.
+
 ## Evidence required for the behavior
 
 Testing must exercise the public Execution boundary with a real retained journal,
