@@ -184,3 +184,31 @@ function conflictOutput(fixture: PreparedRecoveryFixture, checkpoint: string, st
     return output;
   }
 }
+
+test('unchanged staging reuses the exact answer without another prompt or acknowledged edit', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const original = await interrupt(fixture);
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  assertHistory(fixture, original);
+  assert.deepEqual(fixture.probes(fixture.tasks[1]!).at(-1).data.assignment.clarifications, [
+    { question: original.gate.question, answer },
+  ]);
+});
+
+test('recovery inspects and removes the abandoned checkpoint workspace before reconstructing', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const original = await interrupt(fixture);
+  const abandoned = fixture.probes(original.task).at(-1).cwd;
+  fixture.git('worktree', 'add', abandoned, '7-task');
+  assert(existsSync(abandoned));
+  assert.equal(readFileSync(join(abandoned, 'checked.txt'), 'utf8'), checked);
+  fixture.advance();
+  const resumed = await fixture.run();
+  assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
+  const fresh = fixture.probes(fixture.tasks[1]!).at(-1).cwd;
+  assert.notEqual(fresh, abandoned);
+  assert(!existsSync(abandoned));
+  assert(!existsSync(fresh));
+  assertHistory(fixture, original);
+});
