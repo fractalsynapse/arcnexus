@@ -1,5 +1,9 @@
-import { editFingerprint, HostTask, type HoldContext } from '../../execution/src/index.js';
-import { checkFailureSignature } from '../../execution/src/steward-check.js';
+import {
+  checkFailureSignature,
+  editFingerprint,
+  HostTask,
+  type HoldContext,
+} from '../../execution/src/index.js';
 import type { RevisionFeedback } from '../../direction/src/index.js';
 import { releasedReviewedPrerequisite } from './reviewed-prerequisite.js';
 import {
