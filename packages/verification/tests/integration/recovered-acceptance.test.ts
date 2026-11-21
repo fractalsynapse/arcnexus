@@ -144,8 +144,10 @@ for (const [name, state] of [
       const current = fixture.advance('required');
       fixture.resume(current, current);
       fixture.checkState = state;
+      const reviews = fixture.requests.length;
       const result = await fixture.run();
       assert.equal(result.kind, 'blocked');
+      assert.equal(fixture.requests.length, reviews + (typeof state.status === 'number' ? 1 : 0));
       assert(result.evidence.length);
       assert(result.evidence.every((path) => fixture.task.evidence.includes(path)));
       const observed = fixture.checks.at(-1)!;
