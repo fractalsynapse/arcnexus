@@ -136,7 +136,11 @@ export class ReviewedWorkflow {
   }
 
   /** Retain the actual production result without synthesizing ordinary failure diagnostics. */
-  private async productionCheck(id: string, signal: AbortSignal, scope?: Parameters<HostTask['check']>[2]) {
+  private async productionCheck(
+    id: string,
+    signal: AbortSignal,
+    scope?: Parameters<HostTask['check']>[2],
+  ) {
     const result = await HostTask.prototype.check.call(this.fixture.task, id, signal, scope);
     this.fixture.checks.push(result);
     return result;
@@ -172,7 +176,9 @@ export class ReviewedWorkflow {
     });
     this.fixture.checks.push(check);
     if (this.scenario === 'external')
-      this.gateEvents.push(check.prerequisite ? 'prerequisite-unavailable' : 'prerequisite-available');
+      this.gateEvents.push(
+        check.prerequisite ? 'prerequisite-unavailable' : 'prerequisite-available',
+      );
     return check;
   }
 
