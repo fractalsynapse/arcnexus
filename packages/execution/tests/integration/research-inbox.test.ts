@@ -154,7 +154,7 @@ class ResearchScenario {
     assert(replies.length, 'Unexpected model activation');
     const reply = replies.shift();
     if (reply instanceof Error) throw reply;
-    return reply;
+    return typeof reply === 'function' ? reply(input) : reply;
   }
 }
 
