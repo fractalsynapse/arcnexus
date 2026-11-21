@@ -124,6 +124,26 @@ provider regressions, live inference, hosted CI and observed staging delivery
 remain distinct evidence. The host performs assembled verification and delivery;
 this documentation establishes intent, not those later results.
 
+### Simplification ledger: reviewed-hold restart correction
+
+Workflow's [retained-check comparison](src/reviewed-hold.ts) reuses
+`checkFailureSignature(log: string): string` from Execution's public entry.
+The private `steward-check.js` import is removed. Execution owns retained-log
+reading, diagnostic normalization and signature comparison; Workflow owns only
+whether a new scoped observation permits continuation. No comparator, wrapper,
+state store or public Workflow responsibility is added. The supplier export is
+secured by receipt
+`dae3bb4c1ee6280357c9d0d3d43b2f30359a16512a962a974e4f88e6e3d20501`.
+
+The existing [prerequisite observation](src/reviewed-prerequisite.ts) is reused
+unchanged from checkpoint `5a10d2cef731d963f129aa34902043ba266641c8`, receipt
+`4dd1bce6d2a0a80de35adeb03d9c0b036da9485300957b8e4e6716c32eab495f`.
+Host observations and complete recorded answers continue to control dependent
+activation. The [ordinary failing-log regression](tests/integration/reviewed-hold-diagnostic.test.ts)
+and both [gate regressions](tests/integration/reviewed-hold.test.ts) remain intact.
+Original rejection, red evidence, task identity and acceptance remain retained;
+this ledger records reuse, not assembled acceptance or delivery.
+
 ## Refinement delivery status
 
 The approved Plan → Architect → Run capability is being implemented in
