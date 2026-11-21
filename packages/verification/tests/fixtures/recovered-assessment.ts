@@ -82,10 +82,17 @@ export class RecoveredAssessment extends RecoveredProject {
       result = await this.run();
     } catch (error) {
       assert(error instanceof AgentActivityHold, String(error));
-      assert.match(error.message, /Reviewer|verification|identity|candidate|acceptance|capture|base/i);
+      assert.match(
+        error.message,
+        /Reviewer|verification|identity|candidate|acceptance|capture|base/i,
+      );
       return;
     }
-    assert.notEqual(result.kind, 'accepted', 'Earlier acceptance authorized a changed recovery identity');
+    assert.notEqual(
+      result.kind,
+      'accepted',
+      'Earlier acceptance authorized a changed recovery identity',
+    );
   }
 
   /** Retrieve full authorized artifacts through the same file boundary available to assessment. */
