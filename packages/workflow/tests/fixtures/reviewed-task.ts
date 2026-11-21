@@ -98,7 +98,7 @@ export class ReviewedTask {
     const command = join(this.root, '.git', 'reviewed-command.mjs');
     writeFileSync(
       command,
-      '#!/usr/bin/node\n' +
+      `#!${process.execPath}\n` +
         readFileSync(join(import.meta.dirname, 'reviewed-hold-command.js'), 'utf8'),
       { mode: 0o700 },
     );
