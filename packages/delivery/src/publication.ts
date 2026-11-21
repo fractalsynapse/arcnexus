@@ -1,6 +1,9 @@
 import type { GitHub, PublishedPull } from '../../collaboration/src/index.js';
 
+import type { VerificationIdentity } from '../../verification/src/index.js';
+
 export interface Publication {
+  verification?: VerificationIdentity;
   target: string;
   branch: string;
   head: string;
