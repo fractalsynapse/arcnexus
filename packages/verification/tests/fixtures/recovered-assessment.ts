@@ -95,6 +95,8 @@ export class RecoveredAssessment extends RecoveredProject {
   /** Retrieve full authorized artifacts through the same file boundary available to assessment. */
   assertHistory(request = this.requests.at(-1)!) {
     const references = (request.evidence ?? []).flatMap((path) => {
+      assert.equal(typeof path, 'string');
+      assert(typeof path === 'string');
       const artifact = this.task.readFile(path).text;
       const parsed = path.includes('retained-evidence') ? JSON.parse(artifact) : undefined;
       return parsed?.references ?? [path];
@@ -119,25 +121,7 @@ export class RecoveredAssessment extends RecoveredProject {
 
   /** Simulate process status only; resolve argv and source scope from the real current capture. */
   private control() {
-    this.context.mock.method(this.task, 'check', async (id: string) => {
-      const operation = resolveOperation(this.task.capture, id);
-      const log = this.task.store(
-        id + '.log',
-        'Controlled check: ' + JSON.stringify(operation) + '\n',
-      );
-      const result: CheckResult = {
-        id,
-        command: operation.command!,
-        args: operation.args,
-        cwd: this.task.worktree!,
-        durationMs: 1,
-        log,
-        ...this.checkState,
-      };
-      this.checks.push(result);
-      this.task.note({ check: result });
-      return result;
-    });
+    this.context.mock.method(this.task, 'check', async (id: string) => this.observeCheck(id));
     this.context.mock.method(
       this.task,
       'activate',
@@ -151,6 +135,27 @@ export class RecoveredAssessment extends RecoveredProject {
         return this.replay ?? this.accept(data);
       },
     );
+  }
+
+  /** Resolve current command data and retain the controlled process observation with its complete log. */
+  private observeCheck(id: string) {
+    const operation = resolveOperation(this.task.capture, id);
+    const log = this.task.store(
+      id + '.log',
+      'Controlled check: ' + JSON.stringify(operation) + '\n',
+    );
+    const result: CheckResult = {
+      id,
+      command: operation.command!,
+      args: operation.args,
+      cwd: this.task.worktree!,
+      durationMs: 1,
+      log,
+      ...this.checkState,
+    };
+    this.checks.push(result);
+    this.task.note({ check: result });
+    return result;
   }
 
   /** Echo the host's requested binding so tests do not invent a future verdict identity schema. */
