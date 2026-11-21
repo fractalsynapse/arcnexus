@@ -48,6 +48,7 @@ export const gateAnswer =
 export class ReviewedWorkflow {
   readonly fixture: ReviewedTask;
   readonly calls: string[] = [];
+  readonly gateEvents: string[] = [];
   readonly holds: HoldContext[] = [];
   readonly revisions: unknown[] = [];
   readonly checkpoints: ActivityCheckpoint[] = [];
@@ -162,6 +163,8 @@ export class ReviewedWorkflow {
       checkInput: textDigest(readFileSync(join(task.worktree!, 'fixture.txt'), 'utf8')),
     });
     this.fixture.checks.push(check);
+    if (this.scenario === 'external')
+      this.gateEvents.push(check.prerequisite ? 'prerequisite-unavailable' : 'prerequisite-available');
     return check;
   }
 
@@ -301,6 +304,7 @@ export class ReviewedWorkflow {
   /** Secure each smaller contribution before resuming its original rejected caller. */
   private async activate(milestone: Milestone): Promise<StewardOutcome> {
     this.calls.push(milestone.id);
+    this.gateEvents.push('steward');
     if (milestone.id !== correction.id) return this.contribute(milestone);
     const result = await steward(
       this.agent,
