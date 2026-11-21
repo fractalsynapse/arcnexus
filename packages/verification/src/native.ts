@@ -21,22 +21,9 @@ export async function verify(
     verification: verificationIdentity(session, plan, candidate, checks),
   };
   task.note({ verification: { identity: assessed.verification, checks } });
-  const unavailable = checks.find(({ status }) => status === null || status === 'not-applicable');
-  if (unavailable)
-    return {
-      kind: 'blocked',
-      reason: `Required check ${unavailable.id} is unavailable`,
-      evidence: [unavailable.log],
-    };
-  const verdict = await assess(agent, session, plan, assessed, checks, signal);
-  const failed = checks.filter((result) => result.status !== 0 || result.diagnostic);
-  if (verdict.kind === 'accepted' && failed.length)
-    return {
-      kind: 'blocked',
-      reason: 'Required candidate checks failed',
-      evidence: failed.map(({ log }) => log),
-    };
-  return verdict;
+  const failure = requiredCheckFailure(checks);
+  if (failure) return failure;
+  return assess(agent, session, plan, assessed, checks, signal);
 }
 
 type VerifiedCheck = Awaited<ReturnType<HostTask['check']>>;
@@ -52,3 +39,20 @@ async function runChecks(task: HostTask, signal: AbortSignal) {
   return checks;
 }
 
+/** Keep unavailable, skipped, failed and invalid-scope evidence from authorizing acceptance. */
+function requiredCheckFailure(checks: readonly VerifiedCheck[]): Verdict | undefined {
+  const unavailable = checks.find(({ status }) => status === null || status === 'not-applicable');
+  if (unavailable)
+    return {
+      kind: 'blocked',
+      reason: `Required check ${unavailable.id} is unavailable`,
+      evidence: [unavailable.log],
+    };
+  const failed = checks.filter((result) => result.status !== 0 || result.diagnostic);
+  if (failed.length)
+    return {
+      kind: 'blocked',
+      reason: 'Required candidate checks failed',
+      evidence: failed.map(({ log }) => log),
+    };
+}
