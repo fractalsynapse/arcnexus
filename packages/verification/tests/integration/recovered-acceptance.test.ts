@@ -188,7 +188,11 @@ test('a changed dependency environment invalidates interrupted check evidence on
   assert.equal((await fixture.run()).kind, 'accepted');
   const request = fixture.requests.at(-1)!;
   const current = (request.assignment as { checks: typeof fixture.checks }).checks;
-  assert.notEqual(current[0]!.log, old.log, 'Changed dependencies reused an earlier environment observation');
+  assert.notEqual(
+    current[0]!.log,
+    old.log,
+    'Changed dependencies reused an earlier environment observation',
+  );
   assert.equal(current[0]!.status, 0);
   assert.notEqual(fixture.task.readFile(current[0]!.log).text, fixture.task.readFile(old.log).text);
 });
