@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import type { Plan, Rejection } from '../../direction/src/index.js';
 
 export interface VerificationIdentity {
@@ -37,13 +38,7 @@ export type Verdict =
 /** Reject a verdict that does not bind to the assembled candidate and its acceptance. */
 export function validateVerdict(plan: Plan, candidate: Candidate, verdict: Verdict) {
   if (verdict.kind === 'blocked') return;
-  if (candidate.digest !== verdict.candidate)
-    throw new Error('Reviewer verdict refers to a different candidate');
-  if (
-    candidate.verification &&
-    JSON.stringify(candidate.verification) !== JSON.stringify(verdict.verification)
-  )
-    throw new Error('Reviewer verdict refers to a different verification identity');
+  validateCandidate(candidate, verdict);
   const criteria = new Map(
     plan.milestones.flatMap(({ owner, criteria }) =>
       criteria.map(({ id }) => [id, owner] as const),
@@ -70,3 +65,11 @@ export function validateVerdict(plan: Plan, candidate: Candidate, verdict: Verdi
 export { verify } from './native.js';
 
 export { verificationIdentity } from './identity.js';
+
+/** Reject stale review identities without depending on JSON object member order. */
+function validateCandidate(candidate: Candidate, verdict: Exclude<Verdict, { kind: 'blocked' }>) {
+  if (candidate.digest !== verdict.candidate)
+    throw new Error('Reviewer verdict refers to a different candidate');
+  if (candidate.verification && !isDeepStrictEqual(candidate.verification, verdict.verification))
+    throw new Error('Reviewer verdict refers to a different verification identity');
+}
