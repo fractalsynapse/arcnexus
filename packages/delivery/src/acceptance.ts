@@ -7,12 +7,18 @@ import {
   type Verdict,
   type VerificationIdentity,
 } from '../../verification/src/index.js';
-
 import type { Publication } from './publication.js';
 
 interface Assessment {
   identity: VerificationIdentity;
   checks: Array<{ id: string; status: unknown; diagnostic?: string }>;
+}
+
+export interface PublicationHistory {
+  publication?: Publication;
+  verification?: Assessment;
+  candidate?: Candidate;
+  verdict?: Verdict;
 }
 
 /** Bind publication to the captured plan, actual check observations and independent verdict. */
@@ -62,16 +68,13 @@ export function currentAcceptance(task: HostTask, digest: string, identity?: Ver
 /** Preserve historical approval only as evidence for the exact retained publication. */
 export function validateRetainedAcceptance(
   publication: Publication,
-  events: readonly {
-    verification?: Assessment;
-    candidate?: Candidate;
-    verdict?: Verdict;
-  }[],
+  events: readonly PublicationHistory[],
 ) {
   const identity = publication.verification;
   const accepted = events.findLast(
     (event) =>
       event.verdict?.kind === 'accepted' &&
+      event.verdict.candidate === publication.candidate &&
       event.candidate?.digest === publication.candidate &&
       isDeepStrictEqual(event.verdict.verification, identity),
   );
