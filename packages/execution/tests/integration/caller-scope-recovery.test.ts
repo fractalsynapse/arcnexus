@@ -42,7 +42,14 @@ class CallerRecoveryScenario {
   readonly research: ResearchResult[] = [];
   readonly gates: Clarification[] = [];
   private readonly sources = new Map<string, string>();
-  readonly supplier;
+  readonly supplier = {
+    kind: 'supplier' as const,
+    owner: 'reviewer',
+    milestone: 'accepted-work-reference',
+    reason: 'Retained legacy handoff must return to its actual caller.',
+    question: 'Keep the original supplier diagnostic.\nDo not silently replan.',
+    requester: milestone.id,
+  };
   private readonly diagnostic: string;
 
   /** Seed independent rejection before the accepted corrective plan is recorded. */
@@ -62,14 +69,6 @@ class CallerRecoveryScenario {
           })),
         },
       ],
-    };
-    this.supplier = {
-      kind: 'supplier' as const,
-      owner: 'reviewer',
-      milestone: 'accepted-work-reference',
-      reason: 'Retained legacy handoff must return to its actual caller.',
-      question: 'Keep the original supplier diagnostic.\nDo not silently replan.',
-      requester: milestone.id,
     };
     this.diagnostic = supplierLinkDiagnostic(this.fixture.plan, this.supplier)!;
     assert(this.diagnostic, 'The explicit legacy handoff must be invalid');
