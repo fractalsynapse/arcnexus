@@ -104,11 +104,9 @@ class ResearchScenario {
         return { id, log, status: 0, command: 'fixture', args: [], cwd: this.root, durationMs: 1 };
       };
       if (!replies.length)
-        replies.push({
-          kind: 'accepted',
-          candidate: 'candidate',
-          criteria: [],
-          evidence: [task.evidence[0]],
+        replies.push((input: ActivationInput) => {
+          const assignment = input.task.assignment as { accepted: object };
+          return { ...assignment.accepted, criteria: [], evidence: [task.evidence[0]] };
         });
       const plan = {
         focus: { purpose: 'fixture', objectives: [], constraints: [] },
