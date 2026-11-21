@@ -6,6 +6,7 @@ import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
 import { PublicationCheckFailure } from './check-failure.js';
+import { acceptedIdentity } from './acceptance.js';
 
 export { publish, type Publication } from './publication.js';
 export { PublicationCheckFailure } from './check-failure.js';
@@ -21,6 +22,7 @@ export async function integrate(
   if (candidate.digest !== verdict.candidate)
     throw new Error('Delivery requires an accepting verdict for this candidate');
   const task = hostTask(session);
+  acceptedIdentity(task, candidate, verdict);
   const { branch, issue, head } = task.commit(candidate);
   const publication = {
     target: task.config.base,
@@ -67,9 +69,23 @@ async function refreshUnmerged(task: HostTask, publication: Publication, signal:
   task.note({ publicationObserved: { branch: publication.branch, pull: pull ?? null } });
   if (pull && pull.target !== publication.target)
     throw new Error(`GitHub publication target changed: ${pull.url}`);
+  if (pull && pull.head !== publication.head)
+    throw new Error(`GitHub publication does not match the retained candidate: ${pull.url}`);
   if (pull && pull.state !== 'open') return false;
+  const remote = await provider.remoteHead(publication.branch);
+  task.note({ publicationObserved: { branch: publication.branch, head: remote ?? null } });
+  if (remote !== publication.head)
+    throw new Error(`Remote publication branch changed: ${publication.branch}`);
   const sameHead = !pull || pull.head === publication.head;
-  if (sameHead && publication.parent === task.capture.source.revision) return false;
+  if (sameHead && publication.parent === task.config.capture.source.revision) {
+    const accepted = task.history().findLast((event) => 'verdict' in event);
+    if (accepted?.verdict.kind === 'accepted') {
+      try {
+        acceptedIdentity(task, accepted.candidate, accepted.verdict);
+        return false;
+      } catch { /* Recovered work requires fresh checks and independent acceptance. */ }
+    }
+  }
   if (pull && sameHead && task.config.fresh) {
     try {
       await provider.verify(pull.url, publication.head, publication.target);
