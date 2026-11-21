@@ -36,33 +36,40 @@ test('ordinary failed recovered checks reach independent rejection with exact ev
 
 /** Require the actual failed payload and readable history before issuing a bound substantive rejection. */
 function rejectFailedChecks(context: TestContext, fixture: RecoveredAssessment) {
-  return context.mock.method(fixture.task, 'activate', async (...[, selection, data]: Parameters<RecoveredAssessment['task']['activate']>) => {
-    assert.deepEqual(selection, fixture.task.capture.project.verifier);
-    const assignment = data.assignment as {
-      checks: typeof fixture.checks;
-      rejected: Record<string, unknown>;
-    };
-    const checks = assertFailedEvidence(fixture, assignment.checks);
-    fixture.assertHistory(data);
-    return {
-      ...assignment.rejected,
-      findings: [
-        {
-          criterion: fixture.plan.milestones[0]!.criteria[0]!.id,
-          owner: fixture.plan.milestones[0]!.owner,
-          reason: 'Current recovered required assertions failed',
-          evidence: checks.map(({ log }) => log),
-        },
-      ],
-    };
-  });
+  return context.mock.method(
+    fixture.task,
+    'activate',
+    async (...[, selection, data]: Parameters<RecoveredAssessment['task']['activate']>) => {
+      assert.deepEqual(selection, fixture.task.capture.project.verifier);
+      const assignment = data.assignment as {
+        checks: typeof fixture.checks;
+        rejected: Record<string, unknown>;
+      };
+      const checks = assertFailedEvidence(fixture, assignment.checks);
+      fixture.assertHistory(data);
+      return {
+        ...assignment.rejected,
+        findings: [
+          {
+            criterion: fixture.plan.milestones[0]!.criteria[0]!.id,
+            owner: fixture.plan.milestones[0]!.owner,
+            reason: 'Current recovered required assertions failed',
+            evidence: checks.map(({ log }) => log),
+          },
+        ],
+      };
+    },
+  );
 }
 
 /** Compare the full current check payload with retained readable observations rather than status alone. */
 function assertFailedEvidence(fixture: RecoveredAssessment, supplied: typeof fixture.checks) {
   const checks = fixture.checks.filter(({ status }) => status === 1);
   assert.deepEqual(supplied, checks);
-  assert.deepEqual(checks.map(({ id }) => id), ['required', 'newly-required']);
+  assert.deepEqual(
+    checks.map(({ id }) => id),
+    ['required', 'newly-required'],
+  );
   for (const check of checks) {
     assert.equal(check.cwd, fixture.task.worktree);
     assert(fixture.task.evidence.includes(check.log));
