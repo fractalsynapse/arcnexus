@@ -171,17 +171,22 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   /** Replace only the external review response, retaining the real identity and citation validators. */
   private controlReviewer(task: HostTask) {
     const activate = task.activate.bind(task);
-    this.context.mock.method(task, 'activate', async (...[agent, selection, data, cancellation]: Parameters<HostTask['activate']>) => {
-      if (selection.component !== 'reviewer') return activate(agent, selection, data, cancellation);
-      const assignment = data.assignment as { accepted: Record<string, unknown> };
-      this.reviews.push(structuredClone(data));
-      return {
-        ...assignment.accepted,
-        kind: 'accepted',
-        criteria: [criterion.id],
-        evidence: task.evidence,
-      };
-    });
+    this.context.mock.method(
+      task,
+      'activate',
+      async (...[agent, selection, data, cancellation]: Parameters<HostTask['activate']>) => {
+        if (selection.component !== 'reviewer')
+          return activate(agent, selection, data, cancellation);
+        const assignment = data.assignment as { accepted: Record<string, unknown> };
+        this.reviews.push(structuredClone(data));
+        return {
+          ...assignment.accepted,
+          kind: 'accepted',
+          criteria: [criterion.id],
+          evidence: task.evidence,
+        };
+      },
+    );
   }
 
   /** Interrupt after the answer is durable but before activity completion is acknowledged. */
