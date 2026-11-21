@@ -238,7 +238,11 @@ test('a distinct MCP question after staging moves resumes with its exact new ans
   const original = await interrupt(fixture);
   const { staging } = fixture.advance();
   const resumed = await fixture.run();
-  assert.equal(resumed.kind, 'merged', 'Newly answered recovered caller must resume: ' + JSON.stringify(resumed));
+  assert.equal(
+    resumed.kind,
+    'merged',
+    'Newly answered recovered caller must resume: ' + JSON.stringify(resumed),
+  );
   assertCapture(fixture, staging);
   assert.deepEqual(fixture.prompts, [original.gate.question, continuationQuestion]);
   const probe = fixture.probes(fixture.tasks[1]!).at(-1);
@@ -255,11 +259,17 @@ function assertNewAnswerHistory(
   original: Awaited<ReturnType<typeof interrupt>>,
 ) {
   const history = fixture.observed[1]! as Retained[];
-  assert.deepEqual(history.flatMap((event) => event.editReceipt ?? []), [original.receipt]);
+  assert.deepEqual(
+    history.flatMap((event) => event.editReceipt ?? []),
+    [original.receipt],
+  );
   const gates = history.flatMap((event) =>
     event.clarification?.answer === undefined ? [] : [event.clarification],
   );
-  assert.deepEqual(gates.filter((gate) => gate.question === original.gate.question), [original.gate]);
+  assert.deepEqual(
+    gates.filter((gate) => gate.question === original.gate.question),
+    [original.gate],
+  );
   const current = gates.filter((gate) => gate.question === continuationQuestion);
   assert.equal(current.length, 1);
   assert.equal(current[0]!.answer, continuationAnswer);
