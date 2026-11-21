@@ -50,9 +50,10 @@ function assertCapture(fixture: PreparedRecoveryFixture, staging: string) {
   const probe = fixture.probes(resumed).at(-1);
   assert.deepEqual(probe.data.acceptance, [criterion]);
   assert(probe.input.includes('revision: ' + staging));
-  assert.deepEqual(probe.tools.map((tool: { name: string }) => tool.name), [
-    'checked-edit', 'ask-question', 'current-read',
-  ]);
+  assert.deepEqual(
+    probe.tools.map((tool: { name: string }) => tool.name),
+    ['checked-edit', 'ask-question', 'current-read'],
+  );
   assert.equal(probe.args[probe.args.indexOf('--model') + 1], 'explicit-work');
   assert.equal(probe.executable, resumed.config.executable);
   assert.equal(probe.node, process.version);
