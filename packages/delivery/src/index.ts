@@ -4,7 +4,12 @@ import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
 import { PublicationCheckFailure } from './check-failure.js';
-import { acceptedIdentity, currentAcceptance, validateRetainedAcceptance } from './acceptance.js';
+import {
+  acceptedIdentity,
+  currentAcceptance,
+  validateRetainedAcceptance,
+  type PublicationHistory,
+} from './acceptance.js';
 
 export { publish, type Publication } from './publication.js';
 export { PublicationCheckFailure } from './check-failure.js';
@@ -86,28 +91,15 @@ async function refreshUnmerged(task: HostTask, publication: Publication, signal:
     : !currentAcceptance(task, publication.candidate, publication.verification);
 }
 
-/** Validate the original acceptance and adapt the publication artifact used before journaling. */
+/** Recover the journaled publication without substituting current acceptance for its history. */
 function recover(
   task: HostTask,
   retained: NonNullable<ReturnType<HostTask['retainedPublication']>>,
 ): Publication | undefined {
-  const events = retained.events as {
-    verification?: Parameters<typeof validateRetainedAcceptance>[1][number]['verification'];
-    publication?: Publication;
-    candidate?: Candidate;
-    verdict?: Verdict;
-  }[];
-  const saved = events.findLast((event) => event.publication)?.publication;
-  const publication = saved;
+  const events = retained.events as PublicationHistory[];
+  const publication = events.findLast((event) => event.publication)?.publication;
   if (!publication) return undefined;
-  const accepted = events.findLast(
-    (event) =>
-      event.verdict?.kind === 'accepted' && event.candidate?.digest === publication.candidate,
-  );
   if (
-    accepted?.candidate?.digest !== publication.candidate ||
-    accepted?.verdict?.kind !== 'accepted' ||
-    accepted.verdict.candidate !== publication.candidate ||
     publication.target !== task.config.base ||
     !/^\d+$/.test(publication.issue) ||
     publication.branch !== `${publication.issue}-task` ||
