@@ -22,8 +22,9 @@ export async function verify(
   };
   task.note({ verification: { identity: assessed.verification, checks } });
   const failure = requiredCheckFailure(checks);
-  if (failure) return failure;
-  return assess(agent, session, plan, assessed, checks, signal);
+  if (failure && checks.some(({ status }) => typeof status !== 'number')) return failure;
+  const verdict = await assess(agent, session, plan, assessed, checks, signal);
+  return verdict.kind === 'accepted' && failure ? failure : verdict;
 }
 
 type VerifiedCheck = Awaited<ReturnType<HostTask['check']>>;
