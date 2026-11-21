@@ -161,10 +161,12 @@ function additionalObligation(plan: Plan): Plan {
     ...plan,
     milestones: plan.milestones.map((milestone) => ({
       ...milestone,
-      criteria: [{
-        id: 'continuity',
-        description: originalRequirement + '; also retain new approved obligation',
-      }],
+      criteria: [
+        {
+          id: 'continuity',
+          description: originalRequirement + '; also retain new approved obligation',
+        },
+      ],
     })),
   };
 }
