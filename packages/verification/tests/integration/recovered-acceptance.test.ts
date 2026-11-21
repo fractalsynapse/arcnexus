@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import type { Plan } from '../../../direction/src/index.js';
 import type { Candidate } from '../../src/index.js';
 import { originalRequirement } from '../fixtures/recovered-project.js';
 import { RecoveredAssessment, type CheckState } from '../fixtures/recovered-assessment.js';
@@ -21,19 +22,7 @@ for (const identity of ['tree', 'base', 'capture', 'acceptance'] as const) {
       identity === 'capture' ? current : fixture.original,
       head,
     );
-    if (identity === 'acceptance')
-      fixture.plan = {
-        ...fixture.plan,
-        milestones: fixture.plan.milestones.map((milestone) => ({
-          ...milestone,
-          criteria: [
-            {
-              id: 'continuity',
-              description: originalRequirement + '; also retain new approved obligation',
-            },
-          ],
-        })),
-      };
+    if (identity === 'acceptance') fixture.plan = additionalObligation(fixture.plan);
     const recovered = await fixture.assemble();
     assert.equal(recovered.digest === originalCandidate.digest, identity !== 'tree');
     assert.deepEqual(fixture.task.observations().slice(0, historical.length), historical);
@@ -165,3 +154,17 @@ test('unchanged interrupted assessment reuses exact complete check observations 
   assert.deepEqual(fixture.checks, originalChecks);
   fixture.assertHistory(request);
 });
+
+/** Model an approved additional obligation while retaining the original criterion identity and promise. */
+function additionalObligation(plan: Plan): Plan {
+  return {
+    ...plan,
+    milestones: plan.milestones.map((milestone) => ({
+      ...milestone,
+      criteria: [{
+        id: 'continuity',
+        description: originalRequirement + '; also retain new approved obligation',
+      }],
+    })),
+  };
+}
