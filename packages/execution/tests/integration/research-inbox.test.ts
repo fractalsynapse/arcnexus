@@ -13,6 +13,7 @@ import {
 import type { Capture } from '../../../architecture/src/index.js';
 import { Coordination } from '../../../coordination/src/index.js';
 import { HostTask } from '../../src/index.js';
+import { checkInput, reusableCheck } from '../../src/check-cache.js';
 import { archiveResearch, pendingResearch } from '../../src/research-archive.js';
 import { verify } from '../../../verification/src/index.js';
 
@@ -54,6 +55,10 @@ class ResearchScenario {
     t.after(() => rmSync(this.base, { force: true, recursive: true }));
     mkdirSync(this.root);
     execFileSync('git', ['init', '-q', this.root]);
+    execFileSync('git', [
+      '-C', this.root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.com',
+      'commit', '--allow-empty', '-qm', 'Committed research fixture',
+    ]);
     this.capture = {
       project: {
         knowledgeRoot: '.arc',
@@ -63,10 +68,18 @@ class ResearchScenario {
       contracts: [],
       components: researchComponents(operations),
       operations: {
+        build: {
+          id: 'build', kind: 'check', category: 'build', command: '/usr/bin/true',
+          args: [], network: false,
+        },
         'read-file': { id: 'read-file', kind: 'tool', category: 'project-tool', tool: 'read' },
         'list-files': { id: 'list-files', kind: 'tool', category: 'project-tool', tool: 'list' },
       },
-      source: { root: this.root, revision: 'captured', paths: [], remote: 'https://example.com' },
+      source: {
+        root: this.root,
+        revision: execFileSync('git', ['-C', this.root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+        paths: [], remote: 'https://example.com',
+      },
     } as unknown as Capture;
   }
 
@@ -98,11 +111,7 @@ class ResearchScenario {
   /** Keep the real Verification and Reviewer around a scripted learner. */
   review(replies: unknown[]) {
     return this.withTask('Review fixture', async (task) => {
-      task.check = async (id) => {
-        this.checks++;
-        const log = task.store('build.log', 'fixture passed');
-        return { id, log, status: 0, command: 'fixture', args: [], cwd: this.root, durationMs: 1 };
-      };
+      this.prepareReviewCheck(task);
       if (!replies.length)
         replies.push((input: ActivationInput) => {
           const assignment = input.task.assignment as { accepted: object };
@@ -114,6 +123,21 @@ class ResearchScenario {
       };
       return verify(this.agent(replies), task, plan, { digest: 'candidate', evidence: [] }, signal);
     });
+  }
+
+  /** Seed controlled check evidence once; the real host validates and reuses its committed inputs. */
+  private prepareReviewCheck(task: HostTask) {
+    task.worktree = this.root;
+    const input = checkInput(task, 'build');
+    assert(input, 'Review checks need clean committed fixture inputs');
+    if (reusableCheck(task.observations(), input)) return;
+    this.checks++;
+    const log = task.store('build.log', 'Controlled checklist observation; no native execution claimed');
+    const check = {
+      id: 'build', log, status: 0, command: '/usr/bin/true',
+      args: [], cwd: this.root, durationMs: 0,
+    };
+    task.note({ check, checkInput: input });
   }
 
   /** Use the same persisted task identity across attempts. */
