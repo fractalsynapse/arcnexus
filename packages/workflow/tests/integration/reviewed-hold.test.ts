@@ -199,7 +199,11 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
   assert.equal((await f.run()).kind, 'blocked');
   await f.reopen();
   assertUnchangedGate(f, held, receipts);
-  assert.deepEqual(f.calls, before, 'An unavailable prerequisite cannot reactivate dependent stewards');
+  assert.deepEqual(
+    f.calls,
+    before,
+    'An unavailable prerequisite cannot reactivate dependent stewards',
+  );
   assert.equal((await f.run()).kind, 'blocked');
   assert.deepEqual(f.calls, before);
   await resumeSatisfiedGate(f);
@@ -208,7 +212,10 @@ async function resumeGate(f: ReviewedWorkflow, checkpoint: string) {
 /** Compare complete retained effects and cursor before allowing any dependent continuation. */
 function assertUnchangedGate(f: ReviewedWorkflow, held: HoldContext, receipts: unknown[]) {
   assert.equal(f.fixture.checkpoint(), held.task.checkpoint);
-  assert.deepEqual(f.fixture.task.history().findLast((event) => 'position' in event)!.position, held.position);
+  assert.deepEqual(
+    f.fixture.task.history().findLast((event) => 'position' in event)!.position,
+    held.position,
+  );
   assert.deepEqual(gateReceipts(f), receipts);
   assert.equal(f.fixture.task.taskID, held.task.id);
   assert.equal(f.fixture.task.issue, held.task.issue);
@@ -221,7 +228,9 @@ function assertUnchangedGate(f: ReviewedWorkflow, held: HoldContext, receipts: u
 
 /** Select full checked-edit observations, preserving their original receipt and checkpoint associations. */
 function gateReceipts(f: ReviewedWorkflow) {
-  return f.fixture.task.observations<{ editReceipt?: unknown }>().filter((event) => event.editReceipt);
+  return f.fixture.task
+    .observations<{ editReceipt?: unknown }>()
+    .filter((event) => event.editReceipt);
 }
 
 /** Observe an actual artifact or complete human answer before dependent correction may resume. */
@@ -240,8 +249,10 @@ async function resumeSatisfiedGate(f: ReviewedWorkflow) {
   if (f.scenario === 'external') {
     const events = f.gateEvents.slice(start);
     assert(events.indexOf('prerequisite-available') >= 0);
-    assert(events.indexOf('prerequisite-available') < events.indexOf('steward'),
-      'Host prerequisite satisfaction must precede dependent activation');
+    assert(
+      events.indexOf('prerequisite-available') < events.indexOf('steward'),
+      'Host prerequisite satisfaction must precede dependent activation',
+    );
   }
   if (f.scenario === 'human') {
     const answered = f.holds.flatMap((h) => h.answers).find((a) => a.question === gateQuestion);
