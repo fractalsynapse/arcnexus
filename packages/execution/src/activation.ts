@@ -39,8 +39,16 @@ export function activateActor(
     actorInvoker(task, agent, selection, signal, refresh),
     signal,
   );
-  return new Clarifications(task, selection, signal).run({ ...data, evidence }, (input) =>
-    inbox.run(selection, input),
+  const verifier = capture.project.verifier;
+  const reviewing =
+    selection.component === verifier?.component && selection.activity === verifier.activity;
+  const originalBase = reviewing
+    ? undefined
+    : task.observations<{ baseRevision?: string }>().find(({ baseRevision }) => baseRevision)
+        ?.baseRevision;
+  return new Clarifications(task, selection, signal, originalBase).run(
+    { ...data, evidence },
+    (input) => inbox.run(selection, input),
   );
 }
 
