@@ -318,7 +318,7 @@ export function fileView() {
     ${editInput('Topics', 'topics', rev.topics.join(', '), !state.editing)}
   </div>`;
   return (
-    breadcrumbs([[areaName, slug], ['File']]) +
+    breadcrumbs(data.fileReview ? [[areaName + ' file']] : [[areaName, slug], ['File']]) +
     title(rev.name, item.type + ' · ' + rev.id) +
     `<small class="arc-file-reference">
       <span>Path <code class="arc-file-path">${escape(item.path)}</code></span>

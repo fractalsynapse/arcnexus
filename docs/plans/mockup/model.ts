@@ -185,6 +185,7 @@ export type Phase = {
   prCommits?: number;
 };
 export type Capture = {
+  fileReview?: boolean;
   plan: Phase;
   architect: Phase;
   files: DesignFile[];
@@ -210,11 +211,11 @@ export type PreviewCommand = { operation: string; instruction: string; actors: A
 const fallback = await loadCapture();
 export const data = fallback;
 export const files = data.files;
-const defaultGoal = requireValue(data.goals.at(-1));
+const defaultGoal = data.goals.at(-1);
 
 export const state = {
-  route: '/plan/',
-  goal: defaultGoal.id,
+  route: data.fileReview ? '/' + requireValue(files[0]).area + '/file/' : '/plan/',
+  goal: defaultGoal?.id ?? '',
   component: 'execution',
   milestone: '',
   activity: 'implementation',
@@ -222,7 +223,7 @@ export const state = {
   revision: 0,
   expandedPane: null as string | null,
   questionId: '',
-  runRevision: String(requireValue(defaultGoal.snapshots[0]).seq),
+  runRevision: String(defaultGoal?.snapshots[0]?.seq ?? ''),
   editing: false,
   saved: false,
   filters: {

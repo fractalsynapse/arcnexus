@@ -12,17 +12,15 @@ repository root. Open the resulting `dist/docs/plans/mockup/index.html` in a
 browser. The capture can contain retained operator messages and tool results,
 so share the generated preview only with its intended reviewers.
 
-For Codex design review, regenerate the preview after each revision from the
-repository root using the same capture:
+For inline Codex file review, generate a focused preview using the same capture:
 
 ```sh
-npx --no-install jiti docs/plans/mockup/preview.ts <capture.json> --viewer <viewer-output.html>
+npx --no-install jiti docs/plans/mockup/preview.ts <capture.json> --file .arc/goals/inspect-parity.md --viewer dist/docs/plans/mockup/arcnexus-mdx-file-review.html
 ```
 
-Put the output in the active chat's visualization directory and use the printed
-absolute path in a fresh visualization reference. The builder uses the current
-layout, TypeScript, and brand assets on each run. The embedded viewer refreshes
-when the new preview is attached to the chat.
+Use the printed project-local absolute path in a fresh visualization reference.
+The same editor and file panels run in both builds. The full browser preview
+retains the complete round and navigation.
 
 ## Behaviors to review
 
@@ -50,9 +48,11 @@ when the new preview is attached to the chat.
   excerpts, use the local patch picker to load the complete merge diff. An
   export from `git show --format= --no-color <merge>` works as a local patch.
 - Open a Plan or Architect file to see its full path and File information.
-  Markdown files use the rendered body and visual editor. YAML files use a
-  highlighted document and text editor. Expand Content or Changes while editing
-  and confirm your draft is still present after restoring the split view.
+  Markdown files use the rendered body and MDXEditor. In Edit mode, use Raw
+  to review or edit the Markdown syntax and Visual to return to rich text.
+  Save a draft after editing in either mode. Unsupported rich-text syntax
+  remains available in Raw. YAML files use a highlighted document and text
+  editor. Expand either pane while editing to check draft retention.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
   and loaded patches. Read the issue before the PR in Delivery.

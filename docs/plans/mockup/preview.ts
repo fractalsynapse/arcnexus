@@ -1,24 +1,30 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { constants, gzipSync } from 'node:zlib';
 import { encodeBase85 } from './base85.ts';
+import type { Capture } from './model.ts';
 
 const source = import.meta.dirname;
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
-  options: { viewer: { type: 'string' } },
+  options: { viewer: { type: 'string' }, file: { type: 'string' } },
 });
 
 const [capturePath] = positionals;
 
-if (!capturePath || positionals.length !== 1 || values.viewer === '') {
-  throw new Error('Usage: preview.ts <capture.json> [--viewer <output.html>]');
+if (!capturePath || positionals.length !== 1 || values.viewer === '' || values.file === '') {
+  throw new Error(
+    'Usage: preview.ts <capture.json> [--viewer <output.html>] [--file <captured-path>]',
+  );
 }
 
-const capture = gzipSync(readFileSync(capturePath), { level: constants.Z_BEST_COMPRESSION });
+const capture = gzipSync(previewCapture(readFileSync(capturePath), values.file), {
+  level: constants.Z_BEST_COMPRESSION,
+});
 
 const script = bundle('main.ts', Boolean(values.viewer));
 
@@ -69,6 +75,25 @@ try {
 
 console.log(preview);
 
+function previewCapture(raw: Buffer, path: string | undefined) {
+  if (!path) return raw;
+  const data = JSON.parse(raw.toString('utf8')) as Capture;
+  const file = data.files.find((item) => item.path === path);
+  if (!file) throw new Error('File is missing from the capture: ' + path);
+  const review: Capture = {
+    ...data,
+    fileReview: true,
+    files: [file],
+    goals: [],
+    directories: [],
+    tools: {},
+    payloads: [],
+    plan: { ...data.plan, rows: [] },
+    architect: { ...data.architect, rows: [] },
+  };
+  return Buffer.from(JSON.stringify(review));
+}
+
 function viewerScript(code: string) {
   const packed = gzipSync(code, { level: constants.Z_BEST_COMPRESSION }).toString('base64');
   return `<script type="application/octet-stream" id="arc-bundle">${packed}</script>
@@ -76,20 +101,30 @@ function viewerScript(code: string) {
 }
 
 function bundle(entry: string, minify: boolean) {
-  return execFileSync(
-    'npm',
-    [
-      'exec',
-      '--yes',
-      '--package=esbuild@0.28.2',
-      '--',
-      'esbuild',
-      resolve(source, entry),
-      '--bundle',
-      '--format=esm',
-      ...(minify ? ['--minify'] : []),
-      '--log-level=warning',
-    ],
-    { encoding: 'utf8' },
-  );
+  const scratch = mkdtempSync(join(tmpdir(), 'arc-mockup-'));
+  const output = join(scratch, 'bundle.js');
+  try {
+    execFileSync(
+      'npm',
+      [
+        'exec',
+        '--yes',
+        '--package=esbuild@0.28.2',
+        '--',
+        'esbuild',
+        resolve(source, entry),
+        '--bundle',
+        '--format=esm',
+        '--outfile=' + output,
+        '--loader:.css=text',
+        '--define:process.env.NODE_ENV="production"',
+        ...(minify ? ['--minify'] : []),
+        '--log-level=warning',
+      ],
+      { stdio: 'inherit' },
+    );
+    return readFileSync(output, 'utf8');
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
 }

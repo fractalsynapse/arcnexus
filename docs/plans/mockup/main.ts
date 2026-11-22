@@ -9,11 +9,13 @@ import {
 } from './composer.ts';
 import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
-import { editedMarkdown, formatMarkdown, highlightFileCode, pasteMarkdown } from './markdown.ts';
+import { highlightFileCode } from './markdown.ts';
+import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
 import { togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
 import {
+  data,
   files,
   state,
   displayedRows,
@@ -82,8 +84,10 @@ export function render(resetComposer = false) {
   });
   displayedRows.clear();
   operationGroups.clear();
+  detachMarkdownEditor();
   main.innerHTML = requireValue(routes[r])();
   highlightFileCode(main);
+  mountMarkdownEditor(main.querySelector('[data-md-editor]'), files[state.fileId]?.revisions[state.revision]);
   const added = previewRows();
   if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
     main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, { preview: false }));
@@ -167,14 +171,14 @@ export function applyPreviewForm(form: HTMLFormElement) {
     render();
   }
   if (form.dataset.form !== 'file' || !state.editing) return;
-  saveRevision(form, data);
+  saveRevision(data);
 }
 
-function saveRevision(form: HTMLFormElement, data: FormData) {
+function saveRevision(data: FormData) {
   const item = requireValue(files[state.fileId]);
-  const source = requireValue(item.revisions[state.revision]).content;
-  const editor = form.querySelector<HTMLElement>('[data-md-editor]');
-  const content = editor ? editedMarkdown(source, editor) : String(data.get('content'));
+  const content = item.path.endsWith('.md')
+    ? editedMarkdown(requireValue(item.revisions[state.revision]))
+    : String(data.get('content'));
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
     name: String(data.get('name')).trim(),
@@ -196,22 +200,7 @@ root.addEventListener('click', (event) => {
   if (!control || !root.contains(control)) return;
   if (control.getAttribute('role') === 'tab') selectDiffTab(control);
   else if (control.dataset.expandPane) togglePane(control);
-  else if (control.dataset.mdCommand) formatMarkdown(control);
   else handleClick(control);
-});
-
-root.addEventListener('mousedown', (event) => {
-  if (event.target instanceof Element && event.target.closest('[data-md-command]')) {
-    event.preventDefault();
-  }
-});
-
-root.addEventListener('paste', pasteMarkdown);
-
-root.addEventListener('drop', (event) => {
-  if (event.target instanceof Element && event.target.closest('[data-md-editor]')) {
-    event.preventDefault();
-  }
 });
 
 root.addEventListener(
@@ -314,5 +303,9 @@ root.addEventListener('keydown', (event) => {
   if (field.form) applyPreviewForm(field.form);
 });
 
+if (data.fileReview) {
+  root.setAttribute('data-file-review', '');
+  dom<HTMLButtonElement>('.arc-brand').disabled = true;
+}
 dom('.arc-footer-state').innerHTML = roundFooter();
 render();
