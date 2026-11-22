@@ -34,8 +34,8 @@ when the new preview is attached to the chat.
   Expand objects and arrays in structured responses as needed.
 - In Plan, compare phase elapsed time with the Planner's Codex execution time.
   Expand Tools by frequency below the metric rows. Check the issue before the
-  pull request, then use the compact state readout under the instruction bar to
-  open the detailed round metrics.
+  pull request, then use the Round metrics icon before the footer state readout
+  to open the detailed round metrics.
 - Find a file by its extension-free name or description. Sort by priority and
   combine search and topic filters with Changed only. Preview topics illustrate
   the filter across captured goals and objectives.

@@ -1,17 +1,27 @@
 import { showInspector } from './inspector.ts';
 import { data, inspector } from './model.ts';
 import { countDetails } from './timeline.ts';
-import { cacheRate, escape, factList, readouts, status, tokenCount, tokenPair } from './view.ts';
+import {
+  cacheRate,
+  escape,
+  factList,
+  icon,
+  readouts,
+  status,
+  tokenCount,
+  tokenPair,
+} from './view.ts';
 
 export function roundFooter() {
   const { ended, wall } = data.round;
-  return `<div class="arc-footer-readout">
+  return `<button type="button" class="arc-link arc-metrics-trigger" data-action="round-metrics"
+    aria-label="Round metrics" data-tooltip="Round metrics" aria-haspopup="dialog">${icon('chart-no-axes-column')}</button>
+  <div class="arc-footer-readout">
     ${status('Completed')}<strong>Refine</strong>
     <span>Updated <time>${escape(ended)} ET</time></span>
     <span>Elapsed <strong>${escape(wall)}</strong></span>
     <span>Tokens (in / out) <strong>${roundTokens()}</strong></span>
-  </div>
-  <button type="button" class="arc-link" data-action="round-metrics" aria-haspopup="dialog">Round metrics</button>`;
+  </div>`;
 }
 
 function roundTokens() {

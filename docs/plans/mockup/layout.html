@@ -92,6 +92,7 @@
 #arc-preview .arc-button.solid:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 83%, #041d49); color: var(--on-accent); }
 #arc-preview .arc-main { padding: var(--pad); display: grid; gap: var(--gap); min-width: 0; }
 #arc-preview .arc-title, #arc-preview .arc-title-text { display: flex; align-items: baseline; gap: 5px 14px; flex-wrap: wrap; min-width: 0; }
+#arc-preview .arc-title > .arc-round { margin-inline-start:auto; justify-content:flex-end; text-align:end; }
 #arc-preview .arc-title p { color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 #arc-preview .arc-crumbs { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; color: var(--muted); }
 #arc-preview .arc-link { display: inline-flex; align-items: center; gap: 6px; padding: 5px 1px; font-weight: 630; color: var(--link); }
@@ -196,8 +197,12 @@
 #arc-preview .arc-launch { display: grid; grid-template-columns: minmax(105px,.32fr) minmax(0,1.5fr) auto; gap: 9px; align-items: end; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
-#arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; flex-wrap:wrap; align-items:center; gap:5px 12px; }
-#arc-preview .arc-footer-state { justify-content:space-between; margin-top:11px; padding-top:8px; border-top:1px solid var(--line); }
+#arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; align-items:center; gap:5px 12px; }
+#arc-preview .arc-footer-state { margin-top:11px; padding-top:8px; border-top:1px solid var(--line); }
+#arc-preview .arc-footer-readout { flex-wrap:wrap; min-width:0; }
+#arc-preview .arc-metrics-trigger { flex:none; justify-content:center; inline-size:30px; min-block-size:30px; border-radius:7px; }
+#arc-preview .arc-metrics-trigger:is(:hover,:focus-visible) { background:var(--tint); }
+#arc-preview .arc-metrics-trigger i::before { content:'▥'; font:16px/1 system-ui,sans-serif; }
 #arc-preview .arc-footer-readout, #arc-preview .arc-command { color:var(--muted); font-size:12px; }
 #arc-preview .arc-footer-readout strong { color:var(--ink); font-weight:650; }
 #arc-preview .arc-command { text-align:end; padding:4px 0 9px; }
@@ -228,6 +233,7 @@
 @media (pointer: coarse) {
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }
   #arc-preview :is(select,input,textarea) { font-size: 16px; }
+  #arc-preview .arc-metrics-trigger { inline-size:44px; }
 }
 
 #arc-preview .arc-round { display:flex; flex-wrap:wrap; align-items:center; gap:7px 15px; min-width:0; color:var(--muted); font-size:12px; }
