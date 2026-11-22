@@ -236,7 +236,7 @@ export function scopedDiff(
     lines: entry.excerpt ? readPatch(entry.excerpt, entry.path).find((file) => file.path === entry.path)?.lines ?? [] : [],
     note: entry.truncated ? 'Latest retained checkpoint patch excerpt' :
       entry.excerpt ? 'Latest retained checkpoint patch' : 'No patch text retained for this path.',
-  })), true);
+  })), { localPatch: true });
 }
 
 function scopedReceipts(owner: string, milestone: string | null, activity: string | null) {
@@ -405,5 +405,5 @@ function deliveryDiff(d: Goal['delivery'], delivered: boolean) {
       note: !file ? 'Open the local merge patch to inspect this path.' :
         d.patchExcerpt ? 'Retained patch excerpt' : undefined,
     };
-  }), true);
+  }), { localPatch: true });
 }

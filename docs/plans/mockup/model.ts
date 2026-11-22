@@ -1,7 +1,9 @@
+import { decodeBase85 } from './base85.ts';
 import { previewTopics } from './plan-topics.ts';
 
 export type Area = 'plan' | 'architect';
 export type Workspace = Area | 'run';
+export type FilePane = 'content' | 'changes';
 export type EventRow = [
   time: string,
   kind: string,
@@ -215,6 +217,7 @@ export const state = {
   activity: 'implementation',
   fileId: 0,
   revision: 0,
+  expandedFilePane: null as FilePane | null,
   questionId: '',
   runRevision: String(requireValue(defaultGoal.snapshots[0]).seq),
   editing: false,
@@ -253,8 +256,10 @@ export const main = dom('.arc-main');
 export const launch = dom<HTMLFormElement>('.arc-launch');
 
 async function loadCapture(): Promise<Capture> {
-  const source = dom('#arc-capture').textContent ?? '';
-  const bytes = Uint8Array.from(atob(source), (byte) => byte.charCodeAt(0));
+  const captureNode = dom('#arc-capture');
+  const source = captureNode.textContent ?? '';
+  const bytes = captureNode.dataset.encoding === 'base85'
+    ? decodeBase85(source) : Uint8Array.from(atob(source), (byte) => byte.charCodeAt(0));
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
   const capture = (await new Response(stream).json()) as Capture;
   for (const item of capture.files) {

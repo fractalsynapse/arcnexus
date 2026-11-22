@@ -8,7 +8,8 @@ import {
   submitComposer,
 } from './composer.ts';
 import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
-import { workspaceIndex, updateFileList, fileView } from './files.ts';
+import { workspaceIndex, updateFileList, fileView, expandFilePane } from './files.ts';
+import { editedMarkdown, formatMarkdown, highlightMarkdownCode, pasteMarkdown } from './markdown.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
 import {
@@ -80,6 +81,7 @@ export function render(resetComposer = false) {
   displayedRows.clear();
   operationGroups.clear();
   main.innerHTML = requireValue(routes[r])();
+  highlightMarkdownCode(main);
   const added = previewRows();
   if (added.length && r !== '/plan/question/' && !main.querySelector('.arc-grouped-log')) {
     main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, false));
@@ -91,6 +93,7 @@ export function render(resetComposer = false) {
 
 export function go(route: string) {
   state.route = route;
+  state.expandedFilePane = null;
   state.editing = false;
   state.saved = false;
   render(true);
@@ -162,17 +165,21 @@ export function applyPreviewForm(form: HTMLFormElement) {
     render();
   }
   if (form.dataset.form !== 'file' || !state.editing) return;
-  saveRevision(data);
+  saveRevision(form, data);
 }
 
-function saveRevision(data: FormData) {
+function saveRevision(form: HTMLFormElement, data: FormData) {
   const item = requireValue(files[state.fileId]);
+  const source = requireValue(item.revisions[state.revision]).content;
+  const content = item.area === 'plan'
+    ? editedMarkdown(source, requireValue(form.querySelector<HTMLElement>('[data-md-editor]')))
+    : String(data.get('content'));
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
     name: String(data.get('name')).trim(),
     priority: data.get('priority') ? Number(data.get('priority')) : null,
     topics: parseTopics(data.get('topics')),
-    content: String(data.get('content')),
+    content,
     updated: 'Preview draft',
   });
   state.revision = 0;
@@ -187,7 +194,23 @@ root.addEventListener('click', (event) => {
   const control = element.closest('button');
   if (!control || !root.contains(control)) return;
   if (control.getAttribute('role') === 'tab') selectDiffTab(control);
+  else if (control.dataset.expandFile) expandFilePane(control);
+  else if (control.dataset.mdCommand) formatMarkdown(control);
   else handleClick(control);
+});
+
+root.addEventListener('mousedown', (event) => {
+  if (event.target instanceof Element && event.target.closest('[data-md-command]')) {
+    event.preventDefault();
+  }
+});
+
+root.addEventListener('paste', pasteMarkdown);
+
+root.addEventListener('drop', (event) => {
+  if (event.target instanceof Element && event.target.closest('[data-md-editor]')) {
+    event.preventDefault();
+  }
 });
 
 root.addEventListener(

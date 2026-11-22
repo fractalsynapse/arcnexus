@@ -1,7 +1,8 @@
 import { plannerRows } from './composer.ts';
 import { diffView } from './diff.ts';
+import { markdownContent } from './markdown.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
-import type { Area, DesignFile, IndexedFile, Revision, Filter } from './model.ts';
+import type { Area, DesignFile, IndexedFile, Revision, Filter, FilePane } from './model.ts';
 import { fileName } from './plan-topics.ts';
 import { metrics, eventLog } from './timeline.ts';
 import {
@@ -222,30 +223,20 @@ export function fileRow(item: IndexedFile) {
   );
 }
 
-export function markdownPreview(source: string) {
-  return source
-    .trim()
-    .split(/\n+/)
-    .map((line) => {
-      const heading = line.match(/^#{1,6}\s+(.+)$/);
-      return heading ? '<h3>' + escape(heading[1]) + '</h3>' : '<p>' + escape(line) + '</p>';
-    })
-    .join('');
-}
-
-export function fileDiff(item: DesignFile, index: number) {
+export function fileDiff(item: DesignFile, index: number, action = '') {
   const current = requireValue(item.revisions[index]);
   const previous = item.revisions[index + 1];
+  const heading = item.area === 'plan' ? 'Changes' : 'File diff';
   if (!previous)
-    return panel('File diff', noData('No earlier revision included in this snapshot.'));
+    return panel(heading, noData('No earlier revision included in this snapshot.'), action);
   const label = 'Compared with ' + previous.id;
   const lines = revisionDiff(current, previous);
   return lines.length
-    ? diffView(label, [{ path: item.path, lines }])
+    ? diffView(label, [{ path: item.path, lines }], { heading, action })
     : panel(
-        'File diff',
+        heading,
         noData('Contents match the selected comparison.'),
-        `<small>${escape(label)}</small>`,
+        `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`,
       );
 }
 
@@ -327,9 +318,53 @@ export function fileView() {
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}
       ${panel('File information', metadata)}
-      <div class="arc-grid equal">${panel(item.area === 'architect' ? 'YAML' : 'Markdown', fileContent(item, rev))}${fileDiff(item, state.revision)}</div>
+      ${filePanels(item, rev)}
     </form>`
   );
+}
+
+function filePanels(item: DesignFile, revision: Revision) {
+  if (item.area === 'architect') {
+    const content = panel('YAML', fileContent(item, revision));
+    return `<div class="arc-grid equal">${content}${fileDiff(item, state.revision)}</div>`;
+  }
+  const content = panel('Content', fileContent(item, revision), expandButton('content'));
+  const changes = fileDiff(item, state.revision, expandButton('changes'));
+  const expanded = state.expandedFilePane;
+  return `<div class="arc-grid equal arc-file-workspace" ${expanded ? 'data-expanded' : ''}>
+    <div data-file-pane-panel="content" id="arc-file-content" ${expanded === 'changes' ? 'hidden' : ''}>${content}</div>
+    <div data-file-pane-panel="changes" id="arc-file-changes" ${expanded === 'content' ? 'hidden' : ''}>${changes}</div>
+  </div>`;
+}
+
+function paneLabel(pane: FilePane, expanded: boolean) {
+  return (expanded ? 'Collapse ' : 'Expand ') + (pane === 'content' ? 'Content' : 'Changes');
+}
+
+function expandButton(pane: FilePane) {
+  const expanded = state.expandedFilePane === pane;
+  const label = paneLabel(pane, expanded);
+  return `<button type="button" class="arc-link arc-file-expand" data-expand-file="${pane}"
+    aria-controls="arc-file-${pane}" aria-expanded="${expanded}" aria-label="${label}"
+    data-tooltip="${label}">${icon(expanded ? 'minimize-2' : 'maximize-2')}</button>`;
+}
+
+export function expandFilePane(control: HTMLButtonElement) {
+  const pane = control.dataset.expandFile;
+  const workspace = control.closest('.arc-file-workspace');
+  if (!workspace || (pane !== 'content' && pane !== 'changes')) return;
+  const expanded = state.expandedFilePane !== pane;
+  state.expandedFilePane = expanded ? pane : null;
+  workspace.toggleAttribute('data-expanded', expanded);
+  workspace.querySelectorAll<HTMLElement>('[data-file-pane-panel]').forEach((panel) => {
+    panel.hidden = expanded && panel.dataset.filePanePanel !== pane;
+  });
+  const label = paneLabel(pane, expanded);
+  control.setAttribute('aria-expanded', String(expanded));
+  control.setAttribute('aria-label', label);
+  control.setAttribute('data-tooltip', label);
+  control.innerHTML = icon(expanded ? 'minimize-2' : 'maximize-2');
+  icons();
 }
 
 function fileRevisionControls(item: DesignFile) {
@@ -349,9 +384,9 @@ function fileRevisionControls(item: DesignFile) {
 }
 
 function fileContent(item: DesignFile, rev: Revision) {
+  if (item.area === 'plan') return markdownContent(rev.content, state.editing);
   if (state.editing)
     return `<label><span class="arc-sr">File content</span>
     <textarea name="content" class="arc-content-edit" required>${escape(rev.content)}</textarea></label>`;
-  if (item.area === 'plan') return markdownPreview(rev.content);
   return `<details><summary>View captured YAML</summary><pre class="arc-diff">${escape(rev.content)}</pre></details>`;
 }

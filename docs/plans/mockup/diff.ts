@@ -42,9 +42,13 @@ function patchLines(source: string): DiffLine[] {
   return lines;
 }
 
-export function diffView(label: string, files: FileDelta[], localPatch = false) {
-  const caption = `<small>${escape(label)}</small>`;
-  if (!files.length) return panel('File diff', noData('No changed files recorded.'), caption);
+export function diffView(
+  label: string,
+  files: FileDelta[],
+  { localPatch = false, heading = 'File diff', action = '' } = {},
+) {
+  const caption = `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`;
+  if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);
   const id = 'arc-diff-' + ++viewerId;
   const selected = Math.max(
     0,
@@ -55,7 +59,7 @@ export function diffView(label: string, files: FileDelta[], localPatch = false) 
     ? '<label class="arc-diff-load">Open local patch<input type="file" data-patch-file accept=".diff,.patch,text/plain"></label><small role="status"></small>'
     : '';
   return panel(
-    'File diff',
+    heading,
     `<div class="arc-file-diff">${picker}<div class="arc-diff-layout">
       <div role="tablist" aria-label="Changed files" aria-orientation="vertical">${views.map((view) => view.tab).join('')}</div>
       <div class="arc-diff-content">${views.map((view) => view.content).join('')}</div></div></div>`,
