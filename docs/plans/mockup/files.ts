@@ -1,6 +1,9 @@
 import { plannerRows } from './composer.ts';
+import { diffView } from './diff.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter } from './model.ts';
+import { fileName } from './plan-topics.ts';
+import { roundEvidence } from './run.ts';
 import { metrics, eventLog } from './timeline.ts';
 import {
   asText,
@@ -14,22 +17,11 @@ import {
   panel,
   title,
   breadcrumbs,
-  diff,
   icons,
 } from './view.ts';
 
 export function phaseOutcome(phase: Area) {
-  if (phase === 'plan')
-    return (
-      '<p>' +
-      githubReferences(data.plan.detail) +
-      '</p>' +
-      '<div class="arc-row">' +
-      githubReferences('Issue #' + data.plan.issue) +
-      ' · ' +
-      data.plan.modified.length +
-      ' file changed</div>'
-    );
+  if (phase === 'plan') return plannerOutcome();
   const paragraphs = data.architect.detail.split('\n\n');
   return (
     '<p>' +
@@ -46,23 +38,43 @@ export function phaseOutcome(phase: Area) {
   );
 }
 
+function plannerOutcome() {
+  const plan = data.plan;
+  const number = plan.pr?.split('/').at(-1);
+  const prState = plan.prState ?? (plan.stats.state === 'Merged' ? 'merged' : undefined);
+  return `<div class="arc-github-outcome">
+    ${plan.issue ? outcomeReference('Issue', plan.issue, plan.issueState, plan.issueComments, 'comment') : ''}
+    ${number ? outcomeReference('PR', number, prState, plan.prCommits, 'commit') : ''}
+  </div><p>${githubReferences(plan.detail.replace(/^PR #\d+ merged the /, 'Merged the '))} ${plan.modified.length}
+    ${plan.modified.length === 1 ? 'file changed.' : 'files changed.'}</p>`;
+}
+
+function outcomeReference(kind: string, number: string, state: string | undefined, count: number | undefined, unit: string) {
+  const link = githubReferences(kind + ' #' + number);
+  const ended = state === 'closed' || state === 'merged';
+  const label = state ? state[0]?.toUpperCase() + state.slice(1) : 'State unavailable';
+  const quantity = count === undefined ? unit + ' count unavailable' : count + ' ' + unit + (count === 1 ? '' : 's');
+  return `<div class="arc-row">${ended ? '<s>' + link + '</s>' : link}
+    ${pill(label)}<small>${escape(quantity)}</small></div>`;
+}
+
 export function workspaceIndex(area: Area) {
   const name = area === 'plan' ? 'Planner' : 'Architect';
   const phase = data[area];
   const rows = area === 'plan' ? plannerRows(phase.rows) : phase.rows;
   return (
-    title(area === 'plan' ? 'Plan' : 'Architect') +
-    roundStatus() +
+    title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
     `<div class="arc-grid arc-index">
       <div class="arc-stack">
-        <div class="arc-metrics-wrap">${metrics(name, phase.stats, phase.rows)}</div>
+        <div class="arc-metrics-wrap">${metrics(name, phase.stats, phase.rows, phase.wall)}</div>
         <div class="arc-log-wrap">${eventLog(name, rows)}</div>
       </div>
       <div class="arc-stack">
-        <div class="arc-outcome-wrap">${panel(name + ' outcome', phaseOutcome(area), `<small>${phase.wall} wall time</small>`)}</div>
+        <div class="arc-outcome-wrap">${panel(name + ' outcome', phaseOutcome(area))}</div>
         <div class="arc-files-wrap">${fileIndex(area)}</div>
       </div>
-    </div>`
+    </div>` +
+    (area === 'plan' ? roundEvidence() : '')
   );
 }
 
@@ -91,8 +103,10 @@ function fileIndex(area: Area) {
     `<div class="arc-filter">
     <label>File type<select data-change="filter-type">${options(fileTypes(area), filter.type)}</select></label>
     <label>Sort by<select data-change="filter-sort">${options(order, filter.sort)}</select></label>
-    <label class="wide">Search<input type="search" data-filter="search" placeholder="Search name and content" value="${escape(filter.query)}"></label>
+    <label class="wide">Search<input type="search" data-filter="search" placeholder="Search file name and content" value="${escape(filter.query)}"></label>
     ${topicFilter(area, filter.topics)}
+    <label class="wide arc-checkbox"><input type="checkbox" data-change="filter-changed"
+      ${filter.changed ? 'checked' : ''}>Changed only</label>
   </div>
   <div class="arc-file-row arc-table-head">
     <span>Name</span><span>Priority</span><span class="arc-topics-head">Topics</span><span>Updated</span><span></span>
@@ -139,7 +153,7 @@ export function updateFileList() {
   const matches = files
     .map((item, id) => ({ ...item, id, latest: requireValue(item.revisions[0]) }))
     .filter((item) => matchesFile(item, area, filter, search))
-    .sort((a, b) => compareFiles(a.latest, b.latest, filter.sort));
+    .sort((a, b) => compareFiles(a, b, filter.sort));
   dom('.arc-file-count').textContent = matches.length + (matches.length === 1 ? ' file' : ' files');
   list.innerHTML = matches.length
     ? matches.map(fileRow).join('')
@@ -152,16 +166,19 @@ export function matchesFile(item: IndexedFile, area: Area, filter: Filter, searc
   return (
     item.area === area &&
     item.type === filter.type &&
-    (latest.name + ' ' + latest.content).toLowerCase().includes(search) &&
+    (!filter.changed || data[area].modified.includes(item.path)) &&
+    [fileName(item.path), fileDescription(item), latest.content].some((text) => text.toLowerCase().includes(search)) &&
     filter.topics.every((topic) =>
       latest.topics.some((value) => value.toLowerCase() === topic.toLowerCase()),
     )
   );
 }
 
-export function compareFiles(a: Revision, b: Revision, sort: string) {
+export function compareFiles(first: IndexedFile, second: IndexedFile, sort: string) {
+  const a = first.latest;
+  const b = second.latest;
   const priority = (a.priority ?? Infinity) - (b.priority ?? Infinity);
-  const byName = a.name.localeCompare(b.name);
+  const byName = fileName(first.path).localeCompare(fileName(second.path));
   if (sort === 'name') return byName;
   if (sort === 'priority') return priority || byName;
   return (
@@ -172,7 +189,14 @@ export function compareFiles(a: Revision, b: Revision, sort: string) {
   );
 }
 
-export function fileRow({ id, latest, path, area }: IndexedFile) {
+function fileDescription({ type, latest }: IndexedFile) {
+  if (type !== 'Objective' || !latest.name.startsWith('Human objective ·')) return latest.name;
+  const exact = latest.content.match(/## Exact submission\s*```text\s*([\s\S]*?)\n```/)?.[1];
+  return exact?.split('\n\n')[0] ?? latest.name;
+}
+
+export function fileRow(item: IndexedFile) {
+  const { id, latest, path, area } = item;
   const changed = (area === 'plan' ? data.plan : data.architect).modified.includes(path);
   const topics = latest.topics.length
     ? latest.topics.map((topic) => pill(topic, 'quiet')).join('')
@@ -182,10 +206,11 @@ export function fileRow({ id, latest, path, area }: IndexedFile) {
     (changed ? ' is-changed' : '') +
     '" data-file="' +
     id +
-    '"><span class="arc-file-name">' +
+    '" aria-describedby="arc-description-' + id + '"><span class="arc-file-name">' +
     icon('file-text') +
-    '<span class="arc-file-label">' +
-    escape(latest.name) +
+    '<span class="arc-file-label"><span class="arc-mono" title="' + escape(fileDescription(item)) +
+    '" data-tooltip="' + escape(fileDescription(item)) + '">' + escape(fileName(path)) + '</span>' +
+    '<span class="arc-sr" id="arc-description-' + id + '">' + escape(fileDescription(item)) + '</span>' +
     (changed ? pill(area === 'plan' ? 'Changed in Plan' : 'Changed in Architect') : '') +
     '</span></span><span class="arc-mono">' +
     (latest.priority == null ? '—' : escape(latest.priority)) +
@@ -218,7 +243,7 @@ export function fileDiff(item: DesignFile, index: number) {
   const label = 'Compared with ' + previous.id;
   const lines = revisionDiff(current, previous);
   return lines.length
-    ? diff(label, lines)
+    ? diffView(label, [{ path: item.path, lines }])
     : panel(
         'File diff',
         noData('Contents match the selected comparison.'),
@@ -242,16 +267,26 @@ function revisionDiff(current: Revision, previous: Revision): [string, string][]
       replacement.forEach((line) => lines.push(['removed', '− ' + line]));
       after.slice(start, end).forEach((line) => lines.push(['added', '+ ' + line]));
     }
-  } else {
-    const before = previous.content.split('\n');
-    before
-      .filter((line) => !after.includes(line))
-      .forEach((line) => lines.push(['removed', '− ' + line]));
-    after
-      .filter((line) => !before.includes(line))
-      .forEach((line) => lines.push(['added', '+ ' + line]));
+  } else if (previous.content !== current.content) {
+    lines.push(...draftDiff(previous.content.split('\n'), after));
   }
   return lines;
+}
+
+function draftDiff(before: string[], after: string[]): [string, string][] {
+  let start = 0;
+  while (start < before.length && start < after.length && before[start] === after[start]) start++;
+  let oldEnd = before.length;
+  let newEnd = after.length;
+  while (oldEnd > start && newEnd > start && before[oldEnd - 1] === after[newEnd - 1]) {
+    oldEnd--;
+    newEnd--;
+  }
+  return [
+    ['hunk', `@@ Draft changes from line ${start + 1}`],
+    ...before.slice(start, oldEnd).map<[string, string]>((line) => ['removed', '− ' + line]),
+    ...after.slice(start, newEnd).map<[string, string]>((line) => ['added', '+ ' + line]),
+  ];
 }
 
 export function editInput(

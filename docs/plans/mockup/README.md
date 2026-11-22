@@ -31,9 +31,18 @@ when the new preview is attached to the chat.
   reported basis.
 - Read messages and lifecycle entries in order. Expand the tool calls between
   messages, then open an individual tool to inspect its request and result.
-- Sort higher-priority files first, with the lowest numeric priority listed
-  first. Highlight the file paths changed by the recorded Plan.
-- Use one composer across views. Try starting an operation, queueing a second
-  operation from another view, steering the displayed agent, and replying to the
-  recorded Planner question in preview mode. Keep these preview messages
-  identifiable in the log.
+- In Plan, compare phase elapsed time with the Planner's Codex execution time.
+  Check the issue before the pull request and find the end-to-end refinement
+  metrics beneath the phase details.
+- Find a file by its extension-free name or description. Sort by priority and
+  combine search and topic filters with Changed only. Preview topics illustrate
+  the filter across captured goals and objectives.
+- Use one composer across views. Start Plan and steer while the Planner is
+  active. Advance the preview to simulate the approval question. Open the question,
+  make a selection, return to Plan, and reopen it to verify the draft persists.
+  The recorded historical question shows its existing answer and accepts no reply.
+- Open a file, approval, activity, or delivery diff. Select a changed path to
+  review its additions, deletions, and context.
+  When delivery evidence contains excerpts, use the local patch picker to load
+  the complete merge diff. An export from `git show --format= --no-color <merge>`
+  works as a local patch.

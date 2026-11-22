@@ -1,3 +1,5 @@
+import { previewTopics } from './plan-topics.ts';
+
 export type Area = 'plan' | 'architect';
 export type Workspace = Area | 'run';
 export type EventRow = [
@@ -45,7 +47,7 @@ export type DesignFile = {
   revisions: Revision[];
 };
 export type IndexedFile = DesignFile & { id: number; latest: Revision };
-export type Filter = { type: string; sort: string; query: string; topics: string[] };
+export type Filter = { type: string; sort: string; query: string; topics: string[]; changed: boolean };
 export type Stats = {
   state: string;
   last: string;
@@ -155,6 +157,14 @@ export type Clarification = {
   answerSequence: number;
   answerTime: string;
 };
+export type PlanQuestion = {
+  id: string;
+  prompt: string;
+  supporting: string;
+  recommendation?: string;
+  choices?: [string, string][];
+  answer?: string;
+};
 export type Phase = {
   stats: Stats;
   detail: string;
@@ -163,6 +173,11 @@ export type Phase = {
   modified: string[];
   clarification?: Clarification;
   issue?: string;
+  issueState?: 'open' | 'closed';
+  issueComments?: number;
+  pr?: string;
+  prState?: 'open' | 'closed' | 'merged';
+  prCommits?: number;
 };
 export type Capture = {
   plan: Phase;
@@ -200,12 +215,13 @@ export const state = {
   activity: 'implementation',
   fileId: 0,
   revision: 0,
+  questionId: '',
   runRevision: String(requireValue(defaultGoal.snapshots[0]).seq),
   editing: false,
   saved: false,
   filters: {
-    plan: { type: 'Goal', sort: 'priority', query: '', topics: [] },
-    architect: { type: 'Component', sort: 'priority', query: '', topics: [] },
+    plan: { type: 'Goal', sort: 'priority', query: '', topics: [], changed: false },
+    architect: { type: 'Component', sort: 'priority', query: '', topics: [], changed: false },
   } satisfies Record<Area, Filter> as Record<Area, Filter>,
 };
 export const inspector = { tool: null as ToolCall | null };
@@ -213,9 +229,11 @@ export const displayedRows = new Map<string, EventRow>();
 export const operationGroups = new Map<string, EventRow[]>();
 export const expandedGroups = new Set<string>();
 export const composerState = {
-  active: null as PreviewCommand | null,
+  active: null as (PreviewCommand & { actor: Actor | null; prompted: boolean }) | null,
   queue: [] as PreviewCommand[],
-  question: null as { recipient: Actor; text: string } | null,
+  questions: new Map<string, PlanQuestion>(),
+  drafts: new Map<string, string>(),
+  waiting: '',
   conversations: new Map<string, EventRow[]>(),
   sequence: 0,
   feedback: '',
@@ -242,12 +260,14 @@ async function loadCapture(): Promise<Capture> {
   const capture = (await new Response(stream).json()) as Capture;
   for (const item of capture.files) {
     const [current, previous] = item.revisions;
-    if (!current || !previous?.restore) continue;
-    const lines = current.content.split('\n');
-    for (const [start, end, replacement] of [...previous.restore].reverse()) {
-      lines.splice(start, end - start, ...replacement);
+    if (current && previous?.restore) {
+      const lines = current.content.split('\n');
+      for (const [start, end, replacement] of [...previous.restore].reverse()) {
+        lines.splice(start, end - start, ...replacement);
+      }
+      previous.content = lines.join('\n');
     }
-    previous.content = lines.join('\n');
+    previewTopics(item);
   }
   return capture;
 }

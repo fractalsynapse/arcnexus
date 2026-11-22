@@ -3,12 +3,13 @@ import {
   target,
   previewRows,
   composerUI,
-  selectReply,
   enqueue,
   advanceQueue,
   submitComposer,
 } from './composer.ts';
+import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
+import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import {
   files,
   state,
@@ -36,10 +37,10 @@ export function workspace(): Workspace {
       : 'plan';
 }
 
-export function renderCommand() {
-  const filePage = state.route.endsWith('/file/');
+export function renderCommand(reset = false) {
+  const detailPage = state.route.endsWith('/file/') || state.route === '/plan/question/';
   const headerAction = dom('.arc-header-action');
-  headerAction.innerHTML = filePage
+  headerAction.innerHTML = detailPage
     ? button('Back', '/' + workspace() + '/', 'arrow-left')
     : state.route === '/run/direction/log/'
       ? button('Director', '/run/direction/', 'arrow-left')
@@ -49,12 +50,13 @@ export function renderCommand() {
           icon('refresh-cw') +
           'Refine</button>';
   command.innerHTML = '<span class="arc-preview-label">Recorded round · Preview commands</span>';
-  composerUI();
+  composerUI(reset);
 }
 
 const routes: Record<string, () => string> = {
   '/plan/': () => workspaceIndex('plan'),
   '/plan/file/': fileView,
+  '/plan/question/': questionView,
   '/architect/': () => workspaceIndex('architect'),
   '/architect/file/': fileView,
   '/run/': runIndex,
@@ -69,7 +71,7 @@ const routes: Record<string, () => string> = {
   '/run/delivery/': deliveryPage,
 };
 
-export function render() {
+export function render(resetComposer = false) {
   const r = state.route;
   const area = workspace();
   root.querySelectorAll<HTMLButtonElement>('.arc-nav button').forEach((item) => {
@@ -80,11 +82,11 @@ export function render() {
   operationGroups.clear();
   main.innerHTML = requireValue(routes[r])();
   const added = previewRows();
-  if (added.length && !main.querySelector('.arc-grouped-log')) {
+  if (added.length && r !== '/plan/question/' && !main.querySelector('.arc-grouped-log')) {
     main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, false));
   }
   updateFileList();
-  renderCommand();
+  renderCommand(resetComposer);
   icons();
 }
 
@@ -92,7 +94,7 @@ export function go(route: string) {
   state.route = route;
   state.editing = false;
   state.saved = false;
-  render();
+  render(true);
 }
 
 export function openFile(id: string) {
@@ -102,16 +104,10 @@ export function openFile(id: string) {
 }
 
 export function handleClick(control: HTMLButtonElement) {
-  const {
-    go: route,
-    file: id,
-    component,
-    activity,
-    action,
-    topic,
-    inspect: record,
-  } = control.dataset;
-  if (record) {
+  const { go: route, file: id, component, activity, action, topic, question, inspect: record } =
+    control.dataset;
+  if (question) openQuestion(question);
+  else if (record) {
     const row = displayedRows.get(record);
     if (row) inspect(row);
   } else if (route) go(route);
@@ -135,7 +131,6 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   if (action === 'close-inspector') dom<HTMLDialogElement>('.arc-inspector').close();
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
-  else if (action === 'preview-answer') selectReply();
   else if (action === 'advance-queue') advanceQueue();
 }
 
@@ -157,12 +152,20 @@ export function applyPreviewForm(form: HTMLFormElement) {
     submitComposer(data);
     return;
   }
+  if (form.dataset.form === 'question') {
+    submitAnswer(form.dataset.question ?? '', String(data.get('question-reply') ?? '').trim());
+    return;
+  }
   if (form.dataset.form === 'topics') {
     const filter = state.filters[fileArea()];
     filter.topics = [...new Set([...filter.topics, ...parseTopics(data.get('topic'))])];
     render();
   }
   if (form.dataset.form !== 'file' || !state.editing) return;
+  saveRevision(data);
+}
+
+function saveRevision(data: FormData) {
   const item = requireValue(files[state.fileId]);
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
@@ -182,7 +185,9 @@ root.addEventListener('click', (event) => {
   const element = event.target;
   if (!(element instanceof Element)) return;
   const control = element.closest('button');
-  if (control && root.contains(control)) handleClick(control);
+  if (!control || !root.contains(control)) return;
+  if (control.getAttribute('role') === 'tab') selectDiffTab(control);
+  else handleClick(control);
 });
 
 root.addEventListener(
@@ -207,6 +212,7 @@ root.addEventListener(
 
 root.addEventListener('input', (event) => {
   const field = event.target;
+  if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) rememberAnswer(field);
   if (!(field instanceof HTMLInputElement) || field.dataset.filter !== 'search') return;
   state.filters[fileArea()].query = field.value;
   updateFileList();
@@ -223,6 +229,11 @@ function changeField(kind: string, field: HTMLSelectElement | HTMLInputElement):
   const value = field.value;
   if (kind === 'filter-type') state.filters[fileArea()].type = value;
   else if (kind === 'filter-sort') state.filters[fileArea()].sort = value;
+  else if (kind === 'filter-changed' && field instanceof HTMLInputElement) {
+    state.filters[fileArea()].changed = field.checked;
+    updateFileList();
+    return false;
+  }
   else if (kind === 'run-goal') changeRun(value);
   else if (kind === 'run-revision') state.runRevision = value;
   else if (kind === 'milestone') state.milestone = value;
@@ -244,6 +255,10 @@ root.addEventListener('change', (event) => {
     void openArtifact(field);
     return;
   }
+  if (field instanceof HTMLInputElement && field.hasAttribute('data-patch-file')) {
+    void loadDiffPatch(field);
+    return;
+  }
   if (field.name === 'operation' && field.form === launch) {
     composerUI();
     return;
@@ -261,6 +276,10 @@ root.addEventListener('submit', (event) => {
 
 root.addEventListener('keydown', (event) => {
   const field = event.target;
+  if (field instanceof HTMLButtonElement && field.getAttribute('role') === 'tab') {
+    navigateDiffTabs(event, field);
+    return;
+  }
   if (
     event.key !== 'Enter' ||
     !(field instanceof HTMLInputElement) ||

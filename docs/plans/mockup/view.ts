@@ -104,22 +104,6 @@ export function readouts(items: [string, string][], classes = '') {
   );
 }
 
-export function patchLines(source: string): [string, string][] {
-  return source
-    .split('\n')
-    .filter((line) => line.length)
-    .map((line) => [
-      line.startsWith('+') && !line.startsWith('+++')
-        ? 'added'
-        : line.startsWith('-') && !line.startsWith('---')
-          ? 'removed'
-          : line.startsWith('@@') || line.startsWith('diff --git')
-            ? 'hunk'
-            : '',
-      line,
-    ]);
-}
-
 export function noData(message: string) {
   return '<p class="arc-muted">' + escape(message) + '</p>';
 }
@@ -217,7 +201,7 @@ export function panel(title: string, content: string, extra = '', wrapped = true
 
 export function title(name: string, description = '', action = '') {
   return (
-    '<div class="arc-title"><div><h1>' +
+    '<div class="arc-title"><div class="arc-title-text"><h1>' +
     escape(name) +
     '</h1>' +
     (description ? '<p>' + escape(description) + '</p>' : '') +
@@ -238,19 +222,6 @@ export function breadcrumbs(items: [string, string?][]) {
       )
       .join(icon('chevron-right')) +
     '</nav>'
-  );
-}
-
-export function diff(label: string, lines: [string, string][]) {
-  return panel(
-    'File diff',
-    '<pre class="arc-diff">' +
-      lines
-        .map(([kind, line]) => '<span class="' + kind + '">' + escape(line) + '</span>')
-        .join('') +
-      '</pre>',
-    '<small>' + escape(label) + '</small>',
-    false,
   );
 }
 

@@ -1,4 +1,5 @@
 import { previewRows } from './composer.ts';
+import { findQuestion } from './questions.ts';
 import {
   data,
   inspector,
@@ -159,14 +160,15 @@ export function countDetails(counts: { report: [string, number][]; providerOnly:
   );
 }
 
-export function metrics(name: string, values: Stats, rows: EventRow[] = []) {
+export function metrics(name: string, values: Stats, rows: EventRow[] = [], elapsed?: string) {
   const items: [string, string][] = [
     ['State', status(values.state)],
     ['Last updated (ET)', escape(values.last)],
-    ['Native time', escape(values.nativeDuration)],
+    ['Codex execution time', escape(values.nativeDuration)],
     ['Reported tokens (in / out)', tokenPair(values.input, values.output)],
     ['Token cache rate', cacheRate(values.input, values.cached)],
   ];
+  if (elapsed) items.splice(2, 0, ['Phase elapsed time', escape(elapsed)]);
   const counts = toolCounts(rows);
   const total = counts.report.reduce((sum, [, count]) => sum + count, 0);
   if (rows.length)
@@ -174,7 +176,11 @@ export function metrics(name: string, values: Stats, rows: EventRow[] = []) {
       name === 'Planner' || name === 'Architect' ? 'Phase tool calls' : 'Tool calls',
       tokenCount(total),
     ]);
-  return panel(name + ' metrics', readouts(items) + countDetails(counts));
+  const timing = elapsed
+    ? `<details class="arc-timing"><summary>How time is measured</summary>
+      <p>Phase elapsed time covers the whole workflow, including any approval waits, review and delivery. Codex execution time totals invocation time for ${escape(name)}, including tools used during those invocations.</p></details>`
+    : '';
+  return panel(name + ' metrics', readouts(items) + timing + countDetails(counts));
 }
 
 export function timelineItem(row: EventRow) {
@@ -204,16 +210,17 @@ export function timelineItem(row: EventRow) {
 }
 
 export function timelineText(row: EventRow) {
-  const [, kind, , detail] = row;
+  const [, kind, , detail, sequence] = row;
   if (kind === 'response') return '<p>Structured reply · Open to read</p>';
   if (kind === 'question') {
-    const [title, ...rest] = detail.split('\n\n');
+    const question = findQuestion(String(sequence));
+    const prompt = question?.prompt ?? detail.split('\n\n')[0];
+    const label = question?.answer ? 'View answered question' : 'Open question';
     return (
       '<p>' +
-      escape(title) +
-      '</p><details><summary>Review exact changes</summary><pre class="arc-payload">' +
-      escape(rest.join('\n\n')) +
-      '</pre></details><button type="button" class="arc-link" data-action="preview-answer">Try answering</button>'
+      escape(prompt) +
+      '</p>' +
+      (question ? `<button type="button" class="arc-button" data-question="${escape(question.id)}">${label}</button>` : '')
     );
   }
   return detail

@@ -1,10 +1,10 @@
 import { data, state } from './model.ts';
+import { diffView, readPatch } from './diff.ts';
 import type {
   Activation,
   PlanStep,
   Milestone,
   Review,
-  RunRevision,
   Goal,
   ComponentModel,
   ActivityModel,
@@ -48,7 +48,6 @@ import {
   breadcrumbs,
   tabs,
   readouts,
-  patchLines,
 } from './view.ts';
 
 export function reviewContent(compact = false) {
@@ -137,10 +136,8 @@ export function issueView(kind: string, compact = false) {
 
 export function runIndex() {
   const goal = currentGoal();
-  const snapshot = currentSnapshot();
   return (
-    title('Run', goal.title) +
-    roundStatus() +
+    title('Run', goal.title, roundStatus()) +
     '<div class="arc-detail-toolbar">' +
     goalControl() +
     revisionControl() +
@@ -151,32 +148,35 @@ export function runIndex() {
     stage('Review', '/run/review/', reviewContent(true) + reviewAction()) +
     stage('Delivery', '/run/delivery/', issueView('issue', true) + issueView('pr', true)) +
     '</div>' +
-    roundEvidence(snapshot)
+    roundEvidence()
   );
 }
 
-export function roundEvidence(snapshot: RunRevision) {
+export function roundEvidence() {
   const r = data.round;
   const usage = r.usage;
   const tools = data.toolUsage;
   const providerOnly = tools.provider - tools.host;
-  const report = Object.entries({
-    ...tools.names,
-    'read-file': (tools.names['read-file'] ?? 0) + providerOnly,
-  }).sort((a, b) => b[1] - a[1]);
+  const names = { ...tools.names };
+  for (const [name, , , , , , , flags] of Object.values(data.tools)) {
+    if (flags & 4) names[name] = (names[name] ?? 0) + 1;
+  }
+  const report = Object.entries(names).sort((a, b) => b[1] - a[1]);
   return panel(
-    'Round evidence',
+    'End-to-end refinement metrics',
     readouts([
+      ['State', status('Completed')],
       ['Wall time', r.wall],
+      ['Codex execution time', r.native],
       ['Model messages', tokenCount(tools.messages)],
       ['Tool calls', tokenCount(tools.provider)],
       ['Reported tokens (in / out)', tokenPair(usage.input_tokens, usage.output_tokens)],
       ['Token cache rate', cacheRate(usage.input_tokens, usage.cached_input_tokens)],
-      ['Usage coverage', r.coverage.withReportedUsage + ' / ' + r.coverage.activations],
+      ['Activations with token usage', r.coverage.withReportedUsage + ' / ' + r.coverage.activations],
     ]) +
       countDetails({ report, providerOnly }) +
       evidenceNotes(),
-    `<small>Run ${snapshot.run}</small>`,
+    '<small>Plan · Architect · Run</small>',
   );
 }
 
@@ -185,13 +185,11 @@ function evidenceNotes() {
   const notes = [
     'Round 1 completed after two controlled interruptions. It was excluded from qualification because it received operator-assisted regression evidence.',
     'Eight goals assessed, with six staging merges and two satisfied by evidence.',
-    'Native time ' +
-      r.native +
-      '. Cached input is included in reported input. Two interrupted activations have no reported usage.',
+    'Codex execution time totals recorded invocations across the round. Cached input is included in reported input. Two interrupted activations have no reported usage.',
     'Cost unavailable. The evidence has no verified pricing or billing basis.',
     'Stable milestone and activation IDs would make operation attribution explicit.',
     'Review next steps come from the subsequent plan. A verdict-to-action link would make that association explicit.',
-    'File dates and revisions come from Git. Topics are unavailable in captured file metadata.',
+    'File dates and revisions come from Git. The Plan file manager includes preview topic labels.',
     r.following,
   ];
   return `<details><summary>Evidence coverage and gaps</summary>${factList(notes)}</details>`;
@@ -277,21 +275,16 @@ export function scopedDiff(
   const heading = `<small>${escape(label)}</small>`;
   if (!entries.length)
     return panel('File diff', noData('No checked edits in the selected scope.'), heading);
-  const paths = [...new Set(entries.map((r) => r.path))];
-  const last = entries.findLast((r) => r.excerpt);
-  const patch = last?.excerpt
-    ? patchDetails(
-        last.truncated ? 'Latest checkpoint patch excerpt' : 'Latest checkpoint patch',
-        last.path,
-        last.excerpt,
-      )
-    : noData('Checkpoint patch text is unavailable for this scope.');
-  return panel(
-    'File diff',
-    `<p>${paths.length} changed ${paths.length === 1 ? 'file' : 'files'} · ${entries.length} checked edit receipts</p>
-    <details><summary>Changed paths</summary>${factList(paths)}</details>${patch}`,
-    heading,
-  );
+  const paths = new Map<string, typeof entries[number]>();
+  for (const entry of entries) {
+    if (entry.excerpt || !paths.has(entry.path)) paths.set(entry.path, entry);
+  }
+  return diffView(label + ' · ' + entries.length + ' checked edit receipts', [...paths.values()].map((entry) => ({
+    path: entry.path,
+    lines: entry.excerpt ? readPatch(entry.excerpt, entry.path).find((file) => file.path === entry.path)?.lines ?? [] : [],
+    note: entry.truncated ? 'Latest retained checkpoint patch excerpt' :
+      entry.excerpt ? 'Latest retained checkpoint patch' : 'No patch text retained for this path.',
+  })), true);
 }
 
 function scopedReceipts(owner: string, milestone: string | null, activity: string | null) {
@@ -449,21 +442,16 @@ function deliveryState(goal: Goal, delivered: boolean) {
 }
 
 function deliveryDiff(d: Goal['delivery'], delivered: boolean) {
-  if (!delivered || !d.patch)
+  if (!delivered || !d.files.length)
     return panel('File diff', noData('No confirmed PR diff at this revision.'));
-  return panel(
-    'File diff',
-    `<details><summary>${d.files.length} changed files</summary>
-    ${factList(d.files.map(([change, path]) => change + ' · ' + path))}</details>
-    ${patchDetails(d.patchExcerpt ? 'Patch excerpt' : 'Patch', d.patchPath ?? '', d.patch)}`,
-    '<small>Staging merge</small>',
-  );
-}
-
-function patchDetails(label: string, path: string, patch: string) {
-  const contents = patchLines(patch)
-    .map(([kind, line]) => `<span class="${kind}">${escape(line)}</span>`)
-    .join('');
-  return `<details><summary>${label} · <code>${escape(path)}</code></summary>
-    <pre class="arc-diff">${contents}</pre></details>`;
+  const patches = new Map(readPatch(d.patch ?? '', d.patchPath).map((file) => [file.path, file]));
+  return diffView('Staging merge', d.files.map(([, path]) => {
+    const file = patches.get(path);
+    return {
+      path,
+      lines: file?.lines ?? [],
+      note: !file ? 'Open the local merge patch to inspect this path.' :
+        d.patchExcerpt ? 'Retained patch excerpt' : undefined,
+    };
+  }), true);
 }
