@@ -21,7 +21,7 @@
 
 ### Added
 
-- Version the mobile-first ArcNexus UI design mockup with refinement metrics, grouped tool calls, and local previews of the shared operator composer (#703).
+- Version the mobile-first ArcNexus UI design mockup with refinement metrics, grouped tool calls, and local previews of the shared operator composer. Generate the Codex viewer preview from the current mockup source after each design revision (#703).
 
 - Add `arcnexus refine [--rounds N]` through the shared Commands SDK and Workflow lifecycle: default to one round, preserve positive decimal counts exactly without a numeric ceiling, and run Planner, Architect and every captured approved goal in priority order each round. Retain one foreground project writer across sequential child sessions, with fresh staging authority at phase/task admission and the normal Director, steward, independent Reviewer and verified staging delivery path ([#615](https://github.com/fractalsynapse/arcnexus/issues/615)).
   Resume the first unfinished phase or goal with the same requested total, retaining exact proposals, approvals, answers, checkpoints and the captured Run inventory; reconcile uncertain effects and reuse successful children after an interrupted parent acknowledgement. Completed invocations permit fresh identities. Stream current round/phase, complete provider/tool observations and measurements through human output or ordered JSONL with one terminal result. Retain readable reports outside source and expose prior findings and profile-attributed time/token references to subsequent assessments; unknown usage, pricing and cost remain unknown.

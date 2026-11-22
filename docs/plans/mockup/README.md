@@ -12,6 +12,18 @@ repository root. Open the resulting `dist/docs/plans/mockup/index.html` in a
 browser. The capture can contain retained operator messages and tool results,
 so share the generated preview only with its intended reviewers.
 
+For Codex design review, regenerate the preview after each revision from the
+repository root using the same capture:
+
+```sh
+npx --no-install jiti docs/plans/mockup/preview.ts <capture.json> --viewer <viewer-output.html>
+```
+
+Put the output in the active chat's visualization directory and use the printed
+absolute path in a fresh visualization reference. The builder uses the current
+layout, TypeScript, and brand assets on each run. The embedded viewer refreshes
+when the new preview is attached to the chat.
+
 ## Behaviors to review
 
 - Read total input and output separately. Calculate cache rate from reported cached
