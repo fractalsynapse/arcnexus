@@ -26,7 +26,7 @@ function expandButton(pane: Pane, expanded: boolean) {
   return `<button type="button" class="arc-link arc-pane-expand" data-expand-pane="${pane.id}"
     data-pane-label="${escape(pane.label)}" aria-controls="${pane.id}"
     aria-expanded="${expanded}" aria-label="${escape(name)}"
-    data-tooltip="${escape(name)}">${expandIcon(expanded)}</button>`;
+    data-arc-tooltip="${escape(name)}">${expandIcon(expanded)}</button>`;
 }
 
 function expandLabel(label: string, expanded: boolean) {
@@ -50,7 +50,7 @@ export function togglePane(control: HTMLButtonElement) {
   const name = expandLabel(paneLabel, expanded);
   control.setAttribute('aria-expanded', String(expanded));
   control.setAttribute('aria-label', name);
-  control.setAttribute('data-tooltip', name);
+  control.dataset.arcTooltip = name;
   control.innerHTML = expandIcon(expanded);
   icons();
 }

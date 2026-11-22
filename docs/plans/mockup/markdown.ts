@@ -19,13 +19,13 @@ const parser = new Marked({
     link({ href, title, tokens }) {
       const label = this.parser.parseInline(tokens);
       return safeLink(href)
-        ? `<a class="arc-link" href="${escape(href)}" title="${escape(title)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        ? `<a class="arc-link" href="${escape(href)}" data-arc-tooltip="${escape(title)}" aria-description="${escape(title)}" target="_blank" rel="noopener noreferrer">${label}</a>`
         : label;
     },
     image({ text, href, title }) {
       const label = escape(text);
       return safeLink(href)
-        ? `<a class="arc-link" data-md-image href="${escape(href)}" title="${escape(title)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        ? `<a class="arc-link" data-md-image href="${escape(href)}" data-arc-tooltip="${escape(title)}" aria-description="${escape(title)}" target="_blank" rel="noopener noreferrer">${label}</a>`
         : label;
     },
   },

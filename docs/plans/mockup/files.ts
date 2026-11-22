@@ -195,6 +195,7 @@ function fileDescription({ area, type, latest }: IndexedFile) {
 
 export function fileRow(item: IndexedFile) {
   const { id, latest, path, area } = item;
+  const description = escape(fileDescription(item));
   const changed = (area === 'plan' ? data.plan : data.architect).modified.includes(path);
   const topics = latest.topics.length
     ? latest.topics.map((topic) => pill(topic, 'quiet')).join('')
@@ -204,11 +205,10 @@ export function fileRow(item: IndexedFile) {
     (changed ? ' is-changed' : '') +
     '" data-file="' +
     id +
-    '" aria-describedby="arc-description-' + id + '"><span class="arc-file-name">' +
+    '" data-arc-tooltip="' + description + '" aria-describedby="arc-description-' + id + '"><span class="arc-file-name">' +
     icon('file-text') +
-    '<span class="arc-file-label"><span class="arc-mono" title="' + escape(fileDescription(item)) +
-    '" data-tooltip="' + escape(fileDescription(item)) + '">' + escape(fileName(path)) + '</span>' +
-    '<span class="arc-sr" id="arc-description-' + id + '">' + escape(fileDescription(item)) + '</span>' +
+    '<span class="arc-file-label"><span class="arc-mono">' + escape(fileName(path)) + '</span>' +
+    '<span class="arc-sr" id="arc-description-' + id + '">' + description + '</span>' +
     fileFormat(item) +
     (changed ? pill(area === 'plan' ? 'Changed in Plan' : 'Changed in Architect') : '') +
     '</span></span><span class="arc-mono">' +

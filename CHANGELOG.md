@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Use one readable tooltip style for mockup controls, file descriptions, and the Markdown editor toolbar in light and dark mode (#703).
+
 - Match the mockup’s Raw Markdown editor to the blue palette in light and dark mode while keeping syntax highlighting readable (#703).
 
 - Recover prepared work when staging moves while preserving the existing issue and branch, secured checked bytes and receipts, complete evidence and verbatim human answers. Retain original bases, acceptance and review observations as history; capture current staging, ownership and applicable acceptance before continuation, enforce changed ownership and retain conflicts for accountable resolution. Preserve original requirements and architectural decision gates. Require current applicable checks and fresh independent acceptance for the recovered tree, base and capture; earlier approval cannot authorize it ([#701](https://github.com/fractalsynapse/arcnexus/issues/701)).

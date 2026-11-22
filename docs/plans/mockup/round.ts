@@ -15,7 +15,7 @@ import {
 export function roundFooter() {
   const { ended, wall } = data.round;
   return `<button type="button" class="arc-link arc-metrics-trigger" data-action="round-metrics"
-    aria-label="Round metrics" data-tooltip="Round metrics" aria-haspopup="dialog">${icon('chart-no-axes-column')}</button>
+    aria-label="Round metrics" data-arc-tooltip="Round metrics" aria-haspopup="dialog">${icon('chart-no-axes-column')}</button>
   <div class="arc-footer-readout">
     ${status('Completed')}<strong>Refine</strong>
     <span>Updated <time>${escape(ended)} ET</time></span>

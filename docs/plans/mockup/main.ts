@@ -31,6 +31,7 @@ import {
 import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage, deliveryPage } from './run.ts';
 import { inspect, openArtifact, renderCalls, eventLog } from './timeline.ts';
+import { dismissTooltip } from './tooltip.ts';
 import { icon, button, icons } from './view.ts';
 
 export function workspace(): Workspace {
@@ -84,6 +85,7 @@ export function render(resetComposer = false) {
   });
   displayedRows.clear();
   operationGroups.clear();
+  dismissTooltip();
   detachMarkdownEditor();
   main.innerHTML = requireValue(routes[r])();
   highlightFileCode(main);
