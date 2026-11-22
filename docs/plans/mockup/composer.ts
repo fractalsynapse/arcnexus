@@ -1,21 +1,28 @@
 import { render, workspace } from './main.ts';
 import { data, state, composerState, dom } from './model.ts';
-import type { EventRow, Actor, PreviewCommand } from './model.ts';
+import type { Area, EventRow, Actor, PreviewCommand } from './model.ts';
 import { escape, options } from './view.ts';
-import { startPlanQuestion } from './questions.ts';
+import { findQuestion, startWorkspaceQuestion } from './questions.ts';
+import { currentGoal, currentPlan, currentSnapshot } from './run-context.ts';
+
+export function phaseActor(area: Area): Actor {
+  return { key: area, role: area === 'plan' ? 'Planner' : 'Architect' };
+}
+
+function runActor(component: string): Actor {
+  const key = state.goal + ':' + state.runRevision + ':' + component;
+  return { key, role: component === 'direction' ? 'Director' :
+    component === 'reviewer' ? 'Reviewer' : component + ' steward' };
+}
 
 export function target(): Actor | null {
   const area = workspace();
-  if (area === 'plan' || area === 'architect')
-    return { key: area, role: area === 'plan' ? 'Planner' : 'Architect' };
+  if (area === 'plan' || area === 'architect') return phaseActor(area);
   const route = state.route;
-  const goal = state.goal;
-  if (route.startsWith('/run/direction/')) return { key: goal + ':director', role: 'Director' };
-  if (route.startsWith('/run/review/')) return { key: goal + ':assessment', role: 'Reviewer' };
+  if (route.startsWith('/run/direction/')) return runActor('direction');
+  if (route.startsWith('/run/review/')) return runActor('reviewer');
   if (route.startsWith('/run/component/') || route.startsWith('/run/activity/')) {
-    return state.component
-      ? { key: goal + ':steward:' + state.component, role: state.component + ' steward' }
-      : null;
+    return state.component ? runActor(state.component) : null;
   }
   return null;
 }
@@ -25,26 +32,26 @@ export function previewRows() {
   return actor ? (composerState.conversations.get(actor.key) ?? []) : [];
 }
 
-export function plannerRows(rows: EventRow[]): EventRow[] {
-  const gate = data.plan.clarification;
+export function phaseRows(area: Area): EventRow[] {
+  const { rows, clarification: gate } = data[area];
   if (!gate) return rows;
   const withGate: EventRow[] = [
     ...rows,
     [
       shortTime(gate.time),
       'question',
-      'Planner · Asked for approval',
+      phaseActor(area).role + ' · Asked for approval',
       gate.question,
       gate.sequence,
     ],
-    [
+  ];
+  if (gate.answer) withGate.push([
       shortTime(gate.answerTime),
       'answer',
       'Operator · Recorded reply',
       gate.answer,
       gate.answerSequence,
-    ],
-  ];
+    ]);
   return withGate.sort((a, b) => Number(a[4]) - Number(b[4]));
 }
 
@@ -86,7 +93,7 @@ export function commandItem(item: PreviewCommand, label: string) {
     '<li><b>' +
     escape(commandName(item.operation)) +
     '</b> · ' +
-    label +
+    escape(label) +
     (item.instruction ? '<small>' + escape(item.instruction) + '</small>' : '') +
     '</li>'
   );
@@ -95,13 +102,13 @@ export function commandItem(item: PreviewCommand, label: string) {
 export function queueTray() {
   const { active, queue, waiting } = composerState;
   if (!active && !queue.length) return '';
-  const advance = active?.operation === 'plan' && !active.prompted && data.plan.clarification
-    ? 'Advance to approval question' : 'Advance preview';
+  const advance = pendingPhase(active) ? 'Advance to approval question' : 'Advance preview';
+  const actor = activeActor();
   return (
     '<details class="arc-queue"><summary>Preview queue · ' +
     queue.length +
     ' waiting</summary><ol>' +
-    (active ? commandItem(active, waiting ? 'Awaiting reply' : 'Active') : '') +
+    (active ? commandItem(active, waiting ? 'Awaiting reply' : actor ? actor.role + ' active' : 'Active') : '') +
     queue.map((item) => commandItem(item, 'Queued')).join('') +
     '</ol>' +
     (active
@@ -115,8 +122,13 @@ export function queueTray() {
 
 function steeringTarget() {
   const actor = target();
-  const active = composerState.active?.actor;
+  const active = activeActor();
   return active && !composerState.waiting && active.key === actor?.key ? active : null;
+}
+
+function activeActor() {
+  const active = composerState.active;
+  return active?.actors[active.actorIndex];
 }
 
 export function composerUI(reset = false) {
@@ -129,14 +141,15 @@ export function composerUI(reset = false) {
   mode.innerHTML = options(choices, selected);
   const input = dom<HTMLTextAreaElement>('.arc-launch textarea');
   const steer = mode.value === 'steer' && actor;
+  const waiting = findQuestion(composerState.waiting);
   input.placeholder = steer ? `Steer ${actor.role}…` : 'Add an instruction…';
   dom('.arc-instruction-label').innerHTML = steer
     ? 'Steering message'
     : 'Instruction <small>optional</small>';
   dom('.arc-compose-state').innerHTML =
-    (composerState.waiting
-      ? `<div class="arc-wait"><strong>Planner is waiting for a reply</strong>
-        <button type="button" class="arc-button" data-question="${escape(composerState.waiting)}">Open question</button></div>`
+    (waiting
+      ? `<div class="arc-wait"><strong>${phaseActor(waiting.area).role} is waiting for a reply</strong>
+        <button type="button" class="arc-button" data-question="${escape(waiting.id)}">Open question</button></div>`
       : '') +
     queueTray() +
     (composerState.feedback
@@ -158,7 +171,9 @@ export function sendSteering(instruction: string) {
 }
 
 export function enqueue(operation: string, instruction: string) {
-  const next = { operation, instruction };
+  const actors = operation === 'run' ? runActors() :
+    [phaseActor(operation === 'architect' ? 'architect' : 'plan')];
+  const next = { operation, instruction, actors };
   if (composerState.active) {
     composerState.queue.push(next);
     composerState.feedback = commandName(operation) + ' queued in preview';
@@ -170,14 +185,41 @@ export function enqueue(operation: string, instruction: string) {
   composerUI(true);
 }
 
+function runActors() {
+  const snapshot = currentSnapshot();
+  const observed = new Set(currentGoal().activations
+    .filter((activation) => activation.sequence <= snapshot.seq)
+    .map((activation) => activation.component));
+  const owners = new Set((currentPlan()?.milestones ?? []).map((milestone) => milestone.owner));
+  owners.delete('direction');
+  owners.delete('reviewer');
+  const order = ['direction', ...[...owners].filter((owner) => observed.has(owner))];
+  if (observed.has('reviewer')) order.push('reviewer');
+  return order.map(runActor);
+}
+
+function pendingPhase(active: typeof composerState.active): Area | undefined {
+  if (!active || active.prompted) return;
+  const area = active.operation;
+  return (area === 'plan' || area === 'architect') && data[area].clarification
+    ? area : undefined;
+}
+
 export function advanceQueue() {
   if (composerState.waiting) return;
   const active = composerState.active;
-  if (active?.operation === 'plan' && !active.prompted && data.plan.clarification) {
+  const questionArea = pendingPhase(active);
+  if (active && questionArea) {
     active.prompted = true;
-    startPlanQuestion();
+    startWorkspaceQuestion(questionArea);
+    render(true);
+    return;
+  }
+  const nextActor = active?.actors[active.actorIndex + 1];
+  if (active && nextActor) {
+    active.actorIndex++;
+    composerState.feedback = nextActor.role + ' started in preview';
     composerUI(true);
-    render();
     return;
   }
   startCommand(composerState.queue.shift());
@@ -188,17 +230,7 @@ export function advanceQueue() {
 }
 
 function startCommand(command?: PreviewCommand) {
-  if (!command) {
-    composerState.active = null;
-    return;
-  }
-  const { operation } = command;
-  const actor = operation === 'run'
-    ? { key: state.goal + ':director', role: 'Director' }
-    : operation === 'architect'
-      ? { key: 'architect', role: 'Architect' }
-      : { key: 'plan', role: 'Planner' };
-  composerState.active = { ...command, actor, prompted: false };
+  composerState.active = command ? { ...command, actorIndex: 0, prompted: false } : null;
 }
 
 export function submitComposer(values: FormData) {

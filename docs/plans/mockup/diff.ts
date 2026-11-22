@@ -45,7 +45,7 @@ function patchLines(source: string): DiffLine[] {
 export function diffView(
   label: string,
   files: FileDelta[],
-  { localPatch = false, heading = 'File diff', action = '' } = {},
+  { localPatch = false, heading = 'Changes', action = '' } = {},
 ) {
   const caption = `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`;
   if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);

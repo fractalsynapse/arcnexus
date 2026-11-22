@@ -8,8 +8,9 @@ import {
   submitComposer,
 } from './composer.ts';
 import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
-import { workspaceIndex, updateFileList, fileView, expandFilePane } from './files.ts';
-import { editedMarkdown, formatMarkdown, highlightMarkdownCode, pasteMarkdown } from './markdown.ts';
+import { workspaceIndex, updateFileList, fileView } from './files.ts';
+import { editedMarkdown, formatMarkdown, highlightFileCode, pasteMarkdown } from './markdown.ts';
+import { togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
 import {
@@ -39,7 +40,7 @@ export function workspace(): Workspace {
 }
 
 export function renderCommand(reset = false) {
-  const detailPage = state.route.endsWith('/file/') || state.route === '/plan/question/';
+  const detailPage = state.route.endsWith('/file/') || state.route.endsWith('/question/');
   const headerAction = dom('.arc-header-action');
   headerAction.innerHTML = detailPage
     ? button('Back', '/' + workspace() + '/', 'arrow-left')
@@ -59,6 +60,7 @@ const routes: Record<string, () => string> = {
   '/plan/question/': questionView,
   '/architect/': () => workspaceIndex('architect'),
   '/architect/file/': fileView,
+  '/architect/question/': questionView,
   '/run/': runIndex,
   '/run/direction/': () => sectionDetail('Direction'),
   '/run/direction/log/': () => actorLog('Direction'),
@@ -81,10 +83,10 @@ export function render(resetComposer = false) {
   displayedRows.clear();
   operationGroups.clear();
   main.innerHTML = requireValue(routes[r])();
-  highlightMarkdownCode(main);
+  highlightFileCode(main);
   const added = previewRows();
-  if (added.length && r !== '/plan/question/' && !main.querySelector('.arc-grouped-log')) {
-    main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, false));
+  if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
+    main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, { preview: false }));
   }
   updateFileList();
   renderCommand(resetComposer);
@@ -93,7 +95,7 @@ export function render(resetComposer = false) {
 
 export function go(route: string) {
   state.route = route;
-  state.expandedFilePane = null;
+  state.expandedPane = null;
   state.editing = false;
   state.saved = false;
   render(true);
@@ -171,9 +173,8 @@ export function applyPreviewForm(form: HTMLFormElement) {
 function saveRevision(form: HTMLFormElement, data: FormData) {
   const item = requireValue(files[state.fileId]);
   const source = requireValue(item.revisions[state.revision]).content;
-  const content = item.area === 'plan'
-    ? editedMarkdown(source, requireValue(form.querySelector<HTMLElement>('[data-md-editor]')))
-    : String(data.get('content'));
+  const editor = form.querySelector<HTMLElement>('[data-md-editor]');
+  const content = editor ? editedMarkdown(source, editor) : String(data.get('content'));
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
     name: String(data.get('name')).trim(),
@@ -194,7 +195,7 @@ root.addEventListener('click', (event) => {
   const control = element.closest('button');
   if (!control || !root.contains(control)) return;
   if (control.getAttribute('role') === 'tab') selectDiffTab(control);
-  else if (control.dataset.expandFile) expandFilePane(control);
+  else if (control.dataset.expandPane) togglePane(control);
   else if (control.dataset.mdCommand) formatMarkdown(control);
   else handleClick(control);
 });

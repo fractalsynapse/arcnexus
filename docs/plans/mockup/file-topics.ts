@@ -1,4 +1,4 @@
-import type { DesignFile } from './model.ts';
+import type { DesignFile, Revision } from './model.ts';
 
 const examples: Record<string, string[]> = {
   'inspect-parity': ['Agent inspection', 'MCP'],
@@ -16,9 +16,12 @@ export function fileName(path: string) {
 }
 
 export function previewTopics(item: DesignFile) {
-  if (item.area !== 'plan') return;
   for (const revision of item.revisions) {
     if (revision.topics.length) continue;
+    if (item.area === 'architect') {
+      revision.topics = architectureTopics(item, revision);
+      continue;
+    }
     const goals =
       item.type === 'Goal'
         ? [fileName(item.path)]
@@ -27,4 +30,30 @@ export function previewTopics(item: DesignFile) {
           );
     revision.topics = [...new Set(goals.flatMap((id) => examples[id] ?? []))].sort();
   }
+}
+
+const componentTopics: Record<string, string> = {
+  agent: 'Agent lifecycle',
+  architecture: 'Ownership',
+  direction: 'Agent lifecycle',
+  execution: 'Agent lifecycle',
+  planner: 'Planning',
+  reviewer: 'Verification',
+  verification: 'Verification',
+  workflow: 'Agent lifecycle',
+  delivery: 'Delivery',
+  release: 'Delivery',
+};
+
+function architectureTopics(item: DesignFile, revision: Revision) {
+  const name = fileName(item.path);
+  if (item.type === 'Standard')
+    return [name === 'readable-typescript' ? 'TypeScript' : 'Agent guidance'];
+  if (item.type === 'Component') {
+    return componentTopics[name] ? [componentTopics[name]] : [];
+  }
+  const category = revision.content.match(/^category: ([\w-]+)$/m)?.[1];
+  return category
+    ? [category.replaceAll('-', ' ').replace(/^./, (letter) => letter.toUpperCase())]
+    : [];
 }

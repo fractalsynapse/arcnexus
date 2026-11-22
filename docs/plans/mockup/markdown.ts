@@ -74,8 +74,8 @@ export function markdownContent(source: string, editing: boolean) {
   return `<article class="arc-markdown arc-md-view">${html}</article>`;
 }
 
-export function highlightMarkdownCode(parent: HTMLElement) {
-  for (const block of parent.querySelectorAll<HTMLElement>('.arc-md-view pre code')) {
+export function highlightFileCode(parent: HTMLElement) {
+  for (const block of parent.querySelectorAll<HTMLElement>(':is(.arc-md-view,.arc-code-view) pre code')) {
     const language = [...block.classList].find((name) => name.startsWith('language-'))?.slice(9);
     if (language && highlight.getLanguage(language)) {
       block.innerHTML = highlight.highlight(block.textContent ?? '', { language }).value;

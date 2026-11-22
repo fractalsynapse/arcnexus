@@ -44,6 +44,24 @@ export function githubReferences(text: string) {
   );
 }
 
+export function githubOutcome(
+  kind: 'Issue' | 'PR',
+  number: string,
+  observedState?: string,
+  count?: number,
+) {
+  const link = githubReferences(kind + ' #' + number);
+  const ended = observedState === 'closed' || observedState === 'merged';
+  const label = observedState
+    ? observedState.charAt(0).toUpperCase() + observedState.slice(1) : 'State unavailable';
+  const unit = kind === 'Issue' ? 'comment' : 'commit';
+  const quantity = count === undefined
+    ? unit + ' count unavailable' : tokenCount(count) + ' ' + unit + (count === 1 ? '' : 's');
+  return `<div class="arc-row arc-github-reference">
+    ${ended ? '<s>' + link + '</s>' : link}
+    ${status(label)}<small>${escape(quantity)}</small></div>`;
+}
+
 export function thousand(value: number | null) {
   return value == null
     ? '—'
@@ -200,15 +218,27 @@ export function panel(title: string, content: string, extra = '', wrapped = true
 }
 
 export function title(name: string, description = '', action = '') {
-  return (
-    '<div class="arc-title"><div class="arc-title-text"><h1>' +
-    escape(name) +
-    '</h1>' +
-    (description ? '<p>' + escape(description) + '</p>' : '') +
-    '</div>' +
-    action +
-    '</div>'
-  );
+  const meta = description ? '<p>' + escape(description) + '</p>' : '';
+  const context = action ? '<div class="arc-title-context">' + action + '</div>' : '';
+  return '<div class="arc-title"><div class="arc-title-text"><h1>' + escape(name) +
+    '</h1>' + meta + '</div>' + context + '</div>';
+}
+
+export function overview(
+  metrics: string,
+  outcome: string,
+  { log = '', context = '' } = {},
+) {
+  return `<div class="arc-grid arc-index">
+    <div class="arc-stack">
+      <div class="arc-metrics-wrap">${metrics}</div>
+      ${log ? '<div class="arc-log-wrap">' + log + '</div>' : ''}
+    </div>
+    <div class="arc-stack">
+      <div class="arc-outcome-wrap">${outcome}</div>
+      ${context ? '<div class="arc-context-wrap">' + context + '</div>' : ''}
+    </div>
+  </div>`;
 }
 
 export function breadcrumbs(items: [string, string?][]) {

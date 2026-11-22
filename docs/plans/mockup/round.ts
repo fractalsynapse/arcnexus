@@ -72,7 +72,7 @@ function evidenceNotes() {
     'Cost unavailable. The evidence has no verified pricing or billing basis.',
     'Stable milestone and activation IDs would make operation attribution explicit.',
     'Review next steps come from the subsequent plan. A verdict-to-action link would make that association explicit.',
-    'File dates and revisions come from Git. The Plan file manager includes preview topic labels.',
+    'File dates and revisions come from Git. Plan and Architect include preview topic labels.',
     data.round.following,
   ];
   return `<details><summary>Evidence coverage and gaps</summary>${factList(notes)}</details>`;

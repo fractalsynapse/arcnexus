@@ -1,9 +1,8 @@
 import { decodeBase85 } from './base85.ts';
-import { previewTopics } from './plan-topics.ts';
+import { previewTopics } from './file-topics.ts';
 
 export type Area = 'plan' | 'architect';
 export type Workspace = Area | 'run';
-export type FilePane = 'content' | 'changes';
 export type EventRow = [
   time: string,
   kind: string,
@@ -140,7 +139,10 @@ export type Goal = {
   components: Record<string, ComponentModel>;
   delivery: {
     pr?: string;
+    prCommits?: number;
     issue?: string;
+    issueState?: 'open' | 'closed';
+    issueComments?: number;
     commit?: string;
     files: [string, string][];
     patch?: string;
@@ -159,7 +161,8 @@ export type Clarification = {
   answerSequence: number;
   answerTime: string;
 };
-export type PlanQuestion = {
+export type WorkspaceQuestion = {
+  area: Area;
   id: string;
   prompt: string;
   supporting: string;
@@ -202,7 +205,7 @@ export type Capture = {
   };
 };
 export type Actor = { key: string; role: string };
-export type PreviewCommand = { operation: string; instruction: string };
+export type PreviewCommand = { operation: string; instruction: string; actors: Actor[] };
 
 const fallback = await loadCapture();
 export const data = fallback;
@@ -217,7 +220,7 @@ export const state = {
   activity: 'implementation',
   fileId: 0,
   revision: 0,
-  expandedFilePane: null as FilePane | null,
+  expandedPane: null as string | null,
   questionId: '',
   runRevision: String(requireValue(defaultGoal.snapshots[0]).seq),
   editing: false,
@@ -232,9 +235,9 @@ export const displayedRows = new Map<string, EventRow>();
 export const operationGroups = new Map<string, EventRow[]>();
 export const expandedGroups = new Set<string>();
 export const composerState = {
-  active: null as (PreviewCommand & { actor: Actor | null; prompted: boolean }) | null,
+  active: null as (PreviewCommand & { actorIndex: number; prompted: boolean }) | null,
   queue: [] as PreviewCommand[],
-  questions: new Map<string, PlanQuestion>(),
+  questions: new Map<string, WorkspaceQuestion>(),
   drafts: new Map<string, string>(),
   waiting: '',
   conversations: new Map<string, EventRow[]>(),

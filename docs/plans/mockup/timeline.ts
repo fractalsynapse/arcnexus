@@ -267,10 +267,15 @@ export function renderCalls(calls: EventRow[]) {
   return calls.map((row) => '<li>' + timelineItem(row) + '</li>').join('');
 }
 
-export function eventLog(name: string, rows: EventRow[], preview = true) {
+export function eventLog(
+  name: string,
+  rows: EventRow[],
+  { preview = true, action = '' } = {},
+) {
+  const header = `<div class="arc-row"><small>Times in ET</small>${action}</div>`;
   const input = preview ? rows.concat(previewRows()) : rows;
   if (!input.length)
-    return panel(name + ' event log', noData('No matching events in the retained scope.'));
+    return panel(name + ' event log', noData('No matching events in the retained scope.'), header);
   for (const row of input) displayedRows.set(String(row[4]), row);
   const timeline = timelineGroups(input)
     .map(
@@ -284,7 +289,7 @@ export function eventLog(name: string, rows: EventRow[], preview = true) {
   return panel(
     name + ' event log',
     '<ol class="arc-timeline arc-grouped-log">' + timeline + '</ol>',
-    '<small>Times in ET</small>',
+    header,
     false,
   );
 }

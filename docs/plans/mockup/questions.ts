@@ -1,21 +1,20 @@
-import { addPreviewMessage } from './composer.ts';
+import { addPreviewMessage, phaseActor } from './composer.ts';
 import { diffView, readPatch } from './diff.ts';
 import { go } from './main.ts';
 import { composerState, data, state } from './model.ts';
-import type { PlanQuestion } from './model.ts';
+import type { Area, WorkspaceQuestion } from './model.ts';
 import { breadcrumbs, escape, noData, panel, title } from './view.ts';
 
-const planner = { key: 'plan', role: 'Planner' };
-
-function recordedQuestion(): PlanQuestion | undefined {
-  const gate = data.plan.clarification;
-  if (!gate) return;
+function recordedQuestion(area: Area, id?: string): WorkspaceQuestion | undefined {
+  const gate = data[area].clarification;
+  if (!gate || (id !== undefined && id !== String(gate.sequence))) return;
   const [prompt = '', ...supporting] = gate.question.split('\n\n');
   return {
+    area,
     id: String(gate.sequence),
     prompt,
     supporting: supporting.join('\n\n'),
-    recommendation: plannerRecommendation(),
+    recommendation: phaseRecommendation(area),
     choices: /reply approve .* or skip/i.test(prompt)
       ? [
           ['approve', 'Approve these changes'],
@@ -26,8 +25,9 @@ function recordedQuestion(): PlanQuestion | undefined {
   };
 }
 
-function plannerRecommendation() {
-  const response = data.plan.rows.find((row) => row[2] === 'Planner · Final model response');
+function phaseRecommendation(area: Area) {
+  const name = area === 'plan' ? 'Planner' : 'Architecture';
+  const response = data[area].rows.findLast((row) => row[1] === 'response' && row[2].startsWith(name + ' · '));
   if (!response) return undefined;
   try {
     const { summary } = JSON.parse(response[3]) as { summary?: unknown };
@@ -38,26 +38,28 @@ function plannerRecommendation() {
 }
 
 export function findQuestion(id: string) {
-  const historical = recordedQuestion();
-  return composerState.questions.get(id) ?? (historical?.id === id ? historical : undefined);
+  if (!id) return;
+  return composerState.questions.get(id) ?? recordedQuestion('plan', id) ?? recordedQuestion('architect', id);
 }
 
-export function startPlanQuestion() {
-  const source = recordedQuestion();
+export function startWorkspaceQuestion(area: Area) {
+  const source = recordedQuestion(area);
   if (!source) return;
+  const actor = phaseActor(area);
   const id = 'question-' + ++composerState.sequence;
   composerState.questions.set(id, { ...source, id, answer: undefined });
   composerState.waiting = id;
-  const history = composerState.conversations.get(planner.key) ?? [];
-  history.push(['—', 'question', 'Planner · Approval requested (preview)', source.prompt, id]);
-  composerState.conversations.set(planner.key, history);
+  const history = composerState.conversations.get(actor.key) ?? [];
+  history.push(['—', 'question', actor.role + ' · Approval requested (preview)', source.prompt, id]);
+  composerState.conversations.set(actor.key, history);
   composerState.feedback = '';
 }
 
 export function openQuestion(id: string) {
-  if (!findQuestion(id)) return;
+  const question = findQuestion(id);
+  if (!question) return;
   state.questionId = id;
-  go('/plan/question/');
+  go('/' + question.area + '/question/');
 }
 
 export function rememberAnswer(field: HTMLInputElement | HTMLTextAreaElement) {
@@ -73,12 +75,13 @@ export function submitAnswer(id: string, answer: string) {
   question.answer = answer;
   composerState.drafts.delete(id);
   composerState.waiting = '';
-  composerState.feedback = 'Preview reply recorded for Planner';
-  addPreviewMessage(planner, 'You · Reply', answer);
-  go('/plan/');
+  const actor = phaseActor(question.area);
+  composerState.feedback = 'Preview reply recorded for ' + actor.role;
+  addPreviewMessage(actor, 'You · Reply', answer);
+  go('/' + question.area + '/');
 }
 
-function answerForm(question: PlanQuestion) {
+function answerForm(question: WorkspaceQuestion) {
   const value = composerState.drafts.get(question.id) ?? '';
   const controls = question.choices
     ? `<fieldset><legend>Decision</legend>
@@ -96,11 +99,13 @@ function answerForm(question: PlanQuestion) {
 
 export function questionView() {
   const question = findQuestion(state.questionId);
-  const heading = breadcrumbs([['Plan', '/plan/'], ['Question']]) + title('Planner question');
-  if (!question) return heading + panel('Question', noData('No question selected.'));
+  if (!question) return title('Question') + panel('Question', noData('No question selected.'));
+  const actor = phaseActor(question.area);
+  const page = question.area === 'plan' ? 'Plan' : 'Architect';
+  const heading = breadcrumbs([[page, '/' + question.area + '/'], ['Question']]) + title(actor.role + ' question');
   const patches = readPatch(question.supporting);
   const context = question.recommendation
-    ? `<h3>Planner recommendation</h3><p>${escape(question.recommendation)}</p>`
+    ? `<h3>${actor.role} recommendation</h3><p>${escape(question.recommendation)}</p>`
     : '';
   const supporting =
     !patches.length && question.supporting ? `<p>${escape(question.supporting)}</p>` : '';
@@ -112,7 +117,7 @@ export function questionView() {
   return (
     heading +
     panel('Question', `<p>${escape(question.prompt)}</p>${context}${supporting}`) +
-    (patches.length ? diffView('Proposed goal changes', patches) : '') +
+    (patches.length ? diffView(question.area === 'plan' ? 'Proposed goal changes' : 'Proposed architecture changes', patches) : '') +
     answer
   );
 }

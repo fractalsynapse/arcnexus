@@ -38,16 +38,21 @@ when the new preview is attached to the chat.
   to open the detailed round metrics.
 - Find a file by its extension-free name or description. Sort by priority and
   combine search and topic filters with Changed only. Preview topics illustrate
-  the filter across captured goals and objectives.
+  the filter across captured goals, objectives, and architecture files.
 - Use one composer across views. Start Plan and steer while the Planner is
   active. Advance the preview to simulate the approval question. Open the question,
   make a selection, return to Plan, and reopen it to verify the draft persists.
   The recorded historical question shows its existing answer and accepts no reply.
+  Advance Run through its recorded actor roster and steer the active Director,
+  steward, or Reviewer from the matching view.
 - Open a file, approval, activity, or delivery diff. Select a changed path to
   review its additions, deletions, and context. When delivery evidence contains
   excerpts, use the local patch picker to load the complete merge diff. An
   export from `git show --format= --no-color <merge>` works as a local patch.
-- Open a Plan file to read the rendered Markdown body and see its full path
-  below the title. Edit the body in the visual editor and update its metadata
-  in File information. Expand Content or Changes while editing and confirm your
-  draft is still present after restoring the split view.
+- Open a Plan or Architect file to see its full path and File information.
+  Markdown files use the rendered body and visual editor. YAML files use a
+  highlighted document and text editor. Expand Content or Changes while editing
+  and confirm your draft is still present after restoring the split view.
+- In Run, check the metrics beside the Director and Reviewer outcomes. Expand
+  an activity timeline or Changes to inspect it while retaining selected tabs
+  and loaded patches. Read the issue before the PR in Delivery.

@@ -1,5 +1,6 @@
 import { state } from './model.ts';
 import { diffView, readPatch } from './diff.ts';
+import { splitPanels } from './panels.ts';
 import type {
   Activation,
   PlanStep,
@@ -31,6 +32,7 @@ import { metrics, eventLog } from './timeline.ts';
 import {
   asText,
   githubReferences,
+  githubOutcome,
   outcomeName,
   roundStatus,
   noData,
@@ -44,6 +46,7 @@ import {
   title,
   breadcrumbs,
   tabs,
+  overview,
 } from './view.ts';
 
 export function reviewContent(compact = false) {
@@ -120,12 +123,14 @@ export function issueView(kind: string, compact = false) {
     : goal.hostedFailures.findLast((row) => row.seq <= snapshot.seq)?.pr;
   const number = issue ? delivery.issue : pr?.split('/').at(-1);
   const label = issue ? 'GitHub issue' : 'Staging PR';
+  const observedState = issue ? delivery.issueState : delivered ? 'merged' : 'hosted check failed';
+  const count = issue ? delivery.issueComments : delivered ? delivery.prCommits : undefined;
   const link = number
-    ? githubReferences((issue ? 'Issue' : 'PR') + ' #' + number)
+    ? githubOutcome(issue ? 'Issue' : 'PR', number, observedState, count)
     : noData(issue ? 'No issue linked to this assessment.' : 'No PR observed for this revision.');
   return `<div class="arc-issue">
     ${compact ? `<small>${label}</small>` : ''}
-    ${link}${!issue && number ? status(delivered ? 'Merged' : 'Hosted check failed') : ''}
+    ${link}
     ${!compact && delivered && !issue ? `<small>Staging commit · <code>${escape(delivery.commit)}</code></small>` : ''}
   </div>`;
 }
@@ -147,52 +152,48 @@ export function runIndex() {
   );
 }
 
-export function sectionDetail(phase: string) {
+function actorEvidence(phase: 'Direction' | 'Review') {
   const direction = phase === 'Direction';
   const actor = direction ? 'Director' : 'Reviewer';
   const path = direction ? '/run/direction/' : '/run/review/';
   const component = direction ? 'direction' : 'reviewer';
   const activity = direction ? 'planning' : 'assessment';
-  const snapshot = currentSnapshot();
-  const review = currentReview();
+  const review = direction ? undefined : currentReview();
   const stats = measuredScope(
     scopedActs(component, activity),
     direction ? 'Assessed' : outcomeName(review?.kind),
     review?.at,
   );
-  const body = direction
-    ? `<div class="arc-grid equal">${panel('Strategy', strategy())}
-    ${panel('Component assignments', assignments(), '', false)}</div>`
-    : panel('Review', reviewContent()) + panel('Action', reviewAction());
+  return { actor, path, stats, rows: scopedRows(component, activity) };
+}
+
+export function sectionDetail(phase: 'Direction' | 'Review') {
+  const direction = phase === 'Direction';
+  const { actor, path, stats, rows } = actorEvidence(phase);
+  const outcome = direction ? panel('Strategy', strategy()) : panel('Review', reviewContent());
+  const context = direction
+    ? panel('Component assignments', assignments(), '', false)
+    : panel('Action', reviewAction());
+  const snapshot = currentSnapshot();
   return (
     breadcrumbs([['Run', '/run/'], [phase]]) +
     title(phase, currentGoal().title) +
-    `<div class="arc-detail-toolbar">${revisionControl()}${button('View log', path + 'log/', 'list')}</div>
-    ${body}
-    ${metrics(actor, stats, scopedRows(component, activity))}
-    <small class="arc-mono">Run ${snapshot.run} · Captured staging ${asText(snapshot.capturedRevision)}</small>`
+    `<div class="arc-detail-toolbar">${revisionControl()}${button('View log', path + 'log/', 'list')}</div>` +
+    overview(metrics(actor, stats, rows), outcome, { context }) +
+    `<small class="arc-mono">Run ${snapshot.run} · Captured staging ${asText(snapshot.capturedRevision)}</small>`
   );
 }
 
-export function actorLog(phase: string) {
-  const direction = phase === 'Direction';
-  const actor = direction ? 'Director' : 'Reviewer';
-  const component = direction ? 'direction' : 'reviewer';
-  const activity = direction ? 'planning' : 'assessment';
-  const path = direction ? '/run/direction/' : '/run/review/';
-  const review = currentReview();
-  const stats = measuredScope(
-    scopedActs(component, activity),
-    direction ? 'Assessed' : outcomeName(review?.kind),
-  );
+export function actorLog(phase: 'Direction' | 'Review') {
+  const { actor, path, stats, rows } = actorEvidence(phase);
   return (
     breadcrumbs([['Run', '/run/'], [phase, path], ['Log']]) +
     title(actor + ' log', currentGoal().title) +
     '<div class="arc-detail-toolbar">' +
     revisionControl() +
     '</div>' +
-    metrics(actor, stats, scopedRows(component, activity)) +
-    eventLog(actor, scopedRows(component, activity))
+    metrics(actor, stats, rows) +
+    eventLog(actor, rows)
   );
 }
 
@@ -220,13 +221,13 @@ export function milestoneControl(component: string) {
 export function scopedDiff(
   label: string,
   component: string,
-  milestone: string | null = null,
-  activity: string | null = null,
+  { milestone = null, activity = null, action = '' }: {
+    milestone?: string | null; activity?: string | null; action?: string;
+  } = {},
 ) {
   const entries = scopedReceipts(component, milestone, activity);
-  const heading = `<small>${escape(label)}</small>`;
   if (!entries.length)
-    return panel('File diff', noData('No checked edits in the selected scope.'), heading);
+    return panel('Changes', noData('No checked edits in the selected scope.'), action);
   const paths = new Map<string, typeof entries[number]>();
   for (const entry of entries) {
     if (entry.excerpt || !paths.has(entry.path)) paths.set(entry.path, entry);
@@ -236,7 +237,7 @@ export function scopedDiff(
     lines: entry.excerpt ? readPatch(entry.excerpt, entry.path).find((file) => file.path === entry.path)?.lines ?? [] : [],
     note: entry.truncated ? 'Latest retained checkpoint patch excerpt' :
       entry.excerpt ? 'Latest retained checkpoint patch' : 'No patch text retained for this path.',
-  })), { localPatch: true });
+  })), { localPatch: true, action });
 }
 
 function scopedReceipts(owner: string, milestone: string | null, activity: string | null) {
@@ -263,8 +264,15 @@ export function compPage(focus: boolean) {
     );
   const body = focus
     ? componentFocus(row, milestone)
-    : panel('Activity list', workActivities(milestone), '', false) +
-      scopedDiff('Component updates', component);
+    : splitPanels({
+      id: 'arc-component-activities',
+      label: 'Activity list',
+      content: (action) => panel('Activity list', workActivities(milestone), action, false),
+    }, {
+      id: 'arc-component-changes',
+      label: 'Changes',
+      content: (action) => scopedDiff('Component updates', component, { action }),
+    });
   return (
     breadcrumbs([['Run', '/run/'], ['Direction', '/run/direction/'], [component]]) +
     title(component, 'Component steward · ' + milestone.id.replaceAll('-', ' ')) +
@@ -322,19 +330,29 @@ export function activityPage(focus: boolean) {
   const step = milestone?.steps.find((entry) => entry.activity === activity);
   const row = currentGoal().components[component];
   if (!step || !row || !milestone) return unassignedActivity();
-  const activations = scopedActs(component, activity, milestone.id);
   const result = stepState(milestone, step, milestone.steps.indexOf(step));
-  const rows = scopedRows(component, activity, milestone.id);
   const body = focus
-    ? focusActivity(step, activations.at(-1), row.activities[activity])
-    : metrics('Activity', measuredScope(activations, result), rows) +
-      eventLog('Activity', rows) +
-      scopedDiff('Activity updates', component, milestone.id, activity);
+    ? focusActivity(step, scopedActs(component, activity, milestone.id).at(-1), row.activities[activity])
+    : activityEvidence(component, activity, milestone.id, result);
   return (
     activityHeader(component, activity, milestone.id, result) +
     tabs(focus, true, '/run/activity/') +
     body
   );
+}
+
+function activityEvidence(component: string, activity: string, milestone: string, result: string) {
+  const rows = scopedRows(component, activity, milestone);
+  const statistics = metrics('Activity', measuredScope(scopedActs(component, activity, milestone), result), rows);
+  return statistics + splitPanels({
+    id: 'arc-activity-log',
+    label: 'Event log',
+    content: (action) => eventLog('Activity', rows, { action }),
+  }, {
+    id: 'arc-activity-changes',
+    label: 'Changes',
+    content: (action) => scopedDiff('Activity updates', component, { milestone, activity, action }),
+  });
 }
 
 function unassignedActivity() {
@@ -373,10 +391,17 @@ export function deliveryPage() {
     breadcrumbs([['Run', '/run/'], ['Delivery']]) +
     title('Delivery', goal.title) +
     `<div class="arc-detail-toolbar">${revisionControl()}</div>` +
-    panel('Delivery state', deliveryState(goal, delivered), status(outcomeName(snap.kind))) +
-    `<div class="arc-grid equal">${panel('GitHub issue', issueView('issue'))}${panel('GitHub PR', issueView('pr'))}</div>` +
-    history +
-    deliveryDiff(d, delivered)
+    splitPanels({
+      id: 'arc-delivery-outcome',
+      label: 'Delivery state',
+      content: (action) => `<div class="arc-stack">
+        ${panel('Delivery state', deliveryState(goal, delivered), `<div class="arc-row">${status(outcomeName(snap.kind))}${action}</div>`)}
+        ${panel('GitHub issue', issueView('issue'))}${panel('GitHub PR', issueView('pr'))}${history}</div>`,
+    }, {
+      id: 'arc-delivery-changes',
+      label: 'Changes',
+      content: (action) => deliveryDiff(d, delivered, action),
+    })
   );
 }
 
@@ -393,9 +418,9 @@ function deliveryState(goal: Goal, delivered: boolean) {
     <small>Reviewed tree <code>${asText(source?.candidate)}</code> · Parent <code>${asText(source?.parent)}</code> · Branch <code>${escape(source?.branch)}</code></small>`;
 }
 
-function deliveryDiff(d: Goal['delivery'], delivered: boolean) {
+function deliveryDiff(d: Goal['delivery'], delivered: boolean, action: string) {
   if (!delivered || !d.files.length)
-    return panel('File diff', noData('No confirmed PR diff at this revision.'));
+    return panel('Changes', noData('No confirmed PR diff at this revision.'), action);
   const patches = new Map(readPatch(d.patch ?? '', d.patchPath).map((file) => [file.path, file]));
   return diffView('Staging merge', d.files.map(([, path]) => {
     const file = patches.get(path);
@@ -405,5 +430,5 @@ function deliveryDiff(d: Goal['delivery'], delivered: boolean) {
       note: !file ? 'Open the local merge patch to inspect this path.' :
         d.patchExcerpt ? 'Retained patch excerpt' : undefined,
     };
-  }), { localPatch: true });
+  }), { localPatch: true, action });
 }

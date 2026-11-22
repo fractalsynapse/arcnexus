@@ -1,13 +1,15 @@
-import { plannerRows } from './composer.ts';
+import { phaseActor, phaseRows } from './composer.ts';
 import { diffView } from './diff.ts';
 import { markdownContent } from './markdown.ts';
+import { splitPanels } from './panels.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
-import type { Area, DesignFile, IndexedFile, Revision, Filter, FilePane } from './model.ts';
-import { fileName } from './plan-topics.ts';
+import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
+import { fileName } from './file-topics.ts';
 import { metrics, eventLog } from './timeline.ts';
 import {
   asText,
   githubReferences,
+  githubOutcome,
   roundStatus,
   noData,
   escape,
@@ -18,12 +20,14 @@ import {
   title,
   breadcrumbs,
   icons,
+  overview,
 } from './view.ts';
 
 export function phaseOutcome(phase: Area) {
   if (phase === 'plan') return plannerOutcome();
   const paragraphs = data.architect.detail.split('\n\n');
   return (
+    phaseReferences(data.architect) +
     '<p>' +
     escape(paragraphs[0]) +
     '</p>' +
@@ -40,40 +44,30 @@ export function phaseOutcome(phase: Area) {
 
 function plannerOutcome() {
   const plan = data.plan;
-  const number = plan.pr?.split('/').at(-1);
-  const prState = plan.prState ?? (plan.stats.state === 'Merged' ? 'merged' : undefined);
-  return `<div class="arc-github-outcome">
-    ${plan.issue ? outcomeReference('Issue', plan.issue, plan.issueState, plan.issueComments, 'comment') : ''}
-    ${number ? outcomeReference('PR', number, prState, plan.prCommits, 'commit') : ''}
-  </div><p>${githubReferences(plan.detail.replace(/^PR #\d+ merged the /, 'Merged the '))} ${plan.modified.length}
+  return `${phaseReferences(plan)}<p>${githubReferences(plan.detail.replace(/^PR #\d+ merged the /, 'Merged the '))} ${plan.modified.length}
     ${plan.modified.length === 1 ? 'file changed.' : 'files changed.'}</p>`;
 }
 
-function outcomeReference(kind: string, number: string, state: string | undefined, count: number | undefined, unit: string) {
-  const link = githubReferences(kind + ' #' + number);
-  const ended = state === 'closed' || state === 'merged';
-  const label = state ? state[0]?.toUpperCase() + state.slice(1) : 'State unavailable';
-  const quantity = count === undefined ? unit + ' count unavailable' : count + ' ' + unit + (count === 1 ? '' : 's');
-  return `<div class="arc-row">${ended ? '<s>' + link + '</s>' : link}
-    ${pill(label)}<small>${escape(quantity)}</small></div>`;
+function phaseReferences(phase: Phase) {
+  const number = phase.pr?.split('/').at(-1);
+  if (!phase.issue && !number) return '';
+  const prState = phase.prState ?? (phase.stats.state === 'Merged' ? 'merged' : undefined);
+  return `<div class="arc-github-outcome">
+    ${phase.issue ? githubOutcome('Issue', phase.issue, phase.issueState, phase.issueComments) : ''}
+    ${number ? githubOutcome('PR', number, prState, phase.prCommits) : ''}
+  </div>`;
 }
 
 export function workspaceIndex(area: Area) {
-  const name = area === 'plan' ? 'Planner' : 'Architect';
+  const name = phaseActor(area).role;
   const phase = data[area];
-  const rows = area === 'plan' ? plannerRows(phase.rows) : phase.rows;
+  const rows = phaseRows(area);
   return (
     title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
-    `<div class="arc-grid arc-index">
-      <div class="arc-stack">
-        <div class="arc-metrics-wrap">${metrics(name, phase.stats, phase.rows, phase.wall)}</div>
-        <div class="arc-log-wrap">${eventLog(name, rows)}</div>
-      </div>
-      <div class="arc-stack">
-        <div class="arc-outcome-wrap">${panel(name + ' outcome', phaseOutcome(area))}</div>
-        <div class="arc-files-wrap">${fileIndex(area)}</div>
-      </div>
-    </div>`
+    overview(metrics(name, phase.stats, phase.rows, phase.wall), panel(name + ' outcome', phaseOutcome(area)), {
+      log: eventLog(name, rows),
+      context: '<div class="arc-files-wrap">' + fileIndex(area) + '</div>',
+    })
   );
 }
 
@@ -188,7 +182,12 @@ export function compareFiles(first: IndexedFile, second: IndexedFile, sort: stri
   );
 }
 
-function fileDescription({ type, latest }: IndexedFile) {
+function fileDescription({ area, type, latest }: IndexedFile) {
+  if (area === 'architect') {
+    const heading = latest.content.match(/^ *# (.+)$/m)?.[1];
+    const description = latest.content.match(/^description: +(.+)$/m)?.[1];
+    return description || heading || latest.name;
+  }
   if (type !== 'Objective' || !latest.name.startsWith('Human objective ·')) return latest.name;
   const exact = latest.content.match(/## Exact submission\s*```text\s*([\s\S]*?)\n```/)?.[1];
   return exact?.split('\n\n')[0] ?? latest.name;
@@ -210,6 +209,7 @@ export function fileRow(item: IndexedFile) {
     '<span class="arc-file-label"><span class="arc-mono" title="' + escape(fileDescription(item)) +
     '" data-tooltip="' + escape(fileDescription(item)) + '">' + escape(fileName(path)) + '</span>' +
     '<span class="arc-sr" id="arc-description-' + id + '">' + escape(fileDescription(item)) + '</span>' +
+    fileFormat(item) +
     (changed ? pill(area === 'plan' ? 'Changed in Plan' : 'Changed in Architect') : '') +
     '</span></span><span class="arc-mono">' +
     (latest.priority == null ? '—' : escape(latest.priority)) +
@@ -223,18 +223,24 @@ export function fileRow(item: IndexedFile) {
   );
 }
 
+function fileFormat(item: DesignFile) {
+  const name = fileName(item.path);
+  const collision = files.some((other) => other.area === item.area && other.type === item.type &&
+    other.path !== item.path && fileName(other.path) === name);
+  return collision ? '<small>' + (item.path.endsWith('.md') ? 'Markdown' : 'YAML') + '</small>' : '';
+}
+
 export function fileDiff(item: DesignFile, index: number, action = '') {
   const current = requireValue(item.revisions[index]);
   const previous = item.revisions[index + 1];
-  const heading = item.area === 'plan' ? 'Changes' : 'File diff';
   if (!previous)
-    return panel(heading, noData('No earlier revision included in this snapshot.'), action);
+    return panel('Changes', noData('No earlier revision included in this snapshot.'), action);
   const label = 'Compared with ' + previous.id;
   const lines = revisionDiff(current, previous);
   return lines.length
-    ? diffView(label, [{ path: item.path, lines }], { heading, action })
+    ? diffView(label, [{ path: item.path, lines }], { action })
     : panel(
-        heading,
+        'Changes',
         noData('Contents match the selected comparison.'),
         `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`,
       );
@@ -327,47 +333,15 @@ export function fileView() {
 }
 
 function filePanels(item: DesignFile, revision: Revision) {
-  if (item.area === 'architect') {
-    const content = panel('YAML', fileContent(item, revision));
-    return `<div class="arc-grid equal">${content}${fileDiff(item, state.revision)}</div>`;
-  }
-  const content = panel('Content', fileContent(item, revision), expandButton('content'));
-  const changes = fileDiff(item, state.revision, expandButton('changes'));
-  const expanded = state.expandedFilePane;
-  return `<div class="arc-grid equal arc-file-workspace" ${expanded ? 'data-expanded' : ''}>
-    <div data-file-pane-panel="content" id="arc-file-content" ${expanded === 'changes' ? 'hidden' : ''}>${content}</div>
-    <div data-file-pane-panel="changes" id="arc-file-changes" ${expanded === 'content' ? 'hidden' : ''}>${changes}</div>
-  </div>`;
-}
-
-function paneLabel(pane: FilePane, expanded: boolean) {
-  return (expanded ? 'Collapse ' : 'Expand ') + (pane === 'content' ? 'Content' : 'Changes');
-}
-
-function expandButton(pane: FilePane) {
-  const expanded = state.expandedFilePane === pane;
-  const label = paneLabel(pane, expanded);
-  return `<button type="button" class="arc-link arc-file-expand" data-expand-file="${pane}"
-    aria-controls="arc-file-${pane}" aria-expanded="${expanded}" aria-label="${label}"
-    data-tooltip="${label}">${icon(expanded ? 'minimize-2' : 'maximize-2')}</button>`;
-}
-
-export function expandFilePane(control: HTMLButtonElement) {
-  const pane = control.dataset.expandFile;
-  const workspace = control.closest('.arc-file-workspace');
-  if (!workspace || (pane !== 'content' && pane !== 'changes')) return;
-  const expanded = state.expandedFilePane !== pane;
-  state.expandedFilePane = expanded ? pane : null;
-  workspace.toggleAttribute('data-expanded', expanded);
-  workspace.querySelectorAll<HTMLElement>('[data-file-pane-panel]').forEach((panel) => {
-    panel.hidden = expanded && panel.dataset.filePanePanel !== pane;
+  return splitPanels({
+    id: 'arc-file-content',
+    label: 'Content',
+    content: (action) => panel('Content', fileContent(item, revision), action),
+  }, {
+    id: 'arc-file-changes',
+    label: 'Changes',
+    content: (action) => fileDiff(item, state.revision, action),
   });
-  const label = paneLabel(pane, expanded);
-  control.setAttribute('aria-expanded', String(expanded));
-  control.setAttribute('aria-label', label);
-  control.setAttribute('data-tooltip', label);
-  control.innerHTML = icon(expanded ? 'minimize-2' : 'maximize-2');
-  icons();
 }
 
 function fileRevisionControls(item: DesignFile) {
@@ -387,9 +361,9 @@ function fileRevisionControls(item: DesignFile) {
 }
 
 function fileContent(item: DesignFile, rev: Revision) {
-  if (item.area === 'plan') return markdownContent(rev.content, state.editing);
+  if (item.path.endsWith('.md')) return markdownContent(rev.content, state.editing);
   if (state.editing)
     return `<label><span class="arc-sr">File content</span>
     <textarea name="content" class="arc-content-edit" required>${escape(rev.content)}</textarea></label>`;
-  return `<details><summary>View captured YAML</summary><pre class="arc-diff">${escape(rev.content)}</pre></details>`;
+  return `<div class="arc-markdown arc-code-view"><pre><code class="language-yaml">${escape(rev.content)}</code></pre></div>`;
 }
