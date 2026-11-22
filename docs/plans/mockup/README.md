@@ -56,6 +56,10 @@ retains the complete round and navigation.
   Save a draft after editing in either mode. Unsupported rich-text syntax
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
+- Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
+  Change a field or reorder arguments and inspect the draft in Changes. Switch
+  to Raw to edit the same draft as YAML. Save validates the YAML with the
+  preview schema and creates a local draft revision.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
   and loaded patches. Read the issue before the PR in Delivery.

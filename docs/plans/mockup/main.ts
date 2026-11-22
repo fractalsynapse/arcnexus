@@ -11,6 +11,8 @@ import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
+import { detachOperationEditor, mountOperationEditor, saveOperationDraft } from './operation-editor.ts';
+import { ownerTestsPath } from './owner-tests-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
@@ -87,9 +89,12 @@ export function render(resetComposer = false) {
   operationGroups.clear();
   dismissTooltip();
   detachMarkdownEditor();
+  detachOperationEditor();
   main.innerHTML = requireValue(routes[r])();
   highlightFileCode(main);
-  mountMarkdownEditor(main.querySelector('[data-md-editor]'), files[state.fileId]?.revisions[state.revision]);
+  const revision = files[state.fileId]?.revisions[state.revision];
+  mountMarkdownEditor(main.querySelector('[data-md-editor]'), revision);
+  mountOperationEditor(main, revision);
   const added = previewRows();
   if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
     const logPane = eventLogPane(requireValue(target()).role, added, false);
@@ -181,9 +186,10 @@ export function applyPreviewForm(form: HTMLFormElement) {
 
 function saveRevision(data: FormData) {
   const item = requireValue(files[state.fileId]);
-  const content = item.path.endsWith('.md')
-    ? editedMarkdown(requireValue(item.revisions[state.revision]))
-    : String(data.get('content'));
+  let content: string | undefined = String(data.get('content'));
+  if (item.path.endsWith('.md')) content = editedMarkdown(requireValue(item.revisions[state.revision]));
+  else if (item.path === ownerTestsPath) content = saveOperationDraft();
+  if (content === undefined) return;
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
     name: String(data.get('name')).trim(),

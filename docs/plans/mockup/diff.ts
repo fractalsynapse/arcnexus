@@ -49,6 +49,10 @@ export function diffView(
 ) {
   const caption = `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`;
   if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);
+  return panel(heading, diffBody(files, localPatch), caption);
+}
+
+export function diffBody(files: FileDelta[], localPatch = false) {
   const id = 'arc-diff-' + ++viewerId;
   const selected = Math.max(
     0,
@@ -58,13 +62,25 @@ export function diffView(
   const picker = localPatch
     ? '<label class="arc-diff-load">Open local patch<input type="file" data-patch-file accept=".diff,.patch,text/plain"></label><small role="status"></small>'
     : '';
-  return panel(
-    heading,
-    `<div class="arc-file-diff">${picker}<div class="arc-diff-layout">
+  return `<div class="arc-file-diff">${picker}<div class="arc-diff-layout">
       <div role="tablist" aria-label="Changed files" aria-orientation="vertical">${views.map((view) => view.tab).join('')}</div>
-      <div class="arc-diff-content">${views.map((view) => view.content).join('')}</div></div></div>`,
-    caption,
-  );
+      <div class="arc-diff-content">${views.map((view) => view.content).join('')}</div></div></div>`;
+}
+
+export function draftDiff(before: string[], after: string[]): DiffLine[] {
+  let start = 0;
+  while (start < before.length && start < after.length && before[start] === after[start]) start++;
+  let oldEnd = before.length;
+  let newEnd = after.length;
+  while (oldEnd > start && newEnd > start && before[oldEnd - 1] === after[newEnd - 1]) {
+    oldEnd--;
+    newEnd--;
+  }
+  return [
+    ['hunk', `@@ Draft changes from line ${start + 1}`],
+    ...before.slice(start, oldEnd).map<DiffLine>((line) => ['removed', '− ' + line]),
+    ...after.slice(start, newEnd).map<DiffLine>((line) => ['added', '+ ' + line]),
+  ];
 }
 
 function fileTab(file: FileDelta, id: string, selected: boolean) {
