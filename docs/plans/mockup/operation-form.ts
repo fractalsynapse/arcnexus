@@ -11,14 +11,10 @@ export const argumentValues = {
 } as const;
 
 export function operationForm(operation: Operation) {
-  const identity =
-    '<div class="arc-form-grid">' +
-    '<label>Kind<input readonly value="' +
-    escape(operation.kind) +
-    '"></label>' +
-    '<label>Tool<input readonly value="' +
-    escape(operation.tool) +
-    '"></label></div>';
+  const identity = `<div class="arc-form-grid">
+    ${readOnlyField('Kind', operation.kind)}${readOnlyField('Handler', operation.tool)}
+    ${readOnlyField('MCP name', operation.id)}${readOnlyField('Network access', 'Disabled')}
+  </div>`;
   return `<fieldset class="arc-yaml-group"><legend>Operation</legend>
     ${identity}<div class="arc-form-grid">${Object.entries(operationFields)
       .map(([name, schema]) =>
@@ -33,31 +29,17 @@ export function operationForm(operation: Operation) {
     ${addButton('default', 'Add default selector')}</fieldset>`;
 }
 
+function readOnlyField(label: string, value: string) {
+  return `<label>${escape(label)}<input readonly value="${escape(value)}"></label>`;
+}
+
 function operationField(
   key: keyof typeof operationFields,
   schema: (typeof operationFields)[keyof typeof operationFields],
   operation: Operation,
 ) {
   const metadata = schema.meta();
-  const label = metadata?.title ?? key;
-  const path = [key];
-  if (key === 'network') {
-    return `<div class="arc-yaml-field"><label class="arc-checkbox"><input type="checkbox"
-      ${fieldAttributes(path)} ${operation.network ? 'checked' : ''}>${escape(label)}</label>${fieldError(path)}</div>`;
-  }
-  if (key === 'applicability') {
-    const choices = operationFields.applicability.options.map<[string, string]>((entry) => [
-      entry,
-      entry.replaceAll('-', ' '),
-    ]);
-    return field(
-      label,
-      path,
-      `<select ${fieldAttributes(path)}>${options(choices, operation.applicability)}</select>`,
-      metadata?.description,
-    );
-  }
-  return textField(label, path, String(operation[key]), metadata?.description);
+  return textField(metadata?.title ?? key, [key], operation[key], metadata?.description);
 }
 
 function argumentRow(value: Operation['args'][number], index: number, all: Operation['args']) {

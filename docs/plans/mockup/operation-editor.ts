@@ -49,10 +49,11 @@ class OperationEditor {
   private changes?: HTMLElement;
   private status?: HTMLElement;
 
-  /** Start with the selected YAML verbatim and choose the view that can represent it. */
+  /** Preview the proposed removal in a draft based on the selected capture. */
   constructor(readonly revision: Revision) {
     this.source = revision.content;
     this.document = parseDocument(this.source);
+    if (!this.document.errors.length && this.document.delete('applicability')) this.serialize();
     this.mode = operationIssues(this.document).length ? 'Raw' : 'Form';
   }
 
@@ -173,11 +174,7 @@ class OperationEditor {
       this.render();
       this.focusRow(argumentPath, index);
     } else if (yamlField) {
-      const value =
-        target instanceof HTMLInputElement && target.type === 'checkbox'
-          ? target.checked
-          : target.value;
-      this.set(JSON.parse(yamlField) as YamlPath, value);
+      this.set(JSON.parse(yamlField) as YamlPath, target.value);
       this.refresh();
     }
   }
@@ -185,7 +182,7 @@ class OperationEditor {
   /** Update one YAML node while retaining its comments and surrounding document. */
   private set(path: YamlPath, value: unknown) {
     const original = this.document.getIn(path, true);
-    if (isScalar(original) && (typeof value === 'string' || typeof value === 'boolean')) {
+    if (isScalar(original) && typeof value === 'string') {
       if (original.value === value) return;
       original.value = value;
     } else {

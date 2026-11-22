@@ -27,6 +27,8 @@
 
 ### Added
 
+- Record the draft architecture proposal to remove operation applicability and preview the YAML change in the `owner-tests.yaml` mockup editor (#703).
+
 - Prototype a schema-validated Form editor for `owner-tests.yaml` with Raw YAML and live draft changes in the local mockup (#703).
 
 - Version the mobile-first ArcNexus UI design mockup with refinement metrics, grouped tool calls, and local previews of the shared operator composer. Generate the Codex viewer preview from the current mockup source after each design revision. Refine Plan with distinct phase and Codex timing, a draft-preserving approval view, and a filter for changed files. Open detailed round metrics from an icon beside the footer state readout and format final responses as collapsible JSON. Reuse the file and approval views across Plan and Architect, and apply the shared metrics, expandable timeline and changes panels, delivery references, and active-agent steering to Run (#703).

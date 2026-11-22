@@ -5,6 +5,8 @@ refinement round and lets an operator try local interactions. Launch, queue,
 steering, reply, and file edits are preview states. The design has no connection
 to the CLI or live agents.
 
+Keep backend changes surfaced during UI review in the [architecture proposals](architecture-proposals/README.md) collection.
+
 The project keeps the HTML and strict TypeScript source here. The capture, raw
 transcripts, and generated preview stay outside tracked source. Use a saved
 mockup capture with `npx --no-install jiti docs/plans/mockup/preview.ts <capture.json>` from the
@@ -57,9 +59,9 @@ retains the complete round and navigation.
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
 - Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  Change a field or reorder arguments and inspect the draft in Changes. Switch
-  to Raw to edit the same draft as YAML. Save validates the YAML with the
-  preview schema and creates a local draft revision.
+  The draft previews the proposed removal of Applicability in Changes. Change a
+  field or reorder arguments, then switch to Raw to edit the same draft as YAML.
+  Save validates the YAML with the preview schema and creates a local draft revision.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
   and loaded patches. Read the issue before the PR in Delivery.
