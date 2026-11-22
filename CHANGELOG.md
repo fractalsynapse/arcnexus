@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Match the mockup’s Raw Markdown editor to the blue palette in light and dark mode while keeping syntax highlighting readable (#703).
+
 - Recover prepared work when staging moves while preserving the existing issue and branch, secured checked bytes and receipts, complete evidence and verbatim human answers. Retain original bases, acceptance and review observations as history; capture current staging, ownership and applicable acceptance before continuation, enforce changed ownership and retain conflicts for accountable resolution. Preserve original requirements and architectural decision gates. Require current applicable checks and fresh independent acceptance for the recovered tree, base and capture; earlier approval cannot authorize it ([#701](https://github.com/fractalsynapse/arcnexus/issues/701)).
   Observe issue-branch and PR facts before retrying uncertain or outdated publication, reconcile and reuse the same PR or confirm its prior merge without duplicate delivery, and refuse conflicting identities. Retain genuine human or external prerequisite gates with evidence. Pin delivery to the newly reviewed tree and staging parent; further staging movement requires renewed reconciliation. See the [publication recovery guide](docs/release/verification.md#publication-recovery-evidence) and its accountable component references.
   Controlled-provider regressions through production services with real Git and Coordination state cover recovered publication; they do not establish live recovery, hosted CI, configured repository review or actual staging delivery. Staging integration remains distinct from a production release.

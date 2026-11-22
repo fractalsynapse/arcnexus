@@ -1,3 +1,5 @@
+import { syntaxHighlighting } from '@codemirror/language';
+import { classHighlighter } from '@lezer/highlight';
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
@@ -119,7 +121,10 @@ function editorPlugins(entry: Draft) {
       codeBlockEditorDescriptors: [{ priority: 0, match: () => true, Editor: CodeBlock }],
     }),
     markdownShortcutPlugin(),
-    diffSourcePlugin({ viewMode: entry.mode }),
+    diffSourcePlugin({
+      viewMode: entry.mode,
+      codeMirrorExtensions: [syntaxHighlighting(classHighlighter)],
+    }),
     toolbarPlugin({ toolbarContents: () => createElement(EditorToolbar, { entry }) }),
   ];
 }
