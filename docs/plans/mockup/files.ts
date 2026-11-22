@@ -3,7 +3,6 @@ import { diffView } from './diff.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter } from './model.ts';
 import { fileName } from './plan-topics.ts';
-import { roundEvidence } from './run.ts';
 import { metrics, eventLog } from './timeline.ts';
 import {
   asText,
@@ -73,8 +72,7 @@ export function workspaceIndex(area: Area) {
         <div class="arc-outcome-wrap">${panel(name + ' outcome', phaseOutcome(area))}</div>
         <div class="arc-files-wrap">${fileIndex(area)}</div>
       </div>
-    </div>` +
-    (area === 'plan' ? roundEvidence() : '')
+    </div>`
   );
 }
 

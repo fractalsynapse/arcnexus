@@ -10,6 +10,7 @@ import {
 import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
+import { openRoundMetrics, roundFooter } from './round.ts';
 import {
   files,
   state,
@@ -20,7 +21,6 @@ import {
   dom,
   root,
   main,
-  command,
   launch,
   fileArea,
 } from './model.ts';
@@ -49,7 +49,6 @@ export function renderCommand(reset = false) {
         : '<button type="button" class="arc-button" data-action="refine">' +
           icon('refresh-cw') +
           'Refine</button>';
-  command.innerHTML = '<span class="arc-preview-label">Recorded round · Preview commands</span>';
   composerUI(reset);
 }
 
@@ -109,7 +108,7 @@ export function handleClick(control: HTMLButtonElement) {
   if (question) openQuestion(question);
   else if (record) {
     const row = displayedRows.get(record);
-    if (row) inspect(row);
+    if (row) inspect(row, control);
   } else if (route) go(route);
   else if (id !== undefined) openFile(id);
   else if (component) {
@@ -129,6 +128,7 @@ export function handleClick(control: HTMLButtonElement) {
 
 export function handleAction(control: HTMLButtonElement, action: string) {
   if (action === 'close-inspector') dom<HTMLDialogElement>('.arc-inspector').close();
+  else if (action === 'round-metrics') openRoundMetrics(control);
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
   else if (action === 'advance-queue') advanceQueue();
@@ -290,4 +290,5 @@ root.addEventListener('keydown', (event) => {
   if (field.form) applyPreviewForm(field.form);
 });
 
+dom('.arc-footer-state').innerHTML = roundFooter();
 render();

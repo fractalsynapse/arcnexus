@@ -1,4 +1,6 @@
 import { previewRows } from './composer.ts';
+import { showInspector } from './inspector.ts';
+import { responseView } from './json-view.ts';
 import { findQuestion } from './questions.ts';
 import {
   data,
@@ -7,7 +9,6 @@ import {
   operationGroups,
   expandedGroups,
   requireValue,
-  dom,
 } from './model.ts';
 import type { EventRow, ArtifactRef, Stats, ToolCall } from './model.ts';
 import {
@@ -23,14 +24,12 @@ import {
   readouts,
 } from './view.ts';
 
-export function inspect(row: EventRow) {
+export function inspect(row: EventRow, opener: HTMLButtonElement) {
   const tool = data.tools[row[4]];
-  inspector.tool = tool ?? null;
-  dom('#arc-inspector-heading').textContent = tool ? tool[0] : row[2];
-  dom('.arc-inspector-content').innerHTML = tool
-    ? operationContent(tool)
-    : `<pre class="arc-payload">${escape(row[3])}</pre>`;
-  dom<HTMLDialogElement>('.arc-inspector').showModal();
+  showInspector(opener, tool ? tool[0] : row[2], () => {
+    inspector.tool = tool ?? null;
+    return tool ? operationContent(tool) : responseView(row[3]);
+  });
 }
 
 function operationContent(tool: ToolCall) {
@@ -148,7 +147,7 @@ export function toolCounts(rows: EventRow[]) {
 export function countDetails(counts: { report: [string, number][]; providerOnly: number }) {
   if (!counts.report.length) return '';
   return (
-    '<details open class="arc-tool-counts"><summary>Tools by frequency</summary>' +
+    '<details class="arc-tool-counts"><summary>Tools by frequency</summary>' +
     readouts(
       counts.report.map(([name, count]) => [name, tokenCount(count)]),
       'arc-tool-rows',
@@ -180,7 +179,9 @@ export function metrics(name: string, values: Stats, rows: EventRow[] = [], elap
     ? `<details class="arc-timing"><summary>How time is measured</summary>
       <p>Phase elapsed time covers the whole workflow, including any approval waits, review and delivery. Codex execution time totals invocation time for ${escape(name)}, including tools used during those invocations.</p></details>`
     : '';
-  return panel(name + ' metrics', readouts(items) + timing + countDetails(counts));
+  const details = timing + countDetails(counts);
+  return panel(name + ' metrics', readouts(items) +
+    (details ? '<div class="arc-metric-details">' + details + '</div>' : ''));
 }
 
 export function timelineItem(row: EventRow) {

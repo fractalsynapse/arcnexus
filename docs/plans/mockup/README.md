@@ -29,11 +29,13 @@ when the new preview is attached to the chat.
 - Read total input and output separately. Calculate cache rate from reported cached
   input divided by reported input. Show unavailable usage when there is no
   reported basis.
-- Read messages and lifecycle entries in order. Expand the tool calls between
-  messages, then open an individual tool to inspect its request and result.
+- Read messages and lifecycle entries in order. Expand tool calls and inspect a
+  request, result, or final response without leaving the current scroll position.
+  Expand objects and arrays in structured responses as needed.
 - In Plan, compare phase elapsed time with the Planner's Codex execution time.
-  Check the issue before the pull request and find the end-to-end refinement
-  metrics beneath the phase details.
+  Expand Tools by frequency below the metric rows. Check the issue before the
+  pull request, then use the compact state readout under the instruction bar to
+  open the detailed round metrics.
 - Find a file by its extension-free name or description. Sort by priority and
   combine search and topic filters with Changed only. Preview topics illustrate
   the filter across captured goals and objectives.

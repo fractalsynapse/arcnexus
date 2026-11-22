@@ -1,4 +1,4 @@
-import { data, state } from './model.ts';
+import { state } from './model.ts';
 import { diffView, readPatch } from './diff.ts';
 import type {
   Activation,
@@ -27,13 +27,10 @@ import {
   measuredScope,
   currentReview,
 } from './run-context.ts';
-import { countDetails, metrics, eventLog } from './timeline.ts';
+import { metrics, eventLog } from './timeline.ts';
 import {
-  tokenCount,
   asText,
   githubReferences,
-  tokenPair,
-  cacheRate,
   outcomeName,
   roundStatus,
   noData,
@@ -47,7 +44,6 @@ import {
   title,
   breadcrumbs,
   tabs,
-  readouts,
 } from './view.ts';
 
 export function reviewContent(compact = false) {
@@ -147,52 +143,8 @@ export function runIndex() {
     stage('Work', '/run/component/focus/', assignments(true), false) +
     stage('Review', '/run/review/', reviewContent(true) + reviewAction()) +
     stage('Delivery', '/run/delivery/', issueView('issue', true) + issueView('pr', true)) +
-    '</div>' +
-    roundEvidence()
+    '</div>'
   );
-}
-
-export function roundEvidence() {
-  const r = data.round;
-  const usage = r.usage;
-  const tools = data.toolUsage;
-  const providerOnly = tools.provider - tools.host;
-  const names = { ...tools.names };
-  for (const [name, , , , , , , flags] of Object.values(data.tools)) {
-    if (flags & 4) names[name] = (names[name] ?? 0) + 1;
-  }
-  const report = Object.entries(names).sort((a, b) => b[1] - a[1]);
-  return panel(
-    'End-to-end refinement metrics',
-    readouts([
-      ['State', status('Completed')],
-      ['Wall time', r.wall],
-      ['Codex execution time', r.native],
-      ['Model messages', tokenCount(tools.messages)],
-      ['Tool calls', tokenCount(tools.provider)],
-      ['Reported tokens (in / out)', tokenPair(usage.input_tokens, usage.output_tokens)],
-      ['Token cache rate', cacheRate(usage.input_tokens, usage.cached_input_tokens)],
-      ['Activations with token usage', r.coverage.withReportedUsage + ' / ' + r.coverage.activations],
-    ]) +
-      countDetails({ report, providerOnly }) +
-      evidenceNotes(),
-    '<small>Plan · Architect · Run</small>',
-  );
-}
-
-function evidenceNotes() {
-  const r = data.round;
-  const notes = [
-    'Round 1 completed after two controlled interruptions. It was excluded from qualification because it received operator-assisted regression evidence.',
-    'Eight goals assessed, with six staging merges and two satisfied by evidence.',
-    'Codex execution time totals recorded invocations across the round. Cached input is included in reported input. Two interrupted activations have no reported usage.',
-    'Cost unavailable. The evidence has no verified pricing or billing basis.',
-    'Stable milestone and activation IDs would make operation attribution explicit.',
-    'Review next steps come from the subsequent plan. A verdict-to-action link would make that association explicit.',
-    'File dates and revisions come from Git. The Plan file manager includes preview topic labels.',
-    r.following,
-  ];
-  return `<details><summary>Evidence coverage and gaps</summary>${factList(notes)}</details>`;
 }
 
 export function sectionDetail(phase: string) {

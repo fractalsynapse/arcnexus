@@ -22,7 +22,8 @@
       <label><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
       <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
     </form>
-    <div class="arc-command" aria-live="polite"></div>
+    <div class="arc-footer-state" role="group" aria-label="Recorded refinement state"></div>
+    <div class="arc-command">Recorded round · Preview commands</div>
   </footer>
   <dialog class="arc-inspector" aria-labelledby="arc-inspector-heading">
     <div class="arc-panel-head"><h2 id="arc-inspector-heading"></h2><button type="button" class="arc-button" data-action="close-inspector" autofocus>Close</button></div>
@@ -195,9 +196,11 @@
 #arc-preview .arc-launch { display: grid; grid-template-columns: minmax(105px,.32fr) minmax(0,1.5fr) auto; gap: 9px; align-items: end; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
-#arc-preview .arc-command { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 14px; padding: 9px 0; margin-top: 11px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
-#arc-preview .arc-command strong { color: var(--ink); font-weight: 620; }
-#arc-preview .arc-preview-label { margin-inline-start: auto; }
+#arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; flex-wrap:wrap; align-items:center; gap:5px 12px; }
+#arc-preview .arc-footer-state { justify-content:space-between; margin-top:11px; padding-top:8px; border-top:1px solid var(--line); }
+#arc-preview .arc-footer-readout, #arc-preview .arc-command { color:var(--muted); font-size:12px; }
+#arc-preview .arc-footer-readout strong { color:var(--ink); font-weight:650; }
+#arc-preview .arc-command { text-align:end; padding:4px 0 9px; }
 #arc-preview .arc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @container (max-width: 725px) {
   #arc-preview .arc-file-row { grid-template-columns: minmax(0,1.4fr) auto minmax(0,1fr) 48px 10px; padding-inline: 10px; gap: 5px; }
@@ -221,7 +224,6 @@
   #arc-preview .arc-file-row > svg { grid-column: 4; grid-row: 1; }
   #arc-preview .arc-launch { grid-template-columns: minmax(0,1fr) auto; }
   #arc-preview .arc-launch label:nth-child(2) { grid-row: 1; grid-column: 1/-1; }
-  #arc-preview .arc-preview-label { margin-inline-start: 0; }
 }
 @media (pointer: coarse) {
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }
@@ -268,7 +270,7 @@
 #arc-preview .arc-metrics > div:last-child { border:0; padding-bottom:0; }
 #arc-preview .arc-metrics dt { font-size:12px; }
 #arc-preview .arc-metrics dd { margin:0; text-align:right; }
-#arc-preview .arc-tool-counts { border-top:1px solid var(--line); padding-top:8px; }
+#arc-preview .arc-metric-details { border-top:1px solid var(--line); padding-top:9px; display:grid; gap:6px; }
 #arc-preview .arc-tool-rows { margin-top:7px; }
 #arc-preview .arc-tool-rows dt { font-family:ui-monospace,monospace; }
 #arc-preview .arc-tool-rows > div { padding:3px 0; }
@@ -277,17 +279,30 @@
 #arc-preview .arc-log-open svg { width:14px; height:14px; }
 #arc-preview .arc-timeline .arc-message-text { white-space:pre-wrap; color:var(--ink); }
 #arc-preview .arc-inspector {
-  width:min(100% - 24px,740px); max-height:min(80dvh,820px); color:var(--ink); background:var(--paper);
-  border:1px solid var(--line); border-radius:12px; padding:0;
+  position:absolute; inset:var(--arc-dialog-center) 0 auto; margin:0 auto; transform:translateY(-50%);
+  width:min(100% - 24px,740px); max-height:calc(var(--arc-dialog-space) - 2 * var(--pad));
+  color:var(--ink); background:var(--paper); border:1px solid var(--line); border-radius:12px;
+  padding:0; overflow:hidden;
 }
+#arc-preview .arc-inspector[open] { display:flex; flex-direction:column; }
+#arc-preview .arc-inspector > .arc-panel-head { flex:none; }
 #arc-preview .arc-inspector::backdrop { background:#06182ca1; }
-#arc-preview .arc-inspector-content { display:grid; gap:12px; padding:14px; }
+#arc-preview .arc-inspector-content { display:grid; align-content:start; min-height:0; gap:12px; padding:14px; overflow:auto; }
 #arc-preview .arc-inspect-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 #arc-preview .arc-payload-pane { display:grid; align-content:start; min-width:0; gap:7px; }
 #arc-preview .arc-payload { margin:0; padding:9px; background:var(--quiet); border:1px solid var(--line); border-radius:7px;
   white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 ui-monospace,monospace; max-height:440px; overflow:auto; }
 #arc-preview .arc-payload-path { margin:6px 0; font:11px ui-monospace,monospace; }
 #arc-preview .arc-file-picker { display:grid; gap:5px; margin:4px 0; }
+#arc-preview .arc-json { background:var(--quiet); border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  font:12px/1.6 ui-monospace,monospace; overflow-wrap:anywhere; min-width:0; }
+#arc-preview .arc-json summary, #arc-preview .arc-json-line { padding-block:2px; }
+#arc-preview .arc-json-children { border-inline-start:1px solid var(--line); padding-inline-start:9px; margin-inline-start:5px; }
+#arc-preview :is(.arc-json-meta,.arc-json-null) { color:var(--muted); }
+#arc-preview :is(.arc-json-key,.arc-json-shape) { color:var(--link); }
+#arc-preview .arc-json-string { color:light-dark(#186640,#92ddb3); }
+#arc-preview .arc-json-number { color:light-dark(#894412,#ffbe86); }
+#arc-preview .arc-json-boolean { color:light-dark(#6840a0,#d6b5ff); }
 @container (max-width:590px) {
   #arc-preview .arc-index { display:flex; flex-direction:column; align-items:stretch; }
   #arc-preview .arc-index .arc-stack { display:contents; }

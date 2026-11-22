@@ -250,7 +250,6 @@ export function dom<T extends Element = HTMLElement>(selector: string): T {
 
 export const root = dom('#arc-preview');
 export const main = dom('.arc-main');
-export const command = dom('.arc-command');
 export const launch = dom<HTMLFormElement>('.arc-launch');
 
 async function loadCapture(): Promise<Capture> {
