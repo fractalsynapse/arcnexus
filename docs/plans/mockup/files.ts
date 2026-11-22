@@ -314,7 +314,10 @@ export function fileView() {
   return (
     breadcrumbs([[areaName, slug], ['File']]) +
     title(rev.name, item.type + ' · ' + rev.id) +
-    `<small class="arc-mono"><code>${escape(item.path)}</code> · Captured at ${asText(item.capture)}</small>
+    `<small class="arc-file-reference">
+      <span>Path <code class="arc-file-path">${escape(item.path)}</code></span>
+      <span>Captured at ${asText(item.capture)}</span>
+    </small>
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}
       ${panel('File information', metadata)}

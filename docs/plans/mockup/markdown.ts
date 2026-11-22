@@ -71,10 +71,7 @@ export function markdownContent(source: string, editing: boolean) {
   const { body } = splitMarkdown(source);
   const html = parser.parse(body, { async: false });
   if (editing) return editor(html);
-  return `<article class="arc-markdown arc-md-view">${html}</article>
-    <details class="arc-md-source"><summary>Markdown source</summary><pre><code>${
-      highlight.highlight(body.trim(), { language: 'markdown' }).value
-    }</code></pre></details>`;
+  return `<article class="arc-markdown arc-md-view">${html}</article>`;
 }
 
 export function highlightMarkdownCode(parent: HTMLElement) {

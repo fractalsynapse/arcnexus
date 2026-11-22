@@ -47,7 +47,7 @@ when the new preview is attached to the chat.
   review its additions, deletions, and context. When delivery evidence contains
   excerpts, use the local patch picker to load the complete merge diff. An
   export from `git show --format= --no-color <merge>` works as a local patch.
-- Open a Plan file to read the rendered Markdown body and inspect highlighted
-  Markdown source. Edit the body in the visual editor and update its metadata
+- Open a Plan file to read the rendered Markdown body and see its full path
+  below the title. Edit the body in the visual editor and update its metadata
   in File information. Expand Content or Changes while editing and confirm your
   draft is still present after restoring the split view.
