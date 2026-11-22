@@ -1,11 +1,12 @@
 import { phaseActor, phaseRows } from './composer.ts';
 import { diffView } from './diff.ts';
 import { markdownContent } from './markdown.ts';
-import { splitPanels } from './panels.ts';
+import { overview, splitPanels } from './panels.ts';
+import type { Pane } from './panels.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
 import { fileName } from './file-topics.ts';
-import { metrics, eventLog } from './timeline.ts';
+import { metrics, eventLogPane } from './timeline.ts';
 import {
   asText,
   githubReferences,
@@ -20,7 +21,6 @@ import {
   title,
   breadcrumbs,
   icons,
-  overview,
 } from './view.ts';
 
 export function phaseOutcome(phase: Area) {
@@ -65,8 +65,8 @@ export function workspaceIndex(area: Area) {
   return (
     title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
     overview(metrics(name, phase.stats, phase.rows, phase.wall), panel(name + ' outcome', phaseOutcome(area)), {
-      log: eventLog(name, rows),
-      context: '<div class="arc-files-wrap">' + fileIndex(area) + '</div>',
+      log: eventLogPane(name, rows),
+      context: fileIndex(area),
     })
   );
 }
@@ -84,16 +84,24 @@ function fileTypes(area: Area): [string, string][] {
       ];
 }
 
-function fileIndex(area: Area) {
+function fileIndex(area: Area): Pane {
+  return {
+    id: 'arc-files',
+    label: 'Files',
+    content: (action) => `<div class="arc-files-wrap">${panel(
+      'Files', fileIndexContents(area), `<div class="arc-row"><small class="arc-file-count"></small>${action}</div>`, false,
+    )}</div>`,
+  };
+}
+
+function fileIndexContents(area: Area) {
   const filter = state.filters[area];
   const order: [string, string][] = [
     ['priority', 'Priority'],
     ['updated', 'Last updated'],
     ['name', 'Name'],
   ];
-  return panel(
-    'Files',
-    `<div class="arc-filter">
+  return `<div class="arc-filter">
     <label>File type<select data-change="filter-type">${options(fileTypes(area), filter.type)}</select></label>
     <label>Sort by<select data-change="filter-sort">${options(order, filter.sort)}</select></label>
     <label class="wide">Search<input type="search" data-filter="search" placeholder="Search file name and content" value="${escape(filter.query)}"></label>
@@ -104,10 +112,7 @@ function fileIndex(area: Area) {
   <div class="arc-file-row arc-table-head">
     <span>Name</span><span>Priority</span><span class="arc-topics-head">Topics</span><span>Updated</span><span></span>
   </div>
-  <div class="arc-file-list"></div>`,
-    '<small class="arc-file-count"></small>',
-    false,
-  );
+  <div class="arc-file-list"></div>`;
 }
 
 function topicFilter(area: Area, selected: string[]) {

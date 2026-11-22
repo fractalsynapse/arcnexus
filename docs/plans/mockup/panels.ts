@@ -1,23 +1,65 @@
-import { state } from './model.ts';
+import { main, state } from './model.ts';
 import { escape, icon, icons } from './view.ts';
 
-type Pane = {
+export type Pane = {
   id: string;
   label: string;
   content: (action: string) => string;
 };
 
 export function splitPanels(...panes: Pane[]) {
-  const selected = panes.find((pane) => pane.id === state.expandedPane);
-  return `<div class="arc-grid equal arc-pane-workspace" ${selected ? 'data-expanded' : ''}>
-    ${panes
-      .map(
-        (pane) => `<div id="${pane.id}" data-pane-panel
-      ${selected && pane !== selected ? 'hidden' : ''}>
-      ${pane.content(expandButton(pane, pane === selected))}
-    </div>`,
-      )
-      .join('')}
+  const selected = focusedPane(panes);
+  return workspace(
+    'arc-grid equal',
+    selected,
+    panes.map((pane) => paneView(pane, selected)).join(''),
+  );
+}
+
+export function standalonePane(pane: Pane, { before = '', after = '' } = {}) {
+  const selected = focusedPane([pane]);
+  return workspace(
+    'arc-stack',
+    selected,
+    contextView(before) + paneView(pane, selected) + contextView(after),
+  );
+}
+
+export function overview(
+  metrics: string,
+  outcome: string,
+  { log, context }: { log?: Pane; context?: Pane | string },
+) {
+  const selected = focusedPane([log, typeof context === 'object' ? context : undefined]);
+  return workspace(
+    'arc-grid arc-index',
+    selected,
+    `<div class="arc-stack">
+    ${contextView(metrics, 'arc-metrics-wrap')}
+    ${log ? paneView(log, selected, 'arc-log-wrap') : ''}
+  </div><div class="arc-stack">
+    ${contextView(outcome, 'arc-outcome-wrap')}
+    ${typeof context === 'object' ? paneView(context, selected, 'arc-context-wrap') : contextView(context, 'arc-context-wrap')}
+  </div>`,
+  );
+}
+
+function focusedPane(panes: (Pane | undefined)[]) {
+  return panes.find((pane) => pane?.id === state.expandedPane)?.id;
+}
+
+function workspace(classes: string, selected: string | undefined, content: string) {
+  return `<div class="${classes} arc-pane-workspace" ${selected ? 'data-expanded' : ''}>${content}</div>`;
+}
+
+function contextView(content = '', classes = '') {
+  return content ? `<div class="${classes}" data-pane-context>${content}</div>` : '';
+}
+
+function paneView(pane: Pane, selected: string | undefined, classes = '') {
+  return `<div class="${classes}" id="${pane.id}" data-pane-panel
+    ${selected && pane.id !== selected ? 'hidden' : ''}>
+    ${pane.content(expandButton(pane, pane.id === selected))}
   </div>`;
 }
 
@@ -38,19 +80,31 @@ function expandIcon(expanded: boolean) {
 }
 
 export function togglePane(control: HTMLButtonElement) {
-  const { expandPane: id, paneLabel } = control.dataset;
-  const workspace = control.closest('.arc-pane-workspace');
-  if (!workspace || !id || !paneLabel) return;
-  const expanded = state.expandedPane !== id;
-  state.expandedPane = expanded ? id : null;
-  workspace.toggleAttribute('data-expanded', expanded);
-  workspace.querySelectorAll<HTMLElement>('[data-pane-panel]').forEach((pane) => {
-    pane.hidden = expanded && pane.id !== id;
-  });
+  const id = control.dataset.expandPane;
+  if (!id) return;
+  state.expandedPane = state.expandedPane === id ? null : id;
+  main.querySelectorAll('.arc-pane-workspace').forEach(updateWorkspace);
+  icons();
+  control.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+}
+
+function updateWorkspace(workspace: Element) {
+  const panes = [...workspace.querySelectorAll<HTMLElement>('[data-pane-panel]')];
+  const selected = panes.find((pane) => pane.id === state.expandedPane);
+  workspace.toggleAttribute('data-expanded', Boolean(selected));
+  for (const pane of panes) {
+    pane.hidden = Boolean(selected && pane !== selected);
+    const control = pane.querySelector<HTMLButtonElement>('[data-expand-pane]');
+    if (control) updateExpandButton(control, pane === selected);
+  }
+}
+
+function updateExpandButton(control: HTMLButtonElement, expanded: boolean) {
+  const paneLabel = control.dataset.paneLabel;
+  if (!paneLabel || control.getAttribute('aria-expanded') === String(expanded)) return;
   const name = expandLabel(paneLabel, expanded);
   control.setAttribute('aria-expanded', String(expanded));
   control.setAttribute('aria-label', name);
   control.dataset.arcTooltip = name;
   control.innerHTML = expandIcon(expanded);
-  icons();
 }

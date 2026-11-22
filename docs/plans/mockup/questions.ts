@@ -3,6 +3,7 @@ import { diffView, readPatch } from './diff.ts';
 import { go } from './main.ts';
 import { composerState, data, state } from './model.ts';
 import type { Area, WorkspaceQuestion } from './model.ts';
+import { standalonePane } from './panels.ts';
 import { breadcrumbs, escape, noData, panel, title } from './view.ts';
 
 function recordedQuestion(area: Area, id?: string): WorkspaceQuestion | undefined {
@@ -114,10 +115,12 @@ export function questionView() {
     : question.id === composerState.waiting
       ? panel('Reply', answerForm(question))
       : '';
-  return (
-    heading +
-    panel('Question', `<p>${escape(question.prompt)}</p>${context}${supporting}`) +
-    (patches.length ? diffView(question.area === 'plan' ? 'Proposed goal changes' : 'Proposed architecture changes', patches) : '') +
-    answer
-  );
+  const prompt = heading + panel('Question', `<p>${escape(question.prompt)}</p>${context}${supporting}`);
+  if (!patches.length) return prompt + answer;
+  const label = question.area === 'plan' ? 'Proposed goal changes' : 'Proposed architecture changes';
+  return prompt + standalonePane({
+    id: 'arc-proposed-changes',
+    label: 'Changes',
+    content: (action) => diffView(label, patches, { action }),
+  }, { after: answer });
 }

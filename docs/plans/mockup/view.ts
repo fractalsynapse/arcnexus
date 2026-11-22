@@ -220,25 +220,8 @@ export function panel(title: string, content: string, extra = '', wrapped = true
 export function title(name: string, description = '', action = '') {
   const meta = description ? '<p>' + escape(description) + '</p>' : '';
   const context = action ? '<div class="arc-title-context">' + action + '</div>' : '';
-  return '<div class="arc-title"><div class="arc-title-text"><h1>' + escape(name) +
+  return '<div class="arc-title"><div class="arc-title-text"><h1 tabindex="-1">' + escape(name) +
     '</h1>' + meta + '</div>' + context + '</div>';
-}
-
-export function overview(
-  metrics: string,
-  outcome: string,
-  { log = '', context = '' } = {},
-) {
-  return `<div class="arc-grid arc-index">
-    <div class="arc-stack">
-      <div class="arc-metrics-wrap">${metrics}</div>
-      ${log ? '<div class="arc-log-wrap">' + log + '</div>' : ''}
-    </div>
-    <div class="arc-stack">
-      <div class="arc-outcome-wrap">${outcome}</div>
-      ${context ? '<div class="arc-context-wrap">' + context + '</div>' : ''}
-    </div>
-  </div>`;
 }
 
 export function breadcrumbs(items: [string, string?][]) {

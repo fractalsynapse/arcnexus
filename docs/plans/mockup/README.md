@@ -30,6 +30,9 @@ retains the complete round and navigation.
 - Read messages and lifecycle entries in order. Expand tool calls and inspect a
   request, result, or final response without leaving the current scroll position.
   Expand objects and arrays in structured responses as needed.
+- Expand an event log, file explorer, or changes panel to focus on it. Collapse
+  the panel to return to the page layout with filters, open tool groups, and
+  drafts preserved. Follow a page link to start at its heading.
 - In Plan, compare phase elapsed time with the Planner's Codex execution time.
   Expand Tools by frequency below the metric rows. Check the issue before the
   pull request, then use the Round metrics icon before the footer state readout

@@ -11,7 +11,7 @@ import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
-import { togglePane } from './panels.ts';
+import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
 import {
@@ -30,7 +30,7 @@ import {
 } from './model.ts';
 import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage, deliveryPage } from './run.ts';
-import { inspect, openArtifact, renderCalls, eventLog } from './timeline.ts';
+import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
 import { icon, button, icons } from './view.ts';
 
@@ -92,7 +92,8 @@ export function render(resetComposer = false) {
   mountMarkdownEditor(main.querySelector('[data-md-editor]'), files[state.fileId]?.revisions[state.revision]);
   const added = previewRows();
   if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
-    main.insertAdjacentHTML('beforeend', eventLog(requireValue(target()).role, added, { preview: false }));
+    const logPane = eventLogPane(requireValue(target()).role, added, false);
+    main.insertAdjacentHTML('beforeend', `<div class="arc-live-log">${standalonePane(logPane)}</div>`);
   }
   updateFileList();
   renderCommand(resetComposer);
@@ -105,6 +106,8 @@ export function go(route: string) {
   state.editing = false;
   state.saved = false;
   render(true);
+  main.querySelector('h1')?.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 export function openFile(id: string) {

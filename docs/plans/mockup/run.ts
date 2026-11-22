@@ -1,6 +1,6 @@
 import { state } from './model.ts';
 import { diffView, readPatch } from './diff.ts';
-import { splitPanels } from './panels.ts';
+import { overview, splitPanels, standalonePane } from './panels.ts';
 import type {
   Activation,
   PlanStep,
@@ -28,7 +28,7 @@ import {
   measuredScope,
   currentReview,
 } from './run-context.ts';
-import { metrics, eventLog } from './timeline.ts';
+import { metrics, eventLogPane } from './timeline.ts';
 import {
   asText,
   githubReferences,
@@ -46,7 +46,6 @@ import {
   title,
   breadcrumbs,
   tabs,
-  overview,
 } from './view.ts';
 
 export function reviewContent(compact = false) {
@@ -172,7 +171,11 @@ export function sectionDetail(phase: 'Direction' | 'Review') {
   const { actor, path, stats, rows } = actorEvidence(phase);
   const outcome = direction ? panel('Strategy', strategy()) : panel('Review', reviewContent());
   const context = direction
-    ? panel('Component assignments', assignments(), '', false)
+    ? {
+        id: 'arc-component-assignments',
+        label: 'Component assignments',
+        content: (action: string) => panel('Component assignments', assignments(), action, false),
+      }
     : panel('Action', reviewAction());
   const snapshot = currentSnapshot();
   return (
@@ -192,8 +195,7 @@ export function actorLog(phase: 'Direction' | 'Review') {
     '<div class="arc-detail-toolbar">' +
     revisionControl() +
     '</div>' +
-    metrics(actor, stats, rows) +
-    eventLog(actor, rows)
+    standalonePane(eventLogPane(actor, rows), { before: metrics(actor, stats, rows) })
   );
 }
 
@@ -291,10 +293,15 @@ function componentFocus(row: ComponentModel, milestone: Milestone) {
   return (
     panel('Instructions from Director', criteria) +
     panel('Component purpose', `<p>${escape(purpose)}</p>`) +
-    `<div class="arc-grid equal">
-      ${panel('File ownership', files, pill('Scoped write'))}
-      ${panel('File access', noData('Source and evidence access follow the selected activity’s mapped operations.'), pill('Read only', 'quiet'))}
-    </div>`
+    splitPanels({
+      id: 'arc-file-ownership',
+      label: 'File ownership',
+      content: (action) => panel('File ownership', files, `<div class="arc-row">${pill('Scoped write')}${action}</div>`),
+    }, {
+      id: 'arc-file-access',
+      label: 'File access',
+      content: (action) => panel('File access', noData('Source and evidence access follow the selected activity’s mapped operations.'), `<div class="arc-row">${pill('Read only', 'quiet')}${action}</div>`),
+    })
   );
 }
 
@@ -344,11 +351,7 @@ export function activityPage(focus: boolean) {
 function activityEvidence(component: string, activity: string, milestone: string, result: string) {
   const rows = scopedRows(component, activity, milestone);
   const statistics = metrics('Activity', measuredScope(scopedActs(component, activity, milestone), result), rows);
-  return statistics + splitPanels({
-    id: 'arc-activity-log',
-    label: 'Event log',
-    content: (action) => eventLog('Activity', rows, { action }),
-  }, {
+  return statistics + splitPanels(eventLogPane('Activity', rows), {
     id: 'arc-activity-changes',
     label: 'Changes',
     content: (action) => scopedDiff('Activity updates', component, { milestone, activity, action }),

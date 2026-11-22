@@ -267,10 +267,19 @@ export function renderCalls(calls: EventRow[]) {
   return calls.map((row) => '<li>' + timelineItem(row) + '</li>').join('');
 }
 
-export function eventLog(
+export function eventLogPane(name: string, rows: EventRow[], preview = true) {
+  return {
+    id: 'arc-event-log',
+    label: 'Event log',
+    content: (action: string) => eventLog(name, rows, preview, action),
+  };
+}
+
+function eventLog(
   name: string,
   rows: EventRow[],
-  { preview = true, action = '' } = {},
+  preview: boolean,
+  action: string,
 ) {
   const header = `<div class="arc-row"><small>Times in ET</small>${action}</div>`;
   const input = preview ? rows.concat(previewRows()) : rows;

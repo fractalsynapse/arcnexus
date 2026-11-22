@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Start mockup page navigation at the destination heading, align wrapped page context to the left, and remove the redundant footer caption. Reuse the expandable file panels for explorers and event logs (#703).
+
 - Use one readable tooltip style for mockup controls, file descriptions, and the Markdown editor toolbar in light and dark mode (#703).
 
 - Match the mockup’s Raw Markdown editor to the blue palette in light and dark mode while keeping syntax highlighting readable (#703).

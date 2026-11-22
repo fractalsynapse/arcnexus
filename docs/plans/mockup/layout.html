@@ -23,7 +23,6 @@
       <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
     </form>
     <div class="arc-footer-state" role="group" aria-label="Recorded refinement state"></div>
-    <div class="arc-command">Recorded round · Preview commands</div>
   </footer>
   <dialog class="arc-inspector" aria-labelledby="arc-inspector-heading">
     <div class="arc-panel-head"><h2 id="arc-inspector-heading"></h2><button type="button" class="arc-button" data-action="close-inspector" autofocus>Close</button></div>
@@ -105,8 +104,7 @@
 #arc-preview .arc-main { padding: var(--pad); display: grid; gap: var(--gap); min-width: 0; }
 #arc-preview :is(.arc-title,.arc-title-text,.arc-title-context) { display: flex; align-items: baseline; gap: 5px 14px; flex-wrap: wrap; min-width: 0; }
 #arc-preview .arc-title h1 { min-width:0; overflow-wrap:anywhere; }
-#arc-preview .arc-title-context { margin-inline-start:auto; justify-content:flex-end; text-align:end; }
-#arc-preview .arc-title-context .arc-round { justify-content:flex-end; }
+#arc-preview .arc-title { justify-content:space-between; }
 #arc-preview .arc-title p { color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 #arc-preview .arc-crumbs { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; color: var(--muted); }
 #arc-preview .arc-link { display: inline-flex; align-items: center; gap: 6px; padding: 5px 1px; font-weight: 630; color: var(--link); }
@@ -179,6 +177,9 @@
   border-radius:4px; padding:1px 5px; font-size:inherit; font-weight:600; box-decoration-break:clone; }
 #arc-preview .arc-grid.arc-pane-workspace[data-expanded] { grid-template-columns:minmax(0,1fr); }
 #arc-preview .arc-pane-workspace > div { min-width:0; }
+#arc-preview .arc-pane-workspace[data-expanded] [data-pane-context] { display:none; }
+#arc-preview .arc-index[data-expanded] .arc-stack { display:contents; }
+#arc-preview .arc-main:has(> .arc-live-log .arc-pane-workspace[data-expanded]) > :not(.arc-live-log,.arc-title,.arc-crumbs,.arc-detail-toolbar) { display:none; }
 #arc-preview .arc-pane-expand { justify-content:center; min-inline-size:30px; min-block-size:30px; border-radius:7px; }
 #arc-preview .arc-pane-expand:is(:hover,:focus-visible) { background:var(--tint); }
 #arc-preview .arc-pane-expand i::before { content:'⤢'; font:16px/1 system-ui,sans-serif; }
@@ -274,7 +275,7 @@
 #arc-preview .arc-issue { display: grid; gap: 6px; min-width: 0; }
 #arc-preview .arc-issue + .arc-issue { margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--line); }
 #arc-preview .arc-issue strong { overflow-wrap: anywhere; }
-#arc-preview .arc-console { background: var(--paper); border-top: 1px solid var(--line); border-radius: 0 0 15px 15px; padding: 12px var(--pad) 0; }
+#arc-preview .arc-console { background: var(--paper); border-top: 1px solid var(--line); border-radius: 0 0 15px 15px; padding: 12px var(--pad); }
 #arc-preview .arc-launch { display: grid; grid-template-columns: minmax(105px,.32fr) minmax(0,1.5fr) auto; gap: 9px; align-items: end; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
@@ -284,9 +285,8 @@
 #arc-preview .arc-metrics-trigger { flex:none; justify-content:center; inline-size:30px; min-block-size:30px; border-radius:7px; }
 #arc-preview .arc-metrics-trigger:is(:hover,:focus-visible) { background:var(--tint); }
 #arc-preview .arc-metrics-trigger i::before { content:'▥'; font:16px/1 system-ui,sans-serif; }
-#arc-preview .arc-footer-readout, #arc-preview .arc-command { color:var(--muted); font-size:12px; }
+#arc-preview .arc-footer-readout { color:var(--muted); font-size:12px; }
 #arc-preview .arc-footer-readout strong { color:var(--ink); font-weight:650; }
-#arc-preview .arc-command { text-align:end; padding:4px 0 9px; }
 #arc-preview .arc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @container (max-width: 725px) {
   #arc-preview .arc-file-row { grid-template-columns: minmax(0,1.4fr) auto minmax(0,1fr) 48px 10px; padding-inline: 10px; gap: 5px; }
