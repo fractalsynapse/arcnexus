@@ -37,6 +37,8 @@
 
 ### Added
 
+- Use the shared Form, Raw, and Changes editor for every captured operation and component in the Architect mockup (#703).
+
 - Add a dedicated Purpose section above the operation settings in the `owner-tests.yaml` mockup form (#703).
 
 - Record the decision to remove operation categories and preview the proposed YAML in the `owner-tests.yaml` mockup editor (#703).

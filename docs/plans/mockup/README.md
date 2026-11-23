@@ -63,16 +63,19 @@ retains the complete round and navigation.
   Save a draft after editing in either mode. Unsupported rich-text syntax
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
-- Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  Edit Purpose in the first section, above the operation settings. The field
-  grows with the text and keeps one blank row below it. Toggle Network access
-  to edit the draft's `network` boolean. The current host requires network access
-  to be disabled for confined checks. Raw shows the operation ID and handler.
-  Changes shows the proposed Purpose and the removal of Applicability and Category. Drag an
-  argument or default selector by its handle. The gap marks the new position.
-  Use the arrow keys on a focused handle to reorder with the keyboard. Switch to
-  Raw to edit the same draft as YAML.
-  Save validates the YAML with the preview schema and creates a local draft revision.
+- Open any Architect operation or component and enable Edit. Purpose comes
+  first and grows with the text. Command operations expose command settings,
+  arguments, and configured parameters. Raw shows the ID and handler. The
+  operation draft shows the proposed Purpose and removal of Applicability and
+  Category. The current host requires network access to be disabled for
+  confined checks.
+- In a component, edit measures, failure conditions, and owned paths. Expand
+  an activity to edit its instructions, operation bindings, standards, and
+  verification references. A host activity has no model profile. Use Raw for
+  named-map changes such as adding an activity or declaring a new parameter.
+- Reorder lists with the drag handle or its arrow keys. Check the same draft
+  in Form, Raw, and Changes. Save applies the mockup's Zod validation and
+  creates a local draft revision.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
   and loaded patches. Read the issue before the PR in Delivery.

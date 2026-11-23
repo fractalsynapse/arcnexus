@@ -242,6 +242,9 @@
 #arc-preview .arc-yaml-group input[readonly] { background:var(--quiet); color:var(--muted); }
 #arc-preview .arc-yaml-field { min-width:0; }
 #arc-preview .arc-yaml-network { align-self:end; }
+#arc-preview .arc-yaml-section-body { display:grid; gap:8px; min-width:0; padding-block-start:8px; }
+#arc-preview .arc-yaml-activity { padding:7px 9px; border:1px solid var(--line); border-radius:7px; }
+#arc-preview .arc-yaml-activity > summary small { margin-inline-start:5px; color:var(--muted); }
 @supports (field-sizing:content) {
   #arc-preview textarea.arc-purpose-text {
     field-sizing:content; line-height:1.4; padding-block-end:calc(7px + 1lh); resize:none;
@@ -249,8 +252,8 @@
 }
 #arc-preview .arc-sort-list { position:relative; display:grid; gap:6px; min-width:0; }
 #arc-preview .arc-sort-list:empty { display:none; }
-#arc-preview .arc-yaml-list-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 7px; align-items:end; padding:4px; border:1px solid transparent; border-radius:7px; }
-#arc-preview .arc-yaml-list-row > .arc-yaml-field:nth-child(3) { grid-column:1/-1; }
+#arc-preview .arc-yaml-list-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 7px; align-items:start; padding:4px; border:1px solid transparent; border-radius:7px; }
+#arc-preview .arc-yaml-list-fields { display:grid; min-width:0; gap:4px; }
 #arc-preview .arc-yaml-row-actions { gap:4px; flex-wrap:nowrap; }
 #arc-preview .arc-yaml-row-actions button { min-inline-size:30px; padding-inline:5px; }
 #arc-preview button.arc-sort-handle { cursor:grab; touch-action:none; }

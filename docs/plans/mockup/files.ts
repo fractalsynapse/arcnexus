@@ -5,7 +5,7 @@ import { overview, splitPanels } from './panels.ts';
 import type { Pane } from './panels.ts';
 import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
-import { ownerTestsPath } from './owner-tests-schema.ts';
+import { hasYamlForm } from './yaml-schema.ts';
 import { fileName } from './file-topics.ts';
 import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
@@ -305,7 +305,7 @@ function filePanels(item: DesignFile, revision: Revision) {
   }, {
     id: 'arc-file-changes',
     label: 'Changes',
-    content: (action) => state.editing && item.path === ownerTestsPath
+    content: (action) => state.editing && hasYamlForm(item)
       ? panel('Changes', '<div data-yaml-changes></div>', `<div class="arc-row"><small>Draft vs selected revision</small>${action}</div>`)
       : fileDiff(item, state.revision, action),
   });
@@ -320,7 +320,7 @@ function fileRevisionControls(item: DesignFile) {
     <label>File revision<select data-change="file-revision">${options(choices, String(state.revision))}</select></label>
     <div class="arc-row">
       ${state.saved ? '<span class="arc-pill" role="status">Draft revision saved in preview</span>' : ''}
-      ${state.editing && item.path === ownerTestsPath ? '<small class="arc-yaml-error" data-yaml-save-status role="status"></small>' : ''}
+      ${state.editing && hasYamlForm(item) ? '<small class="arc-yaml-error" data-yaml-save-status role="status"></small>' : ''}
       <label class="arc-checkbox"><input type="checkbox" data-change="edit" ${state.editing ? 'checked' : ''}
         ${state.revision === 0 ? '' : 'disabled'}>Edit</label>
       ${state.editing ? '<button type="button" data-action="apply-form" class="arc-button solid">Save</button>' : ''}
@@ -330,7 +330,7 @@ function fileRevisionControls(item: DesignFile) {
 
 function fileContent(item: DesignFile, rev: Revision) {
   if (item.path.endsWith('.md')) return markdownContent(rev.content, state.editing);
-  if (state.editing && item.path === ownerTestsPath) return '<div class="arc-yaml-edit" data-yaml-editor></div>';
+  if (state.editing && hasYamlForm(item)) return '<div class="arc-yaml-edit" data-yaml-editor></div>';
   if (state.editing)
     return `<label><span class="arc-sr">File content</span>
     <textarea name="content" class="arc-content-edit" required>${escape(rev.content)}</textarea></label>`;

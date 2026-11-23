@@ -188,7 +188,11 @@ export class SortableLists {
     if (destination < 0 || destination >= row.rows.length || destination === row.index) return;
     this.reorder(row.key, row.index, destination);
     const list = this.container.querySelector(`[data-sortable-list="${CSS.escape(row.key)}"]`);
-    list?.querySelectorAll<HTMLButtonElement>('[data-sort-handle]')[destination]?.focus();
+    const item = list?.querySelectorAll(':scope > [data-sort-row]')[destination];
+    const grips = item?.querySelectorAll<HTMLButtonElement>('[data-sort-handle]') ?? [];
+    Array.from(grips)
+      .find((handle) => handle.closest('[data-sort-row]') === item)
+      ?.focus();
     const status = this.container.querySelector('[data-sort-status]');
     if (status)
       status.textContent = `Moved item to position ${destination + 1} of ${row.rows.length}.`;

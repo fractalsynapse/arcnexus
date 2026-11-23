@@ -11,8 +11,8 @@ import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
-import { detachOperationEditor, mountOperationEditor, saveOperationDraft } from './operation-editor.ts';
-import { ownerTestsPath } from './owner-tests-schema.ts';
+import { detachYamlEditor, mountYamlEditor, saveYamlDraft } from './yaml-editor.ts';
+import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
@@ -91,12 +91,13 @@ export function render(resetComposer = false) {
   dismissTooltip();
   closeTopicPopup();
   detachMarkdownEditor();
-  detachOperationEditor();
+  detachYamlEditor();
   main.innerHTML = requireValue(routes[r])();
   highlightFileCode(main);
-  const revision = files[state.fileId]?.revisions[state.revision];
+  const file = files[state.fileId];
+  const revision = file?.revisions[state.revision];
   mountMarkdownEditor(main.querySelector('[data-md-editor]'), revision);
-  mountOperationEditor(main, revision);
+  mountYamlEditor(main, file, revision);
   const added = previewRows();
   if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
     const logPane = eventLogPane(requireValue(target()).role, added, false);
@@ -172,7 +173,7 @@ function saveRevision(data: FormData) {
   const revision = requireValue(item.revisions[state.revision]);
   let content: string | undefined = String(data.get('content'));
   if (item.path.endsWith('.md')) content = editedMarkdown(revision);
-  else if (item.path === ownerTestsPath) content = saveOperationDraft();
+  else if (hasYamlForm(item)) content = saveYamlDraft();
   if (content === undefined) return;
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
