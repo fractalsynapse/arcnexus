@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Pad the desktop's pinned workspace links evenly and round the bottom corners (#703).
+
 - Give the header and pinned workspace links a black background and default the command panel to collapsed in the narrow layout (#703).
 
 - Keep Plan, Architect, Run, and Release pinned while the logo and header actions scroll away (#703).

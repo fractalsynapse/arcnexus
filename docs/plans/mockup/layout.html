@@ -56,7 +56,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
   --pad: 16px;
   --gap: 12px;
   --header-height: 66px;
-  --nav-height: 40px;
+  --nav-button-height: 40px;
   --picker-shadow: 0 5px 16px #0b182a32;
   width: 100%;
   min-block-size: 100vh;
@@ -106,11 +106,14 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-brand img { width: 142px; height: auto; display: block; }
 /* Center the independent navigation in the desktop header's space. */
 #arc-preview .arc-nav {
+  --nav-padding:6px;
+  --nav-height:calc(var(--nav-button-height) + 2 * var(--nav-padding));
   position:sticky; inset-block-start:0; z-index:5;
   align-self:center; display:flex; align-items:center; gap:4px;
   margin-block:calc((0px - var(--header-height) - var(--nav-height)) / 2)
     calc((var(--header-height) - var(--nav-height)) / 2);
-  min-block-size:var(--nav-height); padding-inline:4px; background:var(--paper);
+  min-block-size:var(--nav-height); padding:var(--nav-padding); background:var(--paper);
+  border-radius:0 0 8px 8px;
 }
 #arc-preview .arc-nav button, #arc-preview .arc-tabs button {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
@@ -423,7 +426,10 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 }
 @container (max-width: 660px) {
   #arc-preview :is(.arc-header,.arc-nav) { padding-inline:12px; }
-  #arc-preview .arc-nav { align-self:stretch; justify-content:space-between; margin:0; padding-block:4px; border-bottom:1px solid var(--line); }
+  #arc-preview .arc-nav {
+    align-self:stretch; justify-content:space-between; min-block-size:var(--nav-button-height);
+    margin:0; padding-block:4px; border-bottom:1px solid var(--line); border-radius:0;
+  }
   #arc-preview .arc-nav button { flex: 1 1 0; padding-inline: 5px; }
 }
 @container (max-width: 590px) {
@@ -442,7 +448,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
   #arc-preview .arc-file-row > svg { grid-column: 4; grid-row: 1; }
 }
 @media (pointer: coarse) {
-  #arc-preview { --nav-height:44px; }
+  #arc-preview { --nav-button-height:44px; }
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }
   #arc-preview .arc-file-revision-toolbar { --revision-control-height:44px; }
   #arc-preview :is(select,input,textarea) { font-size: 16px; }
