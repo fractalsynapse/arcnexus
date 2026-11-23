@@ -57,7 +57,9 @@ retains the complete round and navigation.
   review its additions, deletions, and context. When delivery evidence contains
   excerpts, use the local patch picker to load the complete merge diff. An
   export from `git show --format= --no-color <merge>` works as a local patch.
-- Open a Plan or Architect file to see its full path and File information.
+- Open a Plan or Architect file to see its full path and File information. Use
+  **Git information** at the right of the breadcrumb for the file revision and
+  repository capture.
   Markdown files use the rendered body and MDXEditor. In Edit mode, use Raw
   to review or edit the Markdown syntax and Visual to return to rich text.
   Save a draft after editing in either mode. Unsupported rich-text syntax

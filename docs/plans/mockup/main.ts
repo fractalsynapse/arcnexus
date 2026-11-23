@@ -9,7 +9,7 @@ import {
 } from './composer.ts';
 import { loadDiffPatch } from './diff.ts';
 import { navigateTabs, selectTab } from './tab-controls.ts';
-import { workspaceIndex, updateFileList, fileView } from './files.ts';
+import { workspaceIndex, updateFileList, fileView, openFileGitInformation } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
 import { detachYamlEditor, mountYamlEditor, mountYamlMarkdownField, saveYamlDraft } from './yaml-editor.ts';
@@ -165,6 +165,7 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'collapse-prose') collapseProse(control);
   else if (action === 'close-prose') closeProse();
   else if (action === 'round-metrics') openRoundMetrics(control);
+  else if (action === 'file-git') openFileGitInformation(control);
   else if (action === 'goal-progress') openGoalProgress(control);
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');

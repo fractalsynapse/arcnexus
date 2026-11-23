@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Move file type and Git revisions into a compact dialog opened from the breadcrumb, leaving the title and path visible on file pages (#703).
+
 - Open goal progress from each Plan goal file in a dialog with a Close button (#703).
 
 - Describe each component tab above its list and align editable rows with their reorder and remove buttons (#703).

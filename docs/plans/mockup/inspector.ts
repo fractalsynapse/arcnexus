@@ -1,6 +1,11 @@
 import { dom, root } from './model.ts';
 
-export function showInspector(opener: HTMLElement, heading: string, body: () => string) {
+export function showInspector(
+  opener: HTMLElement,
+  heading: string,
+  body: () => string,
+  { compact = false } = {},
+) {
   const dialog = dom<HTMLDialogElement>('.arc-inspector');
   const content = dom('.arc-inspector-content');
   // The viewer can give the iframe the full page height. Measure its visible
@@ -14,6 +19,7 @@ export function showInspector(opener: HTMLElement, heading: string, body: () => 
       : opener.getBoundingClientRect().top;
     dialog.style.setProperty('--arc-dialog-center', center + window.scrollY + 'px');
     dialog.style.setProperty('--arc-dialog-space', (visible?.height || window.innerHeight) + 'px');
+    dialog.toggleAttribute('data-compact', compact);
     dom('#arc-inspector-heading').textContent = heading;
     content.innerHTML = body();
     dialog.showModal();

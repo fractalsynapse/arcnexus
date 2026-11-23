@@ -1,10 +1,11 @@
 import { phaseActor, phaseRows } from './composer.ts';
 import { componentReadout } from './component-form.ts';
 import { diffView, draftDiff } from './diff.ts';
+import { showInspector } from './inspector.ts';
 import { markdownContent } from './markdown.ts';
 import { overview, splitPanels } from './panels.ts';
 import type { Pane } from './panels.ts';
-import { data, files, state, requireValue, dom, root, fileArea } from './model.ts';
+import { data, files, state, requireValue, dom, root, fileArea, inspector } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { fileName } from './file-topics.ts';
@@ -12,8 +13,6 @@ import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
 import { ogsmGoalFile } from './ogsm-example.ts';
 import {
-  asText,
-  commitReference,
   commitReferences,
   githubReferences,
   githubOutcome,
@@ -24,6 +23,8 @@ import {
   pill,
   options,
   panel,
+  readouts,
+  shortCommitReference,
   title,
   breadcrumbs,
   icons,
@@ -279,27 +280,42 @@ export function editInput(
 export function fileView() {
   const item = requireValue(files[state.fileId]);
   const rev = requireValue(item.revisions[state.revision]);
-  const slug = '/' + item.area + '/';
-  const areaName = item.area === 'plan' ? 'Plan' : 'Architect';
-  const example = item === ogsmGoalFile;
   const metadata = `<div class="arc-form-grid">
     ${editInput('Name', 'name', rev.name, !state.editing)}
     ${editInput('Priority', 'priority', rev.priority, !state.editing, 'number')}
     ${fileTopics(rev, state.editing)}
   </div>`;
   return (
-    breadcrumbs(data.fileReview ? [[areaName + ' file']] : [[areaName, slug], ['File']]) +
-    title(rev.name, item.type + ' · ' + rev.id) +
-    `<small class="arc-file-reference">
-      <span>${example ? 'Example path' : 'Path'} <code class="arc-file-path">${escape(item.path)}</code></span>
-      ${example ? '' : `<span>Captured at ${commitReference(item.capture, asText(item.capture))}</span>`}
-    </small>
+    fileBreadcrumbs(item) + title(rev.name) +
+    `<small class="arc-file-reference"><code class="arc-file-path">${escape(item.path)}</code></small>
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}
       ${panel('File information', metadata)}
       ${filePanels(item, rev)}
     </form>`
   );
+}
+
+function fileBreadcrumbs(item: DesignFile) {
+  const area = item.area === 'plan' ? 'Plan' : 'Architect';
+  const trail = breadcrumbs(data.fileReview ? [[area + ' file']] : [[area, `/${item.area}/`], ['File']]);
+  return `<div class="arc-file-crumb-row">${trail}
+    <button type="button" class="arc-link arc-file-git" data-action="file-git" aria-label="Git information"
+      aria-haspopup="dialog" data-arc-tooltip="Git information">${icon('info')}</button></div>`;
+}
+
+export function openFileGitInformation(opener: HTMLButtonElement) {
+  const item = files[state.fileId];
+  const revision = item?.revisions[state.revision];
+  if (!item || !revision) return;
+  showInspector(opener, 'Git information', () => {
+    inspector.tool = null;
+    return readouts([
+      ['File type', escape(item.type)],
+      ['File revision', shortCommitReference(revision.id)],
+      ['Repository capture', item.capture ? shortCommitReference(item.capture) : 'Unavailable'],
+    ]);
+  }, { compact: true });
 }
 
 function filePanels(item: DesignFile, revision: Revision) {
