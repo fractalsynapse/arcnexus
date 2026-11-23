@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Theme the mockup's selector menus, add keyboard-selectable topic autocomplete, and simplify file information (#703).
+
 - Start mockup page navigation at the destination heading, align wrapped page context to the left, and remove the redundant footer caption. Reuse the expandable file panels for explorers and event logs (#703).
 
 - Use one readable tooltip style for mockup controls, file descriptions, and the Markdown editor toolbar in light and dark mode (#703).

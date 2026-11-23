@@ -276,7 +276,6 @@ export function fileView() {
   const slug = '/' + item.area + '/';
   const areaName = item.area === 'plan' ? 'Plan' : 'Architect';
   const metadata = `<div class="arc-form-grid">
-    ${editInput('Type', 'type', item.type, true)}
     ${editInput('Name', 'name', rev.name, !state.editing)}
     ${editInput('Priority', 'priority', rev.priority, !state.editing, 'number')}
     ${fileTopics(rev, state.editing)}

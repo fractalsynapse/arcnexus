@@ -42,8 +42,9 @@ retains the complete round and navigation.
 - Find a file by its extension-free name or description. Sort by priority and
   combine search and topic filters with Changed only. Preview topics illustrate
   the filter across captured goals, objectives, and architecture files. In a
-  file's Edit view, choose from the same topics or type a new name and press
-  Enter. Save to make the topic available in the explorer.
+  file's Edit view, use the matching suggestions or type a new name and press
+  Enter. Use the arrow keys to select a suggestion. Save to make a new topic
+  available in the explorer.
 - Use one composer across views. Start Plan and steer while the Planner is
   active. Advance the preview to simulate the approval question. Open the question,
   make a selection, return to Plan, and reopen it to verify the draft persists.

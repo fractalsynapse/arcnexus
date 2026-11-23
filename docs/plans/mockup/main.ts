@@ -34,7 +34,7 @@ import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage, deliveryPage } from './run.ts';
 import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
-import { bindTopicPickers, clearTopicDraft, savedTopics } from './topic-picker.ts';
+import { bindTopicPickers, clearTopicDraft, closeTopicPopup, savedTopics } from './topic-picker.ts';
 import { icon, button, icons } from './view.ts';
 
 export function workspace(): Workspace {
@@ -89,6 +89,7 @@ export function render(resetComposer = false) {
   displayedRows.clear();
   operationGroups.clear();
   dismissTooltip();
+  closeTopicPopup();
   detachMarkdownEditor();
   detachOperationEditor();
   main.innerHTML = requireValue(routes[r])();

@@ -15,7 +15,7 @@ function text(title: string, description: string) {
 export const operationFields = {
   command: text('Command', 'Executable name'),
   cwd: text('Working directory', 'Path relative to the repository root'),
-  category: text('Category', 'Operation category used by execution profiles'),
+  category: text('Category', 'Must be allowed by the activity’s execution profile'),
 };
 
 const argument = z.union(
