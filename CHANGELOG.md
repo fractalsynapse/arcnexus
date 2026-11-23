@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Link the mockup's displayed commit refs to GitHub and put the operation selector and Send above the optional instruction (#703).
+
 - Theme the mockup's selector menus, add keyboard-selectable topic autocomplete, and simplify file information (#703).
 
 - Start mockup page navigation at the destination heading, align wrapped page context to the left, and remove the redundant footer caption. Reuse the expandable file panels for explorers and event logs (#703).

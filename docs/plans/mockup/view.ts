@@ -30,11 +30,53 @@ export function asText(when?: string | null) {
   return when ? when.slice(0, 8) : 'Unavailable';
 }
 
+const githubRepository = 'https://github.com/fractalsynapse/arcnexus';
+const isCommitRef = /^[0-9a-f]+$/i;
+let capturedCommitRefs: Set<string> | undefined;
+
+export function commitReference(ref?: string | null, label = ref || 'Unavailable') {
+  return ref && isCommitRef.test(ref)
+    ? `<a class="arc-commit-link" href="${githubRepository}/commit/${ref}" target="_blank" rel="noopener noreferrer">${escape(label)}</a>`
+    : escape(label);
+}
+
+function collectCommitRefs() {
+  const refs = new Set<string>();
+  const add = (ref?: string) => {
+    if (!ref || !isCommitRef.test(ref)) return;
+    refs.add(ref.toLowerCase());
+    refs.add(asText(ref).toLowerCase());
+  };
+  for (const file of data.files) {
+    add(file.capture);
+    for (const revision of file.revisions) add(revision.id);
+  }
+  for (const goal of data.goals) {
+    add(goal.delivery.commit);
+    add(goal.delivery.publication?.head);
+    add(goal.delivery.publication?.parent);
+    for (const snapshot of goal.snapshots) add(snapshot.capturedRevision);
+    for (const activation of goal.activations) add(activation.revision);
+    for (const receipt of goal.receipts) {
+      add(receipt.base);
+      add(receipt.head);
+    }
+  }
+  return refs;
+}
+
+export function commitReferences(text = '') {
+  const refs = (capturedCommitRefs ??= collectCommitRefs());
+  return escape(text).replace(/\b[0-9a-f]+\b/gi, (ref) =>
+    refs.has(ref.toLowerCase()) ? commitReference(ref) : ref,
+  );
+}
+
 export function githubReferences(text: string) {
-  return escape(text).replace(
+  return commitReferences(text).replace(
     /\b(PR|issue)\s+#(\d+)\b/gi,
     (label, kind, number) =>
-      '<a class="arc-link" href="https://github.com/fractalsynapse/arcnexus/' +
+      '<a class="arc-link" href="' + githubRepository + '/' +
       (kind.toLowerCase() === 'pr' ? 'pull' : 'issues') +
       '/' +
       number +
@@ -218,7 +260,7 @@ export function panel(title: string, content: string, extra = '', wrapped = true
 }
 
 export function title(name: string, description = '', action = '') {
-  const meta = description ? '<p>' + escape(description) + '</p>' : '';
+  const meta = description ? '<p>' + commitReferences(description) + '</p>' : '';
   const context = action ? '<div class="arc-title-context">' + action + '</div>' : '';
   return '<div class="arc-title"><div class="arc-title-text"><h1 tabindex="-1">' + escape(name) +
     '</h1>' + meta + '</div>' + context + '</div>';
@@ -268,6 +310,6 @@ export function icons() {
 
 export function factList(items: string[]) {
   return (
-    '<ul class="arc-facts">' + items.map((item) => `<li>${escape(item)}</li>`).join('') + '</ul>'
+    '<ul class="arc-facts">' + items.map((item) => `<li>${commitReferences(item)}</li>`).join('') + '</ul>'
   );
 }

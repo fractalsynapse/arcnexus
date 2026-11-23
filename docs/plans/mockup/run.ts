@@ -31,6 +31,7 @@ import {
 import { metrics, eventLogPane } from './timeline.ts';
 import {
   asText,
+  commitReference,
   githubReferences,
   githubOutcome,
   outcomeName,
@@ -130,7 +131,7 @@ export function issueView(kind: string, compact = false) {
   return `<div class="arc-issue">
     ${compact ? `<small>${label}</small>` : ''}
     ${link}
-    ${!compact && delivered && !issue ? `<small>Staging commit · <code>${escape(delivery.commit)}</code></small>` : ''}
+    ${!compact && delivered && !issue ? `<small>Staging commit · <code>${commitReference(delivery.commit)}</code></small>` : ''}
   </div>`;
 }
 
@@ -183,7 +184,7 @@ export function sectionDetail(phase: 'Direction' | 'Review') {
     title(phase, currentGoal().title) +
     `<div class="arc-detail-toolbar">${revisionControl()}${button('View log', path + 'log/', 'list')}</div>` +
     overview(metrics(actor, stats, rows), outcome, { context }) +
-    `<small class="arc-mono">Run ${snapshot.run} · Captured staging ${asText(snapshot.capturedRevision)}</small>`
+    `<small class="arc-mono">Run ${snapshot.run} · Captured staging ${commitReference(snapshot.capturedRevision, asText(snapshot.capturedRevision))}</small>`
   );
 }
 
@@ -321,7 +322,7 @@ function focusActivity(
     <small>Reasoning · ${escape(mostRecent?.reasoning || 'Unavailable')}</small>`
       : noData('No activation profile available.');
   const captured = mostRecent?.revision || currentSnapshot().capturedRevision;
-  const context = `<p>Goal · ${escape(currentGoal().title)}</p><p>Capture · <code>${asText(captured)}</code></p>
+  const context = `<p>Goal · ${escape(currentGoal().title)}</p><p>Capture · <code>${commitReference(captured, asText(captured))}</code></p>
     <small>Mapped operations</small>
     <div class="arc-chips">${(mapping?.operations ?? []).map((op) => pill(op, 'quiet')).join('')}</div>`;
   return (
@@ -417,8 +418,8 @@ function deliveryState(goal: Goal, delivered: boolean) {
         ? 'Goal satisfied without a staging change.'
         : 'No verified merge recorded at this revision.',
     );
-  return `<p>Verified on staging at <code>${escape(d.commit)}</code>.</p>
-    <small>Reviewed tree <code>${asText(source?.candidate)}</code> · Parent <code>${asText(source?.parent)}</code> · Branch <code>${escape(source?.branch)}</code></small>`;
+  return `<p>Verified on staging at <code>${commitReference(d.commit)}</code>.</p>
+    <small>Reviewed tree <code>${asText(source?.candidate)}</code> · Parent <code>${commitReference(source?.parent, asText(source?.parent))}</code> · Branch <code>${escape(source?.branch)}</code></small>`;
 }
 
 function deliveryDiff(d: Goal['delivery'], delivered: boolean, action: string) {

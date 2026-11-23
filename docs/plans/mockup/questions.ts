@@ -4,7 +4,7 @@ import { go } from './main.ts';
 import { composerState, data, state } from './model.ts';
 import type { Area, WorkspaceQuestion } from './model.ts';
 import { standalonePane } from './panels.ts';
-import { breadcrumbs, escape, noData, panel, title } from './view.ts';
+import { breadcrumbs, commitReferences, escape, noData, panel, title } from './view.ts';
 
 function recordedQuestion(area: Area, id?: string): WorkspaceQuestion | undefined {
   const gate = data[area].clarification;
@@ -106,16 +106,16 @@ export function questionView() {
   const heading = breadcrumbs([[page, '/' + question.area + '/'], ['Question']]) + title(actor.role + ' question');
   const patches = readPatch(question.supporting);
   const context = question.recommendation
-    ? `<h3>${actor.role} recommendation</h3><p>${escape(question.recommendation)}</p>`
+    ? `<h3>${actor.role} recommendation</h3><p>${commitReferences(question.recommendation)}</p>`
     : '';
   const supporting =
-    !patches.length && question.supporting ? `<p>${escape(question.supporting)}</p>` : '';
+    !patches.length && question.supporting ? `<p>${commitReferences(question.supporting)}</p>` : '';
   const answer = question.answer
-    ? panel('Recorded reply', `<p>${escape(question.answer)}</p>`)
+    ? panel('Recorded reply', `<p>${commitReferences(question.answer)}</p>`)
     : question.id === composerState.waiting
       ? panel('Reply', answerForm(question))
       : '';
-  const prompt = heading + panel('Question', `<p>${escape(question.prompt)}</p>${context}${supporting}`);
+  const prompt = heading + panel('Question', `<p>${commitReferences(question.prompt)}</p>${context}${supporting}`);
   if (!patches.length) return prompt + answer;
   const label = question.area === 'plan' ? 'Proposed goal changes' : 'Proposed architecture changes';
   return prompt + standalonePane({

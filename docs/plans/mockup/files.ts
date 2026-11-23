@@ -11,6 +11,8 @@ import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
 import {
   asText,
+  commitReference,
+  commitReferences,
   githubReferences,
   githubOutcome,
   roundStatus,
@@ -31,13 +33,13 @@ export function phaseOutcome(phase: Area) {
   return (
     phaseReferences(data.architect) +
     '<p>' +
-    escape(paragraphs[0]) +
+    commitReferences(paragraphs[0]) +
     '</p>' +
     (paragraphs.length > 1
       ? '<details><summary>Assessment rationale</summary>' +
         paragraphs
           .slice(1)
-          .map((paragraph) => '<p>' + escape(paragraph) + '</p>')
+          .map((paragraph) => '<p>' + commitReferences(paragraph) + '</p>')
           .join('') +
         '</details>'
       : '')
@@ -285,7 +287,7 @@ export function fileView() {
     title(rev.name, item.type + ' · ' + rev.id) +
     `<small class="arc-file-reference">
       <span>Path <code class="arc-file-path">${escape(item.path)}</code></span>
-      <span>Captured at ${asText(item.capture)}</span>
+      <span>Captured at ${commitReference(item.capture, asText(item.capture))}</span>
     </small>
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}

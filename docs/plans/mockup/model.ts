@@ -133,6 +133,8 @@ export type Goal = {
     activity: string;
     milestone: string | null;
     path: string;
+    base?: string;
+    head?: string;
     excerpt?: string;
     truncated?: boolean;
   }[];
@@ -148,7 +150,7 @@ export type Goal = {
     patch?: string;
     patchPath?: string;
     patchExcerpt?: boolean;
-    publication: { candidate: string; parent: string; branch: string } | null;
+    publication: { candidate: string; parent: string; branch: string; head?: string } | null;
   };
   hostedFailures: { seq: number; pr?: string; diagnostic: string }[];
   outcome: { kind: string; summary: string; at: string };

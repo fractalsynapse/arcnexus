@@ -19,8 +19,8 @@
     <div class="arc-compose-state"></div>
     <form class="arc-launch">
       <label>Operation<select name="operation"></select></label>
-      <label><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
       <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
+      <label class="arc-instruction"><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
     </form>
     <div class="arc-footer-state" role="group" aria-label="Recorded refinement state"></div>
   </footer>
@@ -110,6 +110,7 @@
 #arc-preview .arc-crumbs { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; color: var(--muted); }
 #arc-preview .arc-link { display: inline-flex; align-items: center; gap: 6px; padding: 5px 1px; font-weight: 630; color: var(--link); }
 #arc-preview button.arc-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+#arc-preview .arc-commit-link { color:var(--link); text-decoration:underline; text-underline-offset:2px; overflow-wrap:anywhere; }
 #arc-preview .arc-grid { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: var(--gap); align-items: start; min-width: 0; }
 #arc-preview .arc-grid.equal { grid-template-columns: repeat(2,minmax(0,1fr)); }
 #arc-preview .arc-stack { display: grid; gap: var(--gap); min-width: 0; }
@@ -304,7 +305,8 @@
 #arc-preview .arc-issue + .arc-issue { margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--line); }
 #arc-preview .arc-issue strong { overflow-wrap: anywhere; }
 #arc-preview .arc-console { background: var(--paper); border-top: 1px solid var(--line); border-radius: 0 0 15px 15px; padding: 12px var(--pad); }
-#arc-preview .arc-launch { display: grid; grid-template-columns: minmax(105px,.32fr) minmax(0,1.5fr) auto; gap: 9px; align-items: end; }
+#arc-preview .arc-launch { display:grid; grid-template-columns:minmax(0,max-content) auto minmax(0,1fr); gap:9px; align-items:end; }
+#arc-preview .arc-instruction { grid-column:1 / -1; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
 #arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; align-items:center; gap:5px 12px; }
@@ -336,8 +338,6 @@
   #arc-preview .arc-table-head .arc-topics-head { display: none; }
   #arc-preview button.arc-file-row time { grid-column: 3; grid-row: 1; }
   #arc-preview .arc-file-row > svg { grid-column: 4; grid-row: 1; }
-  #arc-preview .arc-launch { grid-template-columns: minmax(0,1fr) auto; }
-  #arc-preview .arc-launch label:nth-child(2) { grid-row: 1; grid-column: 1/-1; }
 }
 @media (pointer: coarse) {
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }

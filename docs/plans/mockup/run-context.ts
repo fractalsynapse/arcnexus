@@ -4,6 +4,7 @@ import {
   measuredDuration,
   localDate,
   noData,
+  commitReferences,
   escape,
   icon,
   status,
@@ -80,11 +81,11 @@ export function strategy(compact = false) {
     const text = compact ? summary.split(/(?<=\.) /, 2).join(' ') : summary;
     return (
       `<h3>${escape(selected.title)}</h3>` +
-      (text ? `<p>${escape(text)}</p>` : noData('No plan at this recorded revision.'))
+      (text ? `<p>${commitReferences(text)}</p>` : noData('No plan at this recorded revision.'))
     );
   }
   return (
-    `<h3>${escape(plan.purpose)}</h3>` +
+    `<h3>${commitReferences(plan.purpose)}</h3>` +
     (compact
       ? ''
       : `<h3>Objectives</h3>${factList(plan.objectives)}<h3>Constraints</h3>${factList(plan.constraints)}`)

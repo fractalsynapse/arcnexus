@@ -16,6 +16,7 @@ import {
   tokenPair,
   cacheRate,
   noData,
+  commitReferences,
   escape,
   icon,
   pill,
@@ -219,7 +220,7 @@ export function timelineText(row: EventRow) {
     const label = question?.answer ? 'View answered question' : 'Open question';
     return (
       '<p>' +
-      escape(prompt) +
+      commitReferences(prompt) +
       '</p>' +
       (question ? `<button type="button" class="arc-button" data-question="${escape(question.id)}">${label}</button>` : '')
     );
@@ -228,7 +229,7 @@ export function timelineText(row: EventRow) {
     ? '<p class="' +
         (kind === 'message' || kind === 'preview' ? 'arc-message-text' : '') +
         '">' +
-        escape(detail) +
+        commitReferences(detail) +
         '</p>'
     : '';
 }

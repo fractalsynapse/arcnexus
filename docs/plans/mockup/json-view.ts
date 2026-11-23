@@ -1,4 +1,4 @@
-import { escape } from './view.ts';
+import { commitReferences, escape } from './view.ts';
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -17,8 +17,9 @@ function jsonNode(value: Json, key?: string): string {
   const label = key === undefined ? '' : `<span class="arc-json-key">${escape(key)}</span>: `;
   if (value === null || typeof value !== 'object') {
     const kind = value === null ? 'null' : typeof value;
+    const literal = JSON.stringify(value);
     return `<div class="arc-json-line">${label}<span class="arc-json-${kind}">
-      ${escape(JSON.stringify(value))}</span></div>`;
+      ${typeof value === 'string' ? commitReferences(literal) : escape(literal)}</span></div>`;
   }
   const array = Array.isArray(value);
   const entries = Object.entries(value) as [string, Json][];
