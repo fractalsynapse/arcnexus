@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Separate the file path from the revision controls with a divider that matches the breadcrumb spacing (#703).
+
 - Align Progress, Edit, and Save with the bottom of the file revision selector (#703).
 
 - Move file type and Git revisions into a compact dialog opened from the breadcrumb, leaving the title and path visible on file pages (#703).

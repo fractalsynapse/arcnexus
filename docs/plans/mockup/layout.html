@@ -186,6 +186,7 @@
 #arc-preview .arc-file-git i::before { content:'i'; display:grid; place-items:center; inline-size:14px; block-size:14px;
   border:1px solid currentColor; border-radius:50%; font:650 11px/1 system-ui,sans-serif; }
 #arc-preview .arc-file-reference { min-width:0; overflow-wrap:anywhere; }
+#arc-preview [data-form="file"]::before { content:""; border-block-start:1px solid var(--line); }
 #arc-preview code.arc-file-path { color:var(--ink); background:var(--paper); border:1px solid var(--line);
   border-radius:4px; padding:1px 5px; font-size:inherit; font-weight:600; box-decoration-break:clone; }
 #arc-preview .arc-grid.arc-pane-workspace[data-expanded] { grid-template-columns:minmax(0,1fr); }
