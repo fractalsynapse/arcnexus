@@ -70,44 +70,62 @@ function readComponent(source: string) {
   }
 }
 
+const componentSectionText = {
+  objectives: {
+    title: 'Objectives',
+    description: 'Describe how to tell whether this component is meeting its purpose.',
+  },
+  constraints: {
+    title: 'Constraints',
+    description: 'List the outcomes or behavior this component must prevent.',
+  },
+  ownership: {
+    title: 'Ownership',
+    description: 'List the repository paths this component is responsible for.',
+  },
+};
+
+type ComponentSection = [id: keyof typeof componentSectionText, fields: string];
+
 function componentTabs(component: Component, selected: string) {
-  const sections: [string, string, string][] = [
-    ...acceptanceFields(component),
-    ['ownership', 'Ownership', textList(['owns'], 'owned path', component.owns)],
-  ];
-  const tabs = sections.map(([key, label]) => {
+  const sections = componentSections(component);
+  const tabs = sections.map(([key]) => {
     const active = key === selected;
     return `<button type="button" role="tab" data-component-tab="${key}" id="component-${key}-tab"
-      aria-controls="component-${key}" aria-selected="${active}" tabindex="${active ? 0 : -1}">${label}</button>`;
+      aria-controls="component-${key}" aria-selected="${active}" tabindex="${active ? 0 : -1}">${componentSectionText[key].title}</button>`;
   });
   const panels = sections.map(
-    ([key, , content]) =>
+    ([key, content]) =>
       `<div role="tabpanel" id="component-${key}" aria-labelledby="component-${key}-tab" ${key === selected ? '' : 'hidden'}>
-      ${content}</div>`,
+      <p class="arc-component-tab-description">${escape(componentSectionText[key].description)}</p>${content}</div>`,
   );
   return `<div class="arc-component-tabs">
     <div class="arc-tabs" role="tablist" aria-label="Component details">${tabs.join('')}</div>${panels.join('')}</div>`;
 }
 
-function acceptanceFields(component: Component): [string, string, string][] {
+function componentSections(component: Component): ComponentSection[] {
+  const multiline = { multiline: true, hideLabel: true };
   const objectives = yamlList(
     ['objectives'],
     'measure',
     component.objectives ?? [],
-    (value, path) => textField('Measure', [...path, 'measure'], value.measure, { multiline: true }),
+    (value, path, label) => textField(label, [...path, 'measure'], value.measure, multiline),
     { measure: '' },
   );
   const constraints = yamlList(
     ['constraints'],
     'failure condition',
     component.constraints ?? [],
-    (value, path) =>
-      textField('Failure condition', [...path, 'failure'], value.failure, { multiline: true }),
+    (value, path, label) => textField(label, [...path, 'failure'], value.failure, multiline),
     { failure: '' },
   );
+  const ownership = yamlList(['owns'], 'owned path', component.owns, (value, path, label) =>
+    textField(label, path, value, { hideLabel: true }),
+  );
   return [
-    ['objectives', 'Objectives', objectives],
-    ['constraints', 'Constraints', constraints],
+    ['objectives', objectives],
+    ['constraints', constraints],
+    ['ownership', ownership],
   ];
 }
 

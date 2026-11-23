@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Describe each component tab above its list and align editable rows with their reorder and remove buttons (#703).
+
 - Pin the fullscreen Markdown toolbar flush below the popup header while scrolling (#703).
 
 - Group Kind, Summary, and Purpose in the component form, use expandable Markdown fields for prose, and add Objectives, Constraints, and Ownership tabs (#703).

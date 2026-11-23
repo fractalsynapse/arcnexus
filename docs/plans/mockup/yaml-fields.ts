@@ -7,6 +7,7 @@ type ControlOptions = {
   number?: boolean;
   description?: string;
   showError?: boolean;
+  hideLabel?: boolean;
 };
 
 export function textField(
@@ -15,10 +16,11 @@ export function textField(
   value: string | number,
   config: ControlOptions = {},
 ) {
+  const attrs = attributes(path) + (config.hideLabel ? ` aria-label="${escape(label)}"` : '');
   const input = config.multiline
-    ? `<textarea class="arc-purpose-text" ${attributes(path)} rows="2">\n${escape(value)}</textarea>`
-    : `<input ${attributes(path)} ${config.number ? 'type="number" step="any"' : ''} value="${escape(value)}">`;
-  return field(label, path, input, config.description, config.showError);
+    ? `<textarea class="arc-purpose-text" ${attrs} rows="2">\n${escape(value)}</textarea>`
+    : `<input ${attrs} ${config.number ? 'type="number" step="any"' : ''} value="${escape(value)}">`;
+  return field(config.hideLabel ? '' : label, path, input, config.description, config.showError);
 }
 
 export function purposeSection(purpose: string, description: string) {
@@ -74,7 +76,8 @@ export function selectField(
 }
 
 function field(label: string, path: YamlPath, input: string, description = '', showError = true) {
-  return `<div class="arc-yaml-field"><label>${escape(label)}${input}</label>
+  const control = label ? `<label>${escape(label)}${input}</label>` : input;
+  return `<div class="arc-yaml-field">${control}
     ${description ? `<small>${escape(description)}</small>` : ''}${showError ? fieldError(path) : ''}</div>`;
 }
 
