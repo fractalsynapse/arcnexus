@@ -63,16 +63,19 @@ retains the complete round and navigation.
   Save a draft after editing in either mode. Unsupported rich-text syntax
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
-- Open any Architect operation or component and enable Edit. Purpose comes
-  first and grows with the text. Command operations expose command settings,
+- Open any Architect operation and enable Edit. Purpose comes first and grows
+  with the text. Command operations expose command settings,
   arguments, and configured parameters. Raw shows the ID and handler. The
   operation draft shows the proposed Purpose and removal of Applicability and
   Category. The current host requires network access to be disabled for
   confined checks.
-- In a component, edit measures, failure conditions, and owned paths. Expand
-  an activity to edit its instructions, operation bindings, standards, and
-  verification references. A host activity has no model profile. Use Raw for
-  named-map changes such as adding an activity or declaring a new parameter.
+- In a component, edit the catalog Summary above the collapsed Purpose field.
+  Purpose and each activity instruction use the Markdown file editor when
+  expanded. Use Objectives, Constraints, and Ownership to review one list at a
+  time. Expand an activity to edit its instructions, operation bindings,
+  standards, and verification references. A host activity has no model
+  profile. Use Raw for named-map changes such as adding an activity or
+  declaring a new parameter.
 - Reorder lists with the drag handle or its arrow keys. Check the same draft
   in Form, Raw, and Changes. Save applies the mockup's Zod validation and
   creates a local draft revision.

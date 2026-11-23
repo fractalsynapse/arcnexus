@@ -27,25 +27,23 @@ import type { Realm } from '@mdxeditor/gurx';
 import editorStyle from '@mdxeditor/editor/style.css';
 import { createElement, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { Root } from 'react-dom/client';
 import { splitMarkdown } from './markdown.ts';
 import type { Revision } from './model.ts';
 
 type EditMode = 'rich-text' | 'source';
 
 type Draft = {
-  revision: Revision;
   mode: EditMode;
   body: string;
   switching: boolean;
 };
 
-let draft: Draft | undefined;
-let root: Root | undefined;
+let draft: (Draft & { revision: Revision }) | undefined;
+let unmountFile: (() => void) | undefined;
 
 export function detachMarkdownEditor() {
-  root?.unmount();
-  root = undefined;
+  unmountFile?.();
+  unmountFile = undefined;
 }
 
 export function mountMarkdownEditor(host: HTMLElement | null, revision: Revision | undefined) {
@@ -53,10 +51,25 @@ export function mountMarkdownEditor(host: HTMLElement | null, revision: Revision
     draft = undefined;
     return;
   }
-  const entry = draft?.revision === revision ? draft : openDraft(revision);
+  const entry =
+    draft?.revision === revision
+      ? draft
+      : { revision, ...newDraft(splitMarkdown(revision.content).body) };
   draft = entry;
+  unmountFile = mountMarkdownBody(host, entry);
+}
+
+export function mountMarkdownField(
+  host: HTMLElement,
+  body: string,
+  onEdit: (body: string) => void,
+) {
+  return mountMarkdownBody(host, newDraft(body), onEdit);
+}
+
+function mountMarkdownBody(host: HTMLElement, entry: Draft, onEdit?: (body: string) => void) {
   installStyle();
-  root = createRoot(host);
+  const root = createRoot(host);
   root.render(
     createElement(MDXEditor, {
       className: 'arc-mdx',
@@ -66,19 +79,19 @@ export function mountMarkdownEditor(host: HTMLElement | null, revision: Revision
       trim: false,
       suppressHtmlProcessing: true,
       toMarkdownOptions: { bullet: '-', emphasis: '*', fences: true },
-      onChange: (body, initial) => updateDraft(entry, body, initial),
+      onChange: (body, initial) => {
+        const previous = entry.body;
+        updateDraft(entry, body, initial);
+        if (entry.body !== previous) onEdit?.(entry.body);
+      },
       plugins: editorPlugins(entry),
     }),
   );
+  return () => root.unmount();
 }
 
-function openDraft(revision: Revision): Draft {
-  return {
-    revision,
-    mode: 'rich-text',
-    body: splitMarkdown(revision.content).body,
-    switching: false,
-  };
+function newDraft(body: string): Draft {
+  return { mode: 'rich-text', body, switching: false };
 }
 
 function installStyle() {

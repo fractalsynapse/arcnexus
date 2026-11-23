@@ -7,7 +7,8 @@ import {
   advanceQueue,
   submitComposer,
 } from './composer.ts';
-import { loadDiffPatch, navigateDiffTabs, selectDiffTab } from './diff.ts';
+import { loadDiffPatch } from './diff.ts';
+import { navigateTabs, selectTab } from './tab-controls.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
@@ -194,7 +195,7 @@ root.addEventListener('click', (event) => {
   if (!(element instanceof Element)) return;
   const control = element.closest('button');
   if (!control || !root.contains(control)) return;
-  if (control.getAttribute('role') === 'tab') selectDiffTab(control);
+  if (control.getAttribute('role') === 'tab') selectTab(control);
   else if (control.dataset.expandPane) togglePane(control);
   else handleClick(control);
 });
@@ -286,7 +287,7 @@ root.addEventListener('submit', (event) => {
 root.addEventListener('keydown', (event) => {
   const field = event.target;
   if (field instanceof HTMLButtonElement && field.getAttribute('role') === 'tab') {
-    navigateDiffTabs(event, field);
+    navigateTabs(event, field);
   }
 });
 

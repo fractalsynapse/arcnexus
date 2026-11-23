@@ -1,22 +1,27 @@
 import { escape } from './view.ts';
 import type { Activity, Component, ParameterValue, YamlPath } from './yaml-schema.ts';
-import { group, purposeSection, textField, textList, valueField, yamlList } from './yaml-fields.ts';
+import {
+  disclosure,
+  group,
+  markdownDisclosure,
+  textField,
+  textList,
+  valueField,
+  yamlList,
+} from './yaml-fields.ts';
 
-export function componentForm(component: Component) {
+export function componentForm(component: Component, selected = 'objectives') {
   return (
-    purposeSection(
-      component.purpose,
-      'Describe the component’s responsibility and boundaries.',
-      true,
-    ) +
     group(
       'Component',
-      `<div class="arc-form-grid">
-      <label>Kind<input readonly value="${escape(component.kind)}"></label>
-      ${textField('Summary', ['summary'], component.summary ?? '')}</div>`,
+      `<label class="arc-yaml-kind">Kind<input readonly value="${escape(component.kind)}"></label>
+      ${textField('Summary', ['summary'], component.summary ?? '', {
+        multiline: true,
+        description: 'Brief description for other agents in the component catalog.',
+      })}
+      ${markdownDisclosure(['purpose'], 'Purpose')}`,
     ) +
-    acceptanceFields(component) +
-    group('Ownership', textList(['owns'], 'owned path', component.owns)) +
+    componentTabs(component, selected) +
     componentDefaults(component.operationParameters) +
     group(
       'Activities',
@@ -27,7 +32,26 @@ export function componentForm(component: Component) {
   );
 }
 
-function acceptanceFields(component: Component) {
+function componentTabs(component: Component, selected: string) {
+  const sections: [string, string, string][] = [
+    ...acceptanceFields(component),
+    ['ownership', 'Ownership', textList(['owns'], 'owned path', component.owns)],
+  ];
+  const tabs = sections.map(([key, label]) => {
+    const active = key === selected;
+    return `<button type="button" role="tab" data-component-tab="${key}" id="component-${key}-tab"
+      aria-controls="component-${key}" aria-selected="${active}" tabindex="${active ? 0 : -1}">${label}</button>`;
+  });
+  const panels = sections.map(
+    ([key, , content]) =>
+      `<div role="tabpanel" id="component-${key}" aria-labelledby="component-${key}-tab" ${key === selected ? '' : 'hidden'}>
+      ${content}</div>`,
+  );
+  return `<div class="arc-component-tabs">
+    <div class="arc-tabs" role="tablist" aria-label="Component details">${tabs.join('')}</div>${panels.join('')}</div>`;
+}
+
+function acceptanceFields(component: Component): [string, string, string][] {
   const objectives = yamlList(
     ['objectives'],
     'measure',
@@ -43,7 +67,10 @@ function acceptanceFields(component: Component) {
       textField('Failure condition', [...path, 'failure'], value.failure, { multiline: true }),
     { failure: '' },
   );
-  return group('Objectives', objectives) + group('Constraints', constraints);
+  return [
+    ['objectives', 'Objectives', objectives],
+    ['constraints', 'Constraints', constraints],
+  ];
 }
 
 function componentDefaults(config?: Component['operationParameters']) {
@@ -61,18 +88,30 @@ function componentDefaults(config?: Component['operationParameters']) {
 function activityForm(name: string, activity: Activity) {
   const path = ['activities', name];
   const actor = activity.executor ? 'Host' : 'Agent';
-  return `<details class="arc-yaml-activity" data-yaml-section="${escape(JSON.stringify(path))}">
-    <summary><span>${escape(name)}</span> <small>${actor}</small></summary>
-    <div class="arc-yaml-section-body">
+  return disclosure(
+    path,
+    name,
+    `
       <div class="arc-form-grid">
         ${textField('Role', [...path, 'role'], activity.role)}
         ${activity.executor ? '' : textField('Execution profile', [...path, 'profile'], activity.profile ?? '')}
       </div>
-      ${group('Instructions', textList([...path, 'instructions'], 'instruction', activity.instructions, true))}
+      ${group(
+        'Instructions',
+        yamlList(
+          [...path, 'instructions'],
+          'instruction',
+          activity.instructions,
+          (_, entry, label) =>
+            markdownDisclosure(entry, label.charAt(0).toUpperCase() + label.slice(1)),
+        ),
+      )}
       ${group('Operations', yamlList([...path, 'operations'], 'operation', activity.operations, operationBinding))}
       ${group('Standards', textList([...path, 'standards'], 'standard', activity.standards))}
       ${group('Verification', textList([...path, 'verification'], 'required check', activity.verification ?? []))}
-    </div></details>`;
+    `,
+    actor,
+  );
 }
 
 function operationBinding(binding: Activity['operations'][number], path: YamlPath, label: string) {

@@ -115,35 +115,6 @@ function diffContent(file: FileDelta) {
   );
 }
 
-export function selectDiffTab(tab: HTMLButtonElement) {
-  const viewer = tab.closest('.arc-file-diff');
-  if (!viewer) return;
-  viewer.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((button) => {
-    const selected = button === tab;
-    button.setAttribute('aria-selected', String(selected));
-    button.tabIndex = selected ? 0 : -1;
-  });
-  const selected = tab.getAttribute('aria-controls');
-  viewer.querySelectorAll<HTMLElement>('[role="tabpanel"]').forEach((content) => {
-    content.hidden = content.id !== selected;
-  });
-  tab.focus();
-}
-
-export function navigateDiffTabs(event: KeyboardEvent, tab: HTMLButtonElement) {
-  const tabs = [...(tab.parentElement?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
-  const current = tabs.indexOf(tab);
-  const candidate = {
-    ArrowUp: (current - 1 + tabs.length) % tabs.length,
-    ArrowDown: (current + 1) % tabs.length,
-    Home: 0,
-    End: tabs.length - 1,
-  }[event.key];
-  if (candidate === undefined || !tabs[candidate]) return;
-  event.preventDefault();
-  selectDiffTab(tabs[candidate]);
-}
-
 export async function loadDiffPatch(input: HTMLInputElement) {
   const picked = input.files?.[0];
   const viewer = input.closest('.arc-file-diff');

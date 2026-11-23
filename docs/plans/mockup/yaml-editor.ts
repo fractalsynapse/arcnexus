@@ -11,12 +11,14 @@ import {
 import { classHighlighter } from '@lezer/highlight';
 import { isNode, isScalar, isSeq, parseDocument } from 'yaml';
 import { diffBody, draftDiff } from './diff.ts';
+import { mountMarkdownField } from './mdx-editor.ts';
 import type { DesignFile, Revision } from './model.ts';
 import { componentForm } from './component-form.ts';
 import { operationForm } from './operation-form.ts';
 import { prepareOperationDraft, yamlIssues } from './yaml-schema.ts';
 import type { Component, Operation, YamlPath } from './yaml-schema.ts';
 import { SortableLists } from './sortable.ts';
+import { selectTab } from './tab-controls.ts';
 import { noData } from './view.ts';
 
 type Mode = 'Form' | 'Raw';
@@ -55,7 +57,9 @@ class YamlEditor {
   private changes?: HTMLElement;
   private status?: HTMLElement;
   private sorter?: SortableLists;
+  private componentTab?: string;
   private readonly sections = new Map<string, boolean>();
+  private readonly markdownViews = new Map<HTMLElement, () => void>();
 
   /** Prepare an editable draft of the selected architecture file. */
   constructor(
@@ -80,6 +84,7 @@ class YamlEditor {
     this.status = main.querySelector<HTMLElement>('[data-yaml-save-status]') ?? undefined;
     host.onclick = (event) => this.click(event.target);
     host.oninput = (event) => this.input(event.target);
+    host.addEventListener('toggle', this.mountExpandedFields, true);
     this.sorter = new SortableLists(host, (list, from, to) => this.reorder(list, from, to));
     this.render();
   }
@@ -87,6 +92,8 @@ class YamlEditor {
   /** Dispose of the CodeMirror view while preserving the draft across page renders. */
   detach() {
     this.rememberSections();
+    this.host?.removeEventListener('toggle', this.mountExpandedFields, true);
+    this.unmountMarkdownFields();
     this.sorter?.dispose();
     this.sorter = undefined;
     this.view?.destroy();
@@ -99,9 +106,7 @@ class YamlEditor {
     if (this.validate(parseDocument(this.source))) return this.source;
     if (this.status) this.status.textContent = 'Fix the YAML validation errors before saving.';
     const invalid = this.host?.querySelector<HTMLElement>('[aria-invalid="true"]');
-    const section = invalid?.closest('details');
-    if (section) section.open = true;
-    invalid?.focus();
+    if (invalid) this.revealField(invalid);
     return undefined;
   }
 
@@ -109,6 +114,7 @@ class YamlEditor {
   private render() {
     if (!this.host) return;
     this.rememberSections();
+    this.unmountMarkdownFields();
     this.sorter?.cancel();
     this.view?.destroy();
     this.view = undefined;
@@ -125,6 +131,7 @@ class YamlEditor {
     });
     const raw = this.host.querySelector<HTMLElement>('.arc-yaml-raw');
     if (raw) this.mountRaw(raw);
+    this.mountExpandedFields();
     this.refresh();
   }
 
@@ -133,14 +140,41 @@ class YamlEditor {
     const value: unknown = this.document.toJS();
     return this.file.type === 'Operation'
       ? operationForm(value as Operation)
-      : componentForm(value as Component);
+      : componentForm(value as Component, this.componentTab);
   }
 
   /** Keep the selected sections open across list edits and mode changes. */
   private rememberSections() {
+    const active = this.host?.querySelector<HTMLElement>(
+      '[data-component-tab][aria-selected="true"]',
+    );
+    this.componentTab = active?.dataset.componentTab ?? this.componentTab;
     this.host?.querySelectorAll<HTMLDetailsElement>('[data-yaml-section]').forEach((section) => {
       this.sections.set(section.dataset.yamlSection ?? '', section.open);
     });
+  }
+
+  /** Mount the shared editor only for prose fields the operator has expanded. */
+  private readonly mountExpandedFields = () => {
+    for (const field of this.host?.querySelectorAll<HTMLElement>('[data-yaml-markdown]') ?? []) {
+      if (this.markdownViews.has(field) || field.closest('details:not([open])')) continue;
+      const path = JSON.parse(field.dataset.yamlField ?? '[]') as YamlPath;
+      const body = this.document.getIn(path);
+      if (typeof body !== 'string') continue;
+      this.markdownViews.set(
+        field,
+        mountMarkdownField(field, body, (updated) => {
+          this.set(path, updated);
+          this.refresh();
+        }),
+      );
+    }
+  };
+
+  /** Detach each Markdown root before replacing or leaving the form. */
+  private unmountMarkdownFields() {
+    for (const unmount of this.markdownViews.values()) unmount();
+    this.markdownViews.clear();
   }
 
   /** Listen for source edits and parse them for validation without rewriting the text. */
@@ -309,9 +343,25 @@ class YamlEditor {
     const key = CSS.escape(JSON.stringify(path));
     const rows = this.host?.querySelectorAll(`[data-sortable-list="${key}"] > [data-sort-row]`);
     const entry = rows?.[index]?.querySelector<HTMLElement>('[data-yaml-field]');
-    (
-      entry ?? this.host?.querySelector<HTMLElement>(`[data-yaml-list="${key}"][data-yaml-seed]`)
-    )?.focus();
+    if (entry) this.revealField(entry);
+    else
+      this.host?.querySelector<HTMLElement>(`[data-yaml-list="${key}"][data-yaml-seed]`)?.focus();
+  }
+
+  /** Reveal the tab and disclosures that contain an added or invalid field. */
+  private revealField(field: HTMLElement) {
+    const panel = field.closest<HTMLElement>('[role="tabpanel"]');
+    const tab = this.host?.querySelector<HTMLButtonElement>(
+      `[data-component-tab][aria-controls="${CSS.escape(panel?.id ?? '')}"]`,
+    );
+    if (panel?.hidden && tab) selectTab(tab);
+    let section = field.closest('details');
+    while (section) {
+      section.open = true;
+      section = section.parentElement?.closest('details') ?? null;
+    }
+    this.mountExpandedFields();
+    field.focus();
   }
 }
 

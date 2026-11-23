@@ -20,14 +20,26 @@ export function textField(
   return field(label, path, input, config.description, config.showError);
 }
 
-export function purposeSection(purpose: string, description: string, collapsible = false) {
+export function purposeSection(purpose: string, description: string) {
   const path = ['purpose'];
   const content = `<textarea class="arc-purpose-text" ${attributes(path)} aria-labelledby="yaml-purpose-label" rows="2">\n${escape(purpose)}</textarea>
     <small>${escape(description)}</small>${fieldError(path)}`;
-  return collapsible
-    ? `<details class="arc-yaml-group" data-yaml-section="purpose" open>
-      <summary id="yaml-purpose-label">Purpose</summary><div class="arc-yaml-section-body">${content}</div></details>`
-    : `<fieldset class="arc-yaml-group"><legend id="yaml-purpose-label">Purpose</legend>${content}</fieldset>`;
+  return `<fieldset class="arc-yaml-group"><legend id="yaml-purpose-label">Purpose</legend>${content}</fieldset>`;
+}
+
+export function disclosure(path: YamlPath, label: string, body: string, qualifier = '') {
+  const metadata = qualifier ? `<small>${escape(qualifier)}</small>` : '';
+  return `<details class="arc-yaml-disclosure" data-yaml-section="${escape(JSON.stringify(path))}">
+    <summary><span>${escape(label)}</span>${metadata}</summary>
+    <div class="arc-yaml-section-body">${body}</div></details>`;
+}
+
+export function markdownDisclosure(path: YamlPath, label: string) {
+  return disclosure(
+    path,
+    label,
+    `<div class="arc-md-edit" data-yaml-markdown role="group" aria-label="${escape(label)}" tabindex="-1" ${attributes(path)}></div>${fieldError(path)}`,
+  );
 }
 
 export function checkbox(label: string, path: YamlPath, checked: boolean) {

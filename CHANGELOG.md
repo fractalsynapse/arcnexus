@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Group Kind, Summary, and Purpose in the component form, use expandable Markdown fields for prose, and add Objectives, Constraints, and Ownership tabs (#703).
+
 - Grow the mockup's Purpose field with its text, simplify the operation form, and edit Network access with a checkbox (#703).
 
 - Fit the mockup's instruction, operation selector, and Send in one row on wide layouts and give the operation selector the remaining space beside Send on narrow layouts (#703).
