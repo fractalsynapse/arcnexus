@@ -322,14 +322,19 @@ root.addEventListener('keydown', (event) => {
   }
 });
 
+function reserveScrollSpace(selector: string, property: string) {
+  new ResizeObserver(([entry]) => {
+    const height = entry?.borderBoxSize[0]?.blockSize ?? 0;
+    document.documentElement.style.setProperty(property, `${height}px`);
+  }).observe(dom(selector), { box: 'border-box' });
+}
+
 bindTopicPickers(updateFileList);
 if (data.fileReview) {
   root.setAttribute('data-file-review', '');
   dom<HTMLButtonElement>('.arc-brand').disabled = true;
 }
 dom('.arc-footer-state').innerHTML = roundFooter();
-new ResizeObserver(([entry]) => {
-  const height = entry?.borderBoxSize[0]?.blockSize ?? 0;
-  document.documentElement.style.setProperty('--arc-console-space', `${height}px`);
-}).observe(dom('.arc-console'), { box: 'border-box' });
+reserveScrollSpace('.arc-nav', '--arc-nav-space');
+reserveScrollSpace('.arc-console', '--arc-console-space');
 render();

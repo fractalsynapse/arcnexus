@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep Plan, Architect, Run, and Release pinned while the logo and header actions scroll away (#703).
+
 - Give the docked command panel a dark gray finish and let the round metrics row collapse it to a compact status strip (#703).
 
 - Fill the viewport without a site frame and keep the mockup's instruction and round metrics controls at the bottom while scrolling (#703).
