@@ -241,6 +241,12 @@
 #arc-preview .arc-yaml-group > button { justify-self:start; }
 #arc-preview .arc-yaml-group input[readonly] { background:var(--quiet); color:var(--muted); }
 #arc-preview .arc-yaml-field { min-width:0; }
+#arc-preview .arc-yaml-network { align-self:end; }
+@supports (field-sizing:content) {
+  #arc-preview textarea.arc-purpose-text {
+    field-sizing:content; line-height:1.4; padding-block-end:calc(7px + 1lh); resize:none;
+  }
+}
 #arc-preview .arc-sort-list { position:relative; display:grid; gap:6px; min-width:0; }
 #arc-preview .arc-sort-list:empty { display:none; }
 #arc-preview .arc-yaml-list-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 7px; align-items:end; padding:4px; border:1px solid transparent; border-radius:7px; }

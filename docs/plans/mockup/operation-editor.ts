@@ -195,7 +195,11 @@ class OperationEditor {
       this.render();
       this.focusRow(argumentPath, index);
     } else if (yamlField) {
-      this.set(JSON.parse(yamlField) as YamlPath, target.value);
+      const value =
+        target instanceof HTMLInputElement && target.type === 'checkbox'
+          ? target.checked
+          : target.value;
+      this.set(JSON.parse(yamlField) as YamlPath, value);
       this.refresh();
     }
   }
@@ -203,7 +207,7 @@ class OperationEditor {
   /** Update one YAML node while retaining its comments and surrounding document. */
   private set(path: YamlPath, value: unknown) {
     const original = this.document.getIn(path, true);
-    if (isScalar(original) && typeof value === 'string') {
+    if (isScalar(original) && (typeof value === 'string' || typeof value === 'boolean')) {
       if (original.value === value) return;
       original.value = value;
     } else {

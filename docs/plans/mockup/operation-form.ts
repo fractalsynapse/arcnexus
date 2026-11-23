@@ -11,14 +11,17 @@ export const argumentValues = {
 } as const;
 
 export function operationForm(operation: Operation) {
-  const identity = `<div class="arc-form-grid">
-    ${readOnlyField('Kind', operation.kind)}${readOnlyField('Handler', operation.tool)}
-    ${readOnlyField('MCP name', operation.id)}${readOnlyField('Network access', 'Disabled')}
-  </div>`;
+  const network = ['network'];
   return `${purposeSection(operation)}
     <fieldset class="arc-yaml-group"><legend>Operation</legend>
-    ${identity}
-    <div class="arc-form-grid">${operationField('command', operation)}${operationField('cwd', operation)}</div></fieldset>
+    <div class="arc-form-grid">
+      <label>Kind<input readonly value="${escape(operation.kind)}"></label>
+      <div class="arc-yaml-network">
+        <label class="arc-checkbox"><input type="checkbox" ${fieldAttributes(network)} ${operation.network ? 'checked' : ''}>Network access</label>
+        ${fieldError(network)}
+      </div>
+      ${operationField('command', operation)}${operationField('cwd', operation)}
+    </div></fieldset>
     <fieldset class="arc-yaml-group"><legend>Arguments</legend>
     <div class="arc-sort-list" data-sortable-list="argument">${operation.args.map(argumentRow).join('')}</div>
     ${addButton('argument', 'Add argument')}</fieldset>
@@ -29,16 +32,12 @@ export function operationForm(operation: Operation) {
     <span class="arc-sr" role="status" data-sort-status></span>`;
 }
 
-function readOnlyField(label: string, value: string) {
-  return `<label>${escape(label)}<input readonly value="${escape(value)}"></label>`;
-}
-
 function purposeSection(operation: Operation) {
   const path = ['purpose'];
   const metadata = operationFields.purpose.meta();
   return `<fieldset class="arc-yaml-group">
     <legend id="yaml-purpose-label">${escape(metadata?.title ?? 'Purpose')}</legend>
-    <textarea ${fieldAttributes(path)} aria-labelledby="yaml-purpose-label" rows="2">${escape(operation.purpose)}</textarea>
+    <textarea class="arc-purpose-text" ${fieldAttributes(path)} aria-labelledby="yaml-purpose-label" rows="2">${escape(operation.purpose)}</textarea>
     <small>${escape(metadata?.description)}</small>${fieldError(path)}</fieldset>`;
 }
 

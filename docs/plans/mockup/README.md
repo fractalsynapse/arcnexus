@@ -64,8 +64,11 @@ retains the complete round and navigation.
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
 - Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  Edit Purpose in the first section, above the operation settings. Changes
-  shows the proposed Purpose and the removal of Applicability and Category. Drag an
+  Edit Purpose in the first section, above the operation settings. The field
+  grows with the text and keeps one blank row below it. Toggle Network access
+  to edit the draft's `network` boolean. The current host requires network access
+  to be disabled for confined checks. Raw shows the operation ID and handler.
+  Changes shows the proposed Purpose and the removal of Applicability and Category. Drag an
   argument or default selector by its handle. The gap marks the new position.
   Use the arrow keys on a focused handle to reorder with the keyboard. Switch to
   Raw to edit the same draft as YAML.

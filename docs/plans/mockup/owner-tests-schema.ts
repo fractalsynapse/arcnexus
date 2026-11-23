@@ -35,7 +35,7 @@ export const operationSchema = z.strictObject(
     id: z.literal('owner-tests', { error: 'The ID must match the owner-tests file name.' }),
     kind: z.literal('command'),
     tool: z.literal('check'),
-    network: z.literal(false, { error: 'Confined checks require network access to be disabled.' }),
+    network: z.boolean({ error: 'Network access must be true or false.' }),
     ...operationFields,
     args: z.array(argument),
     parameters: z.strictObject({
