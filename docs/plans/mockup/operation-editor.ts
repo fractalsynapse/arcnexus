@@ -144,13 +144,6 @@ class OperationEditor {
   /** Update errors and the preview comparison after an edit. */
   private refresh() {
     this.validate();
-    const preview = this.host?.querySelector('[data-mcp-purpose]');
-    const purpose = this.document.get('purpose');
-    if (preview)
-      preview.textContent =
-        typeof purpose === 'string' && purpose.trim()
-          ? purpose
-          : 'Enter a purpose to preview the description.';
     if (this.status) this.status.textContent = '';
     if (!this.changes) return;
     this.changes.innerHTML =

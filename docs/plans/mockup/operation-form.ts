@@ -15,13 +15,9 @@ export function operationForm(operation: Operation) {
     ${readOnlyField('Kind', operation.kind)}${readOnlyField('Handler', operation.tool)}
     ${readOnlyField('MCP name', operation.id)}${readOnlyField('Network access', 'Disabled')}
   </div>`;
-  return `<fieldset class="arc-yaml-group"><legend>Operation</legend>
-    ${identity}${purposeField(operation)}
-    <details class="arc-mcp-preview" open>
-      <summary>MCP discovery preview</summary>
-      <p><code>${escape(operation.id)}</code></p>
-      <p data-mcp-purpose></p>
-    </details>
+  return `${purposeSection(operation)}
+    <fieldset class="arc-yaml-group"><legend>Operation</legend>
+    ${identity}
     <div class="arc-form-grid">${operationField('command', operation)}${operationField('cwd', operation)}</div></fieldset>
     <fieldset class="arc-yaml-group"><legend>Arguments</legend>
     <div class="arc-sort-list" data-sortable-list="argument">${operation.args.map(argumentRow).join('')}</div>
@@ -37,15 +33,13 @@ function readOnlyField(label: string, value: string) {
   return `<label>${escape(label)}<input readonly value="${escape(value)}"></label>`;
 }
 
-function purposeField(operation: Operation) {
+function purposeSection(operation: Operation) {
   const path = ['purpose'];
   const metadata = operationFields.purpose.meta();
-  return field(
-    metadata?.title ?? 'Purpose',
-    path,
-    `<textarea ${fieldAttributes(path)} rows="2">${escape(operation.purpose)}</textarea>`,
-    metadata?.description,
-  );
+  return `<fieldset class="arc-yaml-group">
+    <legend id="yaml-purpose-label">${escape(metadata?.title ?? 'Purpose')}</legend>
+    <textarea ${fieldAttributes(path)} aria-labelledby="yaml-purpose-label" rows="2">${escape(operation.purpose)}</textarea>
+    <small>${escape(metadata?.description)}</small>${fieldError(path)}</fieldset>`;
 }
 
 function operationField(key: 'command' | 'cwd', operation: Operation) {
