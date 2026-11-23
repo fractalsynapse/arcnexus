@@ -224,7 +224,7 @@ export function fileDiff(item: DesignFile, index: number, action = '') {
     : panel(
         'Changes',
         noData('Contents match the selected comparison.'),
-        `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`,
+        `<div class="arc-row"><small>${commitReferences(label)}</small>${action}</div>`,
       );
 }
 

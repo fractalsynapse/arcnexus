@@ -6,6 +6,8 @@
 
 - Fit the mockup's instruction, operation selector, and Send in one row on wide layouts and give the operation selector the remaining space beside Send on narrow layouts (#703).
 
+- Show unchanged lines as context between separate edits in the mockup's draft diffs (#703).
+
 - Link the mockup's displayed commit refs to GitHub (#703).
 
 - Theme the mockup's selector menus, add keyboard-selectable topic autocomplete, and simplify file information (#703).

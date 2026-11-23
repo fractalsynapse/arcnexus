@@ -1,4 +1,5 @@
-import { escape, noData, panel } from './view.ts';
+import { diffArrays } from 'diff';
+import { commitReferences, escape, noData, panel } from './view.ts';
 
 type DiffLine = [kind: string, text: string];
 
@@ -47,7 +48,7 @@ export function diffView(
   files: FileDelta[],
   { localPatch = false, heading = 'Changes', action = '' } = {},
 ) {
-  const caption = `<div class="arc-row"><small>${escape(label)}</small>${action}</div>`;
+  const caption = `<div class="arc-row"><small>${commitReferences(label)}</small>${action}</div>`;
   if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);
   return panel(heading, diffBody(files, localPatch), caption);
 }
@@ -68,18 +69,21 @@ export function diffBody(files: FileDelta[], localPatch = false) {
 }
 
 export function draftDiff(before: string[], after: string[]): DiffLine[] {
-  let start = 0;
-  while (start < before.length && start < after.length && before[start] === after[start]) start++;
-  let oldEnd = before.length;
-  let newEnd = after.length;
-  while (oldEnd > start && newEnd > start && before[oldEnd - 1] === after[newEnd - 1]) {
-    oldEnd--;
-    newEnd--;
-  }
+  const parts = diffArrays(before, after);
+  const start = parts.findIndex((part) => part.added || part.removed);
+  if (start < 0) return [];
+  const end = parts.findLastIndex((part) => part.added || part.removed);
+  const startLine = (parts[start - 1]?.count ?? 0) + 1;
   return [
-    ['hunk', `@@ Draft changes from line ${start + 1}`],
-    ...before.slice(start, oldEnd).map<DiffLine>((line) => ['removed', '− ' + line]),
-    ...after.slice(start, newEnd).map<DiffLine>((line) => ['added', '+ ' + line]),
+    ['hunk', `@@ Draft changes from line ${startLine}`],
+    ...parts.slice(start, end + 1).flatMap(({ added, removed, value }) => {
+      const [kind, prefix] = added
+        ? ['added', '+ ']
+        : removed
+          ? ['removed', '− ']
+          : ['context', '  '];
+      return value.map<DiffLine>((line) => [kind, prefix + line]);
+    }),
   ];
 }
 
