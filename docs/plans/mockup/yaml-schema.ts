@@ -130,24 +130,70 @@ function activityReferences(value: Pick<Activity, 'operations' | 'verification'>
   return issues;
 }
 
-export const componentSchema = z.looseObject({
-  id: name,
-  kind: z.enum(['plugin', 'app', 'project']),
-  purpose,
-  summary: z.string().optional(),
-  objectives: z.array(z.looseObject({ measure: text('a measure') })).optional(),
-  constraints: z.array(z.looseObject({ failure: text('a failure condition') })).optional(),
-  owns: strings,
-  activities: z.record(name, activity).refine((value) => Object.keys(value).length > 0, {
-    error: 'Declare at least one activity in Raw.',
-  }),
-  operationParameters: z.record(name, parameterValues).optional(),
-});
+export const activityLists = { sequence: 'Milestone sequence', requested: 'On request' } as const;
+export type ActivityList = keyof typeof activityLists;
+
+const activityFlow = z.strictObject({ sequence: strings, requested: strings });
+
+export const componentSchema = z
+  .looseObject({
+    id: name,
+    kind: z.enum(['plugin', 'app', 'project']),
+    purpose,
+    summary: z.string().optional(),
+    objectives: z.array(z.looseObject({ measure: text('a measure') })).optional(),
+    constraints: z.array(z.looseObject({ failure: text('a failure condition') })).optional(),
+    owns: strings,
+    activities: z.record(name, activity).refine((value) => Object.keys(value).length > 0, {
+      error: 'Declare at least one activity in Raw.',
+    }),
+    activityFlow: activityFlow.optional(),
+    operationParameters: z.record(name, parameterValues).optional(),
+  })
+  .superRefine((component, ctx) => {
+    if (!component.activityFlow) return;
+    const assigned = new Map<string, ActivityList>();
+    for (const list of ['sequence', 'requested'] as const) {
+      component.activityFlow[list].forEach((id, index) => {
+        const previous = assigned.get(id);
+        if (!Object.hasOwn(component.activities, id))
+          ctx.addIssue({
+            code: 'custom', path: ['activityFlow', list, index], message: `Unknown activity ${id}.`,
+          });
+        else if (previous)
+          ctx.addIssue({
+            code: 'custom', path: ['activityFlow', list, index], message: `${id} is already in ${activityLists[previous]}.`,
+          });
+        assigned.set(id, previous ?? list);
+      });
+    }
+  });
 
 export type Operation = z.infer<typeof operationSchema>;
 export type Component = z.infer<typeof componentSchema>;
 export type Activity = z.infer<typeof activity>;
 export type ParameterValue = z.infer<typeof parameterValue>;
+
+export function defaultActivityFlow(activities: Component['activities']) {
+  return {
+    sequence: ['documentation', 'testing', 'implementation', 'review', 'release'].filter((id) =>
+      Object.hasOwn(activities, id),
+    ),
+    requested: Object.hasOwn(activities, 'research') ? ['research'] : [],
+  };
+}
+
+export function prepareComponentDraft(document: Document) {
+  if (document.has('activityFlow')) return false;
+  try {
+    const result = componentSchema.safeParse(document.toJS());
+    if (!result.success) return false;
+    document.set('activityFlow', document.createNode(defaultActivityFlow(result.data.activities)));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function yamlIssues(document: Document, file: DesignFile): readonly YamlIssue[] {
   if (document.errors.length) return document.errors.map(({ message }) => ({ path: [], message }));

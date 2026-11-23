@@ -1,11 +1,13 @@
 import { parseDocument } from 'yaml';
 import { escape } from './view.ts';
-import type { Activity, Component, ParameterValue, YamlPath } from './yaml-schema.ts';
-import { componentSchema } from './yaml-schema.ts';
+import type { Activity, ActivityList, Component, ParameterValue, YamlPath } from './yaml-schema.ts';
+import { activityLists, componentSchema, defaultActivityFlow } from './yaml-schema.ts';
 import {
   disclosure,
   group,
   markdownDisclosure,
+  reorderableList,
+  selectField,
   textField,
   textList,
   valueField,
@@ -25,38 +27,58 @@ export function componentForm(component: Component, selected = 'objectives') {
     ) +
     componentTabs(component, selected) +
     componentDefaults(component.operationParameters) +
-    group(
-      'Activities',
-      Object.entries(component.activities)
-        .map(([name, activity]) => activityForm(name, activity))
-        .join(''),
-    )
+    componentActivities(component, true)
   );
 }
 
 export function componentReadout(source: string) {
   const component = readComponent(source);
   if (!component) return '';
-  const activities = Object.entries(component.activities)
-    .map(([name, activity]) =>
-      disclosure(
-        ['activities', name],
-        name,
-        activity.instructions
-          .map((prose, i) =>
-            markdownDisclosure(
-              ['activities', name, 'instructions', i],
-              'Instruction ' + (i + 1),
-              prose,
-            ),
-          )
-          .join(''),
-        activity.executor ? 'Host' : 'Agent',
-      ),
-    )
-    .join('');
   return (
-    markdownDisclosure(['purpose'], 'Purpose', component.purpose) + group('Activities', activities)
+    markdownDisclosure(['purpose'], 'Purpose', component.purpose) + componentActivities(component, false)
+  );
+}
+
+const projectSelected = 'Project-selected';
+const participation: [string, string][] = [
+  ['sequence', activityLists.sequence],
+  ['requested', activityLists.requested],
+  ['project', projectSelected],
+];
+
+function componentActivities(component: Component, editing: boolean) {
+  const { activities } = component;
+  const { sequence, requested } = component.activityFlow ?? defaultActivityFlow(activities);
+  const direct = Object.keys(activities).filter(
+    (id) => !sequence.includes(id) && !requested.includes(id),
+  );
+  const activity = (id: string, list: ActivityList | 'project') => {
+    const definition = activities[id];
+    if (!definition) return '';
+    return editing ? activityForm(id, definition, list) : activityReadout(id, definition);
+  };
+  const sequenceRows = editing && sequence.length
+    ? reorderableList(['activityFlow', 'sequence'], sequence, (id) => activity(id, 'sequence'))
+    : sequence.map((id) => activity(id, 'sequence')).join('');
+  const requestedRows = requested.map((id) => activity(id, 'requested')).join('');
+  const directRows = direct.map((id) => activity(id, 'project')).join('');
+  return group(
+    'Activities',
+    group(activityLists.sequence, sequenceRows || '<small>No activities in the milestone sequence.</small>') +
+      group(activityLists.requested, requestedRows || '<small>No activities available on request.</small>') +
+      (directRows ? group(projectSelected, directRows) : ''),
+  );
+}
+
+function activityReadout(id: string, activity: Activity) {
+  const path = ['activities', id];
+  return disclosure(
+    path,
+    id,
+    activity.instructions
+      .map((prose, i) => markdownDisclosure([...path, 'instructions', i], 'Instruction ' + (i + 1), prose))
+      .join(''),
+    activity.executor ? 'Host' : 'Agent',
   );
 }
 
@@ -141,13 +163,14 @@ function componentDefaults(config?: Component['operationParameters']) {
   );
 }
 
-function activityForm(name: string, activity: Activity) {
+function activityForm(name: string, activity: Activity, list: ActivityList | 'project') {
   const path = ['activities', name];
   const actor = activity.executor ? 'Host' : 'Agent';
   return disclosure(
     path,
     name,
     `
+      ${selectField('Participation', ['activityFlow', 'participation', name], participation, list)}
       <div class="arc-form-grid">
         ${textField('Role', [...path, 'role'], activity.role)}
         ${activity.executor ? '' : textField('Execution profile', [...path, 'profile'], activity.profile ?? '')}

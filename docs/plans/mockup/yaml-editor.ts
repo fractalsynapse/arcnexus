@@ -10,12 +10,13 @@ import {
 } from '@codemirror/view';
 import { classHighlighter } from '@lezer/highlight';
 import { isNode, isScalar, isSeq, parseDocument } from 'yaml';
+import type { Scalar } from 'yaml';
 import { diffBody, draftDiff } from './diff.ts';
 import { mountMarkdownField } from './mdx-editor.ts';
 import type { DesignFile, Revision } from './model.ts';
 import { componentForm } from './component-form.ts';
 import { operationForm } from './operation-form.ts';
-import { prepareOperationDraft, yamlIssues } from './yaml-schema.ts';
+import { prepareComponentDraft, prepareOperationDraft, yamlIssues } from './yaml-schema.ts';
 import type { Component, Operation, YamlPath } from './yaml-schema.ts';
 import { SortableLists } from './sortable.ts';
 import { selectTab } from './tab-controls.ts';
@@ -72,12 +73,12 @@ class YamlEditor {
   ) {
     this.source = revision.content;
     this.document = parseDocument(this.source);
-    if (
-      file.type === 'Operation' &&
-      !this.document.errors.length &&
-      prepareOperationDraft(this.document)
-    )
-      this.serialize();
+    if (!this.document.errors.length) {
+      const prepared = file.type === 'Operation'
+        ? prepareOperationDraft(this.document)
+        : prepareComponentDraft(this.document);
+      if (prepared) this.serialize();
+    }
     this.mode = yamlIssues(this.document, file).length ? 'Raw' : 'Form';
   }
 
@@ -257,6 +258,10 @@ class YamlEditor {
       target instanceof HTMLTextAreaElement;
     if (!isField || !target.dataset.yamlField) return;
     const path = JSON.parse(target.dataset.yamlField) as YamlPath;
+    if (path[0] === 'activityFlow' && path[1] === 'participation') {
+      this.changeParticipation(String(path[2]), target.value);
+      return;
+    }
     if (target.dataset.yamlValues) {
       const values = JSON.parse(target.dataset.yamlValues) as Record<string, unknown>;
       if (!Object.hasOwn(values, target.value)) return;
@@ -269,6 +274,26 @@ class YamlEditor {
     }
     this.set(path, fieldValue(target));
     this.refresh();
+  }
+
+  /** Move an existing activity reference between flow groups. */
+  private changeParticipation(id: string, participation: string) {
+    const sequence = this.document.getIn(['activityFlow', 'sequence'], true);
+    const requested = this.document.getIn(['activityFlow', 'requested'], true);
+    if (!isSeq(sequence) || !isSeq(requested)) return;
+    let entry: Scalar = this.document.createNode(id);
+    for (const list of [sequence, requested]) {
+      const index = list.items.findIndex((item) => isScalar(item) && item.value === id);
+      const node = index < 0 ? undefined : list.items.splice(index, 1)[0];
+      if (isScalar(node)) entry = node;
+    }
+    if (participation === 'sequence') sequence.items.push(entry);
+    if (participation === 'requested') requested.items.push(entry);
+    this.serialize();
+    this.render();
+    const key = CSS.escape(JSON.stringify(['activityFlow', 'participation', id]));
+    const field = this.host?.querySelector<HTMLElement>(`[data-yaml-field="${key}"]`);
+    if (field) this.revealField(field);
   }
 
   /** Update one YAML node while retaining its comments and surrounding document. */
@@ -310,6 +335,8 @@ class YamlEditor {
     const { yamlMode, yamlList, yamlIndex, yamlSeed } = control.dataset;
     if (yamlMode === 'Form' || yamlMode === 'Raw') {
       if (this.mode === yamlMode || (yamlMode === 'Form' && !this.validate())) return;
+      if (yamlMode === 'Form' && this.file.type === 'Component' && prepareComponentDraft(this.document))
+        this.serialize();
       this.mode = yamlMode;
       this.render();
       this.host?.querySelector<HTMLElement>(`[data-yaml-mode="${yamlMode}"]`)?.focus();

@@ -77,8 +77,9 @@ retains the complete round and navigation.
   edits. As the editor scrolls, its toolbar pins directly below the fullscreen
   header. The read-only page keeps the complete source under Raw YAML.
   Use Objectives, Constraints, and Ownership to review one list at a
-  time. Each tab describes its list above the editable rows. Expand an
-  activity to edit its instructions, operation bindings,
+  time. Each tab describes its list above the editable rows. Reorder the
+  milestone sequence with the drag handles or their arrow keys. Expand an
+  activity to change its participation, instructions, operation bindings,
   standards, and verification references. A host activity has no model
   profile. Use Raw for named-map changes such as adding an activity or
   declaring a new parameter.

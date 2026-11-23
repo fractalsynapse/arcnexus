@@ -105,23 +105,36 @@ export function yamlList<T>(
   const key = escape(JSON.stringify(path));
   const rows = values.map((value, i) => {
     const itemLabel = label + ' ' + (i + 1);
-    return `<div class="arc-yaml-list-row" data-sort-row>
-      <div class="arc-yaml-list-fields">${field(value, [...path, i], itemLabel)}</div>
-      ${listButtons(key, itemLabel, i)}</div>`;
+    const name = escape(itemLabel);
+    return sortableRow(field(value, [...path, i], itemLabel), `${sortHandle(itemLabel)}
+      <button type="button" class="arc-button" data-yaml-list="${key}" data-yaml-index="${i}"
+        aria-label="Remove ${name}" data-arc-tooltip="Remove ${name}">×</button>`);
   });
-  return `<div class="arc-sort-list" data-sortable-list="${key}">${rows.join('')}</div>
+  return `${sortableList(key, rows)}
     <button type="button" class="arc-button" data-yaml-list="${key}"
       data-yaml-seed="${escape(JSON.stringify(seed))}">Add ${escape(label)}</button>`;
 }
 
-function listButtons(key: string, label: string, index: number) {
+export function reorderableList(path: YamlPath, ids: string[], row: (id: string) => string) {
+  const key = escape(JSON.stringify(path));
+  return sortableList(key, ids.map((id) => sortableRow(row(id), sortHandle(id))));
+}
+
+function sortableList(key: string, rows: string[]) {
+  return `<div class="arc-sort-list" data-sortable-list="${key}">${rows.join('')}</div>`;
+}
+
+function sortableRow(fields: string, buttons: string) {
+  return `<div class="arc-yaml-list-row" data-sort-row>
+    <div class="arc-yaml-list-fields">${fields}</div>
+    <div class="arc-row arc-yaml-row-actions">${buttons}</div></div>`;
+}
+
+function sortHandle(label: string) {
   const name = escape(label);
-  return `<div class="arc-row arc-yaml-row-actions">
-    <button type="button" class="arc-button arc-sort-handle" data-sort-handle
-      aria-label="Reorder ${name}" data-arc-tooltip="Drag to reorder ${name}"
-      aria-description="Drag to reorder or use the arrow keys"><span class="arc-sort-grip" aria-hidden="true"></span></button>
-    <button type="button" class="arc-button" data-yaml-list="${key}" data-yaml-index="${index}"
-      aria-label="Remove ${name}" data-arc-tooltip="Remove ${name}">×</button></div>`;
+  return `<button type="button" class="arc-button arc-sort-handle" data-sort-handle
+    aria-label="Reorder ${name}" data-arc-tooltip="Drag to reorder ${name}"
+    aria-description="Drag to reorder or use the arrow keys"><span class="arc-sort-grip" aria-hidden="true"></span></button>`;
 }
 
 export function textList(path: YamlPath, label: string, values: string[], multiline = false) {

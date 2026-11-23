@@ -43,6 +43,8 @@
 
 ### Added
 
+- Propose configurable component activities and preview milestone ordering, on-request participation, and project-selected activities in the Architect component editor (#703).
+
 - Add bottom Collapse controls and fullscreen Markdown reading and editing for component purpose and instructions (#703).
 
 - Use the shared Form, Raw, and Changes editor for every captured operation and component in the Architect mockup (#703).
