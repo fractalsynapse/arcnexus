@@ -36,6 +36,8 @@ import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage } from './run.ts';
 import { releasePage } from './run-release.ts';
 import { changeSnapshotPreview, selectStagingRevision, snapshotReleasePage } from './snapshot-release.ts';
+import { advanceProductionPreview, recordProductionDecision, selectProductionScenario } from './production-preview.ts';
+import { productionApprovalPage, productionIncidentPage } from './production-release.ts';
 import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
 import { bindTopicPickers, clearTopicDraft, closeTopicPopup, savedTopics } from './topic-picker.ts';
@@ -48,7 +50,7 @@ export function workspace(): Workspace {
 }
 
 export function renderCommand(reset = false) {
-  const detailPage = state.route.endsWith('/file/') || state.route.endsWith('/question/');
+  const detailPage = state.route.endsWith('/file/') || state.route.endsWith('/question/') || state.route === '/release/approval/';
   const headerAction = dom('.arc-header-action');
   headerAction.innerHTML = detailPage
     ? button('Back', '/' + workspace() + '/', 'arrow-left')
@@ -81,7 +83,9 @@ const routes: Record<string, () => string> = {
   '/run/review/': () => sectionDetail('Review'),
   '/run/review/log/': () => actorLog('Review'),
   '/run/delivery/': releasePage,
+  '/run/incident/': productionIncidentPage,
   '/release/': snapshotReleasePage,
+  '/release/approval/': productionApprovalPage,
 };
 
 export function render(resetComposer = false) {
@@ -162,7 +166,13 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
   else if (action === 'advance-queue') advanceQueue();
-  else if (workspace() === 'release' && changeSnapshotPreview(action)) {
+  else if (state.route === '/release/approval/' && recordProductionDecision(action)) {
+    go('/release/');
+    dom<HTMLElement>('#arc-production-release').focus();
+  } else if (state.route === '/release/' && advanceProductionPreview(action)) {
+    render();
+    dom<HTMLElement>('#arc-production-release').focus({ preventScroll: true });
+  } else if (state.route === '/release/' && changeSnapshotPreview(action)) {
     render();
     dom<HTMLElement>('[data-change="staging-revision"]').focus({ preventScroll: true });
   }
@@ -261,6 +271,7 @@ function changeField(kind: string, field: HTMLSelectElement | HTMLInputElement):
   else if (kind === 'run-goal') changeRun(value);
   else if (kind === 'run-revision') state.runRevision = value;
   else if (kind === 'staging-revision') return selectStagingRevision(value);
+  else if (kind === 'production-scenario') return selectProductionScenario(value);
   else if (kind === 'milestone') state.milestone = value;
   else if (kind === 'file-revision') {
     state.revision = Number(value);

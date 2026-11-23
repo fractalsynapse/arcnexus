@@ -43,6 +43,8 @@
 
 ### Added
 
+- Preview production specialist reviews, exact release approval, merge and publication evidence, and failed-check incident follow-up for a pinned staging candidate (#703).
+
 - Add an independent Release workspace with a verified staging revision selector, an included PR list, and a pinned candidate preview (#703).
 
 - Propose milestone Release checkpoints and show four expandable stages of goal-level release evidence, including post-merge checks, in the Run mockup (#703).

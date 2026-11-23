@@ -9,6 +9,11 @@ import {
   status,
 } from './view.ts';
 
+export function releaseEvidenceRow(label: string, state: string, body: string) {
+  return `<li><details><summary><span class="arc-release-label">${escape(label)}</span>${status(state)}</summary>
+    <div class="arc-release-stage-body">${body}</div></details></li>`;
+}
+
 const stagingStatus = {
   Passed: 'Verified on staging',
   Failed: 'Merged · checks failed',

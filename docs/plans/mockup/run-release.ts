@@ -3,7 +3,7 @@ import type { Goal } from './model.ts';
 import { ogsmGoal } from './ogsm-example.ts';
 import { exampleLabel } from './ogsm.ts';
 import { splitPanels } from './panels.ts';
-import { releaseChecks, releaseEvidence } from './release-evidence.ts';
+import { releaseChecks, releaseEvidence, releaseEvidenceRow } from './release-evidence.ts';
 import { currentGoal, currentSnapshot, revisionControl } from './run-context.ts';
 import {
   breadcrumbs,
@@ -106,10 +106,10 @@ function evidenceStages(goal: Goal, evidence: Evidence) {
           : 'Post-merge checks require a staging commit.',
       );
   return `<ol class="arc-release-stages">
-    ${evidenceRow('Independent review', review ? outcomeName(review.kind) : 'Not recorded', reviewDetail)}
-    ${evidenceRow('PR checks and external review', prState, gateDetail)}
-    ${evidenceRow('Staging merge', commit ? 'Merged' : 'Not recorded', mergeEvidence(goal.delivery.publication, commit))}
-    ${evidenceRow('Post-merge checks', postMerge, postDetail)}</ol>`;
+    ${releaseEvidenceRow('Independent review', review ? outcomeName(review.kind) : 'Not recorded', reviewDetail)}
+    ${releaseEvidenceRow('PR checks and external review', prState, gateDetail)}
+    ${releaseEvidenceRow('Staging merge', commit ? 'Merged' : 'Not recorded', mergeEvidence(goal.delivery.publication, commit))}
+    ${releaseEvidenceRow('Post-merge checks', postMerge, postDetail)}</ol>`;
 }
 
 function mergeEvidence(publication: Goal['delivery']['publication'], commit?: string) {
@@ -122,11 +122,6 @@ function mergeEvidence(publication: Goal['delivery']['publication'], commit?: st
     ],
     'arc-release-revisions',
   );
-}
-
-function evidenceRow(label: string, state: string, body: string) {
-  return `<li><details><summary><span class="arc-release-label">${escape(label)}</span>${status(state)}</summary>
-    <div class="arc-release-stage-body">${body}</div></details></li>`;
 }
 
 function releaseAction(evidence: Evidence) {

@@ -106,3 +106,7 @@ retains the complete round and navigation.
 - Open **Release** from the header after Run. Prepare revision B, simulate C's
   verification, and check that the prepared scope still includes A and B. Select
   C to preview A through C, then replace the candidate to pin the new scope.
+- Pin revision B and use **Release scenario** under **Production release**.
+  Try the specialist rejection, then switch scenarios to review the release
+  approval, simulate merge, tag and publication, and run the post-release
+  checks. The failure scenario opens an illustrative production incident in Run.

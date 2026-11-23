@@ -207,15 +207,17 @@ export function pill(text: string, type = '') {
   return '<span class="arc-pill ' + type + '">' + escape(text) + '</span>';
 }
 
-const activeStatuses = ['Active', 'Running', 'Merged · verifying'];
+const activeStatuses = ['Active', 'Running', 'Merged · verifying', 'Released · verifying'];
 const actionStatuses = [
   'Rejected', 'Changes requested', 'Checks failed', 'Needs correction', 'Cancelled', 'Interrupted',
   'Hosted check failed', 'Failed', 'PR checks failed', 'Merged · checks failed',
+  'Specialist changes requested', 'Released · checks failed', 'Production outage',
 ];
 const quietStatuses = [
   'Waiting', 'Idle', 'Ready', 'Pending', 'Unavailable', 'Inapplicable', 'No verdict recorded',
   'Not recorded', 'Unrecorded', 'Checkpoint unrecorded', 'Merged · checks unrecorded',
   'Merged · checks unavailable', 'Awaiting external review',
+  'Awaiting decision', 'On hold',
 ];
 
 export function status(text: string) {

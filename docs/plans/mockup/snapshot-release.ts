@@ -1,4 +1,6 @@
 import { exampleLabel } from './ogsm.ts';
+import { startProductionPreview } from './production-preview.ts';
+import { productionReleasePanel } from './production-release.ts';
 import { escape, localDate, noData, panel, pill, readouts, status, title } from './view.ts';
 
 const previousRelease = { tag: 'v0.3.0-example', source: 'staging-base' };
@@ -54,13 +56,14 @@ export function changeSnapshotPreview(action: string) {
     action === 'prepare-release-candidate' &&
     verified(selected) &&
     prepared?.revision !== selected
-  )
+  ) {
     prepared = {
       previous: previousRelease,
       revision: selected,
       included: includedThrough(selected),
     };
-  else return false;
+    startProductionPreview(prepared.revision.id);
+  } else return false;
   return true;
 }
 
@@ -76,7 +79,8 @@ export function snapshotReleasePage() {
     `<div class="arc-grid equal">
       <div class="arc-stack">${stagingSelector()}${candidatePanel()}</div>
       ${includedPanel(included, pinnedPreview ? 'Pinned' : 'Preview')}
-    </div>`
+    </div>` +
+    productionReleasePanel()
   );
 }
 
