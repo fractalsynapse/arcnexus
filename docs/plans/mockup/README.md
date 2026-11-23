@@ -64,7 +64,8 @@ retains the complete round and navigation.
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
 - Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  The draft previews the proposed removal of Applicability and Category in Changes. Drag an
+  Edit Purpose to update the MCP discovery description. Changes shows the
+  proposed Purpose and the removal of Applicability and Category. Drag an
   argument or default selector by its handle. The gap marks the new position.
   Use the arrow keys on a focused handle to reorder with the keyboard. Switch to
   Raw to edit the same draft as YAML.

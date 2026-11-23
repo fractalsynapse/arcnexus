@@ -16,11 +16,13 @@ export function operationForm(operation: Operation) {
     ${readOnlyField('MCP name', operation.id)}${readOnlyField('Network access', 'Disabled')}
   </div>`;
   return `<fieldset class="arc-yaml-group"><legend>Operation</legend>
-    ${identity}<div class="arc-form-grid">${Object.entries(operationFields)
-      .map(([name, schema]) =>
-        operationField(name as keyof typeof operationFields, schema, operation),
-      )
-      .join('')}</div></fieldset>
+    ${identity}${purposeField(operation)}
+    <details class="arc-mcp-preview" open>
+      <summary>MCP discovery preview</summary>
+      <p><code>${escape(operation.id)}</code></p>
+      <p data-mcp-purpose></p>
+    </details>
+    <div class="arc-form-grid">${operationField('command', operation)}${operationField('cwd', operation)}</div></fieldset>
     <fieldset class="arc-yaml-group"><legend>Arguments</legend>
     <div class="arc-sort-list" data-sortable-list="argument">${operation.args.map(argumentRow).join('')}</div>
     ${addButton('argument', 'Add argument')}</fieldset>
@@ -35,12 +37,19 @@ function readOnlyField(label: string, value: string) {
   return `<label>${escape(label)}<input readonly value="${escape(value)}"></label>`;
 }
 
-function operationField(
-  key: keyof typeof operationFields,
-  schema: (typeof operationFields)[keyof typeof operationFields],
-  operation: Operation,
-) {
-  const metadata = schema.meta();
+function purposeField(operation: Operation) {
+  const path = ['purpose'];
+  const metadata = operationFields.purpose.meta();
+  return field(
+    metadata?.title ?? 'Purpose',
+    path,
+    `<textarea ${fieldAttributes(path)} rows="2">${escape(operation.purpose)}</textarea>`,
+    metadata?.description,
+  );
+}
+
+function operationField(key: 'command' | 'cwd', operation: Operation) {
+  const metadata = operationFields[key].meta();
   return textField(metadata?.title ?? key, [key], operation[key], metadata?.description);
 }
 

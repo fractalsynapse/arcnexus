@@ -13,7 +13,12 @@ import { isNode, isScalar, isSeq, parseDocument } from 'yaml';
 import { diffBody, draftDiff } from './diff.ts';
 import type { Revision } from './model.ts';
 import { argumentPath, argumentValues, defaultsPath, operationForm } from './operation-form.ts';
-import { operationIssues, ownerTestsPath, removedOperationFields } from './owner-tests-schema.ts';
+import {
+  operationIssues,
+  ownerTestsPath,
+  ownerTestsPurpose,
+  removedOperationFields,
+} from './owner-tests-schema.ts';
 import type { Operation, YamlPath } from './owner-tests-schema.ts';
 import { SortableLists } from './sortable.ts';
 import { noData } from './view.ts';
@@ -51,14 +56,16 @@ class OperationEditor {
   private status?: HTMLElement;
   private sorter?: SortableLists;
 
-  /** Preview the proposed removals in a draft based on the selected capture. */
+  /** Prepare the proposed operation fields in a draft based on the selected capture. */
   constructor(readonly revision: Revision) {
     this.source = revision.content;
     this.document = parseDocument(this.source);
     if (!this.document.errors.length) {
       const removed = removedOperationFields.filter((field) => this.document.has(field));
       for (const field of removed) this.document.delete(field);
-      if (removed.length) this.serialize();
+      const addPurpose = !this.document.has('purpose');
+      if (addPurpose) this.document.set('purpose', ownerTestsPurpose);
+      if (removed.length || addPurpose) this.serialize();
     }
     this.mode = operationIssues(this.document).length ? 'Raw' : 'Form';
   }
@@ -137,6 +144,13 @@ class OperationEditor {
   /** Update errors and the preview comparison after an edit. */
   private refresh() {
     this.validate();
+    const preview = this.host?.querySelector('[data-mcp-purpose]');
+    const purpose = this.document.get('purpose');
+    if (preview)
+      preview.textContent =
+        typeof purpose === 'string' && purpose.trim()
+          ? purpose
+          : 'Enter a purpose to preview the description.';
     if (this.status) this.status.textContent = '';
     if (!this.changes) return;
     this.changes.innerHTML =
@@ -173,7 +187,11 @@ class OperationEditor {
 
   /** Apply one field change and rebuild controls when an argument changes type. */
   private input(target: EventTarget | null) {
-    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    const isField =
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLSelectElement ||
+      target instanceof HTMLTextAreaElement;
+    if (!isField) return;
     const { yamlField, yamlKind } = target.dataset;
     if (yamlKind !== undefined) {
       const index = Number(yamlKind);

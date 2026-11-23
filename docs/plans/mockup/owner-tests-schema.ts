@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 export const ownerTestsPath = '.arc/architecture/operations/owner-tests.yaml';
 export const removedOperationFields = ['applicability', 'category'];
+export const ownerTestsPurpose =
+  'Run the current component’s tests using its configured selectors to verify behavior changes.';
 
 function text(title: string, description: string) {
   return z
@@ -14,6 +16,7 @@ function text(title: string, description: string) {
 }
 
 export const operationFields = {
+  purpose: text('Purpose', 'Describe when Codex should choose this operation.'),
   command: text('Command', 'Executable name'),
   cwd: text('Working directory', 'Path relative to the repository root'),
 };

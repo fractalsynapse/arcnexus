@@ -6,3 +6,4 @@ These drafts record architecture decisions surfaced while reviewing the [ArcNexu
 | --- | --- | --- |
 | [Remove operation applicability](remove-operation-applicability.md) | Draft for design review | Architect file editor for `owner-tests.yaml` |
 | [Remove operation categories](remove-operation-categories.md) | Direction agreed, exact amendment pending | Architect file editor for `owner-tests.yaml` |
+| [Describe operations in MCP discovery](operation-purpose.md) | Draft for design review | Purpose field in `owner-tests.yaml` |

@@ -35,6 +35,8 @@
 
 ### Added
 
+- Add a Purpose field and a live MCP discovery description preview to the `owner-tests.yaml` mockup form (#703).
+
 - Record the decision to remove operation categories and preview the proposed YAML in the `owner-tests.yaml` mockup editor (#703).
 
 - Share topic suggestions between the file explorer and Plan and Architect file editors. Add topics with Enter and reorder YAML arguments and selectors with drag handles and a visible insertion gap (#703).
