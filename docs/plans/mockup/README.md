@@ -32,9 +32,8 @@ retains the complete round and navigation.
   desktop, drag column dividers or use their arrow keys. The layout is saved in
   the current browser for that page. Use the header palette button to create
   named color schemes, edit their colors, or choose the site default. The site
-  default sets the background behind panels on every page. Page content can
-  inherit the site default, and panels can inherit the page scheme. Both
-  selectors show each scheme's swatches and name. Use **Save** to apply display
+  default sets the background and theme across all pages. Panels can inherit
+  it or choose a scheme by name and swatches. Use **Save** to apply display
   settings or **Close** to discard the draft.
 
 - Read total input and output separately. Calculate cache rate from reported cached

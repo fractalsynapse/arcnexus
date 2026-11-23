@@ -111,7 +111,6 @@ function pageDefaults() {
 
 export function applyDisplay() {
   applyPalette(root, findColorScheme(colorSchemes.site)?.colors ?? {}, true);
-  applyPalette(main, findColorScheme(display.scheme)?.colors ?? {});
   for (const { id, section } of pagePanels)
     applyPalette(section, findColorScheme(display.panelSchemes[id])?.colors ?? {});
 }

@@ -96,25 +96,17 @@ export function pageSettingsView(
   registry: readonly DisplayPanel[],
   tab: SettingsTab,
 ) {
-  const site = findColorScheme(colorSchemes.site) ?? {
-    name: 'ArcNexus',
-    colors: defaultSchemeColors(),
-  };
   return panel(
     `${title} page settings`,
-    layoutChoices(draft.layout) +
-      panelTabs(draft, registry, tab) +
-      schemeSelector('page', 'Page content scheme', draft.scheme, {
-        name: `Use site default · ${site.name}`,
-        colors: site.colors,
-      }) +
-      settingsActions(),
+    layoutChoices(draft.layout) + panelTabs(draft, registry, tab) + settingsActions(),
   );
 }
 
 export function panelSettingsView(draft: Preferences, id: PanelId) {
-  const page = findColorScheme(draft.scheme) ??
-    findColorScheme(colorSchemes.site) ?? { name: 'ArcNexus', colors: defaultSchemeColors() };
+  const site = findColorScheme(colorSchemes.site) ?? {
+    name: 'ArcNexus',
+    colors: defaultSchemeColors(),
+  };
   return `<div class="arc-body arc-panel-display-settings" data-panel-display-settings><h3>Display settings</h3>
-    ${schemeSelector('panel', 'Color scheme', draft.panelSchemes[id], { name: `Use page default · ${page.name}`, colors: page.colors })}${settingsActions()}</div>`;
+    ${schemeSelector('panel', 'Color scheme', draft.panelSchemes[id], { name: `Use site default · ${site.name}`, colors: site.colors })}${settingsActions()}</div>`;
 }

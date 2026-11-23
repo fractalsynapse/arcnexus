@@ -67,7 +67,7 @@
 
 ### Added
 
-- Create and edit reusable color schemes from the mockup header. Choose a site default and let pages and panels inherit their parent scheme or select one by name and swatches (#703).
+- Create and edit reusable color schemes from the mockup header. Choose a site default for all pages and select individual panel overrides by name and swatches (#703).
 
 - Preview configurable panels across the mockup, with per-page desktop layouts and mobile order, plus site and panel palettes with dark shades for every color family (#703).
 

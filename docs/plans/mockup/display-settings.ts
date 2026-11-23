@@ -91,11 +91,10 @@ function renderPageForm(session: Session) {
 }
 
 function changeSettings(session: Session, target: EventTarget | null) {
-  if (target instanceof HTMLSelectElement && target.dataset.schemeSelect) {
-    if (session.scope === 'page') session.draft.scheme = target.value;
-    else session.draft.panelSchemes[session.scope] = target.value;
-  } else if (session.scope === 'page') {
+  if (session.scope === 'page') {
     changePageSettings(session, target);
+  } else if (target instanceof HTMLSelectElement && target.dataset.schemeSelect === 'panel') {
+    session.draft.panelSchemes[session.scope] = target.value;
   }
 }
 
