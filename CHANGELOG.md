@@ -39,6 +39,8 @@
 
 ### Added
 
+- Add bottom Collapse controls and fullscreen Markdown reading and editing for component purpose and instructions (#703).
+
 - Use the shared Form, Raw, and Changes editor for every captured operation and component in the Architect mockup (#703).
 
 - Add a dedicated Purpose section above the operation settings in the `owner-tests.yaml` mockup form (#703).

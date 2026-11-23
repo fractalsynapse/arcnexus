@@ -1,4 +1,5 @@
 import { phaseActor, phaseRows } from './composer.ts';
+import { componentReadout } from './component-form.ts';
 import { diffView, draftDiff } from './diff.ts';
 import { markdownContent } from './markdown.ts';
 import { overview, splitPanels } from './panels.ts';
@@ -334,5 +335,10 @@ function fileContent(item: DesignFile, rev: Revision) {
   if (state.editing)
     return `<label><span class="arc-sr">File content</span>
     <textarea name="content" class="arc-content-edit" required>${escape(rev.content)}</textarea></label>`;
-  return `<div class="arc-markdown arc-code-view"><pre><code class="language-yaml">${escape(rev.content)}</code></pre></div>`;
+  const yaml = `<div class="arc-markdown arc-code-view"><pre><code class="language-yaml">${escape(rev.content)}</code></pre></div>`;
+  const prose = item.type === 'Component' ? componentReadout(rev.content) : '';
+  return prose
+    ? `<div class="arc-stack">${prose}<details class="arc-yaml-disclosure"><summary>Raw YAML</summary>
+      <div class="arc-yaml-section-body">${yaml}</div></details></div>`
+    : yaml;
 }

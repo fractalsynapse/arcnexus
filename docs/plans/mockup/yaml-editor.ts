@@ -47,6 +47,10 @@ export function saveYamlDraft() {
   return editor?.save();
 }
 
+export function mountYamlMarkdownField(host: HTMLElement) {
+  editor?.mountMarkdown(host);
+}
+
 /** Own one YAML draft across the form, source editor, and Changes pane. */
 class YamlEditor {
   private source: string;
@@ -157,19 +161,24 @@ class YamlEditor {
   /** Mount the shared editor only for prose fields the operator has expanded. */
   private readonly mountExpandedFields = () => {
     for (const field of this.host?.querySelectorAll<HTMLElement>('[data-yaml-markdown]') ?? []) {
-      if (this.markdownViews.has(field) || field.closest('details:not([open])')) continue;
-      const path = JSON.parse(field.dataset.yamlField ?? '[]') as YamlPath;
-      const body = this.document.getIn(path);
-      if (typeof body !== 'string') continue;
-      this.markdownViews.set(
-        field,
-        mountMarkdownField(field, body, (updated) => {
-          this.set(path, updated);
-          this.refresh();
-        }),
-      );
+      if (!field.closest('details:not([open])')) this.mountMarkdown(field);
     }
   };
+
+  /** Share one editor and draft between inline and fullscreen views of the field. */
+  mountMarkdown(field: HTMLElement) {
+    if (this.markdownViews.has(field) || !field.dataset.yamlField) return;
+    const path = JSON.parse(field.dataset.yamlField) as YamlPath;
+    const body = this.document.getIn(path);
+    if (typeof body !== 'string') return;
+    this.markdownViews.set(
+      field,
+      mountMarkdownField(field, body, (updated) => {
+        this.set(path, updated);
+        this.refresh();
+      }),
+    );
+  }
 
   /** Detach each Markdown root before replacing or leaving the form. */
   private unmountMarkdownFields() {
@@ -222,10 +231,11 @@ class YamlEditor {
   private validate(document = this.document) {
     const issues = yamlIssues(document, this.file);
     const messages = new Map(issues.map(({ path, message }) => [JSON.stringify(path), message]));
-    this.host?.querySelectorAll<HTMLElement>('[data-yaml-field]').forEach((field) => {
+    const scope = this.host?.closest('#arc-preview');
+    scope?.querySelectorAll<HTMLElement>('[data-yaml-field]').forEach((field) => {
       field.setAttribute('aria-invalid', String(messages.has(field.dataset.yamlField ?? '')));
     });
-    this.host?.querySelectorAll<HTMLElement>('[data-yaml-error]').forEach((entry) => {
+    scope?.querySelectorAll<HTMLElement>('[data-yaml-error]').forEach((entry) => {
       const key = entry.dataset.yamlError ?? '';
       entry.textContent = messages.get(key) ?? '';
       messages.delete(key);

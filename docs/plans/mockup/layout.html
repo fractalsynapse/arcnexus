@@ -28,6 +28,10 @@
     <div class="arc-panel-head"><h2 id="arc-inspector-heading"></h2><button type="button" class="arc-button" data-action="close-inspector" autofocus>Close</button></div>
     <div class="arc-inspector-content"></div>
   </dialog>
+  <dialog class="arc-prose-dialog" aria-labelledby="arc-prose-heading">
+    <div class="arc-panel-head"><h2 id="arc-prose-heading"></h2><button type="button" class="arc-button" data-action="close-prose" autofocus>Close</button></div>
+    <div class="arc-prose-scroll"></div>
+  </dialog>
   <div class="arc-tooltip" popover="manual" role="tooltip"></div>
 </div>
 
@@ -260,6 +264,15 @@
 #arc-preview .arc-yaml-disclosure[open] > summary { border-bottom:1px solid var(--line); border-radius:6px 6px 0 0; }
 #arc-preview .arc-yaml-disclosure[open] > summary::after { rotate:225deg; }
 #arc-preview .arc-yaml-section-body { display:grid; gap:8px; min-width:0; padding:8px 10px; }
+#arc-preview .arc-prose-field { position:relative; min-width:0; }
+#arc-preview .arc-prose-field > details > summary { padding-inline-end:46px; }
+#arc-preview .arc-prose-open {
+  position:absolute; inset-block-start:1px; inset-inline-end:3px;
+  justify-content:center; inline-size:34px; block-size:calc(1lh + 16px); border-radius:6px;
+}
+#arc-preview .arc-prose-open i:empty::before { content:'⛶'; font:17px/1 system-ui,sans-serif; }
+#arc-preview .arc-prose-open:is(:hover,:focus-visible) { background:var(--tint); }
+#arc-preview .arc-prose-end { display:flex; justify-content:flex-end; }
 #arc-preview .arc-component-tabs { border:1px solid var(--line); border-radius:7px; min-width:0; }
 #arc-preview .arc-component-tabs .arc-tabs { padding:5px; gap:3px; }
 #arc-preview .arc-component-tabs [aria-selected=true] { color:var(--link); background:var(--tint); border-color:var(--line); }
@@ -292,6 +305,8 @@
 @media (pointer:coarse) {
   #arc-preview .arc-yaml-row-actions button { min-inline-size:44px; }
   #arc-preview .arc-yaml-disclosure > summary { min-block-size:44px; }
+  #arc-preview .arc-prose-field > details > summary { padding-inline-end:54px; }
+  #arc-preview .arc-prose-open { inline-size:44px; min-block-size:44px; }
 }
 #arc-preview textarea.arc-mdx-code { font-family:ui-monospace,monospace; }
 #arc-preview .arc-markdown :is(.hljs-section,.hljs-bullet,.hljs-keyword,.hljs-attr,.hljs-strong) { color:var(--link); font-weight:650; }
@@ -476,6 +491,15 @@
 #arc-preview .arc-inspector > .arc-panel-head { flex:none; }
 #arc-preview .arc-inspector::backdrop { background:#06182ca1; }
 #arc-preview .arc-inspector-content { display:grid; align-content:start; min-height:0; gap:12px; padding:14px; overflow:auto; }
+html:has(.arc-prose-dialog[open]) { overflow:hidden; }
+#arc-preview .arc-prose-dialog {
+  position:fixed; inset:0 auto auto 0; margin:0; inline-size:100vw; block-size:100dvh;
+  max-inline-size:none; max-block-size:none; padding:0; border:0; overflow:hidden;
+  color:var(--ink); background:var(--paper);
+}
+#arc-preview .arc-prose-dialog[open] { display:flex; flex-direction:column; }
+#arc-preview .arc-prose-dialog > .arc-panel-head { flex:none; }
+#arc-preview .arc-prose-scroll { flex:1; min-block-size:0; padding:var(--pad); overflow:auto; overscroll-behavior:contain; }
 #arc-preview .arc-inspect-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 #arc-preview .arc-payload-pane { display:grid; align-content:start; min-width:0; gap:7px; }
 #arc-preview .arc-payload { margin:0; padding:9px; background:var(--quiet); border:1px solid var(--line); border-radius:7px;

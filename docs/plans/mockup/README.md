@@ -71,7 +71,11 @@ retains the complete round and navigation.
   confined checks.
 - In a component, edit the catalog Summary above the collapsed Purpose field.
   Purpose and each activity instruction use the Markdown file editor when
-  expanded. Use Objectives, Constraints, and Ownership to review one list at a
+  expanded in Edit mode and the Markdown viewer on a captured revision.
+  Collapse a long field from the bottom, or open it fullscreen from its header.
+  Closing fullscreen returns focus to the collapsed field and keeps draft
+  edits. The read-only page keeps the complete source under Raw YAML.
+  Use Objectives, Constraints, and Ownership to review one list at a
   time. Expand an activity to edit its instructions, operation bindings,
   standards, and verification references. A host activity has no model
   profile. Use Raw for named-map changes such as adding an activity or

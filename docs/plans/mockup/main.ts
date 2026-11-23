@@ -12,7 +12,8 @@ import { navigateTabs, selectTab } from './tab-controls.ts';
 import { workspaceIndex, updateFileList, fileView } from './files.ts';
 import { highlightFileCode } from './markdown.ts';
 import { detachMarkdownEditor, editedMarkdown, mountMarkdownEditor } from './mdx-editor.ts';
-import { detachYamlEditor, mountYamlEditor, saveYamlDraft } from './yaml-editor.ts';
+import { detachYamlEditor, mountYamlEditor, mountYamlMarkdownField, saveYamlDraft } from './yaml-editor.ts';
+import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
@@ -91,6 +92,7 @@ export function render(resetComposer = false) {
   operationGroups.clear();
   dismissTooltip();
   closeTopicPopup();
+  closeProse();
   detachMarkdownEditor();
   detachYamlEditor();
   main.innerHTML = requireValue(routes[r])();
@@ -148,6 +150,9 @@ export function handleClick(control: HTMLButtonElement) {
 
 export function handleAction(control: HTMLButtonElement, action: string) {
   if (action === 'close-inspector') dom<HTMLDialogElement>('.arc-inspector').close();
+  else if (action === 'open-prose') showProse(control, mountYamlMarkdownField);
+  else if (action === 'collapse-prose') collapseProse(control);
+  else if (action === 'close-prose') closeProse();
   else if (action === 'round-metrics') openRoundMetrics(control);
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');

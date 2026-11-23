@@ -1,5 +1,7 @@
+import { parseDocument } from 'yaml';
 import { escape } from './view.ts';
 import type { Activity, Component, ParameterValue, YamlPath } from './yaml-schema.ts';
+import { componentSchema } from './yaml-schema.ts';
 import {
   disclosure,
   group,
@@ -30,6 +32,42 @@ export function componentForm(component: Component, selected = 'objectives') {
         .join(''),
     )
   );
+}
+
+export function componentReadout(source: string) {
+  const component = readComponent(source);
+  if (!component) return '';
+  const activities = Object.entries(component.activities)
+    .map(([name, activity]) =>
+      disclosure(
+        ['activities', name],
+        name,
+        activity.instructions
+          .map((prose, i) =>
+            markdownDisclosure(
+              ['activities', name, 'instructions', i],
+              'Instruction ' + (i + 1),
+              prose,
+            ),
+          )
+          .join(''),
+        activity.executor ? 'Host' : 'Agent',
+      ),
+    )
+    .join('');
+  return (
+    markdownDisclosure(['purpose'], 'Purpose', component.purpose) + group('Activities', activities)
+  );
+}
+
+function readComponent(source: string) {
+  const document = parseDocument(source);
+  if (document.errors.length) return undefined;
+  try {
+    return componentSchema.safeParse(document.toJS()).data;
+  } catch {
+    return undefined;
+  }
 }
 
 function componentTabs(component: Component, selected: string) {

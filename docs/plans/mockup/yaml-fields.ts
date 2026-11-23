@@ -1,5 +1,6 @@
 import type { ParameterValue, YamlPath } from './yaml-schema.ts';
-import { escape, options } from './view.ts';
+import { markdownViewer } from './markdown.ts';
+import { escape, icon, options } from './view.ts';
 
 type ControlOptions = {
   multiline?: boolean;
@@ -34,12 +35,20 @@ export function disclosure(path: YamlPath, label: string, body: string, qualifie
     <div class="arc-yaml-section-body">${body}</div></details>`;
 }
 
-export function markdownDisclosure(path: YamlPath, label: string) {
-  return disclosure(
-    path,
-    label,
-    `<div class="arc-md-edit" data-yaml-markdown role="group" aria-label="${escape(label)}" tabindex="-1" ${attributes(path)}></div>${fieldError(path)}`,
-  );
+export function markdownDisclosure(path: YamlPath, label: string, prose?: string) {
+  const name = escape(label);
+  const fullLabel = escape('Open ' + label + ' fullscreen');
+  const field =
+    prose === undefined
+      ? `<div class="arc-md-edit" data-yaml-markdown role="group" aria-label="${name}" tabindex="-1" ${attributes(path)}></div>${fieldError(path)}`
+      : markdownViewer(prose);
+  const body = `<div data-prose-content>${field}</div>
+    <div class="arc-prose-end"><button type="button" class="arc-button" data-action="collapse-prose"
+      aria-label="Collapse ${name}">Collapse</button></div>`;
+  return `<div class="arc-prose-field">
+    <button type="button" class="arc-link arc-prose-open" data-action="open-prose" data-prose-title="${name}"
+      aria-label="${fullLabel}" aria-haspopup="dialog" data-arc-tooltip="${fullLabel}">${icon('maximize')}</button>
+    ${disclosure(path, label, body)}</div>`;
 }
 
 export function checkbox(label: string, path: YamlPath, checked: boolean) {

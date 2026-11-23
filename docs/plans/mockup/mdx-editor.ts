@@ -64,16 +64,21 @@ export function mountMarkdownField(
   body: string,
   onEdit: (body: string) => void,
 ) {
-  return mountMarkdownBody(host, newDraft(body), onEdit);
+  return mountMarkdownBody(host, newDraft(body), onEdit, host);
 }
 
-function mountMarkdownBody(host: HTMLElement, entry: Draft, onEdit?: (body: string) => void) {
+function mountMarkdownBody(
+  host: HTMLElement,
+  entry: Draft,
+  onEdit?: (body: string) => void,
+  overlay = host.closest<HTMLElement>('#arc-preview'),
+) {
   installStyle();
   const root = createRoot(host);
   root.render(
     createElement(MDXEditor, {
       className: 'arc-mdx',
-      overlayContainer: host.closest<HTMLElement>('#arc-preview'),
+      overlayContainer: overlay,
       contentEditableClassName: 'arc-markdown arc-mdx-visual',
       markdown: entry.body,
       trim: false,

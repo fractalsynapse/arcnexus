@@ -50,13 +50,18 @@ export function splitMarkdown(source: string) {
 
 export function markdownContent(source: string, editing: boolean) {
   if (editing) return '<div class="arc-md-edit" data-md-editor></div>';
-  const { body } = splitMarkdown(source);
+  return markdownViewer(splitMarkdown(source).body);
+}
+
+export function markdownViewer(body: string) {
   const html = parser.parse(body, { async: false });
   return `<article class="arc-markdown arc-md-view">${html}</article>`;
 }
 
 export function highlightFileCode(parent: HTMLElement) {
-  for (const block of parent.querySelectorAll<HTMLElement>(':is(.arc-md-view,.arc-code-view) pre code')) {
+  for (const block of parent.querySelectorAll<HTMLElement>(
+    ':is(.arc-md-view,.arc-code-view) pre code',
+  )) {
     const language = [...block.classList].find((name) => name.startsWith('language-'))?.slice(9);
     if (language && highlight.getLanguage(language)) {
       block.innerHTML = highlight.highlight(block.textContent ?? '', { language }).value;
