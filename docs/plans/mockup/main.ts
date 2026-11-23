@@ -16,6 +16,8 @@ import { detachYamlEditor, mountYamlEditor, mountYamlMarkdownField, saveYamlDraf
 import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
+import { applyPlanDisplay, bindPlanResize, desktopPlan } from './plan-layout.ts';
+import { bindPlanSettings, discardPlanSettings, refreshPlanSettings } from './plan-settings.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { mountRoundFooter, openRoundMetrics, toggleRoundFooter } from './round.ts';
 import { openGoalProgress } from './ogsm.ts';
@@ -104,22 +106,29 @@ export function render(resetComposer = false) {
   detachMarkdownEditor();
   detachYamlEditor();
   main.innerHTML = requireValue(routes[r])();
+  applyPlanDisplay();
+  refreshPlanSettings();
   highlightFileCode(main);
   const file = files[state.fileId];
   const revision = file?.revisions[state.revision];
   mountMarkdownEditor(main.querySelector('[data-md-editor]'), revision);
   mountYamlEditor(main, file, revision);
-  const added = previewRows();
-  if (added.length && !r.endsWith('/question/') && !main.querySelector('.arc-grouped-log')) {
-    const logPane = eventLogPane(requireValue(target()).role, added, false);
-    main.insertAdjacentHTML('beforeend', `<div class="arc-live-log">${standalonePane(logPane)}</div>`);
-  }
+  renderPreviewConversation(r);
   updateFileList();
   renderCommand(resetComposer);
   icons();
 }
 
+function renderPreviewConversation(route: string) {
+  if (route === '/plan/' || route.endsWith('/question/') || main.querySelector('.arc-grouped-log')) return;
+  const added = previewRows();
+  if (!added.length) return;
+  const logPane = eventLogPane(requireValue(target()).role, added, false);
+  main.insertAdjacentHTML('beforeend', `<div class="arc-live-log">${standalonePane(logPane)}</div>`);
+}
+
 export function go(route: string) {
+  discardPlanSettings();
   dom<HTMLDialogElement>('.arc-inspector').close();
   clearTopicDraft();
   state.route = route;
@@ -330,6 +339,11 @@ function reserveScrollSpace(selector: string, property: string) {
 }
 
 bindTopicPickers(updateFileList);
+bindPlanSettings(render);
+bindPlanResize();
+desktopPlan.addEventListener('change', () => {
+  if (state.route === '/plan/') render();
+});
 if (data.fileReview) {
   root.setAttribute('data-file-review', '');
   dom<HTMLButtonElement>('.arc-brand').disabled = true;

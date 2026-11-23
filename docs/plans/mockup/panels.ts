@@ -4,7 +4,7 @@ import { escape, icon, icons } from './view.ts';
 export type Pane = {
   id: string;
   label: string;
-  content: (action: string) => string;
+  content: (action: string, titleAction?: string) => string;
 };
 
 export function splitPanels(...panes: Pane[]) {
@@ -48,7 +48,7 @@ function focusedPane(panes: (Pane | undefined)[]) {
   return panes.find((pane) => pane?.id === state.expandedPane)?.id;
 }
 
-function workspace(classes: string, selected: string | undefined, content: string) {
+export function workspace(classes: string, selected: string | undefined, content: string) {
   return `<div class="${classes} arc-pane-workspace" ${selected ? 'data-expanded' : ''}>${content}</div>`;
 }
 
@@ -56,10 +56,10 @@ function contextView(content = '', classes = '') {
   return content ? `<div class="${classes}" data-pane-context>${content}</div>` : '';
 }
 
-function paneView(pane: Pane, selected: string | undefined, classes = '') {
+export function paneView(pane: Pane, selected: string | undefined, classes = '', titleAction = '') {
   return `<div class="${classes}" id="${pane.id}" data-pane-panel
     ${selected && pane.id !== selected ? 'hidden' : ''}>
-    ${pane.content(expandButton(pane, pane.id === selected))}
+    ${pane.content(expandButton(pane, pane.id === selected), titleAction)}
   </div>`;
 }
 

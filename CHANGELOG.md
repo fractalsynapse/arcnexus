@@ -61,6 +61,8 @@
 
 ### Added
 
+- Preview configurable Plan panels, desktop column layouts and widths, responsive order, and site and panel appearance settings (#703).
+
 - Preview production specialist reviews, exact release approval, merge and publication evidence, and failed-check incident follow-up for a pinned staging candidate (#703).
 
 - Add an independent Release workspace with a verified staging revision selector, an included PR list, and a pinned candidate preview (#703).

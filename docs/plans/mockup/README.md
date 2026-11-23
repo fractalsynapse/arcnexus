@@ -26,6 +26,14 @@ retains the complete round and navigation.
 
 ## Behaviors to review
 
+- Open **Plan page settings** from the gear before the title. Choose a desktop
+  layout, place the active panels in regions, or use **Available panels** to add
+  a panel. Reorder the active list with its drag handles or arrow keys. On
+  desktop, drag column dividers or use their arrow keys. The layout is saved in
+  the current browser. Site appearance applies across pages, and each Plan
+  panel has a gear for its own overrides. Use **Save** to apply the settings or
+  **Close** to discard the draft.
+
 - Read total input and output separately. Calculate cache rate from reported cached
   input divided by reported input. Show unavailable usage when there is no
   reported basis.

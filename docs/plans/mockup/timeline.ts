@@ -160,7 +160,7 @@ export function countDetails(counts: { report: [string, number][]; providerOnly:
   );
 }
 
-export function metrics(name: string, values: Stats, rows: EventRow[] = [], elapsed?: string) {
+export function metrics(name: string, values: Stats, rows: EventRow[] = [], elapsed?: string, titleAction = '', action = '') {
   const items: [string, string][] = [
     ['State', status(values.state)],
     ['Last updated (ET)', escape(values.last)],
@@ -182,7 +182,7 @@ export function metrics(name: string, values: Stats, rows: EventRow[] = [], elap
     : '';
   const details = timing + countDetails(counts);
   return panel(name + ' metrics', readouts(items) +
-    (details ? '<div class="arc-metric-details">' + details + '</div>' : ''));
+    (details ? '<div class="arc-metric-details">' + details + '</div>' : ''), action, true, titleAction);
 }
 
 export function timelineItem(row: EventRow) {
@@ -270,9 +270,9 @@ export function renderCalls(calls: EventRow[]) {
 
 export function eventLogPane(name: string, rows: EventRow[], preview = true) {
   return {
-    id: 'arc-event-log',
+    id: 'arc-event-log' as const,
     label: 'Event log',
-    content: (action: string) => eventLog(name, rows, preview, action),
+    content: (action: string, titleAction?: string) => eventLog(name, rows, preview, action, titleAction),
   };
 }
 
@@ -281,11 +281,12 @@ function eventLog(
   rows: EventRow[],
   preview: boolean,
   action: string,
+  titleAction = '',
 ) {
   const header = `<div class="arc-row"><small>Times in ET</small>${action}</div>`;
   const input = preview ? rows.concat(previewRows()) : rows;
   if (!input.length)
-    return panel(name + ' event log', noData('No matching events in the retained scope.'), header);
+    return panel(name + ' event log', noData('No matching events in the retained scope.'), header, true, titleAction);
   for (const row of input) displayedRows.set(String(row[4]), row);
   const timeline = timelineGroups(input)
     .map(
@@ -301,5 +302,6 @@ function eventLog(
     '<ol class="arc-timeline arc-grouped-log">' + timeline + '</ol>',
     header,
     false,
+    titleAction,
   );
 }

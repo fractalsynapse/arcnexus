@@ -241,11 +241,11 @@ export function options(values: [string, string][], selected?: string) {
     .join('');
 }
 
-export function panel(title: string, content: string, extra = '', wrapped = true) {
+export function panel(title: string, content: string, extra = '', wrapped = true, titleAction = '') {
+  const label = '<h2>' + escape(title) + '</h2>';
   return (
-    '<section class="arc-surface"><div class="arc-panel-head"><h2>' +
-    escape(title) +
-    '</h2>' +
+    '<section class="arc-surface"><div class="arc-panel-head">' +
+    (titleAction ? `<div class="arc-display-heading">${titleAction}${label}</div>` : label) +
     extra +
     '</div>' +
     (wrapped ? '<div class="arc-body">' + content + '</div>' : content) +
@@ -253,10 +253,10 @@ export function panel(title: string, content: string, extra = '', wrapped = true
   );
 }
 
-export function title(name: string, description = '', action = '') {
+export function title(name: string, description = '', action = '', titleAction = '') {
   const meta = description ? '<p>' + commitReferences(description) + '</p>' : '';
   const context = action ? '<div class="arc-title-context">' + action + '</div>' : '';
-  return '<div class="arc-title"><div class="arc-title-text"><h1 tabindex="-1">' + escape(name) +
+  return '<div class="arc-title"><div class="arc-title-text">' + titleAction + '<h1 tabindex="-1">' + escape(name) +
     '</h1>' + meta + '</div>' + context + '</div>';
 }
 
