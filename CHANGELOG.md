@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Open goal progress from each Plan goal file in a dialog with a Close button (#703).
+
 - Describe each component tab above its list and align editable rows with their reorder and remove buttons (#703).
 
 - Pin the fullscreen Markdown toolbar flush below the popup header while scrolling (#703).

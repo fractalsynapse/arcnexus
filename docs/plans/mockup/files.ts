@@ -11,7 +11,6 @@ import { fileName } from './file-topics.ts';
 import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
 import { ogsmGoalFile } from './ogsm-example.ts';
-import { goalProgress } from './ogsm.ts';
 import {
   asText,
   commitReference,
@@ -70,13 +69,11 @@ export function workspaceIndex(area: Area) {
   const phase = data[area];
   const rows = phaseRows(area);
   const outcome = panel(name + ' outcome', phaseOutcome(area));
-  const exampleIndex = files.indexOf(ogsmGoalFile);
-  const example = area === 'plan' && exampleIndex >= 0 ? goalProgress(exampleIndex) : '';
   return (
     title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
     overview(
       metrics(name, phase.stats, phase.rows, phase.wall),
-      example ? `<div class="arc-stack">${outcome}${example}</div>` : outcome,
+      outcome,
       { log: eventLogPane(name, rows), context: fileIndex(area) },
     )
   );
@@ -300,7 +297,6 @@ export function fileView() {
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}
       ${panel('File information', metadata)}
-      ${example ? goalProgress() : ''}
       ${filePanels(item, rev)}
     </form>`
   );
@@ -326,9 +322,13 @@ function fileRevisionControls(item: DesignFile) {
     String(index),
     rev.id + ' · ' + (index === 0 ? currentLabel : rev.updated),
   ]);
+  const progress = item.type === 'Goal'
+    ? `<button type="button" class="arc-button" data-action="goal-progress" aria-haspopup="dialog">${icon('chart-no-axes-column')}Progress</button>`
+    : '';
   return `<div class="arc-detail-toolbar">
     <label>File revision<select data-change="file-revision">${options(choices, String(state.revision))}</select></label>
     <div class="arc-row">
+      ${progress}
       ${state.saved ? '<span class="arc-pill" role="status">Draft revision saved in preview</span>' : ''}
       ${state.editing && hasYamlForm(item) ? '<small class="arc-yaml-error" data-yaml-save-status role="status"></small>' : ''}
       <label class="arc-checkbox"><input type="checkbox" data-change="edit" ${state.editing ? 'checked' : ''}

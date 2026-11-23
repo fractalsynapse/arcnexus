@@ -93,11 +93,11 @@ retains the complete round and navigation.
   from the routing preview. Select a rejected run revision to see the recorded
   Direction action on Review. The goal's Release view previews the final release route beside
   any captured hosted check failures.
-- Open the example in Plan's **Goal progress**. The `list-files` baseline and
-  latest verified value are 24 calls per activation (median) against a target of
-  12 or fewer. Follow **View strategy in Run** to see the candidate result of
-  16, then open the `planner` assignment to check the measurement method and
-  citation quality check. These values illustrate the design.
+- In Plan's goal file explorer, open **Reduce repeated Planner file discovery**
+  and select **Progress**. The dialog shows an illustrative baseline and latest
+  verified value of 24 `list-files` calls per activation (median), against a target
+  of 12 or fewer. Follow **View strategy in Run** to see the candidate result of
+  16, then open the `planner` assignment to check the method and citation quality check.
 - In the Planner example, open **Activities → Release** to see its published
   checkpoint. Return to Run and open **Release** to expand the four evidence
   stages. Use **Example release state** to see alternatives waiting for review, verifying after

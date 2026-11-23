@@ -18,6 +18,7 @@ import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { openRoundMetrics, roundFooter } from './round.ts';
+import { openGoalProgress } from './ogsm.ts';
 import {
   data,
   files,
@@ -119,6 +120,7 @@ export function render(resetComposer = false) {
 }
 
 export function go(route: string) {
+  dom<HTMLDialogElement>('.arc-inspector').close();
   clearTopicDraft();
   state.route = route;
   state.expandedPane = null;
@@ -163,6 +165,7 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'collapse-prose') collapseProse(control);
   else if (action === 'close-prose') closeProse();
   else if (action === 'round-metrics') openRoundMetrics(control);
+  else if (action === 'goal-progress') openGoalProgress(control);
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
   else if (action === 'advance-queue') advanceQueue();

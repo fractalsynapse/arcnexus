@@ -4,7 +4,7 @@
 
 ## Plan sets the objective and target
 
-Keep the human Objective and its linked standing Goals in the approved guides. A quantitative goal specifies the outcome measure, unit, target, how the value is calculated, and the comparable population or conditions. Changes to the target or to what qualifies as success use the existing objective and goal approval. Plan joins the baseline and latest verified observation from run evidence. Component assignments and observed values stay in the run records. [Planner](../../../../packages/planner/contract.md)
+Keep the human Objective and its linked standing Goals in the approved guides. A quantitative goal specifies the outcome measure, unit, target, how the value is calculated, and the comparable population or conditions. Changes to the target or to what qualifies as success use the existing objective and goal approval. Each goal file opens a **Progress** dialog with its baseline and latest verified observation from run evidence. Component assignments and observed values stay in the run records. [Planner](../../../../packages/planner/contract.md)
 
 ## Run chooses a strategy and collects evidence
 
@@ -25,4 +25,4 @@ Improve Planner efficiency while preserving decision quality. In the illustrativ
 
 ## Mockup review
 
-Open **Goal progress** in Plan, then open **Reduce repeated Planner file discovery**. Follow **View strategy in Run** to **Strategy and Measures**, then open the `planner` assignment to see **Milestone measures**. The example is labeled throughout and uses illustrative values alongside the recorded refinement round.
+In Plan's goal file explorer, open **Reduce repeated Planner file discovery** and select **Progress**. The dialog uses the same close control and focus behavior as Round metrics. Follow **View strategy in Run** to **Strategy and Measures**, then open the `planner` assignment to see **Milestone measures**. The example is labeled throughout and uses illustrative values alongside the recorded refinement round.
