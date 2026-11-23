@@ -1,7 +1,5 @@
 import { colorFields, colorPicker } from './color-picker.ts';
-import type { Palette } from './display-preferences.ts';
-
-type Colors = Required<Palette>;
+import type { Colors, Palette } from './display-preferences.ts';
 
 const paletteTokens = [
   '--ground',
@@ -71,13 +69,10 @@ export function inheritedColors(parent: HTMLElement, site = false): Colors {
   return colors;
 }
 
-export function colorFieldsView(palette: Colors, reset: string) {
+export function colorFieldsView(palette: Colors) {
   return `<div class="arc-color-fields">${colorFields
     .map((field) => colorPicker(field, palette[field]))
-    .join(
-      '',
-    )}</div><div class="arc-row"><button type="button" class="arc-button" data-display-action="reset-colors">${reset}</button>
-    <small role="status" data-contrast-warning>${colorWarning(palette)}</small></div>`;
+    .join('')}</div><small role="status" data-contrast-warning>${colorWarning(palette)}</small>`;
 }
 
 export function colorWarning({ background, text, accent }: Colors) {

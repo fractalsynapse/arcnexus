@@ -1,7 +1,9 @@
 import { applyPalette } from './display-colors.ts';
 import {
+  colorSchemes,
   defaultDisplay,
   display,
+  findColorScheme,
   openDisplay,
   panelRegion,
   saveDisplay,
@@ -44,11 +46,7 @@ export function mountDisplayPage() {
     (child): child is HTMLElement =>
       child instanceof HTMLElement && pagePanels.some(({ unit }) => child.contains(unit)),
   );
-  openDisplay(
-    state.route,
-    pageDefaults(),
-    pagePanels.map(({ id }) => id),
-  );
+  openDisplay(state.route, pageDefaults(), pagePanels, displayPageTitle);
   main.insertAdjacentHTML('beforeend', '<div id="arc-page-settings" hidden></div>');
   applyDisplay();
   arrangeDisplay();
@@ -112,8 +110,10 @@ function pageDefaults() {
 }
 
 export function applyDisplay() {
-  applyPalette(root, display.site, true);
-  for (const { id, section } of pagePanels) applyPalette(section, display.panels[id] ?? {});
+  applyPalette(root, findColorScheme(colorSchemes.site)?.colors ?? {}, true);
+  applyPalette(main, findColorScheme(display.scheme)?.colors ?? {});
+  for (const { id, section } of pagePanels)
+    applyPalette(section, findColorScheme(display.panelSchemes[id])?.colors ?? {});
 }
 
 function placeUnit({ id, unit, section }: DisplayPanel) {

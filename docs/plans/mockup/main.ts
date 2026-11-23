@@ -17,7 +17,10 @@ import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { arrangeDisplay, bindDisplayResize, desktopDisplay, mountDisplayPage } from './display-layout.ts';
+import { inheritedColors } from './display-colors.ts';
+import { initializeColorSchemes } from './display-preferences.ts';
 import { bindDisplaySettings, discardDisplaySettings, refreshDisplaySettings } from './display-settings.ts';
+import { bindColorSchemes, openColorSchemes } from './scheme-dialog.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { mountRoundFooter, openRoundMetrics, toggleRoundFooter } from './round.ts';
 import { openGoalProgress } from './ogsm.ts';
@@ -174,6 +177,7 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'collapse-prose') collapseProse(control);
   else if (action === 'close-prose') closeProse();
   else if (action === 'round-metrics') openRoundMetrics(control);
+  else if (action === 'color-schemes') openColorSchemes(control);
   else if (action === 'toggle-round-footer') toggleRoundFooter(control);
   else if (action === 'file-git') openFileGitInformation(control);
   else if (action === 'goal-progress') openGoalProgress(control);
@@ -339,6 +343,8 @@ function reserveScrollSpace(selector: string, property: string) {
 }
 
 bindTopicPickers(updateFileList);
+initializeColorSchemes(inheritedColors(root, true));
+bindColorSchemes();
 bindDisplaySettings();
 bindDisplayResize();
 desktopDisplay.addEventListener('change', arrangeDisplay);

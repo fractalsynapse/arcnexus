@@ -8,6 +8,7 @@ export function showInspector(
   { compact = false } = {},
 ) {
   const dialog = dom<HTMLDialogElement>('.arc-inspector');
+  dialog.toggleAttribute('data-viewport-fixed', window === window.parent);
   const content = dom('.arc-inspector-content');
   // The viewer can give the iframe the full page height. Measure its visible
   // intersection at open time, since scrolling may occur in the parent.

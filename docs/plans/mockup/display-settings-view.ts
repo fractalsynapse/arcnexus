@@ -1,7 +1,13 @@
-import { colorFieldsView } from './display-colors.ts';
-import { columns, panelRegion } from './display-preferences.ts';
-import type { Layout, Palette, Preferences } from './display-preferences.ts';
+import {
+  colorSchemes,
+  columns,
+  defaultSchemeColors,
+  findColorScheme,
+  panelRegion,
+} from './display-preferences.ts';
+import type { Layout, PanelId, Preferences } from './display-preferences.ts';
 import type { DisplayPanel } from './display-layout.ts';
+import { schemeSelector } from './scheme-selector.ts';
 import { escape, noData, options, panel } from './view.ts';
 
 export type SettingsTab = 'active' | 'available';
@@ -89,19 +95,26 @@ export function pageSettingsView(
   draft: Preferences,
   registry: readonly DisplayPanel[],
   tab: SettingsTab,
-  palette: Required<Palette>,
 ) {
+  const site = findColorScheme(colorSchemes.site) ?? {
+    name: 'ArcNexus',
+    colors: defaultSchemeColors(),
+  };
   return panel(
     `${title} page settings`,
     layoutChoices(draft.layout) +
       panelTabs(draft, registry, tab) +
-      `<fieldset class="arc-display-fieldset"><legend>Site appearance · applies to all pages</legend>
-      ${colorFieldsView(palette, 'Use default colors')}</fieldset>` +
+      schemeSelector('page', 'Color scheme', draft.scheme, {
+        name: `Use site default · ${site.name}`,
+        colors: site.colors,
+      }) +
       settingsActions(),
   );
 }
 
-export function panelSettingsView(palette: Required<Palette>) {
+export function panelSettingsView(draft: Preferences, id: PanelId) {
+  const page = findColorScheme(draft.scheme) ??
+    findColorScheme(colorSchemes.site) ?? { name: 'ArcNexus', colors: defaultSchemeColors() };
   return `<div class="arc-body arc-panel-display-settings" data-panel-display-settings><h3>Display settings</h3>
-    ${colorFieldsView(palette, 'Inherit site colors')}${settingsActions()}</div>`;
+    ${schemeSelector('panel', 'Color scheme', draft.panelSchemes[id], { name: `Use page default · ${page.name}`, colors: page.colors })}${settingsActions()}</div>`;
 }

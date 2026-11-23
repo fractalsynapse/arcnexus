@@ -4,7 +4,16 @@
       <img class="arc-mark" src="brand/brain.webp" alt="" width="24" height="24">
       <img class="arc-wordmark" src="brand/wordmark-dark.webp" alt="ArcNexus" width="146" height="20">
     </button>
-    <div class="arc-header-action"></div>
+    <div class="arc-header-controls">
+      <button type="button" class="arc-link arc-palette-trigger" data-action="color-schemes"
+        aria-label="Color schemes" data-arc-tooltip="Color schemes" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a9 9 0 1 0 0 18h1a1.8 1.8 0 0 0 1.3-3c-.9-1-.3-2.5 1.1-2.5H17a4 4 0 0 0 4-4C21 6.8 17 3 12 3Z"/>
+          <circle cx="7.5" cy="11.5" r=".7"/><circle cx="11" cy="7.5" r=".7"/><circle cx="16" cy="8.5" r=".7"/>
+        </svg>
+      </button>
+      <div class="arc-header-action"></div>
+    </div>
   </header>
   <nav class="arc-nav" aria-label="Workspace">
     <button type="button" data-go="/plan/"><i data-lucide="compass" aria-hidden="true"></i>Plan</button>
@@ -122,6 +131,11 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-nav button:hover, #arc-preview .arc-tabs button:hover { background: var(--quiet); color: var(--ink); }
 #arc-preview .arc-nav [aria-current], #arc-preview .arc-tabs [aria-current] { color: var(--link); background: var(--tint); border-color: var(--line); }
 #arc-preview .arc-header-action { display: flex; justify-content: end; }
+#arc-preview .arc-header-action:empty { display:none; }
+#arc-preview .arc-header-controls { display:flex; align-items:center; gap:8px; }
+#arc-preview .arc-palette-trigger { min-inline-size:36px; min-block-size:36px; justify-content:center; border-radius:7px; }
+#arc-preview .arc-palette-trigger:is(:hover,:focus-visible) { background:var(--tint); }
+#arc-preview .arc-palette-trigger svg { inline-size:19px; block-size:19px; }
 #arc-preview .arc-button {
   display: inline-flex; justify-content: center; align-items: center; gap: 7px; padding: 9px 12px; min-height: 38px;
   border: 1px solid var(--line); background: var(--paper); border-radius: 8px; color: var(--ink); font-weight: 620;
@@ -129,7 +143,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-button:not(:disabled):hover { background: var(--tint); color: var(--link); }
 #arc-preview .arc-button.solid { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 #arc-preview .arc-button.solid:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 83%, var(--on-accent)); color: var(--on-accent); }
-#arc-preview .arc-main { flex:1; padding: var(--pad); display: grid; align-content:start; gap: var(--gap); min-width: 0; }
+#arc-preview .arc-main { flex:1; padding: var(--pad); display:grid; align-content:start; gap:var(--gap); min-width:0; color:var(--ink); background:var(--ground); }
 #arc-preview :is(.arc-title,.arc-title-text,.arc-title-context) { display: flex; align-items: baseline; gap: 5px 14px; flex-wrap: wrap; min-width: 0; }
 #arc-preview .arc-title h1 { min-width:0; overflow-wrap:anywhere; }
 #arc-preview .arc-title { justify-content:space-between; }
@@ -169,7 +183,14 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-display-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:center; gap:5px 8px; padding:4px; border:1px solid transparent; }
 #arc-preview .arc-display-row .arc-button { min-inline-size:30px; padding-inline:5px; }
 #arc-preview .arc-available-panel { justify-content:space-between; padding-block:6px; border-bottom:1px solid var(--line); }
-#arc-preview .arc-color-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:8px 16px; }
+#arc-preview :is(.arc-scheme-manager,.arc-scheme-editor) { display:grid; gap:12px; min-width:0; }
+#arc-preview .arc-scheme-editor { border-top:1px solid var(--line); padding-block-start:12px; }
+#arc-preview .arc-scheme-field { display:grid; gap:4px; min-width:0; }
+#arc-preview .arc-scheme-option { display:inline-flex; align-items:center; gap:8px; min-width:0; overflow-wrap:anywhere; }
+#arc-preview .arc-scheme-swatches { display:inline-flex; flex:none; gap:3px; }
+#arc-preview .arc-scheme-swatches span { inline-size:1rem; block-size:1rem; border:1px solid var(--line); border-radius:4px; background:var(--swatch); }
+#arc-preview .arc-scheme-save { justify-content:space-between; }
+#arc-preview .arc-color-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr)); gap:8px; }
 #arc-preview .arc-color-trigger { inline-size:100%; display:grid; grid-template-columns:auto minmax(0,1fr) auto; text-align:start; }
 #arc-preview .arc-color-trigger code { display:block; color:var(--muted); background:none; }
 #arc-preview .arc-color-sample { inline-size:1.5rem; block-size:1.5rem; background:var(--swatch); border:1px solid var(--line); border-radius:5px; }
@@ -605,6 +626,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
   padding:0; overflow:hidden;
 }
 #arc-preview .arc-inspector[open] { display:flex; flex-direction:column; }
+#arc-preview .arc-inspector[data-viewport-fixed] { position:fixed; inset-block-start:50%; }
 #arc-preview .arc-inspector[data-compact] { inline-size:fit-content; max-inline-size:calc(100% - 2 * var(--pad)); }
 #arc-preview .arc-inspector > .arc-panel-head { flex:none; }
 #arc-preview .arc-inspector::backdrop { background:#06182ca1; }

@@ -1,8 +1,6 @@
-import { bindColorPicker, colorFields } from './color-picker.ts';
-import { colorWarning, inheritedColors } from './display-colors.ts';
 import { columns, display, saveDisplay } from './display-preferences.ts';
 import type { PanelId, Preferences } from './display-preferences.ts';
-import { main, root } from './model.ts';
+import { main } from './model.ts';
 import { applyDisplay, arrangeDisplay, displayPageTitle, pagePanels } from './display-layout.ts';
 import { pageSettingsView, panelSettingsView } from './display-settings-view.ts';
 import type { SettingsTab } from './display-settings-view.ts';
@@ -12,13 +10,8 @@ import { icons } from './view.ts';
 type Session = { scope: 'page' | PanelId; draft: Preferences; tab: SettingsTab; scroll: number };
 let active: Session | undefined;
 let reordering: SortableLists | undefined;
-let siteDefaults: ReturnType<typeof inheritedColors>;
 
 export function bindDisplaySettings() {
-  siteDefaults = inheritedColors(root, true);
-  bindColorPicker(main, (field, value) => {
-    if (active) changeColor(active, field, value);
-  });
   main.addEventListener('click', (event) => {
     const control =
       event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button') : null;
@@ -28,7 +21,7 @@ export function bindDisplaySettings() {
     else if (active && displayAction) handleSettingsAction(active, control, displayAction);
   });
   main.addEventListener('change', (event) => {
-    if (active?.scope === 'page') changePageSettings(active, event.target);
+    if (active) changeSettings(active, event.target);
   });
 }
 
@@ -54,7 +47,7 @@ function openSettings(scope: string) {
   refreshDisplaySettings();
   main
     .querySelector<HTMLElement>(
-      active.scope === 'page' ? '[data-display-layout]:checked' : '.arc-color-trigger',
+      active.scope === 'page' ? '[data-display-layout]:checked' : '.arc-scheme-select',
     )
     ?.focus({ preventScroll: true });
 }
@@ -77,10 +70,9 @@ export function refreshDisplaySettings() {
   if (scope === 'page') renderPageForm(active);
   else {
     const section = pagePanels.find(({ id }) => id === scope)?.section;
-    const colors = { ...inheritedColors(root), ...draft.panels[scope] };
     section?.setAttribute('data-display-editing', '');
     section?.querySelector('[data-panel-display-settings]')?.remove();
-    section?.insertAdjacentHTML('beforeend', panelSettingsView(colors));
+    section?.insertAdjacentHTML('beforeend', panelSettingsView(draft, scope));
   }
   icons();
 }
@@ -95,10 +87,16 @@ function renderPageForm(session: Session) {
       : session.tab;
   main.setAttribute('data-page-settings', '');
   editor.hidden = false;
-  editor.innerHTML = pageSettingsView(displayPageTitle, session.draft, pagePanels, session.tab, {
-    ...siteDefaults,
-    ...session.draft.site,
-  });
+  editor.innerHTML = pageSettingsView(displayPageTitle, session.draft, pagePanels, session.tab);
+}
+
+function changeSettings(session: Session, target: EventTarget | null) {
+  if (target instanceof HTMLSelectElement && target.dataset.schemeSelect) {
+    if (session.scope === 'page') session.draft.scheme = target.value;
+    else session.draft.panelSchemes[session.scope] = target.value;
+  } else if (session.scope === 'page') {
+    changePageSettings(session, target);
+  }
 }
 
 function changePageSettings(session: Session, target: EventTarget | null) {
@@ -119,28 +117,8 @@ function changePageSettings(session: Session, target: EventTarget | null) {
   }
 }
 
-function changeColor(session: Session, fieldName: string, color: string) {
-  const field = colorFields.find((name) => name === fieldName);
-  if (!field) return;
-  const palette =
-    session.scope === 'page' ? session.draft.site : (session.draft.panels[session.scope] ??= {});
-  palette[field] = color;
-  const colors = session.scope === 'page' ? siteDefaults : inheritedColors(root);
-  const warning = main.querySelector('[data-contrast-warning]');
-  if (warning) warning.textContent = colorWarning({ ...colors, ...palette });
-}
-
 function handleSettingsAction(session: Session, control: HTMLElement, action: string) {
   if (action === 'save' || action === 'close') return finishSettings(session, action === 'save');
-  if (action === 'reset-colors') {
-    if (session.scope === 'page') session.draft.site = {};
-    else delete session.draft.panels[session.scope];
-    refreshDisplaySettings();
-    main
-      .querySelector<HTMLElement>('[data-display-action="reset-colors"]')
-      ?.focus({ preventScroll: true });
-    return;
-  }
   const id = control.closest<HTMLElement>('[data-display-entry]')?.dataset.displayEntry;
   const entry = pagePanels.find((panel) => panel.id === id);
   if (!entry) return;
@@ -162,7 +140,7 @@ function finishSettings({ scope, draft, scroll }: Session, save: boolean) {
     applyDisplay();
     arrangeDisplay();
   } else if (save && scope !== 'page') {
-    display.panels[scope] = draft.panels[scope];
+    display.panelSchemes[scope] = draft.panelSchemes[scope];
     saveDisplay();
     applyDisplay();
   }

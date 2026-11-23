@@ -63,6 +63,8 @@
 
 ### Added
 
+- Create and edit reusable color schemes from the mockup header. Choose a site default and let pages and panels inherit their parent scheme or select one by name and swatches (#703).
+
 - Preview configurable panels across the mockup, with per-page desktop layouts and mobile order, plus site and panel palettes with dark shades for every color family (#703).
 
 - Preview production specialist reviews, exact release approval, merge and publication evidence, and failed-check incident follow-up for a pinned staging candidate (#703).
