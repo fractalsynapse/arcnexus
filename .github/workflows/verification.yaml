@@ -44,6 +44,9 @@ jobs:
       - name: Check TypeScript
         if: steps.specification.outputs.executable == 'true'
         run: npm run check
+      - name: Install Chromium for web acceptance
+        if: steps.specification.outputs.executable == 'true'
+        run: npx --no-install playwright install --with-deps chromium
       - name: Build and test app and plugin suites
         if: steps.specification.outputs.executable == 'true'
         run: npm test

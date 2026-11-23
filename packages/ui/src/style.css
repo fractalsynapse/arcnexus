@@ -1,0 +1,501 @@
+html {
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+}
+.arc-app {
+  --paper: light-dark(#fff, #112239);
+  --quiet: light-dark(#f4f8ff, #172c46);
+  --line: light-dark(#d6e4f4, #284263);
+  --muted: light-dark(#536b88, #a1b8d4);
+  --tint: light-dark(#e8f1ff, #182f51);
+  --accent: #195ac4;
+  --on-accent: #fff;
+  --pad: 16px;
+  --gap: 12px;
+  --header-height: 66px;
+  --nav-height: 52px;
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  color: var(--ink);
+  font:
+    400 13px/1.45 Inter,
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+}
+.arc-app *,
+.arc-app *::before,
+.arc-app *::after {
+  box-sizing: border-box;
+}
+.arc-app [hidden] {
+  display: none;
+}
+.arc-app :is(h1, h2, h3, p, dl, dd) {
+  margin: 0;
+}
+.arc-app h1 {
+  font-size: 25px;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+.arc-app h2 {
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+.arc-app h3 {
+  font-size: 14px;
+}
+.arc-app :is(button, input, select, textarea) {
+  color: inherit;
+  font: inherit;
+}
+.arc-app :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.arc-app h1:focus {
+  outline: none;
+}
+.arc-app button {
+  cursor: pointer;
+}
+.arc-app button:disabled {
+  opacity: 0.54;
+  cursor: default;
+}
+.arc-app label,
+.arc-field {
+  display: grid;
+  min-inline-size: 0;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 640;
+}
+.arc-app :is(input, select, textarea) {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.arc-button,
+.arc-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 0 12px;
+  min-block-size: 38px;
+  font-weight: 640;
+}
+.arc-button:hover:not(:disabled),
+.arc-icon-button:hover:not(:disabled) {
+  background: var(--tint);
+}
+.arc-app .arc-solid {
+  color: var(--on-accent);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.arc-app .arc-solid:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent), var(--paper) 14%);
+}
+.arc-icon-button {
+  inline-size: 36px;
+  min-block-size: 36px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.arc-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-self: start;
+}
+.arc-tooltip {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--quiet);
+  color: var(--ink);
+  padding: 4px 7px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.arc-icon-wrap:has(button:is(:hover, :focus-visible)) > .arc-tooltip {
+  display: block;
+}
+.arc-header,
+.arc-nav {
+  --paper: #000;
+  --quiet: #20252d;
+  --tint: #192433;
+  --line: #353b45;
+  --ink: #fff;
+  --muted: #e2e7ef;
+  --link: #b9d7ff;
+  color-scheme: dark;
+  background: var(--paper);
+  color: var(--ink);
+}
+.arc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  min-block-size: var(--header-height);
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--line);
+}
+.arc-brand,
+.arc-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.arc-brand {
+  min-block-size: 42px;
+  border-radius: 6px;
+}
+.arc-brand img {
+  display: block;
+  object-fit: contain;
+}
+.arc-nav {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 5;
+  display: flex;
+  align-self: center;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  margin-block: calc((0px - var(--header-height) - var(--nav-height)) / 2)
+    calc((var(--header-height) - var(--nav-height)) / 2);
+  min-block-size: var(--nav-height);
+  border-radius: 0 0 8px 8px;
+}
+.arc-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  min-block-size: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 640;
+}
+.arc-nav a:hover {
+  background: var(--quiet);
+  color: var(--ink);
+}
+.arc-nav a[aria-current='page'] {
+  border-color: var(--line);
+  background: var(--tint);
+  color: var(--link);
+}
+.arc-main {
+  flex: 1;
+  padding: var(--pad);
+  min-inline-size: 0;
+}
+.arc-command-panel {
+  --paper: #35383e;
+  --quiet: #33363c;
+  --tint: #474b52;
+  --ink: #fff;
+  --muted: #f1f3f5;
+  --line: #62666e;
+  --link: #fff;
+  z-index: 4;
+  position: sticky;
+  inset-block-end: 0;
+  color-scheme: dark;
+  color: var(--ink);
+  background: #282b30;
+  padding: 12px var(--pad);
+  border-top: 1px solid var(--line);
+}
+.arc-command-panel[data-collapsed] {
+  padding-block: 2px;
+}
+.arc-command-panel .arc-tooltip {
+  inset: auto auto calc(100% + 4px) 0;
+}
+.arc-command-panel .arc-icon-wrap:last-child .arc-tooltip {
+  inset-inline: auto 0;
+}
+.arc-command-panel .arc-icon-button {
+  inline-size: 30px;
+  min-block-size: 30px;
+}
+.arc-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content auto;
+  grid-template-areas: 'instruction operation send';
+  align-items: end;
+  gap: 9px;
+  reading-flow: grid-rows;
+}
+.arc-instruction {
+  grid-area: instruction;
+}
+.arc-instruction small {
+  font-weight: 400;
+}
+.arc-operation {
+  grid-area: operation;
+}
+.arc-send {
+  grid-area: send;
+}
+.arc-composer textarea {
+  display: block;
+  resize: vertical;
+}
+.arc-composer-error {
+  grid-column: 1 / -1;
+}
+.arc-command-readout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 11px;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--line);
+}
+.arc-command-panel[data-collapsed] .arc-command-readout {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.arc-round-values,
+.arc-round-details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+}
+.arc-round-values {
+  font-size: 12px;
+}
+.arc-status {
+  border-radius: 16px;
+  padding: 3px 8px;
+  background: var(--tint);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+}
+.arc-dialog,
+.arc-color-picker {
+  padding: 0;
+  margin: auto;
+  max-block-size: calc(100dvh - 2 * var(--pad));
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.arc-dialog {
+  inline-size: min(740px, calc(100% - 2 * var(--pad)));
+}
+.arc-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.arc-dialog::backdrop {
+  background: #06182ca1;
+}
+.arc-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.arc-dialog-body {
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+}
+.arc-metric-list {
+  display: grid;
+  gap: 6px;
+}
+.arc-metric-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.arc-metric-list dt {
+  color: var(--muted);
+}
+.arc-schemes,
+.arc-scheme-editor,
+.arc-scheme-fields {
+  display: grid;
+  gap: 12px;
+}
+.arc-scheme-editor {
+  border-top: 1px solid var(--line);
+  padding-block-start: 12px;
+}
+.arc-scheme-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.arc-scheme-swatches {
+  display: inline-flex;
+  gap: 4px;
+}
+.arc-swatch {
+  display: inline-block;
+  inline-size: 16px;
+  block-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--swatch);
+}
+.arc-color-trigger .arc-swatch {
+  inline-size: 24px;
+  block-size: 24px;
+}
+.arc-color-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 8px;
+}
+.arc-color-trigger {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  inline-size: 100%;
+  padding-block: 7px;
+  text-align: start;
+}
+.arc-color-trigger code {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+.arc-form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.arc-color-picker {
+  --family-width: 3.5rem;
+  --shade-gap: 6px;
+  inline-size: min(25rem, calc(100vw - 2 * var(--pad)));
+  padding: 12px;
+}
+.arc-color-picker:popover-open {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.arc-color-picker .arc-dialog-header {
+  padding: 0;
+  border: 0;
+}
+.arc-shade-scale {
+  display: flex;
+  justify-content: space-between;
+  padding-inline-start: calc(var(--family-width) + var(--shade-gap));
+  color: var(--muted);
+  font-size: 11px;
+}
+.arc-shade-grid {
+  display: grid;
+  gap: 4px;
+  min-block-size: 0;
+  padding: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.arc-shade-row {
+  display: grid;
+  grid-template-columns: var(--family-width) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--shade-gap);
+}
+.arc-shades {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+}
+.arc-shade {
+  min-block-size: 26px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--swatch);
+}
+.arc-shade[aria-pressed='true'] {
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+}
+.arc-color-custom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 660px) {
+  .arc-app {
+    --pad: 12px;
+  }
+  .arc-nav {
+    align-self: stretch;
+    justify-content: space-between;
+    margin: 0;
+    padding: 4px var(--pad);
+    min-block-size: 40px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .arc-nav a {
+    flex: 1 1 0;
+    padding-inline: 5px;
+  }
+}
+@media (max-width: 590px) {
+  .arc-composer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'operation send' 'instruction instruction';
+  }
+  .arc-app :is(.arc-button, .arc-nav a, input, select, textarea) {
+    min-block-size: 44px;
+  }
+}

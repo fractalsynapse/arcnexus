@@ -1,0 +1,39 @@
+id: web-app
+kind: app
+purpose: |
+  Compose the local ArcNexus browser application from trusted Cordis plugins.
+  Own the web boot, workspace bindings and acceptance through the built browser
+  entry. Route reusable layouts and displays through the UI package.
+objectives:
+  - measure: The compiled application exposes the approved frame on desktop and mobile.
+  - measure: The browser acceptance suite observes the same web composition with a controlled command binding.
+constraints:
+  - failure: The shell launches a model, admits a live task, or creates a second workflow or evidence store.
+  - failure: A workspace reimplements a component already owned by UI.
+owns:
+  - apps/web
+activities:
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Verify the built browser entry and its shared frame. Exercise another
+        command binding through the same composition for command behavior. Keep
+        browser acceptance scoped to local data and observable UI states.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Compose workspace registrations and command bindings through public
+        plugin boundaries. Use the existing repository build and test entry.
+        Preserve the local shell scope and report runtime availability directly.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]
