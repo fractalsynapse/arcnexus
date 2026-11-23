@@ -327,4 +327,8 @@ if (data.fileReview) {
   dom<HTMLButtonElement>('.arc-brand').disabled = true;
 }
 dom('.arc-footer-state').innerHTML = roundFooter();
+new ResizeObserver(([entry]) => {
+  const height = entry?.borderBoxSize[0]?.blockSize ?? 0;
+  document.documentElement.style.setProperty('--arc-console-space', `${height}px`);
+}).observe(dom('.arc-console'), { box: 'border-box' });
 render();

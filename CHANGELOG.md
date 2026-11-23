@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Fill the viewport without a site frame and keep the mockup's instruction and round metrics controls at the bottom while scrolling (#703).
+
 - Separate the file path from the revision controls with a divider that matches the breadcrumb spacing (#703).
 
 - Align Progress, Edit, and Save with the bottom of the file revision selector (#703).

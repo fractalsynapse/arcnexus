@@ -37,12 +37,17 @@
 </div>
 
 <style>
-#arc-preview {
+html:has(> body > #arc-preview), #arc-preview {
   color-scheme: light dark;
+  --ground: light-dark(#edf4fc, #0b182a);
+  background: var(--ground);
+}
+body:has(> #arc-preview) { margin:0; }
+html:has(> body > #arc-preview) { scroll-padding-block-end:var(--arc-console-space, 0px); }
+#arc-preview {
   --ink: light-dark(#142744, #dceaff);
   --muted: light-dark(#536b88, #a1b8d4);
   --line: light-dark(#d6e4f4, #284263);
-  --ground: light-dark(#edf4fc, #0b182a);
   --paper: light-dark(#fff, #112239);
   --quiet: light-dark(#f4f8ff, #172c46);
   --accent: #195ac4;
@@ -53,10 +58,11 @@
   --gap: 12px;
   --picker-shadow: 0 5px 16px #0b182a32;
   width: 100%;
+  min-block-size: 100vh;
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
   color: var(--ink);
-  background: var(--ground);
-  border: 1px solid var(--line);
-  border-radius: 16px;
   container-type: inline-size;
   font: 400 13px/1.45 "Inter", "Segoe UI", system-ui, sans-serif;
 }
@@ -88,7 +94,7 @@
 #arc-preview .arc-header {
   display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center;
   min-height: 66px; padding: 10px var(--pad); border-bottom: 1px solid var(--line);
-  border-radius: 15px 15px 0 0; background: var(--paper);
+  background: var(--paper);
 }
 #arc-preview .arc-brand { justify-self: start; display: grid; align-items: center; min-height: 42px; padding: 0 4px; }
 #arc-preview .arc-brand img { width: 142px; height: auto; display: block; }
@@ -107,7 +113,7 @@
 #arc-preview .arc-button:not(:disabled):hover { background: var(--tint); color: var(--link); }
 #arc-preview .arc-button.solid { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 #arc-preview .arc-button.solid:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 83%, #041d49); color: var(--on-accent); }
-#arc-preview .arc-main { padding: var(--pad); display: grid; gap: var(--gap); min-width: 0; }
+#arc-preview .arc-main { flex:1; padding: var(--pad); display: grid; align-content:start; gap: var(--gap); min-width: 0; }
 #arc-preview :is(.arc-title,.arc-title-text,.arc-title-context) { display: flex; align-items: baseline; gap: 5px 14px; flex-wrap: wrap; min-width: 0; }
 #arc-preview .arc-title h1 { min-width:0; overflow-wrap:anywhere; }
 #arc-preview .arc-title { justify-content:space-between; }
@@ -360,7 +366,10 @@
 #arc-preview .arc-issue { display: grid; gap: 6px; min-width: 0; }
 #arc-preview .arc-issue + .arc-issue { margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--line); }
 #arc-preview .arc-issue strong { overflow-wrap: anywhere; }
-#arc-preview .arc-console { background: var(--paper); border-top: 1px solid var(--line); border-radius: 0 0 15px 15px; padding: 12px var(--pad); }
+#arc-preview .arc-console {
+  position:sticky; inset-block-end:0; z-index:4;
+  background:var(--paper); border-top:1px solid var(--line); padding:12px var(--pad);
+}
 #arc-preview .arc-launch {
   display:grid; grid-template-columns:minmax(0,1fr) max-content auto; grid-template-areas:"instruction operation send";
   gap:9px; align-items:end; reading-flow:grid-rows;
