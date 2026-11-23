@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Pin the fullscreen Markdown toolbar flush below the popup header while scrolling (#703).
+
 - Group Kind, Summary, and Purpose in the component form, use expandable Markdown fields for prose, and add Objectives, Constraints, and Ownership tabs (#703).
 
 - Grow the mockup's Purpose field with its text, simplify the operation form, and edit Network access with a checkbox (#703).

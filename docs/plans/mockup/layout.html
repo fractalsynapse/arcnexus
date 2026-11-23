@@ -499,7 +499,11 @@ html:has(.arc-prose-dialog[open]) { overflow:hidden; }
 }
 #arc-preview .arc-prose-dialog[open] { display:flex; flex-direction:column; }
 #arc-preview .arc-prose-dialog > .arc-panel-head { flex:none; }
-#arc-preview .arc-prose-scroll { flex:1; min-block-size:0; padding:var(--pad); overflow:auto; overscroll-behavior:contain; }
+#arc-preview .arc-prose-scroll {
+  flex:1; min-block-size:0; padding:0 var(--pad) var(--pad); overflow:auto; overscroll-behavior:contain;
+}
+/* Let the top gap scroll away before the Markdown toolbar pins. */
+#arc-preview .arc-prose-scroll > [data-prose-content] { padding-block-start:var(--pad); }
 #arc-preview .arc-inspect-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 #arc-preview .arc-payload-pane { display:grid; align-content:start; min-width:0; gap:7px; }
 #arc-preview .arc-payload { margin:0; padding:9px; background:var(--quiet); border:1px solid var(--line); border-radius:7px;

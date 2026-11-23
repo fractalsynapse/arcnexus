@@ -74,7 +74,8 @@ retains the complete round and navigation.
   expanded in Edit mode and the Markdown viewer on a captured revision.
   Collapse a long field from the bottom, or open it fullscreen from its header.
   Closing fullscreen returns focus to the collapsed field and keeps draft
-  edits. The read-only page keeps the complete source under Raw YAML.
+  edits. As the editor scrolls, its toolbar pins directly below the fullscreen
+  header. The read-only page keeps the complete source under Raw YAML.
   Use Objectives, Constraints, and Ownership to review one list at a
   time. Expand an activity to edit its instructions, operation bindings,
   standards, and verification references. A host activity has no model
