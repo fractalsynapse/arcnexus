@@ -22,11 +22,13 @@ export function operationForm(operation: Operation) {
       )
       .join('')}</div></fieldset>
     <fieldset class="arc-yaml-group"><legend>Arguments</legend>
-    ${operation.args.map(argumentRow).join('')}${addButton('argument', 'Add argument')}</fieldset>
+    <div class="arc-sort-list" data-sortable-list="argument">${operation.args.map(argumentRow).join('')}</div>
+    ${addButton('argument', 'Add argument')}</fieldset>
     <fieldset class="arc-yaml-group"><legend>Selectors parameter</legend>
     <small>List of strings</small>
-    ${operation.parameters.selectors.default.map(defaultRow).join('') || '<small>No default selectors</small>'}
-    ${addButton('default', 'Add default selector')}</fieldset>`;
+    <div class="arc-sort-list" data-sortable-list="default">${operation.parameters.selectors.default.map(defaultRow).join('') || '<small>No default selectors</small>'}</div>
+    ${addButton('default', 'Add default selector')}</fieldset>
+    <span class="arc-sr" role="status" data-sort-status></span>`;
 }
 
 function readOnlyField(label: string, value: string) {
@@ -42,7 +44,7 @@ function operationField(
   return textField(metadata?.title ?? key, [key], operation[key], metadata?.description);
 }
 
-function argumentRow(value: Operation['args'][number], index: number, all: Operation['args']) {
+function argumentRow(value: Operation['args'][number], index: number) {
   const path = [...argumentPath, index];
   const kind = typeof value === 'string' ? 'literal' : 'context' in value ? 'owner' : 'selectors';
   const choices: [string, string][] = [
@@ -51,17 +53,17 @@ function argumentRow(value: Operation['args'][number], index: number, all: Opera
     ['selectors', 'Parameter · selectors'],
   ];
   const label = 'Argument ' + (index + 1);
-  return `<div class="arc-yaml-list-row">
+  return `<div class="arc-yaml-list-row" data-sort-row>
     ${field(label + ' type', path, `<select data-yaml-kind="${index}">${options(choices, kind)}</select>`)}
-    ${listButtons('argument', index, all.length)}
+    ${listButtons('argument', index)}
     ${typeof value === 'string' ? textField(label + ' value', path, value, '', false) : ''}
   </div>`;
 }
 
-function defaultRow(value: string, index: number, all: string[]) {
-  return `<div class="arc-yaml-list-row">
+function defaultRow(value: string, index: number) {
+  return `<div class="arc-yaml-list-row" data-sort-row>
     ${textField('Default selector ' + (index + 1), [...defaultsPath, index], value)}
-    ${listButtons('default', index, all.length)}
+    ${listButtons('default', index)}
   </div>`;
 }
 
@@ -98,22 +100,12 @@ function addButton(list: string, label: string) {
   return `<button type="button" class="arc-button" data-yaml-add="${list}">${label}</button>`;
 }
 
-function listButtons(list: string, index: number, length: number) {
+function listButtons(list: string, index: number) {
   const row = (list === 'argument' ? 'argument ' : 'default selector ') + (index + 1);
   return `<div class="arc-row arc-yaml-row-actions">
-    ${listButton(list, index, 'up', `Move ${row} up`, '↑', index === 0)}
-    ${listButton(list, index, 'down', `Move ${row} down`, '↓', index === length - 1)}
-    ${listButton(list, index, 'remove', `Remove ${row}`, '×', false)}</div>`;
-}
-
-function listButton(
-  list: string,
-  index: number,
-  action: string,
-  label: string,
-  glyph: string,
-  disabled: boolean,
-) {
-  return `<button type="button" class="arc-button" data-yaml-list="${list}" data-yaml-index="${index}"
-    data-yaml-action="${action}" aria-label="${label}" data-arc-tooltip="${label}" ${disabled ? 'disabled' : ''}>${glyph}</button>`;
+    <button type="button" class="arc-button arc-sort-handle" data-sort-handle
+      aria-label="Reorder ${row}" data-arc-tooltip="Drag to reorder ${row}"
+      aria-description="Drag to reorder or use the arrow keys"><span class="arc-sort-grip" aria-hidden="true"></span></button>
+    <button type="button" class="arc-button" data-yaml-list="${list}" data-yaml-index="${index}"
+      aria-label="Remove ${row}" data-arc-tooltip="Remove ${row}">×</button></div>`;
 }

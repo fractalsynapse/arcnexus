@@ -7,6 +7,7 @@ import { data, files, state, requireValue, dom, root, fileArea } from './model.t
 import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
 import { ownerTestsPath } from './owner-tests-schema.ts';
 import { fileName } from './file-topics.ts';
+import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
 import {
   asText,
@@ -106,7 +107,7 @@ function fileIndexContents(area: Area) {
     <label>File type<select data-change="filter-type">${options(fileTypes(area), filter.type)}</select></label>
     <label>Sort by<select data-change="filter-sort">${options(order, filter.sort)}</select></label>
     <label class="wide">Search<input type="search" data-filter="search" placeholder="Search file name and content" value="${escape(filter.query)}"></label>
-    ${topicFilter(area, filter.topics)}
+    <div class="wide">${filterTopics()}</div>
     <label class="wide arc-checkbox"><input type="checkbox" data-change="filter-changed"
       ${filter.changed ? 'checked' : ''}>Changed only</label>
   </div>
@@ -114,33 +115,6 @@ function fileIndexContents(area: Area) {
     <span>Name</span><span>Priority</span><span class="arc-topics-head">Topics</span><span>Updated</span><span></span>
   </div>
   <div class="arc-file-list"></div>`;
-}
-
-function topicFilter(area: Area, selected: string[]) {
-  const topics = [
-    ...new Set(
-      files
-        .filter((item) => item.area === area)
-        .flatMap((item) => requireValue(item.revisions[0]).topics),
-    ),
-  ].sort();
-  const chips = selected
-    .map(
-      (topic) => `<button type="button" class="arc-pill" data-topic="${escape(topic)}"
-    aria-label="Remove topic ${escape(topic)}">${escape(topic)} ×</button>`,
-    )
-    .join('');
-  return (
-    `<form class="wide" data-form="topics">
-    <label for="arc-topic-entry">Topics</label>
-    <div class="arc-filter-pair">
-      <input id="arc-topic-entry" name="topic" list="arc-topic-choices" placeholder="Add topics, separated by commas">
-      <button class="arc-button" type="button" data-action="apply-form" aria-label="Add topics">+</button>
-    </div>
-    ${topics.length ? '' : '<small class="arc-empty-topics">Topics unavailable in captured files</small>'}
-    <datalist id="arc-topic-choices">${topics.map((t) => `<option value="${escape(t)}"></option>`).join('')}</datalist>
-  </form>` + (chips ? `<div class="arc-chips wide">${chips}</div>` : '')
-  );
 }
 
 export function updateFileList() {
@@ -168,7 +142,7 @@ export function matchesFile(item: IndexedFile, area: Area, filter: Filter, searc
     (!filter.changed || data[area].modified.includes(item.path)) &&
     [fileName(item.path), fileDescription(item), latest.content].some((text) => text.toLowerCase().includes(search)) &&
     filter.topics.every((topic) =>
-      latest.topics.some((value) => value.toLowerCase() === topic.toLowerCase()),
+      latest.topics.some((value) => topicKey(value) === topicKey(topic)),
     )
   );
 }
@@ -305,7 +279,7 @@ export function fileView() {
     ${editInput('Type', 'type', item.type, true)}
     ${editInput('Name', 'name', rev.name, !state.editing)}
     ${editInput('Priority', 'priority', rev.priority, !state.editing, 'number')}
-    ${editInput('Topics', 'topics', rev.topics.join(', '), !state.editing)}
+    ${fileTopics(rev, state.editing)}
   </div>`;
   return (
     breadcrumbs(data.fileReview ? [[areaName + ' file']] : [[areaName, slug], ['File']]) +

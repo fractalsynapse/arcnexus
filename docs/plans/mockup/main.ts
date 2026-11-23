@@ -34,6 +34,7 @@ import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage, deliveryPage } from './run.ts';
 import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
+import { bindTopicPickers, clearTopicDraft, savedTopics } from './topic-picker.ts';
 import { icon, button, icons } from './view.ts';
 
 export function workspace(): Workspace {
@@ -106,6 +107,7 @@ export function render(resetComposer = false) {
 }
 
 export function go(route: string) {
+  clearTopicDraft();
   state.route = route;
   state.expandedPane = null;
   state.editing = false;
@@ -122,7 +124,7 @@ export function openFile(id: string) {
 }
 
 export function handleClick(control: HTMLButtonElement) {
-  const { go: route, file: id, component, activity, action, topic, question, inspect: record } =
+  const { go: route, file: id, component, activity, action, question, inspect: record } =
     control.dataset;
   if (question) openQuestion(question);
   else if (record) {
@@ -138,10 +140,6 @@ export function handleClick(control: HTMLButtonElement) {
   } else if (activity) {
     state.activity = activity;
     go('/run/activity/focus/');
-  } else if (topic) {
-    const filter = state.filters[fileArea()];
-    filter.topics = filter.topics.filter((value) => value !== topic);
-    render();
   } else if (action) handleAction(control, action);
 }
 
@@ -151,17 +149,6 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
   else if (action === 'advance-queue') advanceQueue();
-}
-
-export function parseTopics(value: unknown) {
-  return [
-    ...new Set(
-      String(value)
-        .split(',')
-        .map((topic) => topic.trim())
-        .filter(Boolean),
-    ),
-  ];
 }
 
 export function applyPreviewForm(form: HTMLFormElement) {
@@ -175,26 +162,22 @@ export function applyPreviewForm(form: HTMLFormElement) {
     submitAnswer(form.dataset.question ?? '', String(data.get('question-reply') ?? '').trim());
     return;
   }
-  if (form.dataset.form === 'topics') {
-    const filter = state.filters[fileArea()];
-    filter.topics = [...new Set([...filter.topics, ...parseTopics(data.get('topic'))])];
-    render();
-  }
   if (form.dataset.form !== 'file' || !state.editing) return;
   saveRevision(data);
 }
 
 function saveRevision(data: FormData) {
   const item = requireValue(files[state.fileId]);
+  const revision = requireValue(item.revisions[state.revision]);
   let content: string | undefined = String(data.get('content'));
-  if (item.path.endsWith('.md')) content = editedMarkdown(requireValue(item.revisions[state.revision]));
+  if (item.path.endsWith('.md')) content = editedMarkdown(revision);
   else if (item.path === ownerTestsPath) content = saveOperationDraft();
   if (content === undefined) return;
   item.revisions.unshift({
     id: 'Draft ' + (item.revisions.filter((r) => r.id.startsWith('Draft')).length + 1),
     name: String(data.get('name')).trim(),
     priority: data.get('priority') ? Number(data.get('priority')) : null,
-    topics: parseTopics(data.get('topics')),
+    topics: savedTopics(revision),
     content,
     updated: 'Preview draft',
   });
@@ -302,18 +285,10 @@ root.addEventListener('keydown', (event) => {
   const field = event.target;
   if (field instanceof HTMLButtonElement && field.getAttribute('role') === 'tab') {
     navigateDiffTabs(event, field);
-    return;
   }
-  if (
-    event.key !== 'Enter' ||
-    !(field instanceof HTMLInputElement) ||
-    field.id !== 'arc-topic-entry'
-  )
-    return;
-  event.preventDefault();
-  if (field.form) applyPreviewForm(field.form);
 });
 
+bindTopicPickers(updateFileList);
 if (data.fileReview) {
   root.setAttribute('data-file-review', '');
   dom<HTMLButtonElement>('.arc-brand').disabled = true;

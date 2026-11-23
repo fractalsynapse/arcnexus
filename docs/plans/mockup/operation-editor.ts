@@ -15,6 +15,7 @@ import type { Revision } from './model.ts';
 import { argumentPath, argumentValues, defaultsPath, operationForm } from './operation-form.ts';
 import { operationIssues, ownerTestsPath } from './owner-tests-schema.ts';
 import type { Operation, YamlPath } from './owner-tests-schema.ts';
+import { SortableLists } from './sortable.ts';
 import { noData } from './view.ts';
 
 type Mode = 'Form' | 'Raw';
@@ -48,6 +49,7 @@ class OperationEditor {
   private host?: HTMLElement;
   private changes?: HTMLElement;
   private status?: HTMLElement;
+  private sorter?: SortableLists;
 
   /** Preview the proposed removal in a draft based on the selected capture. */
   constructor(readonly revision: Revision) {
@@ -64,11 +66,14 @@ class OperationEditor {
     this.status = main.querySelector<HTMLElement>('[data-yaml-save-status]') ?? undefined;
     host.onclick = (event) => this.click(event.target);
     host.oninput = (event) => this.input(event.target);
+    this.sorter = new SortableLists(host, (list, from, to) => this.reorder(list, from, to));
     this.render();
   }
 
   /** Dispose of the CodeMirror view while preserving the draft across page renders. */
   detach() {
+    this.sorter?.dispose();
+    this.sorter = undefined;
     this.view?.destroy();
     this.view = undefined;
     this.host = this.changes = this.status = undefined;
@@ -85,6 +90,7 @@ class OperationEditor {
   /** Render the active editing mode and restore its validation and diff. */
   private render() {
     if (!this.host) return;
+    this.sorter?.cancel();
     this.view?.destroy();
     this.view = undefined;
     const body =
@@ -208,41 +214,46 @@ class OperationEditor {
     if (!(target instanceof Element)) return;
     const control = target.closest('button');
     if (!control) return;
-    const { yamlMode, yamlAdd, yamlList, yamlIndex, yamlAction } = control.dataset;
+    const { yamlMode, yamlAdd, yamlList, yamlIndex } = control.dataset;
     if (yamlMode === 'Form' || yamlMode === 'Raw') {
       if (this.mode === yamlMode || (yamlMode === 'Form' && !this.validate())) return;
       this.mode = yamlMode;
       this.render();
       this.host?.querySelector<HTMLElement>(`[data-yaml-mode="${yamlMode}"]`)?.focus();
-    } else if (yamlAdd || (yamlList && yamlAction && yamlIndex !== undefined)) {
+    } else if (yamlAdd || (yamlList && yamlIndex !== undefined)) {
       const list = yamlAdd ?? yamlList;
       this.editList(
         list === 'argument' ? argumentPath : defaultsPath,
-        yamlAdd ? 'add' : yamlAction,
-        Number(yamlIndex),
+        yamlAdd ? undefined : Number(yamlIndex),
       );
     }
   }
 
-  /** Move or change list entries in place so retained nodes keep their YAML metadata. */
-  private editList(path: string[], action: string | undefined, index: number) {
+  /** Add or remove an entry while retaining the surrounding YAML nodes. */
+  private editList(path: string[], index?: number) {
     const list = this.document.getIn(path, true);
     if (!isSeq(list)) return;
     let next: number;
-    if (action === 'add') {
+    if (index === undefined) {
       next = list.items.length;
       list.items.push(this.document.createNode(''));
-    } else if (action === 'remove') {
+    } else {
       list.items.splice(index, 1);
       next = Math.min(index, list.items.length - 1);
-    } else {
-      next = action === 'up' ? index - 1 : index + 1;
-      const [node] = list.items.splice(index, 1);
-      list.items.splice(next, 0, node);
     }
     this.serialize();
     this.render();
     this.focusRow(path, next);
+  }
+
+  /** Move the existing YAML node so associated comments follow the reordered entry. */
+  private reorder(key: string, from: number, to: number) {
+    const list = this.document.getIn(key === 'argument' ? argumentPath : defaultsPath, true);
+    if (!isSeq(list)) return;
+    const [node] = list.items.splice(from, 1);
+    list.items.splice(to, 0, node);
+    this.serialize();
+    this.render();
   }
 
   /** Restore focus after rebuilding the list, falling back to its Add button. */

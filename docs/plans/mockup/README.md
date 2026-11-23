@@ -41,7 +41,9 @@ retains the complete round and navigation.
   to open the detailed round metrics.
 - Find a file by its extension-free name or description. Sort by priority and
   combine search and topic filters with Changed only. Preview topics illustrate
-  the filter across captured goals, objectives, and architecture files.
+  the filter across captured goals, objectives, and architecture files. In a
+  file's Edit view, choose from the same topics or type a new name and press
+  Enter. Save to make the topic available in the explorer.
 - Use one composer across views. Start Plan and steer while the Planner is
   active. Advance the preview to simulate the approval question. Open the question,
   make a selection, return to Plan, and reopen it to verify the draft persists.
@@ -59,8 +61,10 @@ retains the complete round and navigation.
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
 - Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  The draft previews the proposed removal of Applicability in Changes. Change a
-  field or reorder arguments, then switch to Raw to edit the same draft as YAML.
+  The draft previews the proposed removal of Applicability in Changes. Drag an
+  argument or default selector by its handle. The gap marks the new position.
+  Use the arrow keys on a focused handle to reorder with the keyboard. Switch to
+  Raw to edit the same draft as YAML.
   Save validates the YAML with the preview schema and creates a local draft revision.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs

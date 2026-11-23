@@ -27,6 +27,8 @@
 
 ### Added
 
+- Share topic suggestions between the file explorer and Plan and Architect file editors. Add topics with Enter and reorder YAML arguments and selectors with drag handles and a visible insertion gap (#703).
+
 - Record the draft architecture proposal to remove operation applicability and preview the YAML change in the `owner-tests.yaml` mockup editor (#703).
 
 - Prototype a schema-validated Form editor for `owner-tests.yaml` with Raw YAML and live draft changes in the local mockup (#703).
