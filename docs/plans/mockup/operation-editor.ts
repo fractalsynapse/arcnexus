@@ -13,7 +13,7 @@ import { isNode, isScalar, isSeq, parseDocument } from 'yaml';
 import { diffBody, draftDiff } from './diff.ts';
 import type { Revision } from './model.ts';
 import { argumentPath, argumentValues, defaultsPath, operationForm } from './operation-form.ts';
-import { operationIssues, ownerTestsPath } from './owner-tests-schema.ts';
+import { operationIssues, ownerTestsPath, removedOperationFields } from './owner-tests-schema.ts';
 import type { Operation, YamlPath } from './owner-tests-schema.ts';
 import { SortableLists } from './sortable.ts';
 import { noData } from './view.ts';
@@ -51,11 +51,15 @@ class OperationEditor {
   private status?: HTMLElement;
   private sorter?: SortableLists;
 
-  /** Preview the proposed removal in a draft based on the selected capture. */
+  /** Preview the proposed removals in a draft based on the selected capture. */
   constructor(readonly revision: Revision) {
     this.source = revision.content;
     this.document = parseDocument(this.source);
-    if (!this.document.errors.length && this.document.delete('applicability')) this.serialize();
+    if (!this.document.errors.length) {
+      const removed = removedOperationFields.filter((field) => this.document.has(field));
+      for (const field of removed) this.document.delete(field);
+      if (removed.length) this.serialize();
+    }
     this.mode = operationIssues(this.document).length ? 'Raw' : 'Form';
   }
 

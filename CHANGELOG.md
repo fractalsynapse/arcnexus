@@ -4,7 +4,9 @@
 
 ### Fixed
 
-- Link the mockup's displayed commit refs to GitHub and put the operation selector and Send above the optional instruction (#703).
+- Fit the mockup's instruction, operation selector, and Send in one row on wide layouts and give the operation selector the remaining space beside Send on narrow layouts (#703).
+
+- Link the mockup's displayed commit refs to GitHub (#703).
 
 - Theme the mockup's selector menus, add keyboard-selectable topic autocomplete, and simplify file information (#703).
 
@@ -30,6 +32,8 @@
 - Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
 
 ### Added
+
+- Record the decision to remove operation categories and preview the proposed YAML in the `owner-tests.yaml` mockup editor (#703).
 
 - Share topic suggestions between the file explorer and Plan and Architect file editors. Add topics with Enter and reorder YAML arguments and selectors with drag handles and a visible insertion gap (#703).
 

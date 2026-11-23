@@ -45,8 +45,10 @@ retains the complete round and navigation.
   file's Edit view, use the matching suggestions or type a new name and press
   Enter. Use the arrow keys to select a suggestion. Save to make a new topic
   available in the explorer.
-- Use one composer across views. Start Plan and steer while the Planner is
-  active. Advance the preview to simulate the approval question. Open the question,
+- Use one composer across views. On wide layouts the instruction, operation,
+  and Send share one row. On narrow layouts the operation and Send fill the
+  top row, with the instruction below them. Start Plan and steer while the
+  Planner is active. Advance the preview to simulate the approval question. Open the question,
   make a selection, return to Plan, and reopen it to verify the draft persists.
   The recorded historical question shows its existing answer and accepts no reply.
   Advance Run through its recorded actor roster and steer the active Director,
@@ -62,7 +64,7 @@ retains the complete round and navigation.
   remains available in Raw. YAML files use a highlighted document and text
   editor. Expand either pane while editing to check draft retention.
 - Open Architect’s `owner-tests.yaml` and enable Edit to try the YAML Form.
-  The draft previews the proposed removal of Applicability in Changes. Drag an
+  The draft previews the proposed removal of Applicability and Category in Changes. Drag an
   argument or default selector by its handle. The gap marks the new position.
   Use the arrow keys on a focused handle to reorder with the keyboard. Switch to
   Raw to edit the same draft as YAML.

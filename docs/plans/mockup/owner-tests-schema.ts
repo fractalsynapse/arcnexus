@@ -2,6 +2,7 @@ import type { Document } from 'yaml';
 import { z } from 'zod';
 
 export const ownerTestsPath = '.arc/architecture/operations/owner-tests.yaml';
+export const removedOperationFields = ['applicability', 'category'];
 
 function text(title: string, description: string) {
   return z
@@ -15,7 +16,6 @@ function text(title: string, description: string) {
 export const operationFields = {
   command: text('Command', 'Executable name'),
   cwd: text('Working directory', 'Path relative to the repository root'),
-  category: text('Category', 'Must be allowed by the activity’s execution profile'),
 };
 
 const argument = z.union(
@@ -46,9 +46,8 @@ export const operationSchema = z.strictObject(
   {
     error: (issue) =>
       issue.code === 'unrecognized_keys' &&
-      issue.keys.length === 1 &&
-      issue.keys.includes('applicability')
-        ? 'Applicability is removed in this draft. Delete the applicability field.'
+      issue.keys.every((key) => removedOperationFields.includes(key))
+        ? `Delete ${issue.keys.join(' and ')} from the draft.`
         : undefined,
   },
 );

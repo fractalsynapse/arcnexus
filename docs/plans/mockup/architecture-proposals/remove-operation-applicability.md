@@ -28,4 +28,4 @@ The confined quality runner reports the owner, quality action, and selected path
 
 ## Mockup review
 
-In Architect, open `owner-tests.yaml` and turn on **Edit**. The draft opens in **Form** without Applicability. **Raw** shows the same proposed YAML, and **Changes** shows the removed line against the selected capture. The read-only revision continues to show the captured YAML, and **Save** creates a local preview revision. This review exercises the proposed editing experience and leaves runtime behavior to the later implementation.
+In Architect, open `owner-tests.yaml` and turn on **Edit**. The draft opens in **Form**. **Raw** shows the proposed YAML, and **Changes** shows the removals of Applicability and [Category](remove-operation-categories.md) against the selected capture. The read-only revision shows the captured YAML, and **Save** creates a local preview revision.

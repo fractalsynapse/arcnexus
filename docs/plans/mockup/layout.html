@@ -18,9 +18,9 @@
   <footer class="arc-console" aria-label="Command controls">
     <div class="arc-compose-state"></div>
     <form class="arc-launch">
-      <label>Operation<select name="operation"></select></label>
-      <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
       <label class="arc-instruction"><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
+      <label class="arc-operation">Operation<select name="operation"></select></label>
+      <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
     </form>
     <div class="arc-footer-state" role="group" aria-label="Recorded refinement state"></div>
   </footer>
@@ -305,8 +305,13 @@
 #arc-preview .arc-issue + .arc-issue { margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--line); }
 #arc-preview .arc-issue strong { overflow-wrap: anywhere; }
 #arc-preview .arc-console { background: var(--paper); border-top: 1px solid var(--line); border-radius: 0 0 15px 15px; padding: 12px var(--pad); }
-#arc-preview .arc-launch { display:grid; grid-template-columns:minmax(0,max-content) auto minmax(0,1fr); gap:9px; align-items:end; }
-#arc-preview .arc-instruction { grid-column:1 / -1; }
+#arc-preview .arc-launch {
+  display:grid; grid-template-columns:minmax(0,1fr) max-content auto; grid-template-areas:"instruction operation send";
+  gap:9px; align-items:end; reading-flow:grid-rows;
+}
+#arc-preview .arc-instruction { grid-area:instruction; }
+#arc-preview .arc-operation { grid-area:operation; }
+#arc-preview .arc-launch-button { grid-area:send; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
 #arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; align-items:center; gap:5px 12px; }
@@ -330,6 +335,7 @@
   #arc-preview .arc-nav { grid-area: 2 / 1 / 3 / -1; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 7px; }
   #arc-preview .arc-nav button { flex: 1 1 0; padding-inline: 5px; }
   #arc-preview .arc-grid, #arc-preview .arc-grid.equal { grid-template-columns: minmax(0,1fr); }
+  #arc-preview .arc-launch { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"operation send" "instruction instruction"; }
 }
 @container (max-width: 400px) {
   #arc-preview .arc-stages { grid-template-columns: minmax(0,1fr); }
