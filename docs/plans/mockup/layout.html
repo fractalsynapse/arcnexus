@@ -17,12 +17,14 @@
   </header>
   <main class="arc-main"></main>
   <footer class="arc-console" aria-label="Command controls">
-    <div class="arc-compose-state"></div>
-    <form class="arc-launch">
-      <label class="arc-instruction"><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
-      <label class="arc-operation">Operation<select name="operation"></select></label>
-      <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
-    </form>
+    <div id="arc-console-body">
+      <div class="arc-compose-state"></div>
+      <form class="arc-launch">
+        <label class="arc-instruction"><span class="arc-instruction-label">Instruction <small>optional</small></span><textarea name="instruction" rows="1" placeholder="Add an instruction…"></textarea></label>
+        <label class="arc-operation">Operation<select name="operation"></select></label>
+        <button class="arc-button solid arc-launch-button" type="button" data-action="apply-form" aria-label="Send" data-arc-tooltip="Send"><span class="arc-play" aria-hidden="true"></span></button>
+      </form>
+    </div>
     <div class="arc-footer-state" role="group" aria-label="Recorded refinement state"></div>
   </footer>
   <dialog class="arc-inspector" aria-labelledby="arc-inspector-heading">
@@ -367,9 +369,14 @@ html:has(> body > #arc-preview) { scroll-padding-block-end:var(--arc-console-spa
 #arc-preview .arc-issue + .arc-issue { margin-top: 3px; padding-top: 10px; border-top: 1px solid var(--line); }
 #arc-preview .arc-issue strong { overflow-wrap: anywhere; }
 #arc-preview .arc-console {
+  --ink:#fff; --muted:#f1f3f5; --link:#fff; --line:#62666e;
+  --paper:#35383e; --quiet:#33363c; --tint:#474b52; --footer-control-size:30px;
   position:sticky; inset-block-end:0; z-index:4;
-  background:var(--paper); border-top:1px solid var(--line); padding:12px var(--pad);
+  color-scheme:dark; color:var(--ink); background:#282b30;
+  border-top:1px solid var(--line); padding:12px var(--pad);
 }
+#arc-preview .arc-console[data-collapsed] { padding-block:2px; }
+#arc-preview .arc-console[data-collapsed] :is(#arc-console-body,#arc-footer-details) { display:none; }
 #arc-preview .arc-launch {
   display:grid; grid-template-columns:minmax(0,1fr) max-content auto; grid-template-areas:"instruction operation send";
   gap:9px; align-items:end; reading-flow:grid-rows;
@@ -379,12 +386,21 @@ html:has(> body > #arc-preview) { scroll-padding-block-end:var(--arc-console-spa
 #arc-preview .arc-launch-button { grid-area:send; }
 #arc-preview .arc-launch textarea { display: block; min-height: 38px; }
 #arc-preview .arc-instruction-label small { margin-left: 4px; font-weight: 400; }
-#arc-preview .arc-footer-state, #arc-preview .arc-footer-readout { display:flex; align-items:center; gap:5px 12px; }
-#arc-preview .arc-footer-state { margin-top:11px; padding-top:8px; border-top:1px solid var(--line); }
-#arc-preview .arc-footer-readout { flex-wrap:wrap; min-width:0; }
-#arc-preview .arc-metrics-trigger { flex:none; justify-content:center; inline-size:30px; min-block-size:30px; border-radius:7px; }
-#arc-preview .arc-metrics-trigger:is(:hover,:focus-visible) { background:var(--tint); }
+#arc-preview .arc-footer-state {
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:start; gap:8px;
+  margin-top:11px; padding-top:8px; border-top:1px solid var(--line);
+}
+#arc-preview .arc-console[data-collapsed] .arc-footer-state { margin-top:0; padding-top:0; border-top:0; }
+#arc-preview :is(.arc-footer-readout,.arc-footer-command,.arc-footer-details) { display:flex; align-items:center; gap:3px 12px; }
+#arc-preview :is(.arc-footer-readout,.arc-footer-details) { flex-wrap:wrap; min-width:0; }
+#arc-preview .arc-footer-command { min-block-size:var(--footer-control-size); }
+#arc-preview :is(.arc-metrics-trigger,.arc-footer-toggle) {
+  justify-content:center; inline-size:var(--footer-control-size); min-block-size:var(--footer-control-size); border-radius:7px;
+}
+#arc-preview :is(.arc-metrics-trigger,.arc-footer-toggle):is(:hover,:focus-visible) { background:var(--tint); }
 #arc-preview .arc-metrics-trigger i::before { content:'▥'; font:16px/1 system-ui,sans-serif; }
+#arc-preview .arc-footer-chevron { inline-size:8px; block-size:8px; border:solid currentColor; border-width:0 2px 2px 0; transform:translateY(-2px) rotate(45deg); }
+#arc-preview .arc-footer-toggle[aria-expanded=false] .arc-footer-chevron { transform:translateY(2px) rotate(225deg); }
 #arc-preview .arc-footer-readout { color:var(--muted); font-size:12px; }
 #arc-preview .arc-footer-readout strong { color:var(--ink); font-weight:650; }
 #arc-preview .arc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -415,7 +431,8 @@ html:has(> body > #arc-preview) { scroll-padding-block-end:var(--arc-console-spa
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }
   #arc-preview .arc-file-revision-toolbar { --revision-control-height:44px; }
   #arc-preview :is(select,input,textarea) { font-size: 16px; }
-  #arc-preview :is(.arc-metrics-trigger,.arc-file-git) { inline-size:44px; }
+  #arc-preview .arc-console { --footer-control-size:44px; }
+  #arc-preview .arc-file-git { inline-size:44px; }
   #arc-preview .arc-pane-expand { min-inline-size:44px; }
   #arc-preview .arc-mdx-format button { min-width:44px; min-height:44px; }
 }

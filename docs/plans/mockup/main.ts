@@ -17,7 +17,7 @@ import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
-import { openRoundMetrics, roundFooter } from './round.ts';
+import { openRoundMetrics, roundFooter, toggleRoundFooter } from './round.ts';
 import { openGoalProgress } from './ogsm.ts';
 import {
   data,
@@ -165,6 +165,7 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'collapse-prose') collapseProse(control);
   else if (action === 'close-prose') closeProse();
   else if (action === 'round-metrics') openRoundMetrics(control);
+  else if (action === 'toggle-round-footer') toggleRoundFooter(control);
   else if (action === 'file-git') openFileGitInformation(control);
   else if (action === 'goal-progress') openGoalProgress(control);
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));

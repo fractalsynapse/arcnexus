@@ -1,5 +1,5 @@
 import { showInspector } from './inspector.ts';
-import { data, inspector } from './model.ts';
+import { data, dom, inspector } from './model.ts';
 import { countDetails } from './timeline.ts';
 import {
   cacheRate,
@@ -17,11 +17,24 @@ export function roundFooter() {
   return `<button type="button" class="arc-link arc-metrics-trigger" data-action="round-metrics"
     aria-label="Round metrics" data-arc-tooltip="Round metrics" aria-haspopup="dialog">${icon('chart-no-axes-column')}</button>
   <div class="arc-footer-readout">
-    ${status('Completed')}<strong>Refine</strong>
-    <span>Updated <time>${escape(ended)} ET</time></span>
-    <span>Elapsed <strong>${escape(wall)}</strong></span>
-    <span>Tokens (in / out) <strong>${roundTokens()}</strong></span>
-  </div>`;
+    <div class="arc-footer-command">${status('Completed')}<strong>Refine</strong></div>
+    <div class="arc-footer-details" id="arc-footer-details">
+      <span>Updated <time>${escape(ended)} ET</time></span>
+      <span>Elapsed <strong>${escape(wall)}</strong></span>
+      <span>Tokens (in / out) <strong>${roundTokens()}</strong></span>
+    </div>
+  </div>
+  <button type="button" class="arc-link arc-footer-toggle" data-action="toggle-round-footer"
+    aria-label="Collapse command panel" data-arc-tooltip="Collapse command panel" aria-expanded="true"
+    aria-controls="arc-console-body arc-footer-details"><span class="arc-footer-chevron" aria-hidden="true"></span></button>`;
+}
+
+export function toggleRoundFooter(control: HTMLButtonElement) {
+  const collapsed = dom('.arc-console').toggleAttribute('data-collapsed');
+  const label = collapsed ? 'Expand command panel' : 'Collapse command panel';
+  control.setAttribute('aria-expanded', String(!collapsed));
+  control.setAttribute('aria-label', label);
+  control.dataset.arcTooltip = label;
 }
 
 function roundTokens() {

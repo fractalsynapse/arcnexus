@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Give the docked command panel a dark gray finish and let the round metrics row collapse it to a compact status strip (#703).
+
 - Fill the viewport without a site frame and keep the mockup's instruction and round metrics controls at the bottom while scrolling (#703).
 
 - Separate the file path from the revision controls with a divider that matches the breadcrumb spacing (#703).
