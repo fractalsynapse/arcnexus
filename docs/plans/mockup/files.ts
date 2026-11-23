@@ -5,7 +5,6 @@ import { showInspector } from './inspector.ts';
 import { markdownContent } from './markdown.ts';
 import { overview, splitPanels } from './panels.ts';
 import type { Pane } from './panels.ts';
-import { displayGear, planLayout } from './plan-layout.ts';
 import { data, files, state, requireValue, dom, root, fileArea, inspector } from './model.ts';
 import type { Area, DesignFile, IndexedFile, Revision, Filter, Phase } from './model.ts';
 import { hasYamlForm } from './yaml-schema.ts';
@@ -67,33 +66,18 @@ function phaseReferences(phase: Phase) {
 }
 
 export function workspaceIndex(area: Area) {
-  if (area === 'plan') return planIndex();
   const name = phaseActor(area).role;
   const phase = data[area];
   const rows = phaseRows(area);
   const outcome = panel(name + ' outcome', phaseOutcome(area));
   return (
-    title('Architect', '', roundStatus()) +
+    title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
     overview(
       metrics(name, phase.stats, phase.rows, phase.wall),
       outcome,
       { log: eventLogPane(name, rows), context: fileIndex(area) },
     )
   );
-}
-
-function planIndex() {
-  const phase = data.plan;
-  const registry = planLayout([
-    { id: 'arc-planner-metrics', label: 'Planner metrics', content: (action, settings) =>
-      metrics('Planner', phase.stats, phase.rows, phase.wall, settings, action) },
-    { id: 'arc-planner-outcome', label: 'Planner outcome', content: (action, settings) =>
-      panel('Planner outcome', phaseOutcome('plan'), action, true, settings) },
-    eventLogPane('Planner', phaseRows('plan')),
-    fileIndex('plan'),
-  ]);
-  return title('Plan', '', roundStatus(), displayGear('page', 'Plan page settings')) +
-    `<div id="arc-plan-dashboard">${registry}</div><div id="arc-plan-settings" hidden></div>`;
 }
 
 function fileTypes(area: Area): [string, string][] {
@@ -113,8 +97,8 @@ function fileIndex(area: Area): Pane & { id: 'arc-files' } {
   return {
     id: 'arc-files',
     label: 'Files',
-    content: (action, settings) => `<div class="arc-files-wrap">${panel(
-      'Files', fileIndexContents(area), `<div class="arc-row"><small class="arc-file-count"></small>${action}</div>`, false, settings,
+    content: (action) => `<div class="arc-files-wrap">${panel(
+      'Files', fileIndexContents(area), `<div class="arc-row"><small class="arc-file-count"></small>${action}</div>`, false,
     )}</div>`,
   };
 }

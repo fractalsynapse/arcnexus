@@ -28,6 +28,8 @@ const preferences = z.object({
   layouts: z.object({ 1: layoutSettings, 2: layoutSettings, 3: layoutSettings }),
   site: palette,
   panels: z.record(panelId, palette.optional()),
+  known: z.array(panelId).optional(),
+  arranged: z.boolean().optional(),
 });
 export type Preferences = z.infer<typeof preferences>;
 
@@ -45,29 +47,51 @@ export function defaultDisplay(): Preferences {
     },
     site: {},
     panels: {},
+    known: [...defaultOrder],
+    arranged: true,
   };
 }
 
-const storageKey = 'arcnexus.mockup.plan-display';
-export let display = readDisplay();
+const legacyKey = 'arcnexus.mockup.plan-display';
+const siteKey = 'arcnexus.mockup.site-appearance';
+const pages = new Map<string, Preferences>();
+let page = '/plan/';
+let site = read(siteKey, palette) ?? read(legacyKey, preferences)?.site ?? {};
+export let display = defaultDisplay();
 
-function readDisplay() {
+function read<T>(key: string, schema: z.ZodType<T>) {
   try {
-    const value = preferences.safeParse(JSON.parse(localStorage.getItem(storageKey) ?? 'null'));
-    if (value.success) {
-      value.data.order = [...new Set(value.data.order)];
-      return value.data;
-    }
+    return schema.safeParse(JSON.parse(localStorage.getItem(key) ?? 'null')).data;
   } catch {
     // Viewer environments may disable storage.
   }
-  return defaultDisplay();
+}
+
+function pageKey(route: string) {
+  return 'arcnexus.mockup.display' + route;
+}
+
+export function openDisplay(route: string, defaults: Preferences, available: PanelId[]) {
+  page = route;
+  const legacy = route === '/plan/' ? read(legacyKey, preferences) : undefined;
+  display = pages.get(route) ?? read(pageKey(route), preferences) ?? legacy ?? defaults;
+  const known = display.known ?? defaults.known ?? defaults.order;
+  display.order = [
+    ...new Set([...display.order, ...available.filter((id) => !known.includes(id))]),
+  ];
+  display.known = [...new Set([...known, ...available])];
+  display.arranged ??= defaults.arranged;
+  display.site = site;
+  pages.set(route, display);
 }
 
 export function saveDisplay(value = display) {
   display = value;
+  site = value.site;
+  pages.set(page, value);
   try {
-    localStorage.setItem(storageKey, JSON.stringify(value));
+    localStorage.setItem(pageKey(page), JSON.stringify(value));
+    localStorage.setItem(siteKey, JSON.stringify(site));
   } catch {
     // The current preview can still use the selected preferences.
   }

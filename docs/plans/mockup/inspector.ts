@@ -1,4 +1,5 @@
 import { dom, root } from './model.ts';
+import { copyPanelPalette } from './display-colors.ts';
 
 export function showInspector(
   opener: HTMLElement,
@@ -20,6 +21,7 @@ export function showInspector(
     dialog.style.setProperty('--arc-dialog-center', center + window.scrollY + 'px');
     dialog.style.setProperty('--arc-dialog-space', (visible?.height || window.innerHeight) + 'px');
     dialog.toggleAttribute('data-compact', compact);
+    copyPanelPalette(opener, dialog);
     dom('#arc-inspector-heading').textContent = heading;
     content.innerHTML = body();
     dialog.showModal();

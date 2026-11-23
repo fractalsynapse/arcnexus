@@ -16,8 +16,8 @@ import { detachYamlEditor, mountYamlEditor, mountYamlMarkdownField, saveYamlDraf
 import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
-import { applyPlanDisplay, bindPlanResize, desktopPlan } from './plan-layout.ts';
-import { bindPlanSettings, discardPlanSettings, refreshPlanSettings } from './plan-settings.ts';
+import { arrangeDisplay, bindDisplayResize, desktopDisplay, mountDisplayPage } from './display-layout.ts';
+import { bindDisplaySettings, discardDisplaySettings, refreshDisplaySettings } from './display-settings.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
 import { mountRoundFooter, openRoundMetrics, toggleRoundFooter } from './round.ts';
 import { openGoalProgress } from './ogsm.ts';
@@ -106,14 +106,14 @@ export function render(resetComposer = false) {
   detachMarkdownEditor();
   detachYamlEditor();
   main.innerHTML = requireValue(routes[r])();
-  applyPlanDisplay();
-  refreshPlanSettings();
+  renderPreviewConversation(r);
+  mountDisplayPage();
+  refreshDisplaySettings();
   highlightFileCode(main);
   const file = files[state.fileId];
   const revision = file?.revisions[state.revision];
   mountMarkdownEditor(main.querySelector('[data-md-editor]'), revision);
   mountYamlEditor(main, file, revision);
-  renderPreviewConversation(r);
   updateFileList();
   renderCommand(resetComposer);
   icons();
@@ -128,7 +128,7 @@ function renderPreviewConversation(route: string) {
 }
 
 export function go(route: string) {
-  discardPlanSettings();
+  discardDisplaySettings();
   dom<HTMLDialogElement>('.arc-inspector').close();
   clearTopicDraft();
   state.route = route;
@@ -339,11 +339,9 @@ function reserveScrollSpace(selector: string, property: string) {
 }
 
 bindTopicPickers(updateFileList);
-bindPlanSettings(render);
-bindPlanResize();
-desktopPlan.addEventListener('change', () => {
-  if (state.route === '/plan/') render();
-});
+bindDisplaySettings();
+bindDisplayResize();
+desktopDisplay.addEventListener('change', arrangeDisplay);
 if (data.fileReview) {
   root.setAttribute('data-file-review', '');
   dom<HTMLButtonElement>('.arc-brand').disabled = true;

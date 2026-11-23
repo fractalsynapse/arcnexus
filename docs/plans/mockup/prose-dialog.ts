@@ -1,4 +1,5 @@
 import { dom, root } from './model.ts';
+import { copyPanelPalette } from './display-colors.ts';
 
 let restoreProse: (() => void) | undefined;
 
@@ -25,7 +26,7 @@ export function showProse(opener: HTMLButtonElement, mountEditor: (host: HTMLEle
   field.before(position);
   const scroll = dom('.arc-prose-scroll');
   scroll.append(field);
-  dom('#arc-prose-heading').textContent = opener.dataset.proseTitle ?? '';
+  prepareDialog(opener, dialog);
   disclosure.open = false;
   const stopTracking = trackEmbeddedViewport(dialog);
   const restore = () => {
@@ -41,8 +42,13 @@ export function showProse(opener: HTMLButtonElement, mountEditor: (host: HTMLEle
   dialog.addEventListener('close', restore);
   dialog.showModal();
   scroll.scrollTop = 0;
-  const markdown = field.querySelector<HTMLElement>('[data-yaml-markdown]');
-  if (markdown) mountEditor(markdown);
+  const editor = field.querySelector<HTMLElement>('[data-yaml-markdown]');
+  if (editor) mountEditor(editor);
+}
+
+function prepareDialog(opener: HTMLButtonElement, dialog: HTMLDialogElement) {
+  copyPanelPalette(opener, dialog);
+  dom('#arc-prose-heading').textContent = opener.dataset.proseTitle ?? '';
 }
 
 export function closeProse() {

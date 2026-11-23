@@ -1,4 +1,5 @@
 import { dom, root } from './model.ts';
+import { copyPanelPalette } from './display-colors.ts';
 
 const tooltip = dom<HTMLElement>('.arc-tooltip');
 let active: HTMLElement | null = null;
@@ -11,6 +12,7 @@ function showTooltip(control: HTMLElement | null) {
   const message = control?.dataset.arcTooltip;
   if (!control || !message || control === active) return;
   active = control;
+  copyPanelPalette(control, tooltip);
   tooltip.textContent = message;
   tooltip.showPopover();
   positionTooltip();

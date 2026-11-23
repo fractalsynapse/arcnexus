@@ -1,10 +1,10 @@
 import { colorFields, colorWarning, inheritedColors } from './display-colors.ts';
 import { columns, display, saveDisplay } from './display-preferences.ts';
 import type { PanelId, Preferences } from './display-preferences.ts';
-import { main, root, state } from './model.ts';
-import { applyPlanDisplay, planPanels } from './plan-layout.ts';
-import { pageSettingsView, panelSettingsView } from './plan-settings-view.ts';
-import type { SettingsTab } from './plan-settings-view.ts';
+import { main, root } from './model.ts';
+import { applyDisplay, arrangeDisplay, displayPageTitle, pagePanels } from './display-layout.ts';
+import { pageSettingsView, panelSettingsView } from './display-settings-view.ts';
+import type { SettingsTab } from './display-settings-view.ts';
 import { SortableLists } from './sortable.ts';
 import { icons } from './view.ts';
 
@@ -13,15 +13,16 @@ let active: Session | undefined;
 let reordering: SortableLists | undefined;
 let siteDefaults: ReturnType<typeof inheritedColors>;
 
-export function bindPlanSettings(onSave: () => void) {
+export function bindDisplaySettings() {
   siteDefaults = inheritedColors(root, true);
   main.addEventListener('click', (event) => {
     const control =
       event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button') : null;
-    if (state.route !== '/plan/' || !control) return;
-    const { displayOpen, displayAction } = control.dataset;
-    if (displayOpen) openSettings(displayOpen);
-    else if (active && displayAction) handleSettingsAction(active, control, displayAction, onSave);
+    if (!control) return;
+    const { displayOpen, displayAction, displaySwatch } = control.dataset;
+    if (displaySwatch && active) selectSwatch(control, displaySwatch);
+    else if (displayOpen) openSettings(displayOpen);
+    else if (active && displayAction) handleSettingsAction(active, control, displayAction);
   });
   main.addEventListener('change', (event) => {
     if (active?.scope === 'page') changePageSettings(active, event.target);
@@ -31,11 +32,19 @@ export function bindPlanSettings(onSave: () => void) {
   });
 }
 
+function selectSwatch(control: HTMLElement, value: string) {
+  const field = control.closest('.arc-color-field');
+  const input = field?.querySelector<HTMLInputElement>('input[type="color"]');
+  if (!input) return;
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function openSettings(scope: string) {
-  const entry = planPanels.find((panel) => panel.id === scope);
+  const entry = pagePanels.find((panel) => panel.id === scope);
   if (scope !== 'page' && !entry) return;
   if (active?.scope === scope) return;
-  discardPlanSettings();
+  discardDisplaySettings();
   active = {
     scope: entry?.id ?? 'page',
     draft: structuredClone(display),
@@ -46,11 +55,11 @@ function openSettings(scope: string) {
     reordering = new SortableLists(main, (_list, from, to) => {
       if (!active) return;
       reorderVisiblePanels(active.draft, from, to);
-      refreshPlanSettings();
+      refreshDisplaySettings();
     });
     window.scrollTo(0, 0);
   }
-  refreshPlanSettings();
+  refreshDisplaySettings();
   main
     .querySelector<HTMLElement>(
       active.scope === 'page' ? '[data-display-layout]:checked' : '[data-display-color]',
@@ -59,22 +68,23 @@ function openSettings(scope: string) {
 }
 
 function reorderVisiblePanels(draft: Preferences, from: number, to: number) {
-  const available = new Set(planPanels.map(({ id }) => id));
+  const available = new Set(pagePanels.map(({ id }) => id));
   const visible = draft.order.filter((id) => available.has(id));
   const [id] = visible.splice(from, 1);
   if (!id) return;
+  draft.arranged = true;
   visible.splice(to, 0, id);
   draft.order = draft.order.map((entry) =>
     available.has(entry) ? (visible.shift() ?? entry) : entry,
   );
 }
 
-export function refreshPlanSettings() {
-  if (!active || state.route !== '/plan/') return;
+export function refreshDisplaySettings() {
+  if (!active) return;
   const { scope, draft } = active;
   if (scope === 'page') renderPageForm(active);
   else {
-    const section = main.querySelector(`#${scope} .arc-surface`);
+    const section = pagePanels.find(({ id }) => id === scope)?.section;
     const colors = { ...inheritedColors(root), ...draft.panels[scope] };
     section?.setAttribute('data-display-editing', '');
     section?.querySelector('[data-panel-display-settings]')?.remove();
@@ -84,17 +94,16 @@ export function refreshPlanSettings() {
 }
 
 function renderPageForm(session: Session) {
-  const editor = main.querySelector<HTMLElement>('#arc-plan-settings');
-  const dashboard = main.querySelector<HTMLElement>('#arc-plan-dashboard');
-  if (!editor || !dashboard) return;
+  const editor = main.querySelector<HTMLElement>('#arc-page-settings');
+  if (!editor) return;
   session.tab = editor.querySelector('[aria-selected="true"]')?.id.endsWith('available')
     ? 'available'
     : editor.innerHTML
       ? 'active'
       : session.tab;
-  dashboard.hidden = true;
+  main.setAttribute('data-page-settings', '');
   editor.hidden = false;
-  editor.innerHTML = pageSettingsView(session.draft, planPanels, session.tab, {
+  editor.innerHTML = pageSettingsView(displayPageTitle, session.draft, pagePanels, session.tab, {
     ...siteDefaults,
     ...session.draft.site,
   });
@@ -105,13 +114,16 @@ function changePageSettings(session: Session, target: EventTarget | null) {
     const layout = columns.find((count) => String(count) === target.value);
     if (!layout) return;
     session.draft.layout = layout;
-    refreshPlanSettings();
+    session.draft.arranged = true;
+    refreshDisplaySettings();
     main
       .querySelector<HTMLElement>('[data-display-layout]:checked')
       ?.focus({ preventScroll: true });
   } else if (target instanceof HTMLSelectElement) {
-    const panel = planPanels.find((entry) => entry.id === target.dataset.displayRegion);
-    if (panel) session.draft.layouts[session.draft.layout].regions[panel.id] = Number(target.value);
+    const panel = pagePanels.find((entry) => entry.id === target.dataset.displayRegion);
+    if (!panel) return;
+    session.draft.layouts[session.draft.layout].regions[panel.id] = Number(target.value);
+    session.draft.arranged = true;
   }
 }
 
@@ -122,65 +134,64 @@ function changeColor(session: Session, target: EventTarget | null) {
   const palette =
     session.scope === 'page' ? session.draft.site : (session.draft.panels[session.scope] ??= {});
   palette[field] = target.value;
+  for (const option of target
+    .closest('.arc-color-field')
+    ?.querySelectorAll<HTMLElement>('[data-display-swatch]') ?? []) {
+    option.setAttribute('aria-pressed', String(option.dataset.displaySwatch === target.value));
+  }
   const colors = session.scope === 'page' ? siteDefaults : inheritedColors(root);
   const warning = main.querySelector('[data-contrast-warning]');
   if (warning) warning.textContent = colorWarning({ ...colors, ...palette });
 }
 
-function handleSettingsAction(
-  session: Session,
-  control: HTMLElement,
-  action: string,
-  onSave: () => void,
-) {
-  if (action === 'save' || action === 'close')
-    return finishSettings(session, action === 'save', onSave);
+function handleSettingsAction(session: Session, control: HTMLElement, action: string) {
+  if (action === 'save' || action === 'close') return finishSettings(session, action === 'save');
   if (action === 'reset-colors') {
     if (session.scope === 'page') session.draft.site = {};
     else delete session.draft.panels[session.scope];
-    refreshPlanSettings();
+    refreshDisplaySettings();
     main
       .querySelector<HTMLElement>('[data-display-action="reset-colors"]')
       ?.focus({ preventScroll: true });
     return;
   }
   const id = control.closest<HTMLElement>('[data-display-entry]')?.dataset.displayEntry;
-  const entry = planPanels.find((panel) => panel.id === id);
+  const entry = pagePanels.find((panel) => panel.id === id);
   if (!entry) return;
   if (action === 'remove')
     session.draft.order = session.draft.order.filter((panel) => panel !== entry.id);
   else if (action === 'add' && !session.draft.order.includes(entry.id))
     session.draft.order.push(entry.id);
-  refreshPlanSettings();
+  session.draft.arranged = true;
+  refreshDisplaySettings();
   main
-    .querySelector<HTMLElement>('#arc-plan-settings [aria-selected="true"]')
+    .querySelector<HTMLElement>('#arc-page-settings [aria-selected="true"]')
     ?.focus({ preventScroll: true });
 }
 
-function finishSettings({ scope, draft, scroll }: Session, save: boolean, onSave: () => void) {
-  discardPlanSettings();
+function finishSettings({ scope, draft, scroll }: Session, save: boolean) {
+  discardDisplaySettings();
   if (save && scope === 'page') {
-    if (!draft.order.some((id) => id === state.expandedPane)) state.expandedPane = null;
     saveDisplay(draft);
-    onSave();
+    applyDisplay();
+    arrangeDisplay();
   } else if (save && scope !== 'page') {
     display.panels[scope] = draft.panels[scope];
     saveDisplay();
-    applyPlanDisplay();
+    applyDisplay();
   }
   main.querySelector<HTMLElement>(`[data-display-open="${scope}"]`)?.focus({ preventScroll: true });
   window.scrollTo(0, scroll);
 }
 
-export function discardPlanSettings() {
+export function discardDisplaySettings() {
   if (!active) return;
-  const editor = main.querySelector<HTMLElement>('#arc-plan-settings');
-  const dashboard = main.querySelector<HTMLElement>('#arc-plan-dashboard');
+  const editor = main.querySelector<HTMLElement>('#arc-page-settings');
   if (editor) {
     editor.hidden = true;
     editor.replaceChildren();
   }
-  if (dashboard) dashboard.hidden = false;
+  main.removeAttribute('data-page-settings');
   main.querySelector('[data-display-editing]')?.removeAttribute('data-display-editing');
   main.querySelector('[data-panel-display-settings]')?.remove();
   reordering?.dispose();

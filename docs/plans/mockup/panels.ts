@@ -4,7 +4,7 @@ import { escape, icon, icons } from './view.ts';
 export type Pane = {
   id: string;
   label: string;
-  content: (action: string, titleAction?: string) => string;
+  content: (action: string) => string;
 };
 
 export function splitPanels(...panes: Pane[]) {
@@ -48,7 +48,7 @@ function focusedPane(panes: (Pane | undefined)[]) {
   return panes.find((pane) => pane?.id === state.expandedPane)?.id;
 }
 
-export function workspace(classes: string, selected: string | undefined, content: string) {
+function workspace(classes: string, selected: string | undefined, content: string) {
   return `<div class="${classes} arc-pane-workspace" ${selected ? 'data-expanded' : ''}>${content}</div>`;
 }
 
@@ -56,10 +56,10 @@ function contextView(content = '', classes = '') {
   return content ? `<div class="${classes}" data-pane-context>${content}</div>` : '';
 }
 
-export function paneView(pane: Pane, selected: string | undefined, classes = '', titleAction = '') {
+function paneView(pane: Pane, selected: string | undefined, classes = '') {
   return `<div class="${classes}" id="${pane.id}" data-pane-panel
     ${selected && pane.id !== selected ? 'hidden' : ''}>
-    ${pane.content(expandButton(pane, pane.id === selected), titleAction)}
+    ${pane.content(expandButton(pane, pane.id === selected))}
   </div>`;
 }
 
@@ -88,7 +88,7 @@ export function togglePane(control: HTMLButtonElement) {
   control.scrollIntoView({ block: 'nearest', behavior: 'instant' });
 }
 
-function updateWorkspace(workspace: Element) {
+export function updateWorkspace(workspace: Element) {
   const panes = [...workspace.querySelectorAll<HTMLElement>('[data-pane-panel]')];
   const selected = panes.find((pane) => pane.id === state.expandedPane);
   workspace.toggleAttribute('data-expanded', Boolean(selected));

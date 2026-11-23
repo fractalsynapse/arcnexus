@@ -160,7 +160,7 @@ export function countDetails(counts: { report: [string, number][]; providerOnly:
   );
 }
 
-export function metrics(name: string, values: Stats, rows: EventRow[] = [], elapsed?: string, titleAction = '', action = '') {
+export function metrics(name: string, values: Stats, rows: EventRow[] = [], elapsed?: string) {
   const items: [string, string][] = [
     ['State', status(values.state)],
     ['Last updated (ET)', escape(values.last)],
@@ -182,7 +182,7 @@ export function metrics(name: string, values: Stats, rows: EventRow[] = [], elap
     : '';
   const details = timing + countDetails(counts);
   return panel(name + ' metrics', readouts(items) +
-    (details ? '<div class="arc-metric-details">' + details + '</div>' : ''), action, true, titleAction);
+    (details ? '<div class="arc-metric-details">' + details + '</div>' : ''));
 }
 
 export function timelineItem(row: EventRow) {
@@ -272,7 +272,7 @@ export function eventLogPane(name: string, rows: EventRow[], preview = true) {
   return {
     id: 'arc-event-log' as const,
     label: 'Event log',
-    content: (action: string, titleAction?: string) => eventLog(name, rows, preview, action, titleAction),
+    content: (action: string) => eventLog(name, rows, preview, action),
   };
 }
 
@@ -281,12 +281,11 @@ function eventLog(
   rows: EventRow[],
   preview: boolean,
   action: string,
-  titleAction = '',
 ) {
   const header = `<div class="arc-row"><small>Times in ET</small>${action}</div>`;
   const input = preview ? rows.concat(previewRows()) : rows;
   if (!input.length)
-    return panel(name + ' event log', noData('No matching events in the retained scope.'), header, true, titleAction);
+    return panel(name + ' event log', noData('No matching events in the retained scope.'), header);
   for (const row of input) displayedRows.set(String(row[4]), row);
   const timeline = timelineGroups(input)
     .map(
@@ -302,6 +301,5 @@ function eventLog(
     '<ol class="arc-timeline arc-grouped-log">' + timeline + '</ol>',
     header,
     false,
-    titleAction,
   );
 }

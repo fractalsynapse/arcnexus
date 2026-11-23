@@ -61,7 +61,7 @@
 
 ### Added
 
-- Preview configurable Plan panels, desktop column layouts and widths, responsive order, and site and panel appearance settings (#703).
+- Preview configurable panels across the mockup, with per-page desktop layouts and mobile order, plus site and panel palettes with dark shades for every color family (#703).
 
 - Preview production specialist reviews, exact release approval, merge and publication evidence, and failed-check incident follow-up for a pinned staging candidate (#703).
 

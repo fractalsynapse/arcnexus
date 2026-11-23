@@ -1,7 +1,7 @@
 import { colorFieldsView } from './display-colors.ts';
 import { columns, panelRegion } from './display-preferences.ts';
 import type { Layout, Palette, Preferences } from './display-preferences.ts';
-import type { PlanPane } from './plan-layout.ts';
+import type { DisplayPanel } from './display-layout.ts';
 import { escape, noData, options, panel } from './view.ts';
 
 export type SettingsTab = 'active' | 'available';
@@ -23,14 +23,14 @@ function layoutChoices(selected: Layout) {
       .map(
         (
           count,
-        ) => `<label><input type="radio" name="plan-layout" data-display-layout value="${count}" ${count === selected ? 'checked' : ''}>
+        ) => `<label><input type="radio" name="display-layout" data-display-layout value="${count}" ${count === selected ? 'checked' : ''}>
       ${wireframe(count)}<span>${layoutNames[count]}</span></label>`,
       )
       .join('')}
     </div></fieldset>`;
 }
 
-function activePanels(draft: Preferences, registry: readonly PlanPane[]) {
+function activePanels(draft: Preferences, registry: readonly DisplayPanel[]) {
   const choices = regionNames[draft.layout].map((label, i): [string, string] => [String(i), label]);
   const rows = draft.order
     .map((id) => {
@@ -47,14 +47,14 @@ function activePanels(draft: Preferences, registry: readonly PlanPane[]) {
     })
     .join('');
   return (
-    `<div class="arc-sort-list" data-sortable-list="plan-panels">${rows}</div>` +
+    `<div class="arc-sort-list" data-sortable-list="display-panels">${rows}</div>` +
     (rows
       ? '<span class="arc-sr" role="status" data-sort-status></span>'
       : noData('Choose panels from the Available panels tab.'))
   );
 }
 
-function availablePanels(draft: Preferences, registry: readonly PlanPane[]) {
+function availablePanels(draft: Preferences, registry: readonly DisplayPanel[]) {
   return registry
     .map(
       ({ id, label }) => `<div class="arc-row arc-available-panel" data-display-entry="${id}">
@@ -67,13 +67,13 @@ function availablePanels(draft: Preferences, registry: readonly PlanPane[]) {
     .join('');
 }
 
-function panelTabs(draft: Preferences, registry: readonly PlanPane[], tab: SettingsTab) {
+function panelTabs(draft: Preferences, registry: readonly DisplayPanel[], tab: SettingsTab) {
   const names = { active: 'Active panels', available: 'Available panels' };
   const button = (
     key: SettingsTab,
   ) => `<button type="button" role="tab" id="arc-display-tab-${key}" aria-controls="arc-display-${key}"
     aria-selected="${tab === key}" tabindex="${tab === key ? 0 : -1}">${names[key]}</button>`;
-  return `<div class="arc-component-tabs"><div class="arc-tabs" role="tablist" aria-label="Plan panels">${button('active')}${button('available')}</div>
+  return `<div class="arc-component-tabs"><div class="arc-tabs" role="tablist" aria-label="Page panels">${button('active')}${button('available')}</div>
     <div role="tabpanel" id="arc-display-active" aria-labelledby="arc-display-tab-active" ${tab !== 'active' ? 'hidden' : ''}>
       <p class="arc-component-tab-description">List order applies on mobile and within each desktop column.</p>${activePanels(draft, registry)}</div>
     <div role="tabpanel" id="arc-display-available" aria-labelledby="arc-display-tab-available" ${tab !== 'available' ? 'hidden' : ''}>${availablePanels(draft, registry)}</div></div>`;
@@ -85,13 +85,14 @@ function settingsActions() {
 }
 
 export function pageSettingsView(
+  title: string,
   draft: Preferences,
-  registry: readonly PlanPane[],
+  registry: readonly DisplayPanel[],
   tab: SettingsTab,
   palette: Required<Palette>,
 ) {
   return panel(
-    'Plan page settings',
+    `${title} page settings`,
     layoutChoices(draft.layout) +
       panelTabs(draft, registry, tab) +
       `<fieldset class="arc-display-fieldset"><legend>Site appearance · applies to all pages</legend>

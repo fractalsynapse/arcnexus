@@ -71,7 +71,7 @@ function mountMarkdownBody(
   host: HTMLElement,
   entry: Draft,
   onEdit?: (body: string) => void,
-  overlay = host.closest<HTMLElement>('#arc-preview'),
+  overlay = host.closest<HTMLElement>('.arc-surface') ?? host,
 ) {
   installStyle();
   const root = createRoot(host);
