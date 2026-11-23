@@ -34,7 +34,7 @@ function editScheme(id: string): ColorScheme {
 
 function schemeDialog() {
   return `<div class="arc-scheme-manager">
-    ${schemeSelector('site', 'Site default', colorSchemes.site, { name: 'ArcNexus default', colors: defaultSchemeColors() })}
+    ${schemeSelector('site', 'Site background and default scheme', colorSchemes.site, { name: 'ArcNexus default', colors: defaultSchemeColors() })}
     <form class="arc-scheme-editor" data-scheme-editor>
       ${schemeSelector('edit', 'Scheme to edit', draft.id, { name: 'New scheme' })}
       <label>Scheme name<input name="scheme-name" value="${escape(draft.name)}" required></label>

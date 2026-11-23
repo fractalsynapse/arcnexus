@@ -104,7 +104,7 @@ export function pageSettingsView(
     `${title} page settings`,
     layoutChoices(draft.layout) +
       panelTabs(draft, registry, tab) +
-      schemeSelector('page', 'Color scheme', draft.scheme, {
+      schemeSelector('page', 'Page content scheme', draft.scheme, {
         name: `Use site default · ${site.name}`,
         colors: site.colors,
       }) +

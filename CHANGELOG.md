@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Use the default scheme from the mockup's palette popup for the background behind panels on every page (#703).
+
 - Reveal desktop layout dividers and resize handles on hover or keyboard focus (#703).
 
 - Use one theme color picker with dark-to-light presets and custom hex entry in the mockup's page and panel settings (#703).
