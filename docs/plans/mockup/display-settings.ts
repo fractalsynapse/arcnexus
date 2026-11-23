@@ -1,4 +1,5 @@
-import { colorFields, colorWarning, inheritedColors } from './display-colors.ts';
+import { bindColorPicker, colorFields } from './color-picker.ts';
+import { colorWarning, inheritedColors } from './display-colors.ts';
 import { columns, display, saveDisplay } from './display-preferences.ts';
 import type { PanelId, Preferences } from './display-preferences.ts';
 import { main, root } from './model.ts';
@@ -15,29 +16,20 @@ let siteDefaults: ReturnType<typeof inheritedColors>;
 
 export function bindDisplaySettings() {
   siteDefaults = inheritedColors(root, true);
+  bindColorPicker(main, (field, value) => {
+    if (active) changeColor(active, field, value);
+  });
   main.addEventListener('click', (event) => {
     const control =
       event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button') : null;
     if (!control) return;
-    const { displayOpen, displayAction, displaySwatch } = control.dataset;
-    if (displaySwatch && active) selectSwatch(control, displaySwatch);
-    else if (displayOpen) openSettings(displayOpen);
+    const { displayOpen, displayAction } = control.dataset;
+    if (displayOpen) openSettings(displayOpen);
     else if (active && displayAction) handleSettingsAction(active, control, displayAction);
   });
   main.addEventListener('change', (event) => {
     if (active?.scope === 'page') changePageSettings(active, event.target);
   });
-  main.addEventListener('input', (event) => {
-    if (active) changeColor(active, event.target);
-  });
-}
-
-function selectSwatch(control: HTMLElement, value: string) {
-  const field = control.closest('.arc-color-field');
-  const input = field?.querySelector<HTMLInputElement>('input[type="color"]');
-  if (!input) return;
-  input.value = value;
-  input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function openSettings(scope: string) {
@@ -62,7 +54,7 @@ function openSettings(scope: string) {
   refreshDisplaySettings();
   main
     .querySelector<HTMLElement>(
-      active.scope === 'page' ? '[data-display-layout]:checked' : '[data-display-color]',
+      active.scope === 'page' ? '[data-display-layout]:checked' : '.arc-color-trigger',
     )
     ?.focus({ preventScroll: true });
 }
@@ -127,18 +119,12 @@ function changePageSettings(session: Session, target: EventTarget | null) {
   }
 }
 
-function changeColor(session: Session, target: EventTarget | null) {
-  if (!(target instanceof HTMLInputElement) || !/^#[a-f\d]{6}$/i.test(target.value)) return;
-  const field = colorFields.find((name) => name === target.dataset.displayColor);
+function changeColor(session: Session, fieldName: string, color: string) {
+  const field = colorFields.find((name) => name === fieldName);
   if (!field) return;
   const palette =
     session.scope === 'page' ? session.draft.site : (session.draft.panels[session.scope] ??= {});
-  palette[field] = target.value;
-  for (const option of target
-    .closest('.arc-color-field')
-    ?.querySelectorAll<HTMLElement>('[data-display-swatch]') ?? []) {
-    option.setAttribute('aria-pressed', String(option.dataset.displaySwatch === target.value));
-  }
+  palette[field] = color;
   const colors = session.scope === 'page' ? siteDefaults : inheritedColors(root);
   const warning = main.querySelector('[data-contrast-warning]');
   if (warning) warning.textContent = colorWarning({ ...colors, ...palette });

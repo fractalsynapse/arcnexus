@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Use one theme color picker with dark-to-light presets and custom hex entry in the mockup's page and panel settings (#703).
+
 - Pad the desktop's pinned workspace links evenly and round the bottom corners (#703).
 
 - Give the header and pinned workspace links a black background and default the command panel to collapsed in the narrow layout (#703).

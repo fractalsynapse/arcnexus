@@ -31,9 +31,9 @@ retains the complete round and navigation.
   a panel. Reorder the active list with its drag handles or arrow keys. On
   desktop, drag column dividers or use their arrow keys. The layout is saved in
   the current browser for that page. Site appearance applies across pages, and
-  each panel has a gear for its own overrides. Browse shades for background,
-  text, and accent, or pick a custom color. Use **Save** to apply the settings
-  or **Close** to discard the draft.
+  each panel has a gear for its own overrides. Open a color field to choose
+  from dark-to-light swatches or enter a custom hex color. Use **Save** to apply
+  the settings or **Close** to discard the draft.
 
 - Read total input and output separately. Calculate cache rate from reported cached
   input divided by reported input. Show unavailable usage when there is no
