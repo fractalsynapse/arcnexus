@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Align Progress, Edit, and Save with the bottom of the file revision selector (#703).
+
 - Move file type and Git revisions into a compact dialog opened from the breadcrumb, leaving the title and path visible on file pages (#703).
 
 - Open goal progress from each Plan goal file in a dialog with a Close button (#703).

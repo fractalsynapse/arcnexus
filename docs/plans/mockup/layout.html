@@ -171,6 +171,10 @@
 }
 #arc-preview .arc-detail-toolbar { justify-content: space-between; }
 #arc-preview .arc-detail-toolbar label:has(select) { min-width: min(170px,100%); }
+#arc-preview .arc-file-revision-toolbar { --revision-control-height:38px; align-items:flex-end; }
+#arc-preview .arc-file-revision-toolbar :is(select,.arc-button,.arc-checkbox) {
+  min-block-size:var(--revision-control-height); margin-block:0; padding-block:7px;
+}
 #arc-preview .arc-tabs { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 #arc-preview .arc-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 #arc-preview .arc-form-grid input[readonly] { background: var(--quiet); color: var(--muted); }
@@ -399,6 +403,7 @@
 }
 @media (pointer: coarse) {
   #arc-preview :is(.arc-button,.arc-nav button,.arc-tabs button,.arc-list-row,.arc-link,.arc-checkbox,[role=tab],select,input:not([type=checkbox],[type=radio]),textarea) { min-height: 44px; }
+  #arc-preview .arc-file-revision-toolbar { --revision-control-height:44px; }
   #arc-preview :is(select,input,textarea) { font-size: 16px; }
   #arc-preview :is(.arc-metrics-trigger,.arc-file-git) { inline-size:44px; }
   #arc-preview .arc-pane-expand { min-inline-size:44px; }

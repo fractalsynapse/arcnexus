@@ -341,7 +341,7 @@ function fileRevisionControls(item: DesignFile) {
   const progress = item.type === 'Goal'
     ? `<button type="button" class="arc-button" data-action="goal-progress" aria-haspopup="dialog">${icon('chart-no-axes-column')}Progress</button>`
     : '';
-  return `<div class="arc-detail-toolbar">
+  return `<div class="arc-detail-toolbar arc-file-revision-toolbar">
     <label>File revision<select data-change="file-revision">${options(choices, String(state.revision))}</select></label>
     <div class="arc-row">
       ${progress}
