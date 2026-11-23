@@ -43,6 +43,8 @@
 
 ### Added
 
+- Preview direct inbox repair routing for milestone review and release, and show Direction routing for final review and release in the Run mockup (#703).
+
 - Propose configurable component activities and preview milestone ordering, on-request participation, and project-selected activities in the Architect component editor (#703).
 
 - Add bottom Collapse controls and fullscreen Markdown reading and editing for component purpose and instructions (#703).

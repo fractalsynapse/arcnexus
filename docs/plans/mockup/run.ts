@@ -40,6 +40,7 @@ import {
   escape,
   factList,
   button,
+  icon,
   pill,
   status,
   options,
@@ -94,22 +95,29 @@ export function candidateChecks(review: Review) {
   );
 }
 
-export function reviewAction() {
+export function reviewAction(compact = false) {
   const review = currentReview();
   if (!review) return status('No verdict recorded');
   const approved = review.kind === 'accepted';
   if (approved) return status('Approved');
   const next = review.action;
+  const scheduled = next?.milestones.length;
   return (
     status(outcomeName(review.kind)) +
-    (next && next.milestones.length
-      ? '<p><strong>Next step recorded</strong> · Direction scheduled ' +
+    `<h3>${scheduled ? 'Sent to Direction' : 'Direction handles correction'}</h3>` +
+    (scheduled
+      ? '<p>Direction scheduled ' +
         next.milestones
           .map(([owner, id]) => '<code>' + escape(owner + ' / ' + id) + '</code>')
           .join(', ') +
         '.</p>'
-      : noData('A subsequent correction plan is unavailable in this record.'))
+      : noData('No correction plan recorded for this verdict.')) +
+    (compact ? '' : directionLink())
   );
+}
+
+function directionLink() {
+  return `<div>${button('Open Direction', '/run/direction/', 'arrow-up-right')}</div>`;
 }
 
 export function issueView(kind: string, compact = false) {
@@ -146,7 +154,7 @@ export function runIndex() {
     '<div class="arc-stages">' +
     stage('Direction', '/run/direction/', strategy(true)) +
     stage('Work', '/run/component/focus/', assignments(true), false) +
-    stage('Review', '/run/review/', reviewContent(true) + reviewAction()) +
+    stage('Review', '/run/review/', reviewContent(true) + reviewAction(true)) +
     stage('Delivery', '/run/delivery/', issueView('issue', true) + issueView('pr', true)) +
     '</div>'
   );
@@ -177,7 +185,7 @@ export function sectionDetail(phase: 'Direction' | 'Review') {
         label: 'Component assignments',
         content: (action: string) => panel('Component assignments', assignments(), action, false),
       }
-    : panel('Action', reviewAction());
+    : panel('Action on review', reviewAction());
   const snapshot = currentSnapshot();
   return (
     breadcrumbs([['Run', '/run/'], [phase]]) +
@@ -345,8 +353,53 @@ export function activityPage(focus: boolean) {
   return (
     activityHeader(component, activity, milestone.id, result) +
     tabs(focus, true, '/run/activity/') +
+    milestoneRepairPanel(milestone, activity) +
     body
   );
+}
+
+const milestoneRepairExamples = [
+  {
+    activity: 'review',
+    sender: 'Milestone Review',
+    subject: 'Add coverage for the staging conflict case',
+    evidence:
+      'Review finding · The regression test covers the normal merge and misses the conflict case in the milestone criteria.',
+  },
+  {
+    activity: 'release',
+    sender: 'Milestone Release',
+    subject: 'Investigate the owner test failure after merging staging',
+    evidence:
+      'Staging integration check · Owner tests exited 1 on the merged candidate. Review the failing assertion before retrying the integration check.',
+  },
+];
+
+function milestoneRepairPanel(milestone: Milestone, activity: string) {
+  const activities = milestone.steps.filter((step) => !step.inapplicable).map((step) => step.activity);
+  const target = activities.indexOf('testing');
+  if (target < 0) return '';
+  const examples = milestoneRepairExamples.filter(
+    (example) => activities.indexOf(example.activity) > target,
+  );
+  const preview = pill('Routing preview', 'quiet');
+  if (activity === 'testing' && examples.length) {
+    const messages = examples.map((example) => `<details>
+      <summary>${escape(example.subject)}</summary>
+      <p><strong>${escape(example.sender)}</strong></p>
+      <p>${escape(example.evidence)}</p></details>`);
+    return panel('Steward inbox', messages.join(''), preview);
+  }
+  const example = examples.find((entry) => entry.activity === activity);
+  if (!example) return '';
+  const title = activity === 'review' ? 'Action on review' : 'Action on release';
+  const content = `
+    <h3>Returned to Testing</h3>
+    <small>From ${escape(example.sender)} · To <strong>${escape(milestone.owner)} steward inbox</strong></small>
+    <p>${escape(example.subject)}</p>
+    <details><summary>Failure evidence</summary><p>${escape(example.evidence)}</p></details>
+    <div><button type="button" class="arc-button" data-activity="testing">${icon('inbox')}Open Testing inbox</button></div>`;
+  return panel(title, content, preview);
 }
 
 function activityEvidence(component: string, activity: string, milestone: string, result: string) {
@@ -391,6 +444,7 @@ export function deliveryPage() {
         notes.map((n) => `<p>${githubReferences(n.diagnostic)}</p>`).join(''),
       )
     : '';
+  const releaseRouting = releaseAction(notes.length > 0);
   return (
     breadcrumbs([['Run', '/run/'], ['Delivery']]) +
     title('Delivery', goal.title) +
@@ -400,13 +454,21 @@ export function deliveryPage() {
       label: 'Delivery state',
       content: (action) => `<div class="arc-stack">
         ${panel('Delivery state', deliveryState(goal, delivered), `<div class="arc-row">${status(outcomeName(snap.kind))}${action}</div>`)}
-        ${panel('GitHub issue', issueView('issue'))}${panel('GitHub PR', issueView('pr'))}${history}</div>`,
+        ${panel('GitHub issue', issueView('issue'))}${panel('GitHub PR', issueView('pr'))}${releaseRouting}${history}</div>`,
     }, {
       id: 'arc-delivery-changes',
       label: 'Changes',
       content: (action) => deliveryDiff(d, delivered, action),
     })
   );
+}
+
+function releaseAction(hasHostedFailure: boolean) {
+  const next = `<p>Direction receives the candidate identity and failure evidence, then assigns the correction. The corrected candidate returns through the required review and checks.</p>${directionLink()}`;
+  const content = hasHostedFailure
+    ? `<h3>Route to Direction</h3>${next}`
+    : `<details><summary>If final release needs an engineering correction</summary><p><strong>Route to Direction</strong></p>${next}</details>`;
+  return panel('Action on release', content, pill('Routing preview', 'quiet'));
 }
 
 function deliveryState(goal: Goal, delivered: boolean) {

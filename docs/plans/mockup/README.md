@@ -89,3 +89,7 @@ retains the complete round and navigation.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
   and loaded patches. Read the issue before the PR in Delivery.
+- In a milestone's Self-review or Integration activity, open the Testing inbox
+  from the routing preview. Select a rejected run revision to see the recorded
+  Direction action on Review. Delivery previews the final release route beside
+  any captured hosted check failures.
