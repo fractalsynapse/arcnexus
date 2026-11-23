@@ -35,7 +35,7 @@ export function releasePage() {
   return (
     breadcrumbs([['Run', '/run/'], ['Release']]) +
     title('Release', goal.title, goal === ogsmGoal ? exampleLabel() : '') +
-    `<div class="arc-detail-toolbar">${revisionControl()}</div>` +
+    `<div class="arc-detail-toolbar">${revisionControl()}${button('Staging snapshots', '/release/', 'arrow-up-right')}</div>` +
     splitPanels(
       {
         id: 'arc-delivery-outcome',

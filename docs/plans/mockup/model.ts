@@ -3,7 +3,7 @@ import { previewTopics } from './file-topics.ts';
 import { ogsmGoalFile } from './ogsm-example.ts';
 
 export type Area = 'plan' | 'architect';
-export type Workspace = Area | 'run';
+export type Workspace = Area | 'run' | 'release';
 export type EventRow = [
   time: string,
   kind: string,

@@ -35,17 +35,16 @@ import {
 import type { Workspace } from './model.ts';
 import { runIndex, sectionDetail, actorLog, compPage, activityPage } from './run.ts';
 import { releasePage } from './run-release.ts';
+import { changeSnapshotPreview, selectStagingRevision, snapshotReleasePage } from './snapshot-release.ts';
 import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
 import { bindTopicPickers, clearTopicDraft, closeTopicPopup, savedTopics } from './topic-picker.ts';
 import { icon, button, icons } from './view.ts';
 
 export function workspace(): Workspace {
-  return state.route.startsWith('/run/')
-    ? 'run'
-    : state.route.startsWith('/architect/')
-      ? 'architect'
-      : 'plan';
+  if (state.route.startsWith('/release/')) return 'release';
+  if (state.route.startsWith('/run/')) return 'run';
+  return state.route.startsWith('/architect/') ? 'architect' : 'plan';
 }
 
 export function renderCommand(reset = false) {
@@ -57,9 +56,11 @@ export function renderCommand(reset = false) {
       ? button('Director', '/run/direction/', 'arrow-left')
       : state.route === '/run/review/log/'
         ? button('Reviewer', '/run/review/', 'arrow-left')
-        : '<button type="button" class="arc-button" data-action="refine">' +
-          icon('refresh-cw') +
-          'Refine</button>';
+        : workspace() === 'release'
+          ? ''
+          : '<button type="button" class="arc-button" data-action="refine">' +
+            icon('refresh-cw') +
+            'Refine</button>';
   composerUI(reset);
 }
 
@@ -80,6 +81,7 @@ const routes: Record<string, () => string> = {
   '/run/review/': () => sectionDetail('Review'),
   '/run/review/log/': () => actorLog('Review'),
   '/run/delivery/': releasePage,
+  '/release/': snapshotReleasePage,
 };
 
 export function render(resetComposer = false) {
@@ -160,6 +162,10 @@ export function handleAction(control: HTMLButtonElement, action: string) {
   else if (action === 'apply-form') applyPreviewForm(requireValue(control.closest('form')));
   else if (action === 'refine') enqueue('refine', '');
   else if (action === 'advance-queue') advanceQueue();
+  else if (workspace() === 'release' && changeSnapshotPreview(action)) {
+    render();
+    dom<HTMLElement>('[data-change="staging-revision"]').focus({ preventScroll: true });
+  }
 }
 
 export function applyPreviewForm(form: HTMLFormElement) {
@@ -254,6 +260,7 @@ function changeField(kind: string, field: HTMLSelectElement | HTMLInputElement):
   }
   else if (kind === 'run-goal') changeRun(value);
   else if (kind === 'run-revision') state.runRevision = value;
+  else if (kind === 'staging-revision') return selectStagingRevision(value);
   else if (kind === 'milestone') state.milestone = value;
   else if (kind === 'file-revision') {
     state.revision = Number(value);

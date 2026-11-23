@@ -1,6 +1,6 @@
 # ArcNexus UI mockup
 
-This is the source for the 14-view MVP design review. See the [wireframes](../arcnexus.wireframes.pdf) for the page map. The mockup replays a retained
+This is the source for the MVP design review. See the [wireframes](../arcnexus.wireframes.pdf) for the original page map. The mockup replays a retained
 refinement round and lets an operator try local interactions. Launch, queue,
 steering, reply, and file edits are preview states. The design has no connection
 to the CLI or live agents.
@@ -103,3 +103,6 @@ retains the complete round and navigation.
   stages. Use **Example release state** to see alternatives waiting for review, verifying after
   merge, failing a post-merge check, and verified on staging. Recorded goals
   show which milestone and post-merge observations were retained.
+- Open **Release** from the header after Run. Prepare revision B, simulate C's
+  verification, and check that the prepared scope still includes A and B. Select
+  C to preview A through C, then replace the candidate to pin the new scope.
