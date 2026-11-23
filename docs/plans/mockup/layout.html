@@ -454,6 +454,13 @@
 #arc-preview .arc-facts { padding-left:18px; margin:4px 0; display:grid; gap:6px; overflow-wrap:anywhere; }
 #arc-preview .arc-assignment-count { display:block; margin-top:2px; }
 #arc-preview .arc-finding { display:grid; gap:4px; }
+#arc-preview .arc-release-stages { display:grid; gap:0; list-style:none; margin:0; padding:0; }
+#arc-preview .arc-release-stages li { min-width:0; border-top:1px solid var(--line); }
+#arc-preview .arc-release-stages summary { display:flex; align-items:center; justify-content:space-between; gap:6px 12px; flex-wrap:wrap; padding-block:8px; }
+#arc-preview .arc-release-label::before { content:'›'; margin-inline-end:8px; display:inline-block; }
+#arc-preview .arc-release-stages details[open] .arc-release-label::before { transform:rotate(90deg); }
+#arc-preview .arc-release-stage-body { display:grid; gap:8px; padding:2px 0 10px 14px; }
+#arc-preview .arc-release-revisions > div { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 #arc-preview details { min-width:0; overflow-wrap:anywhere; }
 #arc-preview details summary { cursor:pointer; color:var(--link); font-weight:630; }
 #arc-preview details > p { margin-top:7px; }

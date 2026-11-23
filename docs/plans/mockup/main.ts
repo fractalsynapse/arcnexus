@@ -33,7 +33,8 @@ import {
   fileArea,
 } from './model.ts';
 import type { Workspace } from './model.ts';
-import { runIndex, sectionDetail, actorLog, compPage, activityPage, deliveryPage } from './run.ts';
+import { runIndex, sectionDetail, actorLog, compPage, activityPage } from './run.ts';
+import { releasePage } from './run-release.ts';
 import { inspect, openArtifact, renderCalls, eventLogPane } from './timeline.ts';
 import { dismissTooltip } from './tooltip.ts';
 import { bindTopicPickers, clearTopicDraft, closeTopicPopup, savedTopics } from './topic-picker.ts';
@@ -78,7 +79,7 @@ const routes: Record<string, () => string> = {
   '/run/activity/activities/': () => activityPage(false),
   '/run/review/': () => sectionDetail('Review'),
   '/run/review/log/': () => actorLog('Review'),
-  '/run/delivery/': deliveryPage,
+  '/run/delivery/': releasePage,
 };
 
 export function render(resetComposer = false) {

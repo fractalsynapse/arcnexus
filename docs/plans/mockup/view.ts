@@ -40,6 +40,10 @@ export function commitReference(ref?: string | null, label = ref || 'Unavailable
     : escape(label);
 }
 
+export function shortCommitReference(ref?: string | null) {
+  return commitReference(ref, ref && isCommitRef.test(ref) ? asText(ref) : undefined);
+}
+
 function collectCommitRefs() {
   const refs = new Set<string>();
   const add = (ref?: string) => {
@@ -203,33 +207,21 @@ export function pill(text: string, type = '') {
   return '<span class="arc-pill ' + type + '">' + escape(text) + '</span>';
 }
 
+const activeStatuses = ['Active', 'Running', 'Merged · verifying'];
+const actionStatuses = [
+  'Rejected', 'Changes requested', 'Checks failed', 'Needs correction', 'Cancelled', 'Interrupted',
+  'Hosted check failed', 'Failed', 'PR checks failed', 'Merged · checks failed',
+];
+const quietStatuses = [
+  'Waiting', 'Idle', 'Ready', 'Pending', 'Unavailable', 'Inapplicable', 'No verdict recorded',
+  'Not recorded', 'Unrecorded', 'Checkpoint unrecorded', 'Merged · checks unrecorded',
+  'Merged · checks unavailable', 'Awaiting external review',
+];
+
 export function status(text: string) {
-  return pill(
-    text,
-    ['Active', 'Running'].includes(text)
-      ? 'live'
-      : [
-            'Rejected',
-            'Changes requested',
-            'Checks failed',
-            'Needs correction',
-            'Cancelled',
-            'Interrupted',
-            'Hosted check failed',
-          ].includes(text)
-        ? 'action'
-        : [
-              'Waiting',
-              'Idle',
-              'Ready',
-              'Pending',
-              'Unavailable',
-              'Inapplicable',
-              'No verdict recorded',
-            ].includes(text)
-          ? 'quiet'
-          : '',
-  );
+  if (activeStatuses.includes(text)) return pill(text, 'live');
+  if (actionStatuses.includes(text)) return pill(text, 'action');
+  return pill(text, quietStatuses.includes(text) ? 'quiet' : '');
 }
 
 export function options(values: [string, string][], selected?: string) {

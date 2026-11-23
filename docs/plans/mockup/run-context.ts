@@ -2,6 +2,7 @@ import { data, state, requireValue } from './model.ts';
 import type { Stats, Activation, PlanStep, Milestone } from './model.ts';
 import { ogsmGoal } from './ogsm-example.ts';
 import { exampleStrategy } from './ogsm.ts';
+import { releaseCheckpoint } from './release-evidence.ts';
 import {
   measuredDuration,
   localDate,
@@ -50,17 +51,17 @@ export function goalControl() {
 }
 
 export function revisionControl() {
-  if (currentGoal() === ogsmGoal) return '';
-  const snapshots = currentGoal().snapshots;
+  const goal = currentGoal();
+  const snapshots = goal.snapshots;
   if (snapshots.length === 1 && currentSnapshot().kind === 'satisfied') {
     return '<small class="arc-mono">Run ' + requireValue(snapshots[0]).run + '</small>';
   }
   return (
-    '<label>Run revision<select data-change="run-revision">' +
+    `<label>${goal === ogsmGoal ? 'Example release state' : 'Run revision'}<select data-change="run-revision">` +
     options(
       snapshots.map((v) => [
         String(v.seq),
-        outcomeName(v.kind) + ' · ' + localDate(v.at).split(', ').at(-1),
+        v.label ?? (outcomeName(v.kind) + ' · ' + localDate(v.at).split(', ').at(-1)),
       ]),
       String(currentSnapshot().seq),
     ) +
@@ -108,7 +109,8 @@ export function cursor() {
 export function stepState(milestone: Milestone, step: PlanStep, index: number) {
   if (step.inapplicable) return 'Inapplicable';
   const snap = currentSnapshot();
-  if (step.activity === 'release') return snap.kind === 'merged' ? 'Merged' : 'Waiting';
+  if (step.activity === 'release')
+    return releaseCheckpoint(currentGoal(), snap, milestone) ? 'Checkpoint published' : 'Checkpoint unrecorded';
   const p = cursor();
   if (!p) return 'Waiting';
   const next = p.activities[milestone.id];
@@ -162,7 +164,7 @@ export function stepName(name: string) {
         testing: 'Testing',
         implementation: 'Implementation',
         review: 'Self-review',
-        release: 'Integration',
+        release: 'Release',
       } as Record<string, string>
     )[name] || name
   );

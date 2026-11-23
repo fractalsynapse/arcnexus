@@ -105,12 +105,33 @@ export type Review = {
   findings: { owner?: string; criterion: string; reason: string; evidence: string[] }[];
   action: { milestones: [string, string][] } | null;
 };
+export type ReleaseCheck = {
+  name: string;
+  state: 'passed' | 'pending' | 'failed' | 'unavailable';
+  detail: string;
+};
+export type ReleaseEvidence = {
+  prChecks: ReleaseCheck[];
+  externalReview: ReleaseCheck;
+  postMerge?: { commit: string; checks: ReleaseCheck[] };
+};
+export type ReleaseCheckpoint = {
+  seq: number;
+  milestone: string;
+  base: string;
+  commit: string;
+  branch: string;
+  checks: ReleaseCheck[];
+  issueComment: string;
+};
 export type RunRevision = {
   kind: string;
   seq: number;
   run: number;
   at: string;
   capturedRevision: string;
+  label?: string;
+  release?: ReleaseEvidence;
 };
 export type ActivityModel = { role?: string; profile?: string; operations: string[] };
 export type ComponentModel = {
@@ -154,6 +175,7 @@ export type Goal = {
     publication: { candidate: string; parent: string; branch: string; head?: string } | null;
   };
   hostedFailures: { seq: number; pr?: string; diagnostic: string }[];
+  checkpoints?: ReleaseCheckpoint[];
   outcome: { kind: string; summary: string; at: string };
 };
 export type Clarification = {

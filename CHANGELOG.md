@@ -43,6 +43,8 @@
 
 ### Added
 
+- Propose milestone Release checkpoints and show four expandable stages of goal-level release evidence, including post-merge checks, in the Run mockup (#703).
+
 - Propose OGSM governance and preview the link from Plan goal progress to Direction strategy and steward milestone measures (#703).
 
 - Preview direct inbox repair routing for milestone review and release, and show Direction routing for final review and release in the Run mockup (#703).

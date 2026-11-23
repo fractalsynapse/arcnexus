@@ -6,7 +6,6 @@ import type {
   PlanStep,
   Milestone,
   Review,
-  Goal,
   ComponentModel,
   ActivityModel,
 } from './model.ts';
@@ -30,13 +29,13 @@ import {
 } from './run-context.ts';
 import { metrics, eventLogPane } from './timeline.ts';
 import { milestoneRepairPanel } from './milestone-repair.ts';
+import { checkpointPanel } from './release-evidence.ts';
+import { releaseCard } from './run-release.ts';
 import { ogsmGoal, ogsmMilestone } from './ogsm-example.ts';
 import { exampleLabel, milestoneMeasures } from './ogsm.ts';
 import {
   asText,
   commitReference,
-  githubReferences,
-  githubOutcome,
   outcomeName,
   roundStatus,
   noData,
@@ -122,29 +121,6 @@ function directionLink() {
   return `<div>${button('Open Direction', '/run/direction/', 'arrow-up-right')}</div>`;
 }
 
-export function issueView(kind: string, compact = false) {
-  const goal = currentGoal();
-  const delivery = goal.delivery;
-  const issue = kind === 'issue';
-  const snapshot = currentSnapshot();
-  const delivered = snapshot.kind === 'merged';
-  const pr = delivered
-    ? delivery.pr
-    : goal.hostedFailures.findLast((row) => row.seq <= snapshot.seq)?.pr;
-  const number = issue ? delivery.issue : pr?.split('/').at(-1);
-  const label = issue ? 'GitHub issue' : 'Staging PR';
-  const observedState = issue ? delivery.issueState : delivered ? 'merged' : 'hosted check failed';
-  const count = issue ? delivery.issueComments : delivered ? delivery.prCommits : undefined;
-  const link = number
-    ? githubOutcome(issue ? 'Issue' : 'PR', number, observedState, count)
-    : noData(issue ? 'No issue linked to this assessment.' : 'No PR observed for this revision.');
-  return `<div class="arc-issue">
-    ${compact ? `<small>${label}</small>` : ''}
-    ${link}
-    ${!compact && delivered && !issue ? `<small>Staging commit · <code>${commitReference(delivery.commit)}</code></small>` : ''}
-  </div>`;
-}
-
 export function runIndex() {
   const goal = currentGoal();
   return (
@@ -157,7 +133,7 @@ export function runIndex() {
     stage('Direction', '/run/direction/', strategy(true)) +
     stage('Work', '/run/component/focus/', assignments(true), false) +
     stage('Review', '/run/review/', reviewContent(true) + reviewAction(true)) +
-    stage('Delivery', '/run/delivery/', issueView('issue', true) + issueView('pr', true)) +
+    stage('Release', '/run/delivery/', releaseCard()) +
     '</div>'
   );
 }
@@ -354,12 +330,16 @@ export function activityPage(focus: boolean) {
   const row = currentGoal().components[component];
   if (!step || !row || !milestone) return unassignedActivity();
   const result = stepState(milestone, step, milestone.steps.indexOf(step));
+  const checkpoint = activity === 'release' && !step.inapplicable
+    ? checkpointPanel(currentGoal(), currentSnapshot(), milestone)
+    : '';
   const body = focus
     ? focusActivity(step, scopedActs(component, activity, milestone.id).at(-1), row.activities[activity])
     : activityEvidence(component, activity, milestone.id, result);
   return (
     activityHeader(component, activity, milestone.id, result) +
     tabs(focus, true, '/run/activity/') +
+    checkpoint +
     milestoneRepairPanel(milestone, activity) +
     body
   );
@@ -390,74 +370,8 @@ function activityHeader(component: string, activity: string, milestone: string, 
       [component, '/run/component/activities/'],
       [stepName(activity)],
     ]) +
-    title(stepName(activity), component + ' · ' + milestone.replaceAll('-', ' '), status(result)) +
+    title(stepName(activity), component + ' · ' + milestone.replaceAll('-', ' '),
+      `<div class="arc-row">${status(result)}${currentGoal() === ogsmGoal ? exampleLabel() : ''}</div>`) +
     `<div class="arc-detail-toolbar">${revisionControl()}${button('Component', '/run/component/activities/', 'arrow-left')}</div>`
   );
-}
-
-export function deliveryPage() {
-  const goal = currentGoal(),
-    d = goal.delivery,
-    snap = currentSnapshot();
-  const delivered = snap.kind === 'merged';
-  const notes = goal.hostedFailures.filter((row) => row.seq <= snap.seq);
-  const history = notes.length
-    ? panel(
-        'Hosted check history',
-        notes.map((n) => `<p>${githubReferences(n.diagnostic)}</p>`).join(''),
-      )
-    : '';
-  const releaseRouting = releaseAction(notes.length > 0);
-  return (
-    breadcrumbs([['Run', '/run/'], ['Delivery']]) +
-    title('Delivery', goal.title) +
-    `<div class="arc-detail-toolbar">${revisionControl()}</div>` +
-    splitPanels({
-      id: 'arc-delivery-outcome',
-      label: 'Delivery state',
-      content: (action) => `<div class="arc-stack">
-        ${panel('Delivery state', deliveryState(goal, delivered), `<div class="arc-row">${status(outcomeName(snap.kind))}${action}</div>`)}
-        ${panel('GitHub issue', issueView('issue'))}${panel('GitHub PR', issueView('pr'))}${releaseRouting}${history}</div>`,
-    }, {
-      id: 'arc-delivery-changes',
-      label: 'Changes',
-      content: (action) => deliveryDiff(d, delivered, action),
-    })
-  );
-}
-
-function releaseAction(hasHostedFailure: boolean) {
-  const next = `<p>Direction receives the candidate identity and failure evidence, then assigns the correction. The corrected candidate returns through the required review and checks.</p>${directionLink()}`;
-  const content = hasHostedFailure
-    ? `<h3>Route to Direction</h3>${next}`
-    : `<details><summary>If final release needs an engineering correction</summary><p><strong>Route to Direction</strong></p>${next}</details>`;
-  return panel('Action on release', content, pill('Routing preview', 'quiet'));
-}
-
-function deliveryState(goal: Goal, delivered: boolean) {
-  const d = goal.delivery;
-  const source = d.publication;
-  if (!delivered)
-    return noData(
-      goal.outcome.kind === 'satisfied'
-        ? 'Goal satisfied without a staging change.'
-        : 'No verified merge recorded at this revision.',
-    );
-  return `<p>Verified on staging at <code>${commitReference(d.commit)}</code>.</p>
-    <small>Reviewed tree <code>${asText(source?.candidate)}</code> · Parent <code>${commitReference(source?.parent, asText(source?.parent))}</code> · Branch <code>${escape(source?.branch)}</code></small>`;
-}
-
-function deliveryDiff(d: Goal['delivery'], delivered: boolean, action: string) {
-  if (!delivered || !d.files.length)
-    return panel('Changes', noData('No confirmed PR diff at this revision.'), action);
-  const patches = new Map(readPatch(d.patch ?? '', d.patchPath).map((file) => [file.path, file]));
-  return diffView('Staging merge', d.files.map(([, path]) => {
-    const file = patches.get(path);
-    return {
-      path,
-      lines: file?.lines ?? [],
-      note: !file ? 'Open the local merge patch to inspect this path.' :
-        d.patchExcerpt ? 'Retained patch excerpt' : undefined,
-    };
-  }), { localPatch: true, action });
 }

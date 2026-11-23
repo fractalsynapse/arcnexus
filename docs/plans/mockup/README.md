@@ -88,13 +88,18 @@ retains the complete round and navigation.
   creates a local draft revision.
 - In Run, check the metrics beside the Director and Reviewer outcomes. Expand
   an activity timeline or Changes to inspect it while retaining selected tabs
-  and loaded patches. Read the issue before the PR in Delivery.
-- In a milestone's Self-review or Integration activity, open the Testing inbox
+  and loaded patches. Read the issue before the PR in Release.
+- In a milestone's Self-review or Release activity, open the Testing inbox
   from the routing preview. Select a rejected run revision to see the recorded
-  Direction action on Review. Delivery previews the final release route beside
+  Direction action on Review. The goal's Release view previews the final release route beside
   any captured hosted check failures.
 - Open the example in Plan's **Goal progress**. The `list-files` baseline and
   latest verified value are 24 calls per activation (median) against a target of
   12 or fewer. Follow **View strategy in Run** to see the candidate result of
   16, then open the `planner` assignment to check the measurement method and
   citation quality check. These values illustrate the design.
+- In the Planner example, open **Activities → Release** to see its published
+  checkpoint. Return to Run and open **Release** to expand the four evidence
+  stages. Use **Example release state** to see alternatives waiting for review, verifying after
+  merge, failing a post-merge check, and verified on staging. Recorded goals
+  show which milestone and post-merge observations were retained.
