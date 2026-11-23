@@ -1,5 +1,5 @@
 import { showInspector } from './inspector.ts';
-import { data, dom, inspector } from './model.ts';
+import { data, dom, inspector, root } from './model.ts';
 import { countDetails } from './timeline.ts';
 import {
   cacheRate,
@@ -12,7 +12,22 @@ import {
   tokenPair,
 } from './view.ts';
 
-export function roundFooter() {
+let defaultFooterObserver: ResizeObserver | undefined;
+
+export function mountRoundFooter() {
+  dom('.arc-footer-state').innerHTML = roundFooter();
+  const footer = dom('.arc-console');
+  const control = dom<HTMLButtonElement>('.arc-footer-toggle');
+  const applyDefault = () => {
+    const collapsed = getComputedStyle(footer).getPropertyValue('--default-footer-collapsed') === '1';
+    setRoundFooterCollapsed(control, collapsed);
+  };
+  applyDefault();
+  defaultFooterObserver = new ResizeObserver(applyDefault);
+  defaultFooterObserver.observe(root);
+}
+
+function roundFooter() {
   const { ended, wall } = data.round;
   return `<button type="button" class="arc-link arc-metrics-trigger" data-action="round-metrics"
     aria-label="Round metrics" data-arc-tooltip="Round metrics" aria-haspopup="dialog">${icon('chart-no-axes-column')}</button>
@@ -30,7 +45,14 @@ export function roundFooter() {
 }
 
 export function toggleRoundFooter(control: HTMLButtonElement) {
-  const collapsed = dom('.arc-console').toggleAttribute('data-collapsed');
+  defaultFooterObserver?.disconnect();
+  setRoundFooterCollapsed(control, control.getAttribute('aria-expanded') === 'true');
+}
+
+function setRoundFooterCollapsed(control: HTMLButtonElement, collapsed: boolean) {
+  const footer = dom('.arc-console');
+  if (footer.hasAttribute('data-collapsed') === collapsed) return;
+  footer.toggleAttribute('data-collapsed', collapsed);
   const label = collapsed ? 'Expand command panel' : 'Collapse command panel';
   control.setAttribute('aria-expanded', String(!collapsed));
   control.setAttribute('aria-label', label);

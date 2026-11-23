@@ -17,7 +17,7 @@ import { closeProse, collapseProse, showProse } from './prose-dialog.ts';
 import { hasYamlForm } from './yaml-schema.ts';
 import { standalonePane, togglePane } from './panels.ts';
 import { openQuestion, questionView, rememberAnswer, submitAnswer } from './questions.ts';
-import { openRoundMetrics, roundFooter, toggleRoundFooter } from './round.ts';
+import { mountRoundFooter, openRoundMetrics, toggleRoundFooter } from './round.ts';
 import { openGoalProgress } from './ogsm.ts';
 import {
   data,
@@ -334,7 +334,7 @@ if (data.fileReview) {
   root.setAttribute('data-file-review', '');
   dom<HTMLButtonElement>('.arc-brand').disabled = true;
 }
-dom('.arc-footer-state').innerHTML = roundFooter();
+mountRoundFooter();
 reserveScrollSpace('.arc-nav', '--arc-nav-space');
 reserveScrollSpace('.arc-console', '--arc-console-space');
 render();

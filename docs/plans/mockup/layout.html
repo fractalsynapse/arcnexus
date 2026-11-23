@@ -2,10 +2,7 @@
   <header class="arc-header">
     <button type="button" class="arc-brand" data-go="/plan/" aria-label="ArcNexus home">
       <img class="arc-mark" src="brand/brain.webp" alt="" width="24" height="24">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="brand/wordmark-dark.webp">
-        <img src="brand/wordmark.webp" alt="ArcNexus" width="146" height="20">
-      </picture>
+      <img class="arc-wordmark" src="brand/wordmark-dark.webp" alt="ArcNexus" width="146" height="20">
     </button>
     <div class="arc-header-action"></div>
   </header>
@@ -95,6 +92,11 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
   box-shadow:0 4px 12px #0b182a26; white-space:pre-wrap;
 }
 #arc-preview .arc-tooltip { position:fixed; inset:auto; margin:0; width:max-content; pointer-events:none; }
+#arc-preview :is(.arc-header,.arc-nav) {
+  --ink:#fff; --muted:#e2e7ef; --line:#353b45;
+  --paper:#000; --quiet:#20252d; --tint:#192433; --link:#b9d7ff;
+  color-scheme:dark; color:var(--ink);
+}
 #arc-preview .arc-header {
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   min-block-size:var(--header-height); padding:10px var(--pad); border-bottom:1px solid var(--line);
@@ -426,6 +428,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 }
 @container (max-width: 590px) {
   #arc-preview :is(.arc-main,.arc-console) { padding-inline:12px; }
+  #arc-preview .arc-console { --default-footer-collapsed:1; }
   #arc-preview .arc-grid, #arc-preview .arc-grid.equal { grid-template-columns: minmax(0,1fr); }
   #arc-preview .arc-launch { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"operation send" "instruction instruction"; }
 }
@@ -521,9 +524,8 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-body > pre { padding:10px; }
 #arc-preview h1 { font-size: 25px; letter-spacing: -.035em; }
 #arc-preview .arc-brand { display:inline-flex; align-items:center; gap:6px; }
-#arc-preview .arc-brand picture { display:block; }
 #arc-preview .arc-brand .arc-mark { inline-size:24px; block-size:24px; object-fit:contain; }
-#arc-preview .arc-brand picture img { inline-size:108px; height:auto; }
+#arc-preview .arc-brand .arc-wordmark { inline-size:108px; height:auto; }
 #arc-preview .arc-index { grid-template-columns:repeat(2,minmax(0,1fr)); }
 #arc-preview .arc-index .arc-stack { gap:var(--gap); }
 #arc-preview .arc-metrics { display:block; margin:0; }
