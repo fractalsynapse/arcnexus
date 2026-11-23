@@ -10,6 +10,8 @@ import { hasYamlForm } from './yaml-schema.ts';
 import { fileName } from './file-topics.ts';
 import { fileTopics, filterTopics, topicKey } from './topic-picker.ts';
 import { metrics, eventLogPane } from './timeline.ts';
+import { ogsmGoalFile } from './ogsm-example.ts';
+import { goalProgress } from './ogsm.ts';
 import {
   asText,
   commitReference,
@@ -67,12 +69,16 @@ export function workspaceIndex(area: Area) {
   const name = phaseActor(area).role;
   const phase = data[area];
   const rows = phaseRows(area);
+  const outcome = panel(name + ' outcome', phaseOutcome(area));
+  const exampleIndex = files.indexOf(ogsmGoalFile);
+  const example = area === 'plan' && exampleIndex >= 0 ? goalProgress(exampleIndex) : '';
   return (
     title(area === 'plan' ? 'Plan' : 'Architect', '', roundStatus()) +
-    overview(metrics(name, phase.stats, phase.rows, phase.wall), panel(name + ' outcome', phaseOutcome(area)), {
-      log: eventLogPane(name, rows),
-      context: fileIndex(area),
-    })
+    overview(
+      metrics(name, phase.stats, phase.rows, phase.wall),
+      example ? `<div class="arc-stack">${outcome}${example}</div>` : outcome,
+      { log: eventLogPane(name, rows), context: fileIndex(area) },
+    )
   );
 }
 
@@ -278,6 +284,7 @@ export function fileView() {
   const rev = requireValue(item.revisions[state.revision]);
   const slug = '/' + item.area + '/';
   const areaName = item.area === 'plan' ? 'Plan' : 'Architect';
+  const example = item === ogsmGoalFile;
   const metadata = `<div class="arc-form-grid">
     ${editInput('Name', 'name', rev.name, !state.editing)}
     ${editInput('Priority', 'priority', rev.priority, !state.editing, 'number')}
@@ -287,12 +294,13 @@ export function fileView() {
     breadcrumbs(data.fileReview ? [[areaName + ' file']] : [[areaName, slug], ['File']]) +
     title(rev.name, item.type + ' · ' + rev.id) +
     `<small class="arc-file-reference">
-      <span>Path <code class="arc-file-path">${escape(item.path)}</code></span>
-      <span>Captured at ${commitReference(item.capture, asText(item.capture))}</span>
+      <span>${example ? 'Example path' : 'Path'} <code class="arc-file-path">${escape(item.path)}</code></span>
+      ${example ? '' : `<span>Captured at ${commitReference(item.capture, asText(item.capture))}</span>`}
     </small>
     <form class="arc-stack" data-form="file">
       ${fileRevisionControls(item)}
       ${panel('File information', metadata)}
+      ${example ? goalProgress() : ''}
       ${filePanels(item, rev)}
     </form>`
   );
@@ -313,9 +321,10 @@ function filePanels(item: DesignFile, revision: Revision) {
 }
 
 function fileRevisionControls(item: DesignFile) {
+  const currentLabel = item === ogsmGoalFile ? 'Preview revision' : 'Selected capture';
   const choices: [string, string][] = item.revisions.map((rev, index) => [
     String(index),
-    rev.id + (index === 0 ? ' · Selected capture' : ' · ' + rev.updated),
+    rev.id + ' · ' + (index === 0 ? currentLabel : rev.updated),
   ]);
   return `<div class="arc-detail-toolbar">
     <label>File revision<select data-change="file-revision">${options(choices, String(state.revision))}</select></label>

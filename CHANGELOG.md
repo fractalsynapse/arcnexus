@@ -43,6 +43,8 @@
 
 ### Added
 
+- Propose OGSM governance and preview the link from Plan goal progress to Direction strategy and steward milestone measures (#703).
+
 - Preview direct inbox repair routing for milestone review and release, and show Direction routing for final review and release in the Run mockup (#703).
 
 - Propose configurable component activities and preview milestone ordering, on-request participation, and project-selected activities in the Architect component editor (#703).

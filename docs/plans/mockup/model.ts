@@ -1,5 +1,6 @@
 import { decodeBase85 } from './base85.ts';
 import { previewTopics } from './file-topics.ts';
+import { ogsmGoalFile } from './ogsm-example.ts';
 
 export type Area = 'plan' | 'architect';
 export type Workspace = Area | 'run';
@@ -212,7 +213,7 @@ export type PreviewCommand = { operation: string; instruction: string; actors: A
 
 const fallback = await loadCapture();
 export const data = fallback;
-export const files = data.files;
+export const files = data.fileReview ? data.files : [...data.files, ogsmGoalFile];
 const defaultGoal = data.goals.at(-1);
 
 export const state = {

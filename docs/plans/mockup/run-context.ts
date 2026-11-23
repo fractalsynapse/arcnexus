@@ -1,5 +1,7 @@
 import { data, state, requireValue } from './model.ts';
 import type { Stats, Activation, PlanStep, Milestone } from './model.ts';
+import { ogsmGoal } from './ogsm-example.ts';
+import { exampleStrategy } from './ogsm.ts';
 import {
   measuredDuration,
   localDate,
@@ -13,8 +15,10 @@ import {
   factList,
 } from './view.ts';
 
+const runGoals = [...data.goals, ogsmGoal];
+
 export function currentGoal() {
-  return requireValue(data.goals.find((goal) => goal.id === state.goal));
+  return requireValue(runGoals.find((goal) => goal.id === state.goal));
 }
 
 export function currentSnapshot() {
@@ -35,7 +39,10 @@ export function goalControl() {
   return (
     '<label class="arc-goal-control">Standing goal<select data-change="run-goal">' +
     options(
-      data.goals.map((goal) => [goal.id, goal.priority + ' · ' + goal.title]),
+      runGoals.map((goal) => [
+        goal.id,
+        (goal === ogsmGoal ? 'Example' : goal.priority) + ' · ' + goal.title,
+      ]),
       state.goal,
     ) +
     '</select></label>'
@@ -43,6 +50,7 @@ export function goalControl() {
 }
 
 export function revisionControl() {
+  if (currentGoal() === ogsmGoal) return '';
   const snapshots = currentGoal().snapshots;
   if (snapshots.length === 1 && currentSnapshot().kind === 'satisfied') {
     return '<small class="arc-mono">Run ' + requireValue(snapshots[0]).run + '</small>';
@@ -75,6 +83,7 @@ export function stage(name: string, route: string, content: string, wrapped = tr
 
 export function strategy(compact = false) {
   const selected = currentGoal();
+  if (selected === ogsmGoal) return exampleStrategy(compact);
   const plan = currentPlan();
   if (!plan) {
     const summary = selected.outcome.summary;

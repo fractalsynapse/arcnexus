@@ -29,6 +29,9 @@ import {
   currentReview,
 } from './run-context.ts';
 import { metrics, eventLogPane } from './timeline.ts';
+import { milestoneRepairPanel } from './milestone-repair.ts';
+import { ogsmGoal, ogsmMilestone } from './ogsm-example.ts';
+import { exampleLabel, milestoneMeasures } from './ogsm.ts';
 import {
   asText,
   commitReference,
@@ -40,7 +43,6 @@ import {
   escape,
   factList,
   button,
-  icon,
   pill,
   status,
   options,
@@ -146,7 +148,7 @@ export function issueView(kind: string, compact = false) {
 export function runIndex() {
   const goal = currentGoal();
   return (
-    title('Run', goal.title, roundStatus()) +
+    title('Run', goal.title, goal === ogsmGoal ? exampleLabel() : roundStatus()) +
     '<div class="arc-detail-toolbar">' +
     goalControl() +
     revisionControl() +
@@ -177,8 +179,12 @@ function actorEvidence(phase: 'Direction' | 'Review') {
 
 export function sectionDetail(phase: 'Direction' | 'Review') {
   const direction = phase === 'Direction';
+  const goal = currentGoal();
+  const example = goal === ogsmGoal;
   const { actor, path, stats, rows } = actorEvidence(phase);
-  const outcome = direction ? panel('Strategy', strategy()) : panel('Review', reviewContent());
+  const outcome = direction
+    ? panel('Strategy and Measures', strategy())
+    : panel('Review', reviewContent());
   const context = direction
     ? {
         id: 'arc-component-assignments',
@@ -189,10 +195,10 @@ export function sectionDetail(phase: 'Direction' | 'Review') {
   const snapshot = currentSnapshot();
   return (
     breadcrumbs([['Run', '/run/'], [phase]]) +
-    title(phase, currentGoal().title) +
+    title(phase, goal.title, example ? exampleLabel() : '') +
     `<div class="arc-detail-toolbar">${revisionControl()}${button('View log', path + 'log/', 'list')}</div>` +
     overview(metrics(actor, stats, rows), outcome, { context }) +
-    `<small class="arc-mono">Run ${snapshot.run} · Captured staging ${commitReference(snapshot.capturedRevision, asText(snapshot.capturedRevision))}</small>`
+    (example ? '' : `<small class="arc-mono">Run ${snapshot.run} · Captured staging ${commitReference(snapshot.capturedRevision, asText(snapshot.capturedRevision))}</small>`)
   );
 }
 
@@ -301,6 +307,7 @@ function componentFocus(row: ComponentModel, milestone: Milestone) {
     noData('No owned paths declared.');
   return (
     panel('Instructions from Director', criteria) +
+    (milestone === ogsmMilestone ? milestoneMeasures() : '') +
     panel('Component purpose', `<p>${escape(purpose)}</p>`) +
     splitPanels({
       id: 'arc-file-ownership',
@@ -356,50 +363,6 @@ export function activityPage(focus: boolean) {
     milestoneRepairPanel(milestone, activity) +
     body
   );
-}
-
-const milestoneRepairExamples = [
-  {
-    activity: 'review',
-    sender: 'Milestone Review',
-    subject: 'Add coverage for the staging conflict case',
-    evidence:
-      'Review finding · The regression test covers the normal merge and misses the conflict case in the milestone criteria.',
-  },
-  {
-    activity: 'release',
-    sender: 'Milestone Release',
-    subject: 'Investigate the owner test failure after merging staging',
-    evidence:
-      'Staging integration check · Owner tests exited 1 on the merged candidate. Review the failing assertion before retrying the integration check.',
-  },
-];
-
-function milestoneRepairPanel(milestone: Milestone, activity: string) {
-  const activities = milestone.steps.filter((step) => !step.inapplicable).map((step) => step.activity);
-  const target = activities.indexOf('testing');
-  if (target < 0) return '';
-  const examples = milestoneRepairExamples.filter(
-    (example) => activities.indexOf(example.activity) > target,
-  );
-  const preview = pill('Routing preview', 'quiet');
-  if (activity === 'testing' && examples.length) {
-    const messages = examples.map((example) => `<details>
-      <summary>${escape(example.subject)}</summary>
-      <p><strong>${escape(example.sender)}</strong></p>
-      <p>${escape(example.evidence)}</p></details>`);
-    return panel('Steward inbox', messages.join(''), preview);
-  }
-  const example = examples.find((entry) => entry.activity === activity);
-  if (!example) return '';
-  const title = activity === 'review' ? 'Action on review' : 'Action on release';
-  const content = `
-    <h3>Returned to Testing</h3>
-    <small>From ${escape(example.sender)} · To <strong>${escape(milestone.owner)} steward inbox</strong></small>
-    <p>${escape(example.subject)}</p>
-    <details><summary>Failure evidence</summary><p>${escape(example.evidence)}</p></details>
-    <div><button type="button" class="arc-button" data-activity="testing">${icon('inbox')}Open Testing inbox</button></div>`;
-  return panel(title, content, preview);
 }
 
 function activityEvidence(component: string, activity: string, milestone: string, result: string) {

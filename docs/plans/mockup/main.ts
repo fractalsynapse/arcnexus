@@ -129,14 +129,16 @@ export function openFile(id: string) {
 }
 
 export function handleClick(control: HTMLButtonElement) {
-  const { go: route, file: id, component, activity, action, question, inspect: record } =
+  const { go: route, file: id, goal, component, activity, action, question, inspect: record } =
     control.dataset;
   if (question) openQuestion(question);
   else if (record) {
     const row = displayedRows.get(record);
     if (row) inspect(row, control);
-  } else if (route) go(route);
-  else if (id !== undefined) openFile(id);
+  } else if (route) {
+    if (goal) changeRun(goal);
+    go(route);
+  } else if (id !== undefined) openFile(id);
   else if (component) {
     state.component = component;
     state.milestone = '';
