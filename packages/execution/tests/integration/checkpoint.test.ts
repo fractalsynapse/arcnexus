@@ -17,7 +17,9 @@ test('retry confirms a lost checkpoint push, reconstructs the worktree and resum
   const boundary = scenario.remote.events.length;
   const secured = scenario.remote.head;
   const retry = await scenario.run();
-  const resumed = scenario.remote.events.slice(boundary).filter(({ branch }) => branch === '7-task');
+  const resumed = scenario.remote.events
+    .slice(boundary)
+    .filter(({ branch }) => branch === '7-task');
   assert.deepEqual(resumed[0], { kind: 'observe', branch: '7-task', head: secured });
   assert(!resumed.some(({ kind, head }) => kind === 'push' && head === secured));
   assert.equal(scenario.identities[0], scenario.identities[1]);
@@ -45,7 +47,10 @@ test('a secured checkpoint resumes on a disjoint staging advance', async (t) => 
   const stopped = await scenario.run();
   assert.equal(stopped.kind, 'failed');
   assert.match(stopped.reason, /Interrupted after secured checkpoint/);
-  const { oldBase, checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
+  const { oldBase, checkpoint, staging } = scenario.advance(
+    'staging-only.txt',
+    'staging contribution',
+  );
   const checkedBlob = scenario.observe('rev-parse', `${checkpoint}:first.txt`);
   const resumed = await scenario.run();
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
