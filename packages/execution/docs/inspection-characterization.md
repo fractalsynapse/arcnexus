@@ -1,5 +1,110 @@
 # Inspection parity characterization
 
+## Resumed Testing at revision fe55cd8
+
+Run 187 resumes issue 728, branch `728-task`, with engineering base and captured
+authority `fe55cd8ec28f25383f30822479c4b8ef8ecd32a7`. The host records recovery
+from run 185 at sequence 142871 and checkpoint
+`4a0e579a39038e7d2f491e780e588cacdce665d4` at 142873 in
+`187-1-run-timeline.jsonl`. The original accepted criteria and completed
+Documentation remain retained. The following run-185 and older sections retain
+their original revision-specific meaning.
+
+All artifact names in this section resolve in the registered evidence directory
+for task `44c36124967005da7c9255e1c839803f6d37789a00cf257bfe2816208ff56c9b`,
+indexed by `187-2-retained-evidence-963dbc2930a5b4015c7d4d855927348b5bbea05e8f2735a41723f2093a976aa6.json`
+and the continuing run timeline. Complete mapped reads supplied the source,
+provider artifacts and logs below; bulk transcripts remain outside source.
+
+### Current characterization
+
+The existing parity, listing, activation, LocalMcp and provider source hashes
+still match those identified in the run-185 account. The complementary
+[activity-tool suite](../tests/integration/activity-tools.test.ts) has SHA-256
+`19a7e6b3e467142f95ac102830747a7255dd1837ccdae019dcfd769d62ea1b7c`.
+Its handwritten bindings and partial HostTask characterize MCP transport,
+validation and caller repair; the production-captured fixture supplies the
+stronger parity comparison. No assertion or product code changed in this activity.
+
+Because recovery advanced the base and authority, matching individual source
+files was insufficient to reuse run-173 results. Testing obtained a fresh
+expected-pass `owner-tests` observation against the recovered candidate.
+`187-51-owner-tests.log`, SHA-256
+`90dd6d5adb8f3013f4d6caa3d9f2d3211dd4d4f95ffbb547beb5efc54897a157`,
+returned status zero in 39093 ms. Sequence 143020 records check-input identity
+`dc991d5ca2f8b2a0f7584fbdd362fe4b8a7913995b9a2f30b3cc4e73b82d4250`.
+Lines 2268–2273 report 269 tests, 253 passes, no failures and 16 skips.
+The interrupted `185-220-owner-tests.log` contains build startup only and
+establishes no behavioral result.
+
+| Measure | Current observed assertions |
+| --- | --- |
+| `inspection-request-parity` | Log lines 1041–1132 pass the complete rendered/structured CLI and actual controlled subprocess comparisons for Director, disjoint steward activities, empty bindings and Reviewer. `assertSelected` independently requires authored purpose, selected procedure and source labels. The named-placeholder/no-effects case passes at 1145. At 1164, `returningContext`, `retainedIndex` and `taskSection` compare complete multiline answer, assignment, milestone, acceptance and ordered evidence before whole-input equality. Completed-round inputs are authored independently and exclude an unregistered report. |
+| `inspection-project-authority` | `assertTools` compares actual HTTP MCP names, exact descriptions and schemas to prepared inspection and rendered Operations. The matrix checks disjoint/unmapped refusals and unchanged foreign bytes. Lines 1173–1197 pass complete retained requested listings for populated, disjoint and empty activities, with exact response, call identity, activity and journal ordering; no-request cases prohibit fabricated observations and handler effects. |
+| `inspection-effects-provider-policy` | At 1145 inspection preserves complete output, Git status, worktrees and absence of storage while throwing sentinels guard activation, admission and upstream calls. The matrix independently checks cached web with tools, disabled web with tools, and disabled/live web with empty tools. `assertInvocation` checks actual argv/cwd, approved guidance bytes and absence of discovery-disabling flags or pasted guidance. Changed guidance is refused before native request creation at 1151; the assembled CLI scenarios pass at 1157. |
+| `inspection-evidence-quality` | Complete controlled diagnostics retain stdin, argv, cwd, fixture executable, fixture capture revision, Node v22.23.5, MCP responses and exact refusals. They establish actual subprocess transport and file visibility, not real Codex inference, automatic guidance selection or enforcement by Codex of the supplied permission flags. The 16 skipped native scenarios supply no confinement proof. |
+
+These assertions reject dropping context from both request paths, losing or
+reordering returning evidence, inheriting another activity's tools, stale tool
+metadata, fabricated listings and coupling web policy to project grants. Current
+characterization demonstrates no new uncovered behavioral requirement, so no red
+or new regression is manufactured. Historical intended red remains historical.
+
+The required quality operations also returned actual status zero:
+`187-106-owner-format.log` (sequence 143185),
+`187-109-owner-lint.log` (143193),
+`187-112-repository-types.log` (143201) and
+`187-115-repository-build.log` (143209). Complete logs identify owner-scoped
+TypeScript formatting/lint, repository strict types and build. Their resolved
+commands, selections, expected-pass scope and input identities are in the timeline.
+These observations precede this evidence-only Markdown update; unchanged executable
+and fixture bytes support reuse, subject to the host's mandatory applicability
+validation for the resulting checkpoint.
+
+### Configured-provider comparison and unavailable observations
+
+Testing read each complete prepared request, invocation and requested listing:
+
+| Selected activity | Request / invocation / listing | Listing call and timeline sequence |
+| --- | --- | --- |
+| Direction/planning | `185-2` / `185-5` / `185-6` | `35bc7f65-54f0-4228-8e33-9d9307781a0a`, 142200 |
+| Execution/documentation | `185-92` / `185-95` / `185-96` | `5e2a0dc1-3ac8-4568-875f-98be48ec4ea4`, 142473 |
+| Execution/testing before interruption | `185-186` / `185-189` / `185-190` | `d077b7d7-6791-4c2d-a596-afba471a2803`, 142766 |
+| Execution/testing after recovery | `187-3` / `187-6` / `187-7` | `edda0fde-7024-4e30-bea6-ec87029c2c19`, 142885 |
+
+Request, invocation and listing suffixes are respectively
+`-native-request.json`, `-native-invocation.json` and
+`-mcp-observation.json`. For each row, removing only internal `handler` from
+the complete prepared tool array produces exact equality with the actual
+`tools/list` response, including descriptions, schemas and order. Journal
+metadata supplies the selected activity attribution. All four are populated
+bindings; they establish neither a real-provider empty listing nor Reviewer
+listing. The run-185 rows retain their original `cd5c2b30` authority, while
+nativeStarted sequence 142881 identifies the recovered `fe55cd8` activation.
+
+Invocations identify `/usr/local/bin/codex`, gpt-6.1-sol, medium reasoning,
+live web policy, disabled shell/unified-exec and a required local project MCP
+endpoint. The timeline identifies profile gpt-sol and host Node v22.23.5.
+These are configuration observations, not proof of web use or an independently
+received full model context. No fresh Codex version receipt is present in these
+artifacts; the older operator-observed version remains separately attributed below.
+
+Complete reads of `185-3-codex.jsonl` and `185-93-codex.jsonl` expose
+thread/turn starts, item starts/completions and turn completion. Their item types
+are agent messages and MCP tool calls. `185-187-codex.jsonl` has 32 records
+and no turn completion; its interrupted stream is preserved rather than called
+a successful provider turn. All three corresponding stderr artifacts are empty.
+None exposes authoritative automatic AGENTS/skill discovery or a complete
+model-received context receipt. A prepared host envelope is not that receipt;
+the controlled executable provides the independent stdin comparison. No live
+empty-binding, Reviewer or automatic discovery observation is inferred.
+The accepted plan explicitly requires these unavailable fields to remain unknown,
+rather than requiring fabricated provider evidence.
+
+Implementation can consume this passing characterization and precise provider
+classification without recreating historical red. Independent assembled acceptance,
+hosted CI/review, staging delivery and live qualification remain host responsibilities.
+
 ## Review at revision cd5c2b30
 
 This account supports maintainers and reviewers assessing run 185's
