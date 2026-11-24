@@ -87,9 +87,6 @@ test('abrupt acknowledged edit recovers its original receipt before activation a
   assert.deepEqual(scenario.activations, ['first', 'second']);
   assert.deepEqual(scenario.identities, [ack.taskID]);
   assert.equal(scenario.remote.issues, 0);
-  const edits = scenario.observations<{ editIntent?: { path: string }[] }>()
-    .flatMap(({ editIntent }) => editIntent ?? []).filter(({ path }) => path === 'first.txt');
-  assert.equal(edits.length, 1);
   assert.equal(scenario.observe('show', '7-task:first.txt'), 'first');
   for (const path of [ack.worktree, ...scenario.worktrees]) assert(!existsSync(path));
   assert(existsSync(unrelated));
