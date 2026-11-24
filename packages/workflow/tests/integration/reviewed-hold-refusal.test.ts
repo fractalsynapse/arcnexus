@@ -37,9 +37,14 @@ test('independent rejection reaches Direction with exact checked-edit refusal af
   const original = JSON.stringify(held);
   await f.reopen();
   assertRetained(f, held);
+  let observedHandoff = false;
+  f.onHoldRevision = () => {
+    assertHandoff(f, held);
+    observedHandoff = true;
+  };
   const resumed = await f.run();
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
-  assertHandoff(f, held);
+  assert(observedHandoff);
   assert.equal(JSON.stringify(held), original);
   assert.deepEqual(f.calls, [
     'original', 'Review', 'Direction:rejection', correction.id,
