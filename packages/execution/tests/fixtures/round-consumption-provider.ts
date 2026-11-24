@@ -9,10 +9,8 @@ interface Frame {
 }
 interface Completion {
   invocation: string;
-  round: number;
+  round: string;
   report: string;
-  findings: string[];
-  measurements: string[];
 }
 
 /** Exercise real request preparation and mapped complete-file consumption with controlled responses. */
@@ -120,7 +118,7 @@ class RoundConsumer {
             : [],
         ),
       );
-      consumed.push({ ...completion, sources: [...sources], messages });
+      consumed.push({ ...observedRound(completion, frames), sources: [...sources], messages });
     }
     return consumed;
   }
@@ -203,6 +201,20 @@ class RoundConsumer {
   private emit(value: unknown) {
     process.stdout.write(JSON.stringify(value) + '\n');
   }
+}
+
+/** Derive the exact observed sequence indexes from the report the actor read. */
+function observedRound(completion: Completion, frames: readonly Frame[]) {
+  const measurements = frames.filter(({ observation }) =>
+    ['nativeStarted', 'nativeEvent', 'nativeFinished', 'nativeInvocation'].some(
+      (key) => key in observation,
+    ),
+  );
+  return {
+    ...completion,
+    findings: frames.map(({ sequence }) => sequence),
+    measurements: measurements.map(({ sequence }) => sequence),
+  };
 }
 
 await new RoundConsumer().run();

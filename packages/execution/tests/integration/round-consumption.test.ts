@@ -75,13 +75,15 @@ function consumptionGaps(observed: Observations, prior: CompletedRefinementRound
           .split('\n\n## Activity')[0]!
           .slice(attempt.input.indexOf('\n\nassignment:') + 2),
       );
-      const advertised = task.assignment.completedRounds?.some(
+      const advertised = task.assignment.completedRounds?.find(
         (round: CompletedRefinementRound) => round.report === prior.report,
       );
       if (!consumed || !advertised) {
         missing.push(actor + ' attempt ' + index + ' omits completed round ' + prior.round);
         continue;
       }
+      const { invocation, round, report } = prior;
+      assert.deepEqual(advertised, { invocation, round, report });
       assertOrigins(attempt, consumed, prior);
     }
   }
