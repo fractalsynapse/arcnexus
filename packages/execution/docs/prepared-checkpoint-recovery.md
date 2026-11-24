@@ -236,25 +236,87 @@ Workflow owns the durable position and repair routing. Final independent
 Verification and Delivery retain their gates; a checkpoint push cannot discharge
 them.
 
-### Existing coverage and remaining demonstration
+### Current source coverage and execution still required
+
+This reconciliation uses the source available under captured revision
+`6c2bc586329939deb57ba69366331e4d00680406`. It records source inspection, not
+a current passing test or quality result.
 
 [Checkpoint scenarios](../tests/integration/checkpoint.test.ts) and their
-[fixture](../tests/fixtures/checkpoint.ts) contain lost-response, receipt replay,
-cleanup and successor assertions using real local Git and Coordination with
-controlled actors and Collaboration. The abandoned-workspace case recreates a
-clean workspace after a prior run; it is not the required abrupt child exit.
-[Interrupted-check scenarios](../tests/integration/interrupted-check.test.ts)
-contain expectation, numeric-exit, readable-log, pending correction and successor
-assertions. They control command outcomes and final verification/delivery ports.
-Their simulated `merged` result is not a hosted staging merge.
+[shared fixture](../tests/fixtures/checkpoint.ts) contain lost-response,
+receipt-replay, cleanup and successor assertions using real local Git and SQLite
+Coordination with controlled actors and Collaboration. The lost-response case
+records ordered remote observations and pushes, asserts that the first issue-branch
+event on retry observes the accepted head, and rejects a repeated push of that
+head. The moved-staging abandoned-workspace case recreates a clean workspace after
+a prior run; that case alone does not cover an abrupt process exit.
 
-At this documentation activity these references identify current test source,
-not a matching executed recovery or quality result. Testing must execute the
-relevant scenarios and add the distinguishing abrupt subprocess observation.
-Characterize working behavior with expected-pass evidence; retain an intended
-behavioral failure before correcting any demonstrated defect. Keep commands and
-bulk logs in external task evidence, associated with the assessed source and
-candidate rather than copied into this intent.
+The separate [crash scenario](../tests/integration/checkpoint-crash.test.ts) and
+[child entry](../tests/fixtures/checkpoint-crash-child.ts) already implement the
+abrupt boundary. The child runs the shared fixture and exits with status 73 after
+`ActivationTools.invoke` acknowledges the checked edit, before Workflow cleanup.
+It writes the actual receipt, retained artifact path, task, issue, branch,
+worktree and Node version to the acknowledgment record. The parent records the
+child executable, arguments, version, status, signal, stdout, stderr and
+acknowledgment in test diagnostics.
+
+Before reopening, parent assertions inspect the abandoned checkout, exact
+`first.txt` bytes, committed branch bytes, receipt artifact and Git worktree
+registration. A callback before each resumed controlled activation asserts the
+same task, issue and branch, restored bytes, original receipt and artifact,
+one original edit intent, removal of the abandoned workspace and only one
+active task worktree alongside the repository and unrelated checkout. The resumed
+fixture replays the identical checked edit and compares its retained receipt.
+Final assertions require task-worktree removal, committed bytes surviving removal,
+and preservation of the unrelated checkout.
+
+These are existing source assertions. The crash fixture directly constructs
+`HostTask` with a supplied capture and uses real Coordination admission,
+Execution preparation and Workflow recovery. Its actor invokes ActivationTools
+directly; it does not invoke a provider executable, MCP transport or the full
+production admission path. Collaboration and final verification/delivery ports
+are controlled. Its simulated `merged` result establishes no hosted staging
+merge, live model behavior or native confinement.
+
+[Interrupted-check scenarios](../tests/integration/interrupted-check.test.ts)
+contain original-expectation, exact numeric-exit, readable-log, pending-correction
+and successor assertions. They interrupt after journaled command observations,
+then omit requested checks on retry to require host reconciliation. Required-pass
+coverage retains exit 37 and the original log, observes a later exit 43 without
+clearing the obligation, then corrects bytes to obtain exit 0. After interruption
+at completed checkpoint, only review activates and verification precedes delivery.
+The expected-fail variant is separately controlled expectation-recovery coverage;
+it is not a demonstrated new behavioral red. Command outcomes, actors and final
+verification/delivery are controlled, so these assertions do not establish actual
+project-command execution.
+
+### Evidence completion and correction intent
+
+Execute the existing scenarios before deciding whether a behavioral correction is
+needed. The remaining work is current observed evidence and any correction it
+demonstrates, rather than creation of a missing crash test. Characterize working
+behavior with expected-pass evidence. If an execution reaches a relevant missing
+behavior, retain its distinguishing failing assertion before correction; no such
+new defect is established by this documentation review.
+
+For `checkpoint-abrupt-preservation`, retain an explicit parent observation of
+the abandoned workspace before reopening, including actual bytes, receipt identity
+and worktree registration. The current parent checks those facts with assertions
+but does not emit a dedicated pre-restart observation in its diagnostics. Preserve
+that observation even if reopening later fails. For `checkpoint-current-quality`,
+retain the child working directory as well as the already reported executable,
+arguments, status and complete output; its current spawn diagnostics omit cwd.
+These are evidence corrections to make through the existing fixture and diagnostics,
+without replacing the real child boundary or weakening its assertions.
+
+Associate executed scenarios and applicable formatting, lint, strict types and
+build observations with the actual assessed source/candidate and environment.
+Retain resolved commands, arguments, working directories, exact exits and complete
+logs in external task evidence. A source file, acknowledgment schema or prior
+unmatched result cannot establish that current execution passed. Unresolved
+failures retain their original expectation, exact numeric exit and readable log
+until correction satisfies that expectation; omitted checks cannot open the
+verification or delivery gates.
 
 Production activation continues through the trusted composition and the shared
 [single-string Agent request and activity-scoped local MCP path](inspection-parity.md).
