@@ -86,6 +86,28 @@ function context(task: HostTask, review = false) {
   };
 }
 
+/** Author registered round inputs independently of the request builder and retain the live timeline. */
+function enrichment(task: HostTask) {
+  task.listen(() => undefined);
+  const report = task.store('prior-round.md', 'Distinct prior round finding\nFinal authored line.\n');
+  const round = { invocation: 'prior-invocation', round: '1' as const, report };
+  task.record({ completedRound: { ...round, findings: [], measurements: [], evidence: [report] } });
+  task.record({
+    completedRound: {
+      ...round,
+      round: '2',
+      report: report + '.unregistered',
+      findings: [],
+      measurements: [],
+      evidence: [],
+    },
+  });
+  return {
+    assignment: { ...context(task).assignment, completedRounds: [round] },
+    evidence: [report, task.timeline!],
+  };
+}
+
 /** Assert selected source content independently of the comparison between the two request paths. */
 function assertSelected(
   view: AgentInspection,
@@ -177,7 +199,11 @@ for (const [component, activity, actor, names, web] of [
     const view = fixture.agent.prepareRequest(
       task.capture,
       selection,
-      context(task, actor === 'reviewer'),
+      {
+        ...context(task, actor === 'reviewer'),
+        assignment: enriched.assignment,
+        evidence: [...context(task, actor === 'reviewer').evidence, ...enriched.evidence],
+      },
     );
     const probe = readProbe(task);
     t.diagnostic(
