@@ -42,30 +42,31 @@ for the data tools it exposes. This lets a component add a model or compatible
 field through its own public entry. [Team contract](../../../../packages/team/contract.md) · [Direction contract](../../../../packages/direction/contract.md) · [OpenAPI operations](https://spec.openapis.org/oas/latest.html#operation-object)
 
 Architecture would register `data` for `packages/data`, and separate app
-stewards for `apps/api`, `apps/mcp`, `apps/db` and the trusted execution host.
-The CLI and web stewards own their existing app surfaces.
+stewards for `apps/api`, `apps/mcp`, `apps/db`, `apps/host` and
+`apps/launcher`. The CLI and web stewards own their existing app surfaces.
 
 ## Local platform services
 
-Include `apps/db` in the first local deployment that runs Web, API and MCP
-together. A shared root `compose.yaml` would assemble the platform under the
-Release steward. Each application steward owns its image and entry point.
+Include `apps/db` and the Host launcher in the first local deployment that
+runs Web, API and MCP together. A shared root `compose.yaml` under the Release
+steward runs the long-lived platform services and the DB setup job. The
+launcher starts project execution containers on demand. Each application
+steward owns its build and entry point.
 
 | Compose service | Responsibility |
 | --- | --- |
 | **PostgreSQL** | Run the shared database on a private network with a persistent volume. Model owners keep their schemas and storage rules. |
 | **DB setup** | Run the `apps/db` migration command once per deployment. It composes the migration steps from model owners, records applied versions, and exits successfully when the schema is ready. The first slice covers migration and schema status. Backup and restore also belong to this app as operator commands. |
-| **Execution host** | Run the trusted Cordis composition for Commands and Workflow in a private `apps/host` container. The host owns project worktrees, provider access and effectful execution. API and MCP pass the initiating caller and request to this same host. |
 | **API and MCP** | Run separate adapters. Both compose Data and its owner bindings and connect to the same PostgreSQL database for permitted model operations. Workflow actions go through the execution host. Give each adapter a runtime role scoped to its allowed database operations. |
 | **Web** | Serve the browser app and connect it to the API through the local same-origin entry point. The browser requests resources from the API and receives status independently for each display. |
 
 Compose starts PostgreSQL and waits for database health. It then runs the DB
-setup job and uses successful completion as the startup dependency for API,
-MCP and the execution host. Those services can start in parallel after the
-schema is ready. On startup, a failed migration surfaces through the DB job
-and blocks the dependent services. Web can serve its shell while the API is
-unavailable. At runtime the adapters report database or host unavailability
-through the affected operation. [Compose startup dependencies](https://docs.docker.com/compose/how-tos/startup-order/)
+setup job and uses successful completion as the startup dependency for API
+and MCP. Those services can start in parallel after the schema is ready. On
+startup, a failed migration surfaces through the DB job and blocks the
+dependent services. Web can serve its shell while the API is unavailable.
+At runtime the adapters report database or host unavailability through the
+affected operation. [Compose startup dependencies](https://docs.docker.com/compose/how-tos/startup-order/)
 
 DB setup uses a dedicated migration role. Serialize migration attempts and
 make a repeated startup recognize already applied versions. API, MCP and the
@@ -81,6 +82,54 @@ Project bindings identify which verified repositories the local host serves.
 The owning services provide authorized reads of Git revisions and retained
 artifacts to Data. These bindings keep file-backed resources usable across
 containers and leave worktree and provider effects with the execution host.
+
+## Host launcher
+
+Build `apps/launcher` as a small strict TypeScript executable packaged with
+`bun build --compile`. The local binary runs alongside Docker Engine. Use it
+from the first local deployment and keep the same registration and launch
+contract for a hosted deployment. A hosted deployment can supply a different
+container runtime adapter behind that contract. [Bun compiler](https://bun.com/docs/compiler)
+
+Configure the platform endpoints with `ARC_API_URL` and `ARC_MCP_URL`, or
+persist their non-secret defaults with `arcnexus-launcher configure`.
+Environment settings take precedence. The launcher registers through one
+authenticated outbound API connection for assignments, status and
+reconnection. The launcher can check the configured operator MCP endpoint
+during setup. Commands submitted through MCP or API use the same routing and
+launch lifecycle. The activity-scoped MCP endpoint inside each Host remains
+bound to its captured operation permissions.
+
+The launcher resolves a verified project ID to a locally approved image,
+directory binding and credential binding. It starts or reuses the private
+`apps/host` container and reports its identity and readiness. A repeated
+launch request reconciles the existing container before starting another.
+The Host checks the captured project and image and acquires Coordination's
+writer before running the command. For local Compose, Host joins the private
+platform network and checks schema compatibility before accepting work.
+Configure the platform addresses used by the native launcher separately
+from the worker's internal service addresses.
+
+### Project directories and Codex sign-in
+
+The operator registers a local project directory with the launcher. Verify
+its canonical Git identity and copy the selected committed revision into a
+managed project volume. Use the same stable paths for its Git store,
+worktrees and evidence when replacing the container. Keep writes in the
+Host's task worktree. A later local source update can supply another approved
+revision. Project directories and run state stay on the execution machine
+and outside the image build context.
+
+For a file-backed Codex login, the operator can seed a fresh private
+`CODEX_HOME` once with the approved local `auth.json`. Store it on a
+dedicated credential mount with access restricted to the trusted Host.
+Preserve Codex's refreshed credentials across container replacement. Assign
+each login cache to a single serialized stream. Use independent sign-ins
+for concurrent Hosts or concurrent desktop use. Keyring-backed credentials
+use a supported sign-in on the destination. Keep credential data local to the
+execution machine, separate from project files, launch messages, images and
+run evidence. [Codex credential storage and headless login](https://learn.chatgpt.com/docs/auth#login-on-headless-devices)
+· [Codex refresh and concurrent jobs](https://learn.chatgpt.com/docs/auth/ci-cd-auth#operational-rules-that-matter)
 
 ## Execution host container
 
@@ -147,13 +196,13 @@ identity and the target platform. A change to the approved build inputs or
 selected image requires fresh validation. [Docker build context](https://docs.docker.com/build/concepts/context/)
 · [Docker image digests](https://docs.docker.com/dhi/explore/security-concepts/digests/)
 
-A local Compose installation can select one approved derivative for its Host
-service. A stack serving different toolchains can start separate private Host
-services and route each project to its assigned image. API and MCP keep the
-same contracts. Coordination enforces the same project writer across all
-services. Persist the project's repositories, worktrees and evidence across
-image changes. A repository import can propose an image source or toolchain
-requirements for the operator to review.
+The launcher selects the approved derivative for each project and starts
+the corresponding Host when requested. A stack can run different toolchains
+side by side. API and MCP keep the same contracts, and Coordination enforces
+one writer per project across all workers. Persist the project's
+repositories, worktrees and evidence across image changes. A repository
+import can propose an image source or toolchain requirements for the
+operator to review.
 
 Keep operation definitions in the project's approved architecture. For
 example, install ShellCheck in a derivative image, declare `shell-lint` once
@@ -354,6 +403,12 @@ sequences are illustrative.
   project and confirm Coordination admits one writer. Race conditional data
   writes and confirm a stale revision fails. Restart each adapter during an
   active run and confirm that the host and retained timeline continue.
+- Start the first Host through the compiled launcher against the local
+  platform. Reconnect during a launch and verify that the same container is
+  reconciled. Replace it and confirm it reuses the approved project volume
+  and the current Codex auth cache. Verify that another concurrent Host
+  needs its own credential binding and that project commands and run
+  evidence cannot read the credentials.
 - Exercise public and private catalog imports with a permitted repository
   and a refused credential binding. Confirm that import cannot change the
   trusted runtime and an updated catalog preserves active run provenance.
