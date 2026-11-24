@@ -71,6 +71,9 @@ function recovered(task: HostTask, scenario: RecoveryScenario, ack: Acknowledgme
   const receipts = task.observations<{ editReceipt?: Acknowledgment['receipt'] }>()
     .flatMap(({ editReceipt }) => editReceipt?.path === 'first.txt' ? [editReceipt] : []);
   assert.deepEqual(receipts, [ack.receipt]);
+  const edits = task.observations<{ editIntent?: { path: string }[] }>()
+    .flatMap(({ editIntent }) => editIntent ?? []).filter(({ path }) => path === 'first.txt');
+  assert.equal(edits.length, 1);
   assert.equal(scenario.observe('worktree', 'list', '--porcelain').split('worktree ').length, 4);
 }
 
