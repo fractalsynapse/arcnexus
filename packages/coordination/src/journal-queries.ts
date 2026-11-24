@@ -164,7 +164,7 @@ export function researchReports(
       FROM events
       WHERE json_extract(content, '$.researchResult.component') = ?
         AND json_type(content, '$.researchResult.archive') = 'text'
-        AND (? IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
+        AND (CAST(? AS TEXT) IS NULL OR json_extract(content, '$.researchResult.request.id') = ?)
       ORDER BY events.id DESC
     `,
     )

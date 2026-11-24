@@ -132,6 +132,31 @@ function assertRecovered(events: readonly { observation: unknown }[], previous: 
 }
 
 test(
+  'the hosted journal reads owner research with and without a request ID',
+  { skip: !url },
+  async (t) => {
+    const { directory, project, sqlite, setup } = await fixture(t);
+    const native = sqlite.admit(project, 'Preparation');
+    assert.ok('record' in native);
+    native.finish({ kind: 'satisfied' });
+    native.close();
+    await setup.cutover(directory, project);
+    const journal = coordinated(project, 'fixture-host').admit(project, 'Research history');
+    assert.ok('record' in journal);
+    t.after(() => journal.close());
+    const first = { component: 'work', request: { id: 'first' }, archive: 'first.md' };
+    const second = { component: 'work', request: { id: 'second' }, archive: 'second.md' };
+    journal.record({ researchResult: first });
+    journal.record({ researchResult: second });
+    journal.record({ researchResult: { ...first, component: 'other' } });
+
+    assert.deepEqual(journal.researchReports('work'), [second, first]);
+    assert.deepEqual(journal.researchReports('work', 'first'), [first]);
+    assert.deepEqual(journal.researchReports('work', 'missing'), []);
+  },
+);
+
+test(
   'the native journal interface runs its nested workflow against PostgreSQL',
   { skip: !url },
   async (t) => {

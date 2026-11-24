@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Read optional owner research history in PostgreSQL so hosted Runs can proceed from the Director's plan to steward work (#706).
+
 - Start the Codex filesystem sandbox inside the confined Docker Host and support Codex installations with a symlinked executable (#706).
 
 - Equip the Docker Host with Bubblewrap overlay support and require the launcher's scoped runtime policy before it can claim work (#706).
