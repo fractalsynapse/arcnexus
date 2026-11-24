@@ -6,6 +6,14 @@ import { PublicationProvider } from '../fixtures/publication-provider.js';
 
 export const suite = { owner: 'delivery', level: 'integration', tags: ['regression'] } as const;
 
+type AcceptanceEvent = {
+    verification?: {
+      identity: import('../../../verification/src/index.js').VerificationIdentity;
+      checks: Array<{ id: string; status: number }>;
+    };
+    verdict?: import('../../../verification/src/index.js').Verdict;
+  };
+
 /** Secure actual checked bytes and a human answer before starting final publication. */
 async function prepared(fixture: PreparedRecoveryFixture) {
   const result = await fixture.run();
@@ -163,13 +171,7 @@ function recoveredAcceptance(
   commit: string,
   corrected = false,
 ) {
-  const history = fixture.observed.at(-1)! as Array<{
-    verification?: {
-      identity: import('../../../verification/src/index.js').VerificationIdentity;
-      checks: Array<{ id: string; status: number }>;
-    };
-    verdict?: import('../../../verification/src/index.js').Verdict;
-  }>;
+  const history = fixture.observed.at(-1)! as AcceptanceEvent[];
   const prior = history.find((event) => event.verification)?.verification;
   const assessment = history.findLast((event) => event.verification)?.verification;
   const verdict = history.findLast((event) => event.verdict)?.verdict;
