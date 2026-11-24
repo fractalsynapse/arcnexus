@@ -28,6 +28,27 @@ failures involved unisolated Collaboration calls, Git branch display decoration,
 cleanup ordering, Reviewer's missing enriched comparison input, the compiled CLI
 path and inherited Node test-runner context. They are setup feedback, not red.
 
+## Requested listing retention regression
+
+The run 138 host clarification identifies an uncovered retention defect:
+LocalMcp answers tools/list, but only tool calls reach activation's journal.
+Add a production admission/Agent/Execution regression that compares the complete
+requested response with captured inspection tools, then reads the exact retained
+response through the journal's registered evidence source. Exercise populated,
+disjoint and explicitly empty activity bindings. Require a nonempty call identity,
+selected component/activity attribution and ordering inside the native activation.
+A provider that makes no MCP request must produce no listing observation.
+Listing alone must never dispatch a project handler. These assertions reject
+dropped listings, fabricated empty listings, foreign activity metadata and
+description/schema loss; production correction belongs to Implementation.
+
+Retain the prior passing characterization separately from the new intended red.
+Host clarification 138-567 records operator-observed codex-cli 0.172.0 and the
+qualification image identity. The configured provider exposes neither a complete
+received-context receipt nor authoritative AGENTS/skill discovery tied to approved
+bytes. No earlier Reviewer or empty-operation provider receipt was located.
+These unavailable observations remain gaps, regardless of controlled test results.
+
 The controlled executable proves transport and file visibility, not live inference
 or the real Codex harness interpreting discovered guidance. Existing native
 confinement scenarios skipped by the ordinary owner suite remain skipped; this
