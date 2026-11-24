@@ -400,7 +400,7 @@ async function returningScenario(t: TestContext) {
   return { fixture, task, enriched, data, snapshots, answer, start: task.evidence.length };
 }
 
-test('EX-6: returning caller inspection matches enriched native input and complete answer', async (t) => {
+test('EX-6: returning caller preserves exact enriched native input', async (t) => {
   const scenario = await returningScenario(t);
   const { fixture, task, enriched, data, snapshots, answer, start } = scenario;
   const selection = { component: 'work', activity: 'testing' };
@@ -416,9 +416,6 @@ test('EX-6: returning caller inspection matches enriched native input and comple
   assert.deepEqual(actual.acceptance, data.acceptance);
   assert.equal(probe.input, view.request.input);
   assertInvocation(view, probe);
-  t.diagnostic(
-    JSON.stringify({
-      returningNativeObservation: { revision: task.capture.source.revision, probe },
-    }),
-  );
+  const observed = { revision: task.capture.source.revision, probe };
+  t.diagnostic(JSON.stringify({ returningNativeObservation: observed }));
 });
