@@ -4,7 +4,8 @@ This intent is for Execution maintainers preparing regressions and reviewers
 deciding whether inspection describes the authority and request actually used by
 an activation. It records the accepted boundary before behavioral changes for
 `execution-inspection-activation-parity`, and updates the evidence scope for
-`inspection-current-parity` and the current `inspection-current-evidence` milestone.
+`inspection-current-parity`, `inspection-current-evidence` and the current
+`inspection-current-assessment` milestone.
 The governing obligations are
 [Execution EX-6, EX-16 and EX-24](../contract.md#acceptance-scenarios),
 [Architecture ARC-9, ARC-13, ARC-18 and ARC-24](../../architecture/contract.md#acceptance-scenarios)
@@ -95,47 +96,56 @@ cannot establish assembled parity.
 
 ## Current evidence scope
 
-This review evaluates revision `7d04db61627b4e76e0fda4ac1003ab5b26d18e8e`
-under run 173's accepted `inspection-current-evidence` milestone. It records
-intent before any new behavioral correction. The earlier reviews at
-`83acc2f956b3595a2594c6051c3e541928427919` and
-`8b369c4fe0ba7bba585fc2530f2e085899edd5c2` remain historical.
+This review evaluates revision `cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1`
+under run 185's accepted `inspection-current-assessment` milestone. It records
+intent before any new behavioral correction. Reviews at
+`83acc2f956b3595a2594c6051c3e541928427919`,
+`8b369c4fe0ba7bba585fc2530f2e085899edd5c2` and
+`7d04db61627b4e76e0fda4ac1003ab5b26d18e8e` remain historical.
 The [characterization account](inspection-characterization.md) preserves their
 results, original criteria, candidate identities and provider limitations.
 
-Source review finds the controlled native parity and requested-listing
-regressions already present. `LocalMcp.listTools` emits the requested response
-through the existing observer; activation retains its complete artifact with
-component, activity and call identity. The run-138 listing-retention red and its
-subsequent correction are historical evidence, not an outstanding defect to
-recreate. Characterize current behavior with expected pass. Add red only when
-a relevant new behavioral gap is demonstrated.
+Current source already contains both the requested-listing retention repair and
+the run-173 enrichment assertions. `LocalMcp.listTools` emits the requested
+response through the existing observer; activation retains its complete artifact
+with component, activity and call identity. The actor matrix uses `enrichment`
+and `liveContext` to compare identical effective inputs containing a registered
+completed round and timeline, while excluding an unregistered report. Reviewer
+comparisons also include the independently retained candidate diff.
 
-Comparisons must use identical effective inputs after host enrichment.
-`invocationContext` adds completed-round references and registered parent/current
-timelines; returning callers also receive retained and newly observed evidence.
-Reviewer activation adds its candidate diff. Preserve complete answers, array
-order and actual workspace in the comparison. The existing parity helper supplies
-an assignment and Reviewer diff, but does not explicitly exercise completed rounds
-or returning-caller enrichment. Testing must assess that coverage before deciding
-whether additional assertions are necessary. Do not change production enrichment
-to make an unenriched expected request agree.
+The returning-caller scenario invokes a captured question operation, supplies a
+distinguishable multiline answer with surrounding whitespace, and retains a new
+host observation. `returningContext`, `retainedIndex` and `taskSection`
+independently assert the complete assignment, acceptance, milestone and ordered
+evidence before comparing the entire subprocess input with Agent preparation.
+These assertions are present at the evaluated revision. The earlier account's
+missing-enrichment description was a run-173 Documentation handoff finding,
+resolved by that run's Testing activity; it is not a current uncovered requirement.
+The fixture authors explicit journal rounds; it does not establish production of
+a live refinement round.
+
+Preserve complete answers, evidence order and actual workspace. Do not change
+production enrichment to match an unenriched expectation. Characterize current
+behavior with expected pass, reuse applicable observations when established, and
+add red only for a demonstrated new behavioral gap. Neither the historical
+listing-retention red nor the resolved enrichment coverage needs recreation.
 
 ## Comparisons required by the current milestone
 
-| Criterion | Intended comparison and evidence gap |
+| Criterion | Existing assertions and current observation needed |
 | --- | --- |
-| `inspection-request-parity` | Run the production admission/Agent/Execution subprocess scenarios for Director, steward and Reviewer. Compare complete stdin and effective invocation options against the shared prepared request using identical enriched inputs. Independently assert full selected purpose, procedure, source labels and named placeholders. Compare complete rendered CLI input/options with structured inspection. Current source coverage exists; current applicable observations and enrichment coverage must be established. |
-| `inspection-activity-authority` | Compare actual MCP tools/list names, exact descriptions and schemas with inspection for populated, disjoint and explicitly empty activity bindings. Check foreign and unmapped refusals without unauthorized effects. Read complete requested response artifacts through registered evidence, checking call identity, selected activity and ordering. No request must produce no listing. Existing listing-retention assertions cover these cases; obtain or justify applicable current observations. |
-| `inspection-effects-and-policy` | Establish repeatability without model calls, admission, upstream, storage or worktree effects. Compare cached, disabled and live provider web options independently of populated/empty project tools. Preserve normal guidance discovery configuration and refuse changed captured guidance before provider startup. Controlled file reads and configuration establish visibility and adapter policy; authoritative real harness discovery remains a separate unavailable observation unless actually exposed. |
-| `inspection-evidence-accuracy` | Map each measure to tracked assertion anchors, actual status/log and relevant source, authority, candidate and environment identities. Include applicable owner format, lint, types, build and tests. Separate controlled subprocess receipts, configured-provider records, live inference, native confinement, CI and independent acceptance. Do not promote source coverage, skipped cases or unrelated review criteria into proof. |
+| `inspection-request-parity` | The native actor matrix and returning-caller scenario compare complete stdin and effective options against the shared request using identical enriched inputs. `assertSelected`, named-placeholder and complete CLI cases independently establish purpose, procedure, source labels and rendered/structured parity. Establish applicability of retained results or obtain current results; completed-round and returning-caller assertions already exist. |
+| `inspection-project-authority` | `assertTools` compares actual MCP names, exact descriptions and schemas with inspection for populated, disjoint and empty activity bindings, and checks unavailable-operation refusals and unchanged foreign bytes. `assertRetained` reads complete requested responses with call identity, activity attribution and native-span ordering; no-request cases forbid fabricated listings or handler effects. Obtain or justify applicable observations. |
+| `inspection-effects-provider-policy` | Repeatability/no-effects, `assertInvocation`, the activity matrix and changed-guidance refusal cover no model/admission/upstream/storage/worktree effects, independent cached/disabled/live web policy, approved guidance visibility and unchanged discovery configuration. Establish current applicability. Controlled receipts do not establish automatic real-harness discovery. |
+| `inspection-evidence-quality` | Record actual status/log, source, candidate, authority, parameters and environment for applicable format, lint, strict types, build and behavioral observations. Distinguish controlled receipts, configured-provider artifacts, skipped native cases and unavailable provider internals. Host verification, CI and delivery remain separate. |
 
-Run 158's completed-round report cites run 147's passing repository checks at the
-evaluated revision, tree `faddf36c0ba3e3ba4dac1f108577b97c50585085` and PR 721.
-Its independent criteria concern recovery and publication. The accepted run-173
-plan therefore requires criterion-linked parity characterization rather than
-treating that summary as parity acceptance. Reuse remains possible when the host
-establishes matching relevant inputs, resolved parameters, authority and environment.
+The characterization account identifies the run-173 criterion-linked logs and
+current matching source hashes. Matching those files alone does not establish
+unchanged dependencies, environment, captured authority or check parameters.
+Run 185's accepted plan also distinguishes the supplied run-183 checkpoint
+verification from parity acceptance: broad repository checks against checkpoint
+criteria cannot discharge these parity measures. Reuse requires matching relevant
+inputs and environment, or a fresh applicable observation.
 
 ## Provider observations and remaining limitations
 
