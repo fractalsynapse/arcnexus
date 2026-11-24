@@ -6,7 +6,7 @@ import { Execution, type HostTask } from '../../src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
 import { existsSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import { parse } from 'yaml';
 import type { AgentInspection } from '../../../architecture/src/index.js';
 import { guidance, InspectionFixture, skill } from '../fixtures/inspection.js';
@@ -86,6 +86,39 @@ function context(task: HostTask, review = false) {
   };
 }
 
+/** Author registered round inputs independently of the request builder and retain the live timeline. */
+function enrichment(task: HostTask) {
+  task.listen(() => undefined);
+  const report = task.store('prior-round.md', 'Prior round finding\nFinal line.\n');
+  const round = { invocation: 'prior-invocation', round: '1' as const, report };
+  const completedRound = { ...round, findings: [], measurements: [], evidence: [report] };
+  task.record({ completedRound });
+  task.record({
+    completedRound: {
+      ...round,
+      round: '2',
+      report: report + '.unregistered',
+      findings: [],
+      measurements: [],
+      evidence: [],
+    },
+  });
+  return {
+    assignment: { ...context(task).assignment, completedRounds: [round] },
+    evidence: [report, task.timeline!],
+  };
+}
+
+/** Compose identical enriched task inputs while preserving the independent reviewer diff. */
+function liveContext(task: HostTask, enriched: ReturnType<typeof enrichment>, review = false) {
+  const supplied = context(task, review);
+  return {
+    ...supplied,
+    assignment: enriched.assignment,
+    evidence: [...supplied.evidence, ...enriched.evidence],
+  };
+}
+
 /** Assert selected source content independently of the comparison between the two request paths. */
 function assertSelected(
   view: AgentInspection,
@@ -118,8 +151,9 @@ function assertSelected(
 }
 
 /** Read the actual complete subprocess observation from Execution's native transcript. */
-function readProbe(task: HostTask): Probe {
-  const transcript = task.evidence.find((path) => path.endsWith('codex.jsonl'));
+function readProbe(task: HostTask, last = false): Probe {
+  const transcripts = task.evidence.filter((path) => path.endsWith('codex.jsonl'));
+  const transcript = last ? transcripts.at(-1) : transcripts[0];
   assert.ok(transcript);
   const frames = readFileSync(transcript, 'utf8')
     .trim()
@@ -167,13 +201,15 @@ for (const [component, activity, actor, names, web] of [
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
     const selection = { component, activity };
-    const initial = fixture.agent.prepareRequest(task.capture, selection, context(task));
+    const enriched = enrichment(task);
+    const supplied = liveContext(task, enriched);
+    const initial = fixture.agent.prepareRequest(task.capture, selection, supplied);
     assertSelected(initial, actor, names, web);
     await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
     const view = fixture.agent.prepareRequest(
       task.capture,
       selection,
-      context(task, actor === 'reviewer'),
+      liveContext(task, enriched, actor === 'reviewer'),
     );
     const probe = readProbe(task);
     t.diagnostic(
@@ -283,4 +319,108 @@ test('current assembled CLI request-parity and inspection scenarios', (t) => {
   t.diagnostic(log);
   assert.match(log, /# fail 0/);
   assert.match(log, /# skipped 0/);
+});
+
+/** Add an explicit question binding only to this returning-caller fixture before capture. */
+function questionBinding(fixture: InspectionFixture) {
+  const path = '.arc/architecture/components/work.yaml';
+  const component = parse(readFileSync(join(fixture.root, path), 'utf8'));
+  component.activities.testing.operations.push('inspect-question');
+  fixture.write(path, component);
+  fixture.write('.arc/architecture/operations/inspect-question.yaml', {
+    id: 'inspect-question',
+    category: 'read',
+    tool: 'question',
+  });
+  fixture.git('add', '.');
+  fixture.git('commit', '-m', 'Capture explicit returning-caller question binding');
+}
+
+/** Read only the authored task section, independently asserting fields before whole-request parity. */
+function taskSection(input: string) {
+  const section = input.split('## Task\n')[1]!.split('\n\n## Activity')[0]!;
+  return parse(section.slice(section.indexOf('\n\nassignment:') + 2));
+}
+
+/** Verify retained index contents against allocated artifacts rather than against prompt text. */
+function retainedIndex(task: HostTask, before: string[]) {
+  const indexes = before.filter((path) => path.includes('-retained-evidence-'));
+  assert.equal(indexes.length, 1);
+  const index = indexes[0]!;
+  const references = JSON.parse(task.readFile(index).text).references;
+  const originals = before.filter((path) => path !== index);
+  assert.deepEqual(references, originals);
+  for (const path of references) {
+    const contents = task.readFile(path);
+    assert.equal(typeof contents.text, 'string');
+  }
+  return index;
+}
+
+/** Construct the exact expected returning context from authored inputs and allocated artifacts. */
+function returningContext(
+  task: HostTask,
+  before: string[],
+  start: number,
+  enriched: ReturnType<typeof enrichment>,
+  data: ReturnType<typeof context>,
+  answer: string,
+) {
+  const clarification = before.find((path) => path.endsWith('-clarification.json'));
+  assert.ok(clarification);
+  const index = retainedIndex(task, before);
+  const direct = [...data.evidence, clarification, ...enriched.evidence, index];
+  const evidence = [...new Set([...direct, ...before.slice(start)])];
+  return {
+    ...data,
+    assignment: {
+      ...data.assignment,
+      clarifications: [{ question: 'Which exact context survives?', answer }],
+      completedRounds: enriched.assignment.completedRounds,
+    },
+    evidence,
+  };
+}
+
+/** Prepare a real returning caller with distinguishable retained and newly observed artifacts. */
+async function returningScenario(t: TestContext) {
+  const fixture = new InspectionFixture(t);
+  questionBinding(fixture);
+  const task = await fixture.open(t);
+  const enriched = enrichment(task);
+  const explicit = task.store('explicit.log', 'Original observation\nFinal original line.\n');
+  const data = context(task);
+  data.assignment.instructions += '\nFixture mode: clarification';
+  data.evidence.push(explicit);
+  const snapshots: string[][] = [];
+  task.listen((event) => {
+    const started = (event.observation as { nativeStarted?: { request: string } }).nativeStarted;
+    if (started) snapshots.push(task.evidence.slice(0, task.evidence.indexOf(started.request)));
+  });
+  const answer = '  Preserve the complete answer.\nDistinct final answer line.  ';
+  task.ask = async () => {
+    task.store('answer-observation.log', 'New host observation\nFinal new line.\n');
+    return answer;
+  };
+  return { fixture, task, enriched, data, snapshots, answer, start: task.evidence.length };
+}
+
+test('EX-6: returning caller preserves exact enriched native input', async (t) => {
+  const scenario = await returningScenario(t);
+  const { fixture, task, enriched, data, snapshots, answer, start } = scenario;
+  const selection = { component: 'work', activity: 'testing' };
+  await task.activate(fixture.agent, selection, data, new AbortController().signal);
+  assert.equal(snapshots.length, 2, 'the mapped question resumes the same caller exactly once');
+  const expected = returningContext(task, snapshots[1]!, start, enriched, data, answer);
+  const view = fixture.agent.prepareRequest(task.capture, selection, expected);
+  const probe = readProbe(task, true);
+  const actual = taskSection(probe.input);
+  assert.deepEqual(actual.assignment, expected.assignment);
+  assert.deepEqual(actual.evidence, expected.evidence);
+  assert.deepEqual(actual.milestone, data.milestone);
+  assert.deepEqual(actual.acceptance, data.acceptance);
+  assert.equal(probe.input, view.request.input);
+  assertInvocation(view, probe);
+  const observed = { revision: task.capture.source.revision, probe };
+  t.diagnostic(JSON.stringify({ returningNativeObservation: observed }));
 });
