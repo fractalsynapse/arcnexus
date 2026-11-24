@@ -1,9 +1,20 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { z } from 'zod';
 import { Architecture } from '../../architecture/src/index.js';
-import { managedRepository, verifyBoundCommit } from '../../collaboration/src/index.js';
+import {
+  githubAppReadToken,
+  managedRepository,
+  verifyBoundCommit,
+} from '../../collaboration/src/index.js';
 import { readSecret } from './database.js';
 import { importSchema } from '../../catalog/src/index.js';
+
+const id = z.string().min(1);
+const absoluteSecret = z.string().startsWith('/');
+const githubBinding = z.union([
+  z.strictObject({ id, tokenFile: absoluteSecret }),
+  z.strictObject({ id, appId: z.string().min(1), privateKeyFile: absoluteSecret }),
+]);
 
 const configuration = z.strictObject({
   operator: z.string().min(1),
@@ -15,9 +26,7 @@ const configuration = z.strictObject({
       managed: z.boolean().optional(),
       provider: z.uuid().optional(),
       evidence: z.string().startsWith('/').optional(),
-      github: z
-        .strictObject({ id: z.string().min(1), tokenFile: z.string().startsWith('/') })
-        .optional(),
+      github: githubBinding.optional(),
     }),
   ),
 });
@@ -49,7 +58,7 @@ export function bindings(file: string) {
   };
 }
 
-function privateToken(file: string) {
+function privateCredential(file: string) {
   const stat = lstatSync(file);
   if (!stat.isFile() || stat.nlink !== 1 || stat.mode & 0o077 || realpathSync(file) !== file)
     throw new Error('GitHub credential requires a private mounted file');
@@ -67,10 +76,18 @@ async function verifyProject(
   const { remote, directory, github, managed } = project;
   if (reference !== undefined && github?.id !== reference)
     throw new Error('Repository provider binding unavailable');
-  const token = github && privateToken(github.tokenFile);
+  const token = github && (await repositoryToken(remote, github));
   const pinned = managed ? await managedRepository({ remote, directory, token }) : undefined;
   const { source } = architecture.capture(directory, pinned);
   if (source.remote !== remote) throw new Error('Bound project remote changed');
   if (token) await verifyBoundCommit(remote, source.revision, { token });
   return { revision: source.revision, credential: github?.id };
+}
+
+async function repositoryToken(remote: string, binding: z.output<typeof githubBinding>) {
+  if ('tokenFile' in binding) return privateCredential(binding.tokenFile);
+  return githubAppReadToken(remote, {
+    appId: binding.appId,
+    privateKey: privateCredential(binding.privateKeyFile),
+  });
 }

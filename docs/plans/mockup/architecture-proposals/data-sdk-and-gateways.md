@@ -70,8 +70,11 @@ Verify a downloaded native binary and its published checksum.
 A trusted repository binding may provision an absent checkout in a declared
 managed directory. Use the configured read credential for that exact GitHub
 remote, verify the captured commit, and persist the binding reference in the
-catalog. Refresh updates the verified revision while previously accepted
-commits remain available. Publication and Host execution retain their own
+catalog. A GitHub App binding resolves the installation for the exact remote
+and requests a read-only access token for that repository on each verification.
+The operator registers and installs the app in GitHub and mounts its private
+key for the gateway. Refresh updates the verified revision while previously
+accepted commits remain available. Publication and Host execution retain their own
 credentials and workspace assignments.
 
 ## Bare Run recovery acceptance

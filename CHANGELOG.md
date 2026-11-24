@@ -14,6 +14,8 @@
 
 - Connect the browser command dock to retained hosted approvals. Add isolated launcher downloads, managed repository imports, and PostgreSQL archive and restore commands (#706).
 
+- Let isolated gateways obtain repository-scoped read tokens from a GitHub App and provision HTTPS checkouts with the system CA bundle (#706).
+
 ### Changed
 
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).

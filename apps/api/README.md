@@ -83,11 +83,30 @@ parent directory into API and MCP. The first import provisions the checkout.
 A catalog refresh fetches and validates the new default-branch commit. The
 cache keeps previously captured commits for pinned reads.
 
-For a private repository, configure `github.id` and a private mounted
-`github.tokenFile` for the exact canonical remote. The binding records the
-credential reference and takes its token from the mount. Use a GitHub
-installation access token with repository Contents read access. See
-[GitHub App installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation).
+For GitHub App authentication, register a GitHub App with repository
+**Contents** read access and install it on the selected repository. The
+gateway binding uses the app's client ID and a mounted private key.
+
+```json
+{
+  "remote": "https://github.com/fractalsynapse/arcnexus.git",
+  "directory": "/managed/arcnexus",
+  "managed": true,
+  "github": {
+    "id": "arcnexus-read",
+    "appId": "<GitHub App client ID>",
+    "privateKeyFile": "/run/github-secrets/arcnexus-read.pem"
+  }
+}
+```
+
+Mount the PEM read-only with private file permissions in API and MCP.
+The gateway discovers the repository's installation and requests a
+repository-scoped Contents read token during import and refresh. The
+catalog retains only the binding reference. A deployment with an existing
+repository-scoped token file can use `github.tokenFile`. See
+[GitHub App registration](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app)
+and [installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation).
 
 The isolated API can serve local [launcher artifacts](../launcher/README.md).
 See [DB archive and restore](../db/README.md) to rehearse platform recovery.

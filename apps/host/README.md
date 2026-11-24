@@ -40,6 +40,6 @@ image or assignment requires removing the old stopped container under
 operator control. A subprocess and its optional project check scripts use
 the Host's existing confinement rules.
 
-A private GitHub review binding can include `github.id` and
-`github.tokenFile`. Use a private mounted file containing a repository-scoped
-GitHub read credential and provision the matching checkout before import.
+Use the [gateway's GitHub App binding](../api/README.md#managed-project-bindings)
+for private managed reads. Supply a separate approved Host checkout when
+assigning execution.

@@ -317,3 +317,5 @@ function title(goal: string) {
 }
 
 export { managedRepository, type CheckoutGit } from './managed-checkout.js';
+
+export { githubAppReadToken } from './github-app-read.js';

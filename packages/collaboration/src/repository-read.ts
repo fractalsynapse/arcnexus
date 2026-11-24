@@ -7,6 +7,14 @@ export function githubRepository(remote: string) {
   return /^https:\/\/github\.com\/([\w-]+)\/([\w-][\w.-]*)\.git$/.exec(remote);
 }
 
+export function githubReadHeaders(token: string) {
+  return {
+    accept: 'application/vnd.github+json',
+    authorization: 'Bearer ' + token,
+    'x-github-api-version': '2026-03-10',
+  };
+}
+
 /** Verify exact GitHub source using a repository-scoped read credential. */
 export async function verifyBoundCommit(remote: string, revision: string, binding: ReadBinding) {
   const target = githubRepository(remote);
@@ -16,11 +24,7 @@ export async function verifyBoundCommit(remote: string, revision: string, bindin
     'https://api.github.com/repos/' + owner + '/' + repository + '/git/commits/' + revision;
   const response = await (binding.request ?? fetch)(url, {
     redirect: 'error',
-    headers: {
-      accept: 'application/vnd.github+json',
-      authorization: 'Bearer ' + binding.token,
-      'x-github-api-version': '2026-03-10',
-    },
+    headers: githubReadHeaders(binding.token),
   });
   if (!response.ok) throw new Error('The configured GitHub binding could not verify this commit');
   const verified = (await response.json()) as { sha?: string };
