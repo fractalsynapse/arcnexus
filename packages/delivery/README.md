@@ -9,8 +9,9 @@ they do not establish that a real delivery has occurred.
 [Publication recovery](docs/check-recovery.md) records the accepted continuation,
 current production-service assertions and retained Execution/Verification outcomes
 for issue #720 at captured revision
-`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. It distinguishes existing recovery
-behavior, pending Delivery characterization and remaining provider-state coverage.
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. Its executed characterization section
+records 49 passing Delivery scenarios, applicable owner quality observations and
+remaining live-provider limitations.
 Preserve the task and its history, require acceptance for the recovered identity,
 inspect provider facts before effects, and reconcile the existing PR.
 
@@ -71,9 +72,15 @@ named external action does.
 
 ## Historical owner evidence
 
-The current source reconciliation and characterization obligations are in
-[Publication recovery](docs/check-recovery.md#current-characterization-scope-issue-720).
-It supersedes treating the earlier implementation-gap description as current work.
+The current source reconciliation and executed owner results are in
+[Publication recovery](docs/check-recovery.md#executed-production-service-characterization).
+That run covers all five Delivery suites, including reopened production-service
+recovery after lost push, PR and merge responses, an outdated PR with fresh
+acceptance, a further staging move after that recovery, and unavailable branch
+facts after successful PR observation. It preserves one issue and PR, exact
+answers, checked bytes and history. No demonstrated production defect required
+a behavioral change. This current result supersedes the earlier implementation-gap
+description and pending-characterization instructions.
 The result below is historical owner evidence; it does not establish execution of
 the current integration scenarios or apply automatically to the recovered candidate.
 
@@ -107,7 +114,7 @@ reused merge commit distinct from the accepted head. Call-sequence assertions
 show that refused paths do not perform prohibited subsequent effects.
 
 The earlier documentation correction cited that retained owner result and source
-inspection. This reconciliation changes no executable behavior. These deterministic tests
+inspection. This documentation reconciliation changes no executable behavior. These deterministic tests
 use simulated providers without live GitHub access. They establish owner behavior,
 not a real delivery or hosted gate outcomes.
 
