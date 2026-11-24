@@ -31,6 +31,8 @@ export { planExecutionDataPlugin } from './postgres/plan-data.js';
 export { reconcileHosted } from './postgres/reconcile.js';
 export { hostedCoordinationMigration } from './postgres/hosted-schema.js';
 export { hostSessionMigration } from './postgres/session-schema.js';
+export { workflowRuntimeMigration } from './postgres/workflow-runtime-schema.js';
+export { workflowReceiptsMigration } from './postgres/workflow-receipts-schema.js';
 export { workflowRequestsMigration } from './postgres/workflow-requests-schema.js';
 export {
   operationEvidenceDataPlugin,

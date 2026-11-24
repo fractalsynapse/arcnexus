@@ -56,6 +56,7 @@ async function responses(page: Page) {
   await page.route('**/api/**', (route) => {
     const url = new URL(route.request().url());
     requests.push(url.pathname + url.search);
+    if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
     const json =
       url.pathname === '/api/projects'
         ? { entries: [project] }
@@ -109,3 +110,76 @@ function timelineRecord(sequence: string, text: string) {
   const data = JSON.stringify({ sequence, timestamp: null, observation });
   return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + data + '\n\n';
 }
+
+test('the built command dock submits Plan and answers only the retained question', async (t) => {
+  const { application, page } = await browserPage(t);
+  const actions = await commandResponses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Answer question' });
+  await dialog.getByText('Approve this proposed change?').waitFor();
+  await dialog.getByLabel('Answer').fill('Use the verified baseline.');
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
+  assert.equal(await dialog.getByLabel('Answer').inputValue(), 'Use the verified baseline.');
+  await dialog.getByRole('button', { name: 'Send answer' }).click();
+  await page
+    .getByRole('button', { name: 'Answer question', exact: true })
+    .waitFor({ state: 'hidden' });
+  assert.deepEqual(
+    actions.map((action) => action.body),
+    [
+      { id: actions[0]?.receipt, request: { command: 'task_plan' } },
+      { gate: 'exact-gate', answer: 'Use the verified baseline.' },
+    ],
+  );
+});
+
+async function commandResponses(page: Page) {
+  await responses(page);
+  const requests: { body: unknown; receipt: string }[] = [];
+  const receipt = {
+    id: '38882637-979e-4702-a8c7-186d1aa066e8',
+    request: { command: 'task_plan' },
+    revision: project.revision,
+    execution: 'retained-plan',
+    state: 'waiting',
+    gate: { id: 'exact-gate', question: 'Approve this proposed change?' },
+    outcome: null,
+  };
+  await page.route('**/commands/current', (route) =>
+    route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'event: command\ndata: {"canSubmit":true,"receipt":null}\n\n',
+    }),
+  );
+  await page.route('**/commands', (route) => {
+    const body = route.request().postDataJSON() as { id: string };
+    receipt.id = body.id;
+    requests.push({ body, receipt: body.id });
+    return route.fulfill({ json: receipt, status: 202 });
+  });
+  await page.route('**/commands/*/answer', (route) => {
+    requests.push({ body: route.request().postDataJSON(), receipt: receipt.id });
+    return route.fulfill({ json: { ...receipt, state: 'queued', gate: null }, status: 202 });
+  });
+  return requests;
+}
+
+test('the Connection manager downloads only an available launcher build', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page);
+  await page.route('**/api/launcher-builds', (route) =>
+    route.fulfill({ json: { entries: [{ target: 'linux-x64', sha256: 'a'.repeat(64) }] } }),
+  );
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.getByRole('button', { name: 'Connection manager' }).click();
+  await page.getByLabel('Launcher build').selectOption('linux-x64');
+  const link = page.getByRole('link', { name: 'Download launcher' });
+  assert.equal(await link.getAttribute('href'), '/api/launcher-builds/linux-x64');
+  await page.getByLabel('Launcher build').selectOption('linux-arm64');
+  assert.equal(await link.count(), 0);
+});

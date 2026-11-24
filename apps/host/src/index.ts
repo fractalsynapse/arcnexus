@@ -1,3 +1,4 @@
+import type { RuntimeImage } from '../../../packages/foundation/src/runtime-image.js';
 import type { Context } from 'cordis';
 export { runHostedRequest } from './request-worker.js';
 export { serveHostedRequests } from './request-loop.js';
@@ -24,16 +25,25 @@ export function hostPlugin(storage = applicationStorage()) {
 }
 
 /** Use a PostgreSQL writer with the same Execution and Workflow plugins. */
-export function hostedHostPlugin(storage: string, assignment: HostedProject) {
-  return mountHost(storage, (context) =>
-    context.provide('coordination', hostedProjectCoordination(assignment)),
+export function hostedHostPlugin(
+  storage: string,
+  assignment: HostedProject & { runtime?: RuntimeImage },
+) {
+  return mountHost(
+    storage,
+    (context) => context.provide('coordination', hostedProjectCoordination(assignment)),
+    assignment.runtime,
   );
 }
 
-function mountHost(storage: string, coordination: (context: Context) => unknown) {
+function mountHost(
+  storage: string,
+  coordination: (context: Context) => unknown,
+  runtime?: RuntimeImage,
+) {
   return async (context: Context) => {
     await context.use(coordination);
-    await context.use(executionPluginFor(storage));
+    await context.use(executionPluginFor(storage, runtime));
     await context.use(plannerPlugin);
     await context.use(nativeWorkflow);
   };

@@ -12,6 +12,8 @@
 
 - Run isolated hosted workflows through the native Host and PostgreSQL. Add shared command receipts, pinned launcher assignments, durable approval and cancellation, and on-demand tool evidence (#706).
 
+- Connect the browser command dock to retained hosted approvals. Add isolated launcher downloads, managed repository imports, and PostgreSQL archive and restore commands (#706).
+
 ### Changed
 
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).

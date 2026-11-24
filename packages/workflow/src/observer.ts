@@ -1,5 +1,11 @@
 import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
-import type { Observation, TaskObserver, TaskQuestion, TaskSession } from './services.js';
+import type {
+  Observation,
+  RoundOutcome,
+  TaskObserver,
+  TaskQuestion,
+  TaskSession,
+} from './services.js';
 
 /** Project one invocation's existing event stream into transport-neutral live measurements. */
 export class RunObserver implements TaskObserver {
@@ -47,6 +53,11 @@ export class RunObserver implements TaskObserver {
     if (!this.caller.event && observation?.phase && typeof observation.message === 'string')
       this.caller.progress(observation as Observation);
     if (changed) this.caller.measurements?.(this.projection.snapshot());
+  }
+
+  /** Let a durable adapter checkpoint the accepted round before the journal closes it. */
+  async completeRound(outcome: RoundOutcome) {
+    await this.caller.completeRound?.(outcome);
   }
 
   /** Keep human interaction with the original foreground caller. */

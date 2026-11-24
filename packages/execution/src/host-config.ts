@@ -2,6 +2,7 @@ import { accessSync, constants, existsSync, lstatSync, readFileSync, realpathSyn
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 import { parse } from 'yaml';
+import type { RuntimeImage } from '../../foundation/src/runtime-image.js';
 import type { Capture } from '../../architecture/src/index.js';
 import { GitHub } from '../../collaboration/src/index.js';
 import { git } from './git.js';
@@ -13,6 +14,7 @@ export interface HostConfig {
   base: string;
   fresh: boolean;
   storage: string;
+  runtime?: RuntimeImage;
 }
 
 /** Refuse dirty or unverified source and executable settings before writing a lane row. */

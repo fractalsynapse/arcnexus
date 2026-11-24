@@ -183,8 +183,12 @@ export class Workflow {
     const completed =
       goals.length === round.goals.length &&
       goals.every(({ outcome }) => outcome.kind === 'merged' || outcome.kind === 'satisfied');
-    if (completed) round.finish();
-    return { kind: 'round', round: round.id, completed, goals };
+    const outcome = { kind: 'round', round: round.id, completed, goals } as const;
+    if (completed) {
+      await observer.completeRound?.(outcome);
+      round.finish();
+    }
+    return outcome;
   }
 
   /** Keep the terminal record accurate if the host cannot safely remove its worktree. */

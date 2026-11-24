@@ -5,7 +5,11 @@ import { importSchema, type projectSchema, revisionSchema } from './schema.js';
 
 type Project = z.output<typeof projectSchema>;
 export type ImportProject = z.output<typeof importSchema>;
-export type VerifyRepository = (repository: ImportProject, operator: string) => Promise<string>;
+export type VerifiedRepository = { revision: string; credential?: string };
+export type VerifyRepository = (
+  repository: ImportProject,
+  operator: string,
+) => Promise<VerifiedRepository>;
 
 /** Preserve verified project identities independently of their selection lifecycle. */
 export class Catalog {
@@ -36,7 +40,8 @@ export class Catalog {
   /** Verify repository access, then create or restore its selection record. */
   async add(operator: string, input: ImportProject) {
     const repository = importSchema.parse(input);
-    const revision = revisionSchema.parse(await this.verify(repository, operator));
+    const verified = await this.verify(repository, operator);
+    const revision = revisionSchema.parse(verified.revision);
     const { rows } = await this.database.query<Project>(
       `INSERT INTO arcnexus_catalog.projects (id, operator, remote, credential, revision)
        VALUES ($1, $2, $3, $4, $5)
@@ -44,7 +49,7 @@ export class Catalog {
           revision = EXCLUDED.revision, credential = EXCLUDED.credential
        WHERE arcnexus_catalog.projects.retired
        RETURNING id, remote, revision`,
-      [randomUUID(), operator, repository.remote, repository.credential ?? null, revision],
+      [randomUUID(), operator, repository.remote, verified.credential ?? null, revision],
     );
     if (rows[0]) return rows[0];
     const existing = await this.database.query<Project>(
@@ -63,16 +68,15 @@ export class Catalog {
     );
     const project = current.rows[0];
     if (!project) throw new Error('Project revision changed');
-    const revision = revisionSchema.parse(
-      await this.verify(
-        { remote: project.remote, credential: project.credential ?? undefined },
-        operator,
-      ),
+    const verified = await this.verify(
+      { remote: project.remote, credential: project.credential ?? undefined },
+      operator,
     );
+    const revision = revisionSchema.parse(verified.revision);
     const saved = await this.database.query<Project>(
-      `UPDATE arcnexus_catalog.projects SET revision=$4
+      `UPDATE arcnexus_catalog.projects SET revision=$4, credential=$5
        WHERE operator=$1 AND id=$2 AND revision=$3 AND NOT retired RETURNING id,remote,revision`,
-      [operator, id, expectedRevision, revision],
+      [operator, id, expectedRevision, revision, verified.credential ?? null],
     );
     if (!saved.rows[0]) throw new Error('Project revision changed');
     return saved.rows[0];

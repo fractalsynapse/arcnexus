@@ -17,14 +17,15 @@ const unavailableCommands: CommandBinding = {
 /** Mount the same browser composition for the local app and controlled acceptance. */
 export async function mountWeb(
   element: HTMLElement,
-  commands: CommandBinding = unavailableCommands,
+  commands?: CommandBinding,
   feature?: Component,
 ) {
   const context = new Context();
   await context.use(uiPlugin);
-  await context.use(workspacePlugin());
   if (feature) await context.use(feature);
-  await context.use(commandBindingPlugin(commands));
+  if (commands || !context.webCommands)
+    await context.use(commandBindingPlugin(commands ?? unavailableCommands));
+  await context.use(workspacePlugin());
   await context.use(framePlugin(element));
   return context;
 }

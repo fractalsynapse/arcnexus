@@ -31,5 +31,11 @@ export { ColorSchemes } from './theme/schemes/color-schemes.js';
 export { SchemeSelect } from './theme/schemes/scheme-select.js';
 export { UiRegistry } from './registry/ui-registry.js';
 export { uiPlugin } from './registry/ui-plugin.js';
-export type { CommandBinding, CommandRequest, CommandState } from './commands/command-binding.js';
+export type {
+  CommandBinding,
+  CommandRequest,
+  CommandState,
+  Operation,
+} from './commands/command-binding.js';
 export type { DisplayRegistration, Workspace } from './registry/workspace.js';
+export { useCommandAction } from './commands/use-command-action.js';

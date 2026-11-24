@@ -5,7 +5,7 @@ import { journalChanges } from './journal-changes.js';
 export type TimelineChanges = (
   scope: DataScope,
   signal: AbortSignal,
-) => Promise<AsyncIterator<void>>;
+) => Promise<AsyncIterator<unknown>>;
 
 /** Use the same verified project resolution for read and change observation. */
 export function timelineChanges(storage: string, resolve: ResolveJournalProject): TimelineChanges {

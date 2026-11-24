@@ -3,9 +3,13 @@ interface ReadBinding {
   request?: typeof fetch;
 }
 
+export function githubRepository(remote: string) {
+  return /^https:\/\/github\.com\/([\w-]+)\/([\w-][\w.-]*)\.git$/.exec(remote);
+}
+
 /** Verify exact GitHub source using a repository-scoped read credential. */
 export async function verifyBoundCommit(remote: string, revision: string, binding: ReadBinding) {
-  const target = /^https:\/\/github\.com\/([\w-]+)\/([\w-][\w.-]*)\.git$/.exec(remote);
+  const target = githubRepository(remote);
   if (!target || !/^[a-f0-9]{40}$/.test(revision)) throw new Error('Invalid GitHub commit binding');
   const [, owner, repository] = target;
   const url =

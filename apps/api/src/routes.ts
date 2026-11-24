@@ -4,7 +4,7 @@ type Route = {
   operation: string;
   method?: 'POST';
   parameter?: string;
-  cursor?: boolean;
+  stream?: 'timeline' | 'commands';
   query?: readonly string[];
 };
 
@@ -23,6 +23,13 @@ export const routes: readonly Route[] = [
     resource: 'workflow-requests',
     operation: 'create',
     query: [],
+  },
+  {
+    path: '/commands/current',
+    resource: 'workflow-requests',
+    operation: 'current',
+    query: [],
+    stream: 'commands',
   },
   {
     path: '/commands/{id}',
@@ -66,7 +73,7 @@ export const routes: readonly Route[] = [
     resource: 'execution-events',
     operation: 'read',
     parameter: 'execution',
-    cursor: true,
+    stream: 'timeline',
   },
   {
     path: '/inspection',
@@ -84,7 +91,7 @@ export const routes: readonly Route[] = [
     resource: 'execution-events',
     operation: 'read',
     parameter: 'execution',
-    cursor: true,
+    stream: 'timeline',
   },
 ];
 
@@ -101,7 +108,7 @@ export function routeInput(match: NonNullable<ReturnType<typeof matchRoute>>, ur
   const { route, binding } = match;
   const input: Record<string, unknown> = {};
   if (route.parameter && binding) input[route.parameter] = decodeURIComponent(binding);
-  if (route.cursor) {
+  if (route.stream === 'timeline') {
     for (const key of ['after', 'through']) {
       const cursor = url.searchParams.get(key);
       if (cursor !== null)

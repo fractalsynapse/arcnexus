@@ -1,3 +1,4 @@
+import type { RuntimeImage } from '../../foundation/src/runtime-image.js';
 import type { Architecture } from '../../architecture/src/index.js';
 import type { Coordination } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
@@ -10,7 +11,7 @@ import type {
 import { checkpoint } from './checkpoint.js';
 import { candidateDiff, git } from './git.js';
 import { goalRound, observeGoal, recordAdmission, stagingCapture } from './goals.js';
-import { preflight } from './host-config.js';
+import { preflight, type HostConfig } from './host-config.js';
 import { ownerEvidenceDigest } from './review-observations.js';
 import { HostTask, hostTask } from './index.js';
 import { refreshArchitecture } from './architecture-edits.js';
@@ -22,11 +23,12 @@ export class Execution {
     private readonly architecture: Architecture,
     private readonly coordination: Coordination,
     private readonly storage: string,
+    private readonly runtime?: RuntimeImage,
   ) {}
 
   /** Resolve the binding and capture the repository before claiming the project lane. */
   async admit(input: TaskInput, signal: AbortSignal, parent?: TaskSession) {
-    let config: ReturnType<typeof preflight>;
+    let config: HostConfig;
     try {
       signal.throwIfAborted();
       config = this.configuration(input, parent);
@@ -38,7 +40,7 @@ export class Execution {
   }
 
   /** Claim a child from its verified project writer or admit one foreground invocation. */
-  private claim(config: ReturnType<typeof preflight>, input: TaskInput, parent?: TaskSession) {
+  private claim(config: HostConfig, input: TaskInput, parent?: TaskSession) {
     const ancestor = parent && hostTask(parent);
     if (ancestor && !this.coordination.owns(config.capture.source.remote, ancestor.journal))
       return invalid('The parent writer belongs to a different project store');
@@ -59,6 +61,7 @@ export class Execution {
       return invalid(`Task admission requires the current verified ${config.base} head`);
     if ('activeGoal' in journal)
       return invalid(`Active goal: ${journal.activeGoal} (run ${journal.run})`);
+    if (config.runtime) journal.record({ hostRuntime: config.runtime });
     recordAdmission(journal, config, input.planning);
     return new HostTask(config, input.goal, journal, ancestor, input.inbox);
   }
@@ -70,7 +73,7 @@ export class Execution {
       parent || input.standing || input.planning || input.architecture || input.scope === 'refine',
     );
     const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
-    return preflight(selected, this.storage, fresh);
+    return { ...preflight(selected, this.storage, fresh), runtime: this.runtime };
   }
 
   /** Adopt an approved guide at a safe activity boundary once its required handlers are available. */

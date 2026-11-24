@@ -66,3 +66,28 @@ checkout's SQLite store to the verified PostgreSQL deployment. A trusted
 isolated project binding can enable hosted commands and select the admitted
 provider UUID. See the [Host setup](../host/README.md) and
 [architecture proposal](../../docs/plans/mockup/architecture-proposals/data-sdk-and-gateways.md).
+
+## Browser command controls
+
+The browser follows `GET /projects/{project}/commands/current` with
+`Accept: text/event-stream`. Reconnect re-reads the operator's latest receipt
+under the selected project. The same route returns a JSON snapshot for a
+non-streaming client. The shared dock uses the existing submission, answer
+and cancel endpoints. Refine submits one round.
+
+## Managed project bindings
+
+An isolated gateway binding can set `"managed": true` and declare an
+absolute checkout path under a trusted writable directory. Mount the same
+parent directory into API and MCP. The first import provisions the checkout.
+A catalog refresh fetches and validates the new default-branch commit. The
+cache keeps previously captured commits for pinned reads.
+
+For a private repository, configure `github.id` and a private mounted
+`github.tokenFile` for the exact canonical remote. The binding records the
+credential reference and takes its token from the mount. Use a GitHub
+installation access token with repository Contents read access. See
+[GitHub App installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation).
+
+The isolated API can serve local [launcher artifacts](../launcher/README.md).
+See [DB archive and restore](../db/README.md) to rehearse platform recovery.

@@ -19,6 +19,7 @@ import {
   planExecutionDataPlugin,
   operationEvidenceDataPlugin,
   postgresTimelineChanges,
+  type TimelineChanges,
 } from '../../coordination/src/index.js';
 import { dataPlugin, type DataAccess, type DataScope } from '../../data/src/index.js';
 import { textDigest } from '../../foundation/src/index.js';
@@ -47,11 +48,7 @@ function authenticateToken(token: string) {
 function platformPlugin(database: Client, configuration: ReturnType<typeof bindings>) {
   return async (context: Context) => {
     await context.use(
-      catalogPlugin(database, async ({ remote, credential }) => {
-        const capture = configuration.capture(remote);
-        if (!capture) throw new Error('Repository is not bound for isolated review');
-        return configuration.verify(remote, capture.source.revision, credential);
-      }),
+      catalogPlugin(database, ({ remote, credential }) => configuration.verify(remote, credential)),
     );
     await context.use(scopedResources(database, configuration));
   };
@@ -176,17 +173,19 @@ export async function openPlatform(options: PlatformOptions) {
   const accepts = authenticateToken(options.token);
   const context = new Context();
   await context.use(platformPlugin(options.database, configuration));
+  const requests = new WorkflowRequests(options.database);
+  const journalProject = async (scope: DataScope) =>
+    (await context.catalog.resolve(scope.principal, scope.project))?.remote;
+  const followCommands: TimelineChanges = async (scope, signal) => {
+    const remote = await journalProject(scope);
+    if (!remote) throw new Error('Project unavailable');
+    return requests.watchReceipts(remote, signal);
+  };
   return {
     context,
-    hostAssignments: hostAssignments(
-      context.catalog,
-      new WorkflowRequests(options.database),
-      configuration,
-    ),
-    followTimeline: postgresTimelineChanges(
-      options.database,
-      async (scope) => (await context.catalog.resolve(scope.principal, scope.project))?.remote,
-    ),
+    hostAssignments: hostAssignments(context.catalog, requests, configuration),
+    followTimeline: postgresTimelineChanges(options.database, journalProject),
+    followCommands,
     async authenticate(request: Request, project: string) {
       if (!accepts(request)) return undefined;
       const principal = configuration.operator;

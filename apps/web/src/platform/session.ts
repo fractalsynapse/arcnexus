@@ -17,14 +17,18 @@ export function setSession(value: Session) {
   for (const listener of listeners) listener();
 }
 
-function subscribe(listener: () => void) {
+export function subscribeSession(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 
 /** Share the active project and in-memory operator session across workspace routes. */
 export function usePlatformSession() {
-  return useSyncExternalStore(subscribe, () => session);
+  return useSyncExternalStore(subscribeSession, activeSession);
+}
+
+export function activeSession() {
+  return session;
 }
 
 export function projectName(project: Project) {

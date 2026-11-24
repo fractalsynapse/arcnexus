@@ -75,6 +75,7 @@ function environmentIdentity(
     '.package-lock.json',
   );
   return {
+    ...(task.config.runtime && { runtime: task.config.runtime }),
     node: process.versions,
     kernel: release(),
     confinement: checkEnvironment,

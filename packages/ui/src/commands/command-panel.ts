@@ -1,7 +1,8 @@
 import { useSyncExternalStore, useState, useId, createElement as h } from 'react';
 import { Dialog } from '../controls/dialog.js';
 import { useMedia } from '../hooks/use-media.js';
-import type { CommandBinding } from './command-binding.js';
+import type { CommandState, CommandBinding } from './command-binding.js';
+import { CommandActions } from './command-actions.js';
 import { Composer } from './composer.js';
 import { RoundMetrics } from './round-metrics.js';
 import { RoundReadout } from './round-readout.js';
@@ -26,7 +27,7 @@ export function CommandPanel({ binding, workspace }: DockProps) {
       'aria-label': 'Command controls',
       'data-collapsed': collapsed || undefined,
     },
-    h('div', { id: body, hidden: collapsed }, h(Composer, { state, binding, workspace })),
+    h(DockControls, { body, collapsed, state, binding, workspace }),
     h(RoundReadout, {
       state,
       collapsed,
@@ -40,4 +41,26 @@ export function CommandPanel({ binding, workspace }: DockProps) {
       h(RoundMetrics, { state }),
     ),
   );
+}
+
+function DockControls({
+  body,
+  collapsed,
+  state,
+  binding,
+  workspace,
+}: DockProps & {
+  body: string;
+  collapsed: boolean;
+  state: CommandState;
+}) {
+  return [
+    h(
+      'div',
+      { id: body, hidden: collapsed, key: 'composer' },
+      h(Composer, { state, binding, workspace, key: state.scope }),
+    ),
+    (state.gate || state.canCancel || state.canReconnect) &&
+      h(CommandActions, { state, binding, key: 'actions:' + state.scope }),
+  ];
 }

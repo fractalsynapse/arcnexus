@@ -1,14 +1,20 @@
 import type { Context } from 'cordis';
 import { dispatchWorkflow, workflowRequest } from '../../../packages/commands/src/index.js';
 import type { WorkflowGate, WorkflowRequests } from '../../../packages/coordination/src/index.js';
+import type { RuntimeImage } from '../../../packages/foundation/src/runtime-image.js';
 import { textDigest } from '../../../packages/foundation/src/index.js';
-import type { TaskObserver, TaskQuestion } from '../../../packages/workflow/src/index.js';
+import type {
+  RoundOutcome,
+  TaskObserver,
+  TaskQuestion,
+} from '../../../packages/workflow/src/index.js';
 
 interface Assignment {
   revision: string;
   remote: string;
   directory: string;
   worker: string;
+  runtime?: RuntimeImage;
 }
 
 /** Run one durably admitted command using the normal Host services and journal. */
@@ -32,7 +38,9 @@ export async function runHostedRequest(
     owner,
     request.id,
     outcome,
-    'reason' in outcome && outcome.kind === 'blocked' ? observer.held : undefined,
+    outcome.kind === 'blocked' || (outcome.kind === 'round' && !outcome.completed)
+      ? observer.held
+      : undefined,
   );
   return true;
 }
@@ -69,6 +77,11 @@ class RequestObserver implements TaskObserver {
       this.bind = this.requests.bind(this.owner, this.id, frame.taskID);
       void this.bind.catch(() => {});
     }
+  }
+
+  /** Retain the accepted aggregate before closing the inventory round. */
+  async completeRound(outcome: RoundOutcome) {
+    await this.requests.completeRound(this.owner, this.id, outcome);
   }
 
   /** Release the Host for an unanswered question, or return its exact submitted reply. */

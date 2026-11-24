@@ -99,7 +99,7 @@ function verifyProject(principal: string, revision: () => string) {
     assert.equal(operator, principal);
     assert.equal(remote, 'https://github.com/example/project.git');
     if (credential !== 'trusted-private-binding') throw new Error('Binding unavailable');
-    return revision();
+    return { revision: revision(), credential };
   };
 }
 

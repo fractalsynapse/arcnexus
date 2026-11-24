@@ -8,6 +8,7 @@ import { Architecture, architecturePlugin } from '../../../packages/architecture
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
 import { WorkflowRequests } from '../../../packages/coordination/src/index.js';
 import { readSecret } from '../../../packages/platform/src/index.js';
+import { runtimeImageSchema } from '../../../packages/foundation/src/runtime-image.js';
 import { teamPlugin } from '../../../packages/team/src/index.js';
 import { verifyPlatformDatabase } from '../../db/src/index.js';
 import { hostedHostPlugin, serveHostedRequests } from './index.js';
@@ -17,6 +18,7 @@ const assignmentSchema = z.strictObject({
   remote: z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\.git$/),
   directory: path,
   storage: path,
+  runtime: runtimeImageSchema,
   revision: z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/),
 });
 
@@ -42,6 +44,7 @@ async function main() {
     hostedHostPlugin(assignment.storage, {
       project: assignment.remote,
       worker: assignment.worker,
+      runtime: assignment.runtime,
       connectionString: assignment.connectionString,
     }),
   );

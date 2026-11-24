@@ -5,7 +5,8 @@ import type { Data, DataScope, ResolveDataScope } from '../../../packages/data/s
 import { catalogRequest, matchCatalog } from './catalog-routes.js';
 import { openApi } from './openapi.js';
 import { matchRoute, routeInput } from './routes.js';
-import { acceptsTimeline, streamTimeline } from './timeline-stream.js';
+import { scopedEventStream, acceptsEvents } from './scoped-event-stream.js';
+import { streamTimeline } from './timeline-stream.js';
 
 export type AuthenticateRequest = ResolveDataScope<Request>;
 
@@ -27,8 +28,9 @@ function apiError(error: unknown) {
   return problem(409, 'Requested project data is unavailable');
 }
 
-/** Serve authorized REST operations with one project scope and the owner-defined Data operation. */
-function handler(data: Data, authenticate: AuthenticateRequest, changes?: TimelineChanges) {
+type LiveResources = { timeline?: TimelineChanges; commands?: TimelineChanges };
+
+function handler(data: Data, authenticate: AuthenticateRequest, live: LiveResources) {
   return async (request: Request) => {
     const url = new URL(request.url);
     const projectRoute = /^\/projects\/([^/]+)(\/.*)$/.exec(url.pathname);
@@ -39,7 +41,7 @@ function handler(data: Data, authenticate: AuthenticateRequest, changes?: Timeli
       const scope = await authenticate(request, project);
       if (!scope || scope.project !== project) return problem(401, 'Project access unavailable');
       if (catalog) return await catalogRequest(data, scope, request, catalog);
-      return await projectResource(data, request, scope, projectRoute![2]!, url, changes);
+      return await projectResource(data, request, scope, projectRoute![2]!, url, live);
     } catch (error) {
       return apiError(error);
     }
@@ -52,7 +54,7 @@ async function projectResource(
   scope: DataScope,
   path: string,
   url: URL,
-  changes?: TimelineChanges,
+  live: LiveResources,
 ) {
   if (path === '/openapi.json' && request.method === 'GET')
     return Response.json(await openApi(data, scope));
@@ -61,28 +63,57 @@ async function projectResource(
     return matchRoute(path)
       ? problem(405, 'Method unavailable')
       : problem(404, 'Resource unavailable');
-  const { resource, operation } = match.route;
   const input = routeInput(match, url);
-  if (match.route.cursor && acceptsTimeline(request))
-    return changes
-      ? await streamTimeline(data, scope, input, request, changes)
-      : problem(406, 'Live timeline unavailable');
-  const content = match.route.method === 'POST' ? await request.text() : '';
+  if (match.route.stream && acceptsEvents(request))
+    return projectStream(data, scope, request, match.route.stream, input, live);
+  return invokeResource(data, scope, request, match.route, input);
+}
+
+async function projectStream(
+  data: Data,
+  scope: DataScope,
+  request: Request,
+  kind: keyof LiveResources,
+  input: Record<string, unknown>,
+  live: LiveResources,
+) {
+  const changes = live[kind];
+  if (!changes) return problem(406, 'Live resource unavailable');
+  if (kind === 'timeline') return streamTimeline(data, scope, input, request, changes);
+  return scopedEventStream(request, scope, changes, async () => {
+    const result = await data.invoke(scope, 'workflow-requests', 'current', input);
+    return 'event: command\ndata: ' + JSON.stringify(result) + '\n\n';
+  });
+}
+
+async function invokeResource(
+  data: Data,
+  scope: DataScope,
+  request: Request,
+  route: NonNullable<ReturnType<typeof matchRoute>>['route'],
+  input: Record<string, unknown>,
+) {
+  const { resource, operation } = route;
+  const content = route.method === 'POST' ? await request.text() : '';
   const body: unknown = content ? JSON.parse(content) : {};
   const value =
     typeof body === 'object' && body !== null && !Array.isArray(body)
       ? { ...body, ...input }
       : body;
   const result = await data.invoke(scope, resource, operation, value);
-  return Response.json(result, { status: match.route.method === 'POST' ? 202 : 200 });
+  return Response.json(result, { status: route.method === 'POST' ? 202 : 200 });
 }
 
-export function apiPlugin(authenticate: AuthenticateRequest, changes?: TimelineChanges) {
+export function apiPlugin(
+  authenticate: AuthenticateRequest,
+  timeline?: TimelineChanges,
+  commands?: TimelineChanges,
+) {
   return {
     inject: ['data'],
     /** Provide the API transport to a trusted composition. */
     apply(context: Context) {
-      context.provide('api', handler(context.data, authenticate, changes));
+      context.provide('api', handler(context.data, authenticate, { timeline, commands }));
     },
   };
 }

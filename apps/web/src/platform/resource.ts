@@ -9,12 +9,20 @@ export function setPlatformTransport(fetch: Fetch) {
   transport = fetch;
 }
 
+/** Carry the gateway status without storing a response body. */
+export class GatewayFailure extends Error {
+  /** The status lets callers distinguish missing authority from a disconnected resource. */
+  constructor(readonly status: number) {
+    super('Gateway request failed (' + status + ')');
+  }
+}
+
 export async function gatewayRequest(path: string, token: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('Authorization', 'Bearer ' + token);
   if (init.body) headers.set('Content-Type', 'application/json');
   const response = await transport(path, { ...init, headers, redirect: 'error' });
-  if (!response.ok) throw new Error('Gateway request failed (' + response.status + ')');
+  if (!response.ok) throw new GatewayFailure(response.status);
   return response;
 }
 

@@ -1,9 +1,12 @@
+import { finishRetainedRound } from './retained-round.js';
 import { reconcileHosted } from './reconcile.js';
+import { workflowReceiptChannel } from './workflow-receipts-schema.js';
 import { subscribeWorkflowRequests } from './workflow-notices.js';
+import type { RuntimeImage } from '../../../foundation/src/runtime-image.js';
 import type { Client } from 'pg';
 
 const store = 'arcnexus_coordination.workflow_requests';
-const columns = 'id, request, revision, state, execution, gate, outcome';
+const columns = 'id, request, revision, runtime, state, execution, gate, outcome';
 
 export interface WorkflowGate {
   id: string;
@@ -14,6 +17,7 @@ export interface WorkflowReceipt {
   id: string;
   request: unknown;
   revision: string;
+  runtime: RuntimeImage | null;
   state: 'queued' | 'running' | 'waiting' | 'finished';
   execution: string | null;
   gate: WorkflowGate | null;
@@ -23,7 +27,7 @@ export interface WorkflowReceipt {
 const cancelledOutcome = { kind: 'cancelled', reason: 'Cancelled by operator', evidence: [] };
 
 type Caller = { remote: string; principal: string };
-type Worker = { remote: string; worker: string };
+type Worker = { remote: string; worker: string; runtime?: RuntimeImage };
 
 /** Persist one authorized command position and its operator answer per project. */
 export class WorkflowRequests {
@@ -33,6 +37,21 @@ export class WorkflowRequests {
   /** Subscribe to changes for one trusted project assignment. */
   watch(remote: string | readonly string[], signal: AbortSignal) {
     return subscribeWorkflowRequests(this.database, remote, signal);
+  }
+
+  /** Follow committed receipt changes independently of launcher wakeups. */
+  watchReceipts(remote: string, signal: AbortSignal) {
+    return subscribeWorkflowRequests(this.database, remote, signal, workflowReceiptChannel);
+  }
+
+  /** Recover the operator's active command or their most recently submitted result. */
+  async current(caller: Caller) {
+    const { rows } = await this.database.query<WorkflowReceipt>(
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2
+       ORDER BY (state <> 'finished') DESC, ordinal DESC FETCH FIRST ROW ONLY`,
+      [caller.remote, caller.principal],
+    );
+    return rows[0];
   }
 
   /** Admit one request and return exact duplicate submissions idempotently. */
@@ -92,14 +111,27 @@ export class WorkflowRequests {
     return rows[0]?.revision;
   }
 
-  /** Transfer the pending request to the trusted Host assigned to this project. */
+  /** Transfer the pending request to a Host with the verified revision and retained image. */
   async claim(owner: Worker & { revision: string }) {
+    const runtime = owner.runtime ? JSON.stringify(owner.runtime) : null;
     const { rows } = await this.database.query<WorkflowReceipt & { reply: string | null }>(
-      `UPDATE ${store} SET state='running',worker=$2
-       WHERE project=$1 AND revision=$3 AND state='queued' AND NOT cancellation RETURNING ${columns},reply`,
-      [owner.remote, owner.worker, owner.revision],
+      `UPDATE ${store} SET state='running',worker=$2,runtime=COALESCE(runtime,$4::jsonb)
+       WHERE project=$1 AND revision=$3 AND state='queued' AND NOT cancellation
+         AND (runtime IS NULL OR runtime=$4::jsonb) RETURNING ${columns},reply`,
+      [owner.remote, owner.worker, owner.revision, runtime],
     );
+    if (!rows[0]) await this.verifyQueuedImage(owner.remote, owner.revision, runtime);
     return rows[0];
+  }
+
+  /** Name the retained prerequisite when the queued command needs a different image. */
+  private async verifyQueuedImage(remote: string, revision: string, runtime: string | null) {
+    const { rows } = await this.database.query<{ runtime: RuntimeImage }>(
+      `SELECT runtime FROM ${store} WHERE project=$1 AND revision=$2 AND state='queued'
+         AND runtime IS NOT NULL AND runtime IS DISTINCT FROM $3::jsonb`,
+      [remote, revision, runtime],
+    );
+    if (rows[0]) throw imageUnavailable(rows[0].runtime);
   }
 
   /** Request cancellation while retaining the canonical active run's ownership. */
@@ -134,11 +166,18 @@ export class WorkflowRequests {
     );
     const request = rows[0];
     if (!request || !(await confirmStopped(owner.worker))) return false;
+    if (
+      request.runtime &&
+      (request.runtime.image !== owner.runtime?.image ||
+        request.runtime.base !== owner.runtime.base)
+    )
+      throw imageUnavailable(request.runtime);
     const retired = await reconcileHosted(
       this.database,
       owner.remote,
       (worker) => worker === owner.worker,
     );
+    if (!retired && (await finishRetainedRound(this.database, owner, request.id))) return true;
     const terminal = !retired && (await this.recoveredOutcome(owner, request));
     if (terminal) await this.settle(owner, request.id, terminal);
     else await this.resume(owner, request.id);
@@ -149,6 +188,14 @@ export class WorkflowRequests {
   private async recoveredOutcome(owner: Worker, request: WorkflowReceipt) {
     if (!request.execution) return;
     const command = request.request as { command: string; goal?: string };
+    if (command.command === 'task_run' && command.goal === undefined) {
+      const { rows } = await this.database.query(
+        `SELECT id FROM arcnexus_coordination.rounds WHERE project=$1 AND namespace='task' AND finished=0`,
+        [owner.remote],
+      );
+      if (rows.length) return;
+      throw new Error('The stopped round requires trusted reconciliation of its aggregate result');
+    }
     const { rows } = await this.database.query<{ outcome: { kind: string } }>(
       `SELECT e.content::jsonb->'outcome' AS outcome
        FROM arcnexus_coordination.runs r JOIN arcnexus_coordination.events e
@@ -160,8 +207,6 @@ export class WorkflowRequests {
     );
     const outcome = rows[0]?.outcome;
     if (!outcome || ['blocked', 'cancelled'].includes(outcome.kind)) return;
-    if (command.command === 'task_run' && command.goal === undefined)
-      throw new Error('The stopped round requires trusted reconciliation of its aggregate result');
     return outcome;
   }
 
@@ -176,6 +221,22 @@ export class WorkflowRequests {
        WHERE project=$1 AND worker=$2 AND id=$3 AND state='running'`,
       [owner.remote, owner.worker, id, JSON.stringify(cancelledOutcome)],
     );
+  }
+
+  /** Checkpoint the accepted round before closing the captured inventory. */
+  async completeRound(
+    owner: Worker,
+    id: string,
+    result: { kind: 'round'; completed: boolean; round: number },
+  ) {
+    if (!result.completed) throw new Error('Cannot checkpoint an unfinished round');
+    const saved = await this.database.query(
+      `UPDATE ${store} SET outcome=$4::jsonb
+       WHERE project=$1 AND worker=$2 AND id=$3 AND state='running'
+         AND request->>'command'='task_run' AND NOT request ? 'goal'`,
+      [owner.remote, owner.worker, id, JSON.stringify(result)],
+    );
+    if (!saved.rowCount) throw new Error('Workflow request ownership was lost');
   }
 
   /** Publish the first admitted logical execution for a running invocation. */
@@ -203,4 +264,8 @@ export class WorkflowRequests {
     );
     if (!result.rowCount) throw new Error('Workflow request ownership was lost');
   }
+}
+
+function imageUnavailable(runtime: RuntimeImage) {
+  return new Error('The workflow requires its pinned Host image ' + runtime.image);
 }

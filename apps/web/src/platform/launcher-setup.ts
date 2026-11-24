@@ -1,14 +1,13 @@
 import { createElement as h, useEffect, useState } from 'react';
+import { launcherTargets, type LauncherBuild } from '../../../launcher/src/targets.js';
+import { LauncherDownload } from './launcher-download.js';
+import { useResource } from './resource.js';
+import { usePlatformSession } from './session.js';
 import { Button, SelectField } from '../../../../packages/ui/src/index.js';
 
 const targets = [
   { value: '', label: 'Choose operating system and CPU' },
-  { value: 'linux-x64', label: 'Linux · x64' },
-  { value: 'linux-arm64', label: 'Linux · ARM64' },
-  { value: 'macos-x64', label: 'macOS · x64' },
-  { value: 'macos-arm64', label: 'macOS · ARM64' },
-  { value: 'windows-x64', label: 'Windows · x64' },
-  { value: 'windows-arm64', label: 'Windows · ARM64' },
+  ...Object.entries(launcherTargets).map(([value, label]) => ({ value, label })),
 ];
 
 type PlatformHints = { platform?: string; architecture?: string; bitness?: string };
@@ -49,6 +48,9 @@ function useLauncherTarget() {
 /** Pick a launcher target and display the operator-issued registration code. */
 export function LauncherSetup({ code, issue }: { code?: string; issue(): void }) {
   const [target, select] = useLauncherTarget();
+  const { token } = usePlatformSession();
+  const builds = useResource<{ entries: LauncherBuild[] }>('/launcher-builds', token);
+  const published = builds.value?.entries?.find((build) => build.target === target);
   return h(
     'section',
     { className: 'arc-platform-stack', 'aria-label': 'Launcher setup' },
@@ -59,12 +61,7 @@ export function LauncherSetup({ code, issue }: { code?: string; issue(): void })
       options: targets,
       onChange: select,
     }),
-    h(
-      'div',
-      { className: 'arc-platform-inline' },
-      h(Button, { disabled: true }, 'Download launcher'),
-      h('small', null, 'A launcher download is unavailable for this deployment.'),
-    ),
+    h(LauncherDownload, { build: published }),
     h(Button, { onClick: issue }, 'Create registration code'),
     code &&
       h(

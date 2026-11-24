@@ -1,7 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
 import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
 import type { Journal, JournalEvent } from '../../coordination/src/index.js';
@@ -15,7 +14,7 @@ import { formatterPreview } from './formatter.js';
 import { observePreparedPublication, recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
-import { applicationStorage, type HostConfig } from './host-config.js';
+import type { HostConfig } from './host-config.js';
 import { runCheck } from './run-check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
@@ -475,21 +474,7 @@ function decisionContext(proposal: string) {
   };
 }
 
-/** Give every Host service the same trusted storage root. */
-export function executionPluginFor(storage?: string) {
-  return {
-    inject: ['architecture', 'coordination'],
-    /** Register the production implementation used by Workflow's host calls. */
-    apply(context: Context) {
-      context.provide(
-        'execution',
-        new Execution(context.architecture, context.coordination, storage ?? applicationStorage()),
-      );
-    },
-  };
-}
-
-export const executionPlugin = executionPluginFor();
+export { executionPlugin, executionPluginFor } from './execution-plugin.js';
 
 export { steward } from './steward.js';
 export { checkFailureSignature } from './steward-check.js';

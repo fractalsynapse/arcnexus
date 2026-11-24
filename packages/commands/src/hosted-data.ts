@@ -1,25 +1,16 @@
 import type { Context } from 'cordis';
 import { z } from 'zod';
-import { dataOperation, type DataScope } from '../../data/src/index.js';
+import { dataOperation, type Data, type DataScope } from '../../data/src/index.js';
 import type { WorkflowRequests } from '../../coordination/src/index.js';
-import { workflowRequest } from './request.js';
+import {
+  currentWorkflow,
+  workflowAnswer,
+  workflowReceipt,
+  workflowSelection,
+  workflowSubmission,
+} from './browser.js';
 
-export const workflowSelection = z.strictObject({ id: z.uuid() });
-export const workflowReceipt = z.strictObject({
-  id: z.uuid(),
-  request: workflowRequest,
-  revision: z.string(),
-  state: z.enum(['queued', 'running', 'waiting', 'finished']),
-  execution: z.string().nullable(),
-  gate: z.strictObject({ id: z.string(), question: z.string() }).nullable(),
-  outcome: z.unknown(),
-});
-
-export const workflowSubmission = workflowSelection.extend({ request: workflowRequest });
-export const workflowAnswer = workflowSelection.extend({
-  gate: z.string(),
-  answer: z.string().refine((answer) => Boolean(answer.trim())),
-});
+const resource = 'workflow-requests';
 
 type Resolve = (scope: DataScope) => Promise<{ remote: string; revision: string } | undefined>;
 
@@ -29,8 +20,14 @@ async function caller(scope: DataScope, resolve: Resolve) {
   return { ...project, principal: scope.principal };
 }
 
-function operations(requests: WorkflowRequests, resolve: Resolve) {
+function operations(data: Data, requests: WorkflowRequests, resolve: Resolve) {
   return {
+    current: dataOperation(z.strictObject({}), currentWorkflow, async (scope) =>
+      currentWorkflow.parse({
+        canSubmit: await data.allows(scope, resource, 'create'),
+        receipt: (await requests.current(await caller(scope, resolve))) ?? null,
+      }),
+    ),
     create: dataOperation(workflowSubmission, workflowReceipt, async (scope, input) => {
       const binding = await caller(scope, resolve);
       return workflowReceipt.parse(
@@ -57,10 +54,11 @@ export function hostedCommandsDataPlugin(requests: WorkflowRequests, resolve: Re
     inject: ['data'],
     /** Route all durable commands through the same authorized project binding. */
     apply(context: Context) {
+      const data = context.data;
       context.effect(() =>
-        context.data.register({
-          id: 'workflow-requests',
-          operations: operations(requests, resolve),
+        data.register({
+          id: resource,
+          operations: operations(data, requests, resolve),
         }),
       );
     },

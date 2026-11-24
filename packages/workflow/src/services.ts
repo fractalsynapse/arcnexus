@@ -40,6 +40,7 @@ export interface TaskQuestion {
 
 export interface TaskObserver {
   progress(observation: Observation): void;
+  completeRound?(outcome: RoundOutcome): Promise<void>;
   event?(event: JournalEvent): void;
   measurements?(measurements: ReturnType<RunMeasurements['snapshot']>): void;
   answer?(question: string, signal: AbortSignal, gate?: TaskQuestion): Promise<string | undefined>;

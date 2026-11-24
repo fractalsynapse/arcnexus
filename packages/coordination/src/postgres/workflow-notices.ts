@@ -2,13 +2,14 @@ import { EventEmitter, on } from 'node:events';
 import type { Client } from 'pg';
 import { textDigest } from '../../../foundation/src/index.js';
 
-const channel = 'arcnexus_workflow_requests';
+const admissions = 'arcnexus_workflow_requests';
 
 /** Listen before checking for work so a concurrently submitted request cannot be missed. */
 export async function subscribeWorkflowRequests(
   database: Client,
   remote: string | readonly string[],
   signal: AbortSignal,
+  channel = admissions,
 ) {
   const events = new EventEmitter();
   const lifetime = new AbortController();
@@ -28,14 +29,19 @@ export async function subscribeWorkflowRequests(
   };
   combined.addEventListener('abort', close, { once: true });
   try {
-    return await listen(database, events, combined);
+    return await listen(database, events, combined, channel);
   } catch (error) {
     lifetime.abort(error);
     throw error;
   }
 }
 
-async function listen(database: Client, events: EventEmitter, signal: AbortSignal) {
+async function listen(
+  database: Client,
+  events: EventEmitter,
+  signal: AbortSignal,
+  channel: string,
+) {
   const pending = on(events, 'changed', { signal });
   await database.query('LISTEN ' + channel);
   return pending;

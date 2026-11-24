@@ -315,3 +315,5 @@ interface Pull {
 function title(goal: string) {
   return goal.trim().split('\n')[0]!;
 }
+
+export { managedRepository, type CheckoutGit } from './managed-checkout.js';

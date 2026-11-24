@@ -67,12 +67,17 @@ function prepare(config: HostAssignment) {
     throw new Error('Hosted database credential must be private');
   verifyCheckout(config);
   credentials(config);
-  const file = join(config.storage, 'host-assignment-' + config.revision + '.json');
+  const runtime = { image: config.image.approvedImage, base: config.image.base };
+  const file = join(
+    config.storage,
+    'host-assignment-' + textDigest(JSON.stringify([config.revision, runtime])) + '.json',
+  );
   const value = JSON.stringify({
     remote: config.remote,
     revision: config.revision,
     directory: checkout,
     storage,
+    runtime,
   });
   try {
     writeFileSync(file, value, { mode: 0o600, flag: 'wx' });

@@ -43,6 +43,16 @@ export class Data {
     };
   }
 
+  /** Report whether a registered operation is available under the same policy as invocation. */
+  async allows(scope: DataScope, resource: string, operation: string) {
+    const registered = this.resources.get(resource);
+    return Boolean(
+      registered &&
+      Object.hasOwn(registered.operations, operation) &&
+      (await this.authorize({ scope, resource, operation })),
+    );
+  }
+
   /** Describe authorized operations using the schemas executed at runtime. */
   async describe(scope: DataScope) {
     const visible = [];

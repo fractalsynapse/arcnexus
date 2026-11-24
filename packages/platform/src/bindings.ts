@@ -1,7 +1,7 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { z } from 'zod';
 import { Architecture } from '../../architecture/src/index.js';
-import { verifyBoundCommit } from '../../collaboration/src/index.js';
+import { managedRepository, verifyBoundCommit } from '../../collaboration/src/index.js';
 import { readSecret } from './database.js';
 import { importSchema } from '../../catalog/src/index.js';
 
@@ -12,6 +12,7 @@ const configuration = z.strictObject({
       directory: z.string().min(1),
       remote: importSchema.shape.remote,
       hosted: z.boolean().optional(),
+      managed: z.boolean().optional(),
       provider: z.uuid().optional(),
       evidence: z.string().startsWith('/').optional(),
       github: z
@@ -28,8 +29,8 @@ export function bindings(file: string) {
   const architecture = new Architecture();
   return {
     operator: config.operator,
-    verify: (remote: string, revision: string, reference?: string) =>
-      verifyProject(projects.get(remote)?.github, remote, revision, reference),
+    verify: (remote: string, reference?: string) =>
+      verifyProject(architecture, projects.get(remote), reference),
     evidence: (remote: string) => projects.get(remote)?.evidence,
     hosted: (remote: string) => projects.get(remote)?.hosted === true,
     provider: (remote: string) => projects.get(remote)?.provider,
@@ -55,15 +56,21 @@ function privateToken(file: string) {
   return readSecret(file);
 }
 
+type ProjectBinding = z.output<typeof configuration>['projects'][number];
+
 async function verifyProject(
-  binding: { id: string; tokenFile: string } | undefined,
-  remote: string,
-  revision: string,
+  architecture: Architecture,
+  project?: ProjectBinding,
   reference?: string,
 ) {
-  if (reference !== undefined && binding?.id !== reference)
+  if (!project) throw new Error('Repository is not bound for isolated review');
+  const { remote, directory, github, managed } = project;
+  if (reference !== undefined && github?.id !== reference)
     throw new Error('Repository provider binding unavailable');
-  if (binding)
-    await verifyBoundCommit(remote, revision, { token: privateToken(binding.tokenFile) });
-  return revision;
+  const token = github && privateToken(github.tokenFile);
+  const pinned = managed ? await managedRepository({ remote, directory, token }) : undefined;
+  const { source } = architecture.capture(directory, pinned);
+  if (source.remote !== remote) throw new Error('Bound project remote changed');
+  if (token) await verifyBoundCommit(remote, source.revision, { token });
+  return { revision: source.revision, credential: github?.id };
 }

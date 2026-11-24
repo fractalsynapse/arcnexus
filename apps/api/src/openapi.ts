@@ -10,7 +10,9 @@ function parametersFor(route: Route) {
   const parameters = [{ name: 'project', in: 'path', required: true, schema: string }];
   if (route.parameter)
     parameters.push({ name: route.parameter, in: 'path', required: true, schema: string });
-  for (const name of route.cursor ? ['after', 'through'] : (route.query ?? ['revision']))
+  for (const name of route.stream === 'timeline'
+    ? ['after', 'through']
+    : (route.query ?? ['revision']))
     parameters.push({ name, in: 'query', required: Boolean(route.query), schema: string });
   return parameters;
 }
@@ -42,7 +44,10 @@ function projectOperation(route: Route, definition: Definition) {
     responses: {
       [route.method ? 202 : 200]: {
         description: route.method ? 'Accepted workflow request' : 'Scoped data',
-        content: { 'application/json': { schema: definition.output } },
+        content: {
+          'application/json': { schema: definition.output },
+          ...(route.stream && { 'text/event-stream': { schema: string } }),
+        },
       },
     },
   };

@@ -215,7 +215,11 @@ async function gateway(
   await context.use(dataPlugin(({ scope }) => scope.project === 'fixture'));
   await context.use(hostedCommandsDataPlugin(requests, async () => ({ remote, revision })));
   await context.use(
-    apiPlugin((_request, project) => ({ project, principal: 'isolated-operator' })),
+    apiPlugin(
+      (_request, project) => ({ project, principal: 'isolated-operator' }),
+      undefined,
+      (_scope, signal) => requests.watchReceipts(remote, signal),
+    ),
   );
   await context.use(operatorMcpPlugin);
   const server = context.operatorMcp({ project: 'fixture', principal: 'isolated-operator' });
@@ -226,3 +230,91 @@ async function gateway(
   t.after(() => Promise.all([server.close(), client.close()]));
   return { api: context.api, mcp: client };
 }
+
+test(
+  'a stopped bare Run finishes the original round from its durable aggregate',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const requests = new WorkflowRequests(database);
+    const owner = { remote, revision, worker: 'departed-round' };
+    const operator = { remote, principal: 'isolated-operator' };
+    const id = randomUUID();
+    await requests.submit(operator, id, { command: 'task_run' }, revision);
+    assert.equal((await requests.claim(owner))?.id, id);
+    const store = hostedProjectCoordination({
+      project: remote,
+      worker: owner.worker,
+      connectionString: connectionString!,
+    });
+    const round = store.round(remote, () => '[]');
+    const completed = { kind: 'round', round: round.id, completed: true, goals: [] } as const;
+    await requests.completeRound(owner, id, completed);
+    assert.equal(await requests.recover(owner, () => true), true);
+    const result = await requests.read(operator, id);
+    assert.equal(result.state, 'finished');
+    assert.deepEqual(result.outcome, completed);
+    const next = store.round(remote, () => '[]');
+    assert.notEqual(next.id, completed.round);
+  },
+);
+
+test(
+  'the project command stream follows committed gates and replays the retained receipt',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const receipts = new WorkflowRequests(database);
+    const { api } = await gateway(t, receipts, remote, revision);
+    const operator = { remote, principal: 'isolated-operator' };
+    const owner = { remote, revision, worker: 'stream-worker' };
+    const id = randomUUID();
+    const address = new Request('http://arc.local/projects/fixture/commands/current', {
+      headers: { accept: 'text/event-stream' },
+    });
+    const response = await api(address);
+    assert.equal(response.status, 200);
+    const stream = response.body!.getReader();
+    try {
+      assert.equal((await nextReceipt(stream)).receipt, null);
+      await receipts.submit(operator, id, { command: 'task_plan' }, revision);
+      assert.equal((await nextReceipt(stream)).receipt.state, 'queued');
+      await receipts.claim(owner);
+      assert.equal((await nextReceipt(stream)).receipt.state, 'running');
+      await receipts.settle(owner, id, { kind: 'blocked' }, { id: 'exact', question: 'Approve?' });
+      assert.equal((await nextReceipt(stream)).receipt.gate.id, 'exact');
+    } finally {
+      await stream.cancel();
+    }
+    const current = await api(new Request(address.url));
+    assert.equal((await current.json()).receipt.id, id);
+  },
+);
+
+async function nextReceipt(stream: ReadableStreamDefaultReader<Uint8Array>) {
+  const frame = await stream.read();
+  assert.ok(frame.value);
+  const data = /^data: (.+)$/m.exec(new TextDecoder().decode(frame.value))?.[1];
+  assert.ok(data);
+  return JSON.parse(data);
+}
+
+test(
+  'a retained approval can only be resumed by its pinned Host image',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const requests = new WorkflowRequests(database);
+    const operator = { remote, principal: 'isolated-operator' };
+    const runtime = { image: 'sha256:' + 'a'.repeat(64), base: 'sha256:' + 'b'.repeat(64) };
+    const owner = { remote, worker: 'pinned-host', revision, runtime };
+    const id = randomUUID();
+    await requests.submit(operator, id, { command: 'task_plan' }, revision);
+    assert.equal((await requests.claim(owner))?.id, id);
+    await requests.settle(owner, id, { kind: 'blocked' }, { id: 'gate', question: 'Approve?' });
+    await requests.answer(operator, id, 'gate', 'approve');
+    const changed = { ...owner, runtime: { ...runtime, image: 'sha256:' + 'c'.repeat(64) } };
+    await assert.rejects(requests.claim(changed), /pinned Host image/);
+    assert.equal((await requests.claim(owner))?.id, id);
+  },
+);

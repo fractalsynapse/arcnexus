@@ -99,3 +99,4 @@ function discoverSuites(directory: string, pattern: string, components: readonly
     .map((file) => registerSuite(file, components, readFileSync(`${directory}/${file}`, 'utf8')));
 }
 export { readServerEvents } from './server-events.js';
+export { fileDigest } from './file-digest.js';

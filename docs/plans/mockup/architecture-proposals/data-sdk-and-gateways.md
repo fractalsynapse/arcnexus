@@ -18,20 +18,71 @@ for real projects follows the existing live qualification requirement.
 | PostgreSQL setup, rehearsal and cutover | DB setup checks migration digests. An isolated cutover verifies the copied observations and registered artifact paths and digests, binds the native write fence to a PostgreSQL deployment, and enables one hosted journal writer. A disconnected writer retains its lane until the trusted caller confirms its prior owner stopped. |
 | Enrollment and catalog | An admitted launcher can maintain an authenticated connection. Revocation closes that connection. REST and MCP share catalog CRUD and compare-and-set revision refresh. The web app and mockup reuse the same manager components. |
 | Commands and Host composition | The native CLI and the hosted worker dispatch the same Commands requests. REST, MCP and the platform CLI share durable admission, read, answer, and cancel operations. Hosted execution uses the existing Host over PostgreSQL. |
-| Launcher assignment | An admitted launcher receives a project ID and the revision pinned by the command. The executable matches them against a local manifest and starts or reuses the approved Docker container. |
+| Browser commands | The shared dock follows the scoped command receipt. Launch Plan, Architect, Run or Refine, respond to its exact open question and cancel a retained command. |
+| Launcher assignment and distribution | An admitted launcher receives a project ID and the revision pinned by the command. It starts or reuses the locally approved Docker container. The isolated API serves staged Linux launcher builds and verified download checksums. |
 | Operation evidence | Plan opens retained tool inputs and outputs on demand. REST and MCP resolve them from the selected journal event and the project's trusted evidence mount. |
-| GitHub bindings | An optional repository-scoped credential verifies the exact commit of a bound checkout. The provider credential file lives in the gateway's trusted deployment. |
+| GitHub bindings | Trusted managed bindings provision absent read checkouts and retain each captured revision. Private bindings use the repository-scoped token file and verify the exact commit. |
+| Database recovery | The DB app archives the quiesced platform schemas and restores them to an empty database. An operator snapshot identity binds the database archive to the separately copied Host state. Hosted Run checkpoints accepted aggregate outcomes for recovery. |
 
 The [local review stack](../../../../apps/api/README.md) runs Web, API, MCP,
 PostgreSQL, and DB setup with distinct runtime grants. Use the
 [Host and launcher setup](../../../../apps/host/README.md) to run workflows
 with isolated checkouts, provider fixtures and a dedicated PostgreSQL role.
 
-Remaining delivery includes launcher binary publishing, cloning private projects
-without a pre-provisioned checkout, browser command and approval controls, and
-deployment backup and restore. Recovery of a stopped bare Run with an ambiguous
-aggregate result requires trusted reconciliation. Real-project activation
-requires the approved live qualification.
+Remaining release evidence includes a live private GitHub import, native
+ARM64 execution, and a matched deployment restore with the original Host
+volumes. Live qualification governs external launcher publication and
+operator-facing activation for real projects. In-progress bare Run receipts
+from before aggregate checkpointing still require trusted reconciliation
+if they have a closed round and no retained result.
+
+
+## Browser command acceptance
+
+The shared command panel submits Plan, Architect, and Run for the selected
+project. Refine submits one round through the same gateway. Follow the
+operator's current command so a reconnect or project switch can recover a
+pending approval. Answer the exact retained question in the shared dialog.
+Closing the dialog preserves its draft while the gate is open. A successful
+answer removes the action. Cancellation and gate answers use the same Commands
+SDK operations as MCP and CLI. An enabled timeline continues to load through
+its own scoped event resource.
+
+## Database recovery acceptance
+
+Stop the gateways and Hosts before taking the database archive and its
+matching Host state snapshot. Record a common snapshot identity. Restore to
+an empty database and verify the archive digest, restored migration series
+and original retained command before starting gateway or Host services.
+Keep setup credentials, runtime credentials and provider logins outside the
+archive and reapply runtime privileges from the deployment's secret files.
+
+## Launcher distribution acceptance
+
+Build the Linux x64 and ARM64 launcher from the same source as the local
+operator CLI. An isolated deployment advertises only binaries staged in
+its trusted artifact directory. The Connection manager offers the matching
+download and allows the operator to choose another available architecture.
+Verify a downloaded native binary and its published checksum.
+
+## Managed repository acceptance
+
+A trusted repository binding may provision an absent checkout in a declared
+managed directory. Use the configured read credential for that exact GitHub
+remote, verify the captured commit, and persist the binding reference in the
+catalog. Refresh updates the verified revision while previously accepted
+commits remain available. Publication and Host execution retain their own
+credentials and workspace assignments.
+
+## Bare Run recovery acceptance
+
+A hosted bare Run exposes the same human gates as a single-goal command.
+A hosted receipt keeps the resolved image and base digest across approval
+and recovery. A different image waits for a fresh command and supplies
+new check inputs. Once every goal has durable accepted evidence, checkpoint the exact round
+result before closing the round. If the Host exits between round completion
+and receipt completion, recovery returns that result with the original
+round ID. An unfinished round resumes its captured inventory.
 
 ## Unified data management
 
@@ -320,9 +371,7 @@ Trusted Cordis contributions register the header actions. Compose common
 layouts and controls through React props, children and hooks so feature
 components reuse the same presentation and behavior. [Existing dialog](../../../../packages/ui/src/controls/dialog.ts)
 
-The local React preview illustrates these flows with fixture registration
-and project entries. Launcher publishing and live enrollment and
-reachability checks belong to the platform implementation. [Platform setup preview](../../../../apps/web/README.md#platform-setup-design-preview)
+The local React preview illustrates the same managers with fixture registration and project entries. The isolated platform can stage and serve native launcher artifacts. [Platform setup preview](../../../../apps/web/README.md#platform-setup-design-preview)
 
 ## Concurrent API and MCP requests
 
@@ -445,8 +494,7 @@ opening the result makes a separate request for its details.
 
 The browser disconnects after applying `413`. The Planner's approval question
 arrives at `414`. Reconnecting brings in the question once. Planner outcome can
-refresh its own status. The operator answers at the existing CLI planning
-prompt. The journal records the reply at `416` and outcome at `417`. MCP
+refresh its own status. The operator answers the retained question from the shared command dock or the CLI. The journal records the reply at `416` and outcome at `417`. MCP
 reads the same range after `413` and sees the same event identities. Turning
 Event log off closes its stream. Turning it back on resumes from the cursor
 when the retained display state matches the selected execution. These event

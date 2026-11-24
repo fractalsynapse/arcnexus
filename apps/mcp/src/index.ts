@@ -13,6 +13,11 @@ const tools = {
     operation: 'create',
     description: 'Submit an authorized Plan, Run, Architect, or Refine request.',
   },
+  current_workflow: {
+    resource: 'workflow-requests',
+    operation: 'current',
+    description: 'Find your active workflow or most recent retained command receipt.',
+  },
   read_workflow: {
     resource: 'workflow-requests',
     operation: 'read',

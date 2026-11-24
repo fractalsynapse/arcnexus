@@ -9,6 +9,8 @@ import {
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowReceiptsMigration,
+  workflowRuntimeMigration,
   journalNotificationMigration,
 } from '../../../packages/coordination/src/index.js';
 import { migrate, verifyMigrations } from './migrations.js';
@@ -19,6 +21,8 @@ const modelMigrations = [
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowReceiptsMigration,
+  workflowRuntimeMigration,
   capacityMigration,
   catalogMigration,
 ];

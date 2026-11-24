@@ -1,6 +1,6 @@
 import { OperationDetail } from './operation-detail.js';
-import { createElement as h } from 'react';
-import { Button } from '../../../../packages/ui/src/index.js';
+import { createElement as h, useSyncExternalStore } from 'react';
+import { Button, type CommandBinding } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 import { usePlatformSession } from './session.js';
 import type { TimelineFrame } from './timeline-stream.js';
@@ -8,15 +8,8 @@ import { useTimeline } from './use-timeline.js';
 
 type Entry = { message?: string; key: string; operations: TimelineFrame[] };
 
-export function EventDisplay() {
-  const { project, token } = usePlatformSession();
-  const base = project && '/projects/' + project.id + '/plan-executions/';
-  const current = useResource<{ execution?: string }>(base && base + 'current', token);
-  const execution = current.value?.execution;
-  const timeline = useTimeline(
-    base && execution ? base + encodeURIComponent(execution) + '/events' : undefined,
-    token,
-  );
+export function EventDisplay({ binding }: { binding: CommandBinding }) {
+  const { project, current, execution, timeline } = useEventSource(binding);
   if (!project) return h('p', null, 'Select a project to see planning events.');
   if (current.error) return h('p', { role: 'alert' }, current.error);
   if (current.value && !execution) return h('p', null, 'No recorded planning execution.');
@@ -36,6 +29,28 @@ export function EventDisplay() {
       entries(timeline.frames).map((entry) => h(EventEntry, { key: entry.key, entry, execution })),
     ),
   );
+}
+
+function useEventSource(binding: CommandBinding) {
+  const { project, token } = usePlatformSession();
+  const command = useSyncExternalStore(binding.subscribe, binding.getSnapshot);
+  const root = project && '/projects/' + project.id;
+  const recorded = command.command === 'Plan' ? command.execution : undefined;
+  const current = useResource<{ execution?: string }>(
+    root && !recorded ? root + '/plan-executions/current' : undefined,
+    token,
+  );
+  const execution = recorded ?? current.value?.execution;
+  const timeline = useTimeline(
+    root && execution
+      ? root +
+          (recorded ? '/executions/' : '/plan-executions/') +
+          encodeURIComponent(execution) +
+          '/events'
+      : undefined,
+    token,
+  );
+  return { project, current, execution, timeline };
 }
 
 function EventEntry({ entry, execution }: { entry: Entry; execution?: string }) {

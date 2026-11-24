@@ -1,12 +1,12 @@
 import { isAbsolute, normalize } from 'node:path';
 import { z } from 'zod';
+import { imageDigest } from '../../../packages/foundation/src/runtime-image.js';
 
 const local = z
   .string()
   .refine((value) => isAbsolute(value) && normalize(value) === value && !value.includes(','));
 const revision = z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/);
-const imageId = z.string().regex(/^sha256:[0-9a-f]{64}$/);
-const base = { approvedImage: imageId, base: imageId };
+const base = { approvedImage: imageDigest, base: imageDigest };
 
 export const hostAssignmentSchema = z.strictObject({
   project: z.uuid(),
