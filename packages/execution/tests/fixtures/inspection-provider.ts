@@ -13,6 +13,11 @@ class InspectionProvider {
     const refusals =
       tools && !input.includes('Fixture mode: listing only') ? await this.refuse(tools.tools) : [];
     this.record(input, tools, refusals);
+    if (input.includes('Fixture mode: clarification') && !input.includes('clarifications:'))
+      await this.rpc('tools/call', {
+        name: 'inspect-question',
+        arguments: { question: 'Which exact context survives?' },
+      });
     this.emit({
       type: 'item.completed',
       item: { type: 'agent_message', text: '{"kind":"completed"}' },
