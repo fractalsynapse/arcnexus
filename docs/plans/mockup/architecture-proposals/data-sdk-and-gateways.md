@@ -55,7 +55,7 @@ Release steward. Each application steward owns its image and entry point.
 | --- | --- |
 | **PostgreSQL** | Run the shared database on a private network with a persistent volume. Model owners keep their schemas and storage rules. |
 | **DB setup** | Run the `apps/db` migration command once per deployment. It composes the migration steps from model owners, records applied versions, and exits successfully when the schema is ready. The first slice covers migration and schema status. Backup and restore also belong to this app as operator commands. |
-| **Execution host** | Run the trusted Cordis composition for Commands and Workflow as a private service, proposed under `apps/host`. The host owns project worktrees, provider access and effectful execution. API and MCP pass the initiating caller and request to this same host. |
+| **Execution host** | Run the trusted Cordis composition for Commands and Workflow in a private `apps/host` container. The host owns project worktrees, provider access and effectful execution. API and MCP pass the initiating caller and request to this same host. |
 | **API and MCP** | Run separate adapters. Both compose Data and its owner bindings and connect to the same PostgreSQL database for permitted model operations. Workflow actions go through the execution host. Give each adapter a runtime role scoped to its allowed database operations. |
 | **Web** | Serve the browser app and connect it to the API through the local same-origin entry point. The browser requests resources from the API and receives status independently for each display. |
 
@@ -81,6 +81,68 @@ Project bindings identify which verified repositories the local host serves.
 The owning services provide authorized reads of Git revisions and retained
 artifacts to Data. These bindings keep file-backed resources usable across
 containers and leave worktree and provider effects with the execution host.
+
+## Execution host container
+
+Use a Linux image built from `apps/host/Dockerfile` with the trusted Cordis
+composition and pinned runtime tools, including Git, the provider client,
+Codex and Bubblewrap. Run it as a dedicated non-root user on the private
+service network. Publish the operator-facing API and MCP entry points and
+keep Host discovery and requests internal. Give it outbound access for
+approved Git remotes and configured execution providers. Keep Docker daemon
+access with the operator. Start with one Host serving the local platform,
+with each project's repository, worktrees and execution lane isolated.
+
+Mount trusted bindings read-only from deployment configuration. Supply
+credentials through the platform secret mechanism and resolve them in the
+owning provider plugin when needed. The Host provisions the current
+`.git/arcnexus/bindings.yaml` in each managed checkout from trusted
+configuration, pointing to the executable installed in the image. Preserve
+Git stores, worktrees and retained evidence on Host-owned volumes at stable
+container paths. For example, store repositories under `/var/lib/arcnexus/repos` and
+worktrees and evidence under `/var/lib/arcnexus/state`. Keep temporary
+execution files on scratch space. PostgreSQL retains the journal and execution
+positions. A matched database and Host state restore should recover the same
+checkpoints and evidence after container replacement.
+
+Build the Host image from ArcNexus source. Each admitted project uses a pinned
+Git revision and its approved check bindings inside its own confined worktree.
+As project toolchains diverge, select an approved runtime profile at
+admission and keep its identity in the evidence.
+
+Qualify the existing execution boundary inside the image on the target Linux
+runtime. ArcNexus uses Bubblewrap namespaces and a disposable filesystem
+overlay for native checks. Docker's runtime policies affect which namespace
+operations work. Verify the real model and check paths, network and workspace
+confinement, secret isolation, cancellation and restart. If a Docker runtime
+cannot enforce the existing contract, keep execution unavailable there. A
+native Linux deployment can run the same Host composition when explicitly
+selected as that project's execution authority. [Execution contract](../../../../packages/execution/contract.md)
+· [Check sandbox](../../../../packages/execution/src/check-sandbox.ts)
+· [Docker seccomp profiles](https://docs.docker.com/engine/security/seccomp/)
+
+## Git-backed project catalog
+
+The platform catalog lists the projects the Host can serve. Import from an
+authorized public or private Git remote and record the verified repository
+identity, source commit and credential binding reference. A catalog imported
+from Git can propose entries for several repositories. Resolve and verify
+each repository through its own provider binding before enabling it.
+A Catalog steward would own those platform records and expose them through
+Data. Collaboration resolves remotes and credential bindings. Architecture
+validates each project's versioned component and steward definitions as
+data. Host admission requires an approved capture and trusted bindings.
+Refreshing a catalog can surface a newer revision while active tasks keep
+their captured revision and authority.
+
+Start with the current canonical GitHub remote boundary. Public catalog reads
+can use anonymous fetch where available. For private GitHub imports, propose
+installation credentials scoped to read the selected repository through
+Collaboration. Keep publication authority separately granted under the
+project's delivery policy. Catalog records carry credential references.
+Secrets stay with the trusted provider and outside clone URLs, event payloads
+and agent tool inputs. [Current GitHub adapter](../../../../packages/collaboration/src/index.ts)
+· [GitHub App installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation)
 
 ## Concurrent API and MCP requests
 
@@ -238,6 +300,11 @@ sequences are illustrative.
   project and confirm Coordination admits one writer. Race conditional data
   writes and confirm a stale revision fails. Restart each adapter during an
   active run and confirm that the host and retained timeline continue.
+- Exercise public and private catalog imports with a permitted repository
+  and a refused credential binding. Confirm that import cannot change the
+  trusted runtime and an updated catalog preserves active run provenance.
+  Replace the Host container and verify recovery from the retained position
+  with real confinement and authorized evidence intact.
 - Review exact contract amendments and the existing qualification gate
   before activating live gateways or adding CLI modes. Exercise each released
   MCP command against the equivalent CLI operation under the same authority
