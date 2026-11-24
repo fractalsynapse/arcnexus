@@ -134,8 +134,8 @@ and confirms the actual returned merge tree. An already merged PR uses explicit
 merged-state verification and confirmation without another mutation.
 [Provider failure retention](../src/check-failure.ts) preserves complete diagnostics,
 stdout and stderr with a publication hold and the required action to resolve the
-diagnostic and observe PR/branch facts before retry. The executed owner observations below exercise these boundaries with controlled
-provider responses.
+diagnostic and observe PR/branch facts before retry. The executed owner observations
+below exercise these boundaries with controlled provider responses.
 
 ### Executed production-service characterization
 
@@ -236,7 +236,8 @@ Their scope complements the Delivery owner result above without replacing it.
 This Implementation reconciliation changes no executable behavior. The current
 Delivery characterization and quality observations above supersede the README's
 older owner result for this contribution. No live inference, native confinement,
-hosted CI, configured review or actual staging integration is established here. Later host assessment and delivery must identify the reviewed
-final tree, recovered parent, capture, acceptance, required evidence, independent
+hosted CI, configured review or actual staging integration is established here.
+Later host assessment and delivery must identify the reviewed final tree, recovered
+parent, capture, acceptance, required evidence, independent
 verdict, single PR and confirmed provider merge. Only the host performs assembled
 verification and delivery.
