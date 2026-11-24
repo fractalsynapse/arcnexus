@@ -364,6 +364,8 @@ function returningContext(
   const clarification = before.find((path) => path.endsWith('-clarification.json'));
   assert.ok(clarification);
   const index = retainedIndex(task, before);
+  const direct = [...data.evidence, clarification, ...enriched.evidence, index];
+  const evidence = [...new Set([...direct, ...before.slice(start)])];
   return {
     ...data,
     assignment: {
@@ -371,15 +373,7 @@ function returningContext(
       clarifications: [{ question: 'Which exact context survives?', answer }],
       completedRounds: enriched.assignment.completedRounds,
     },
-    evidence: [
-      ...new Set([
-        ...data.evidence,
-        clarification,
-        ...enriched.evidence,
-        index,
-        ...before.slice(start),
-      ]),
-    ],
+    evidence,
   };
 }
 
