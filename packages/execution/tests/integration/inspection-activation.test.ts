@@ -167,7 +167,11 @@ for (const [component, activity, actor, names, web] of [
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
     const selection = { component, activity };
-    const initial = fixture.agent.prepareRequest(task.capture, selection, context(task));
+    const enriched = enrichment(task);
+    const initial = fixture.agent.prepareRequest(task.capture, selection, {
+      ...context(task),
+      ...enriched,
+    });
     assertSelected(initial, actor, names, web);
     await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
     const view = fixture.agent.prepareRequest(
