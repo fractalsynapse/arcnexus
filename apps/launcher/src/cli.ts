@@ -33,6 +33,13 @@ const [command, api, mcp] = process.argv.slice(2);
 if (command === 'configure' && api && mcp && process.argv.length === 5) {
   configure(api, mcp);
   console.log('Launcher endpoints configured');
+} else if (command === 'doctor' && process.argv.length === 3) {
+  const context = new Context();
+  await context.use(launcherPlugin);
+  const endpoints = settings();
+  const health = await context.launcher.doctor(endpoints.api, endpoints.mcp);
+  console.log(JSON.stringify(health));
+  if (!health.api || !health.mcp) process.exitCode = 1;
 } else if (command === 'start' && api && process.argv.length === 4) {
   const context = new Context();
   await context.use(launcherPlugin);
@@ -47,6 +54,6 @@ if (command === 'configure' && api && mcp && process.argv.length === 5) {
   await connect(command, api);
 } else {
   throw new Error(
-    'Use configure <api-url> <mcp-url>, register (code via stdin), status, connect [assignments.json], or start <assignment.json>',
+    'Use configure <api-url> <mcp-url>, doctor, register (code via stdin), status, connect [assignments.json], or start <assignment.json>',
   );
 }

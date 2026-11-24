@@ -45,6 +45,10 @@ async function exerciseCatalog(url: string, principal: string) {
   assert.equal(project.revision, revision);
   assert.equal(project.credential, undefined);
   assert.deepEqual(await (await fetch(url + '/projects')).json(), { entries: [project] });
+  assert.deepEqual(await (await fetch(url + '/projects/' + project.id + '/reachability')).json(), {
+    reachable: true,
+    revision,
+  });
   const spec = await (await fetch(url + '/projects/platform/openapi.json')).json();
   assert.equal(spec.paths['/projects'].post.operationId, 'projects.create');
   const other = await fetch(url + '/projects', {

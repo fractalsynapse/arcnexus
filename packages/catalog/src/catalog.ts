@@ -37,6 +37,24 @@ export class Catalog {
     return rows[0];
   }
 
+  /** Test the configured path without changing the selected revision. */
+  async probe(operator: string, id: string) {
+    const project = await this.binding(operator, id);
+    if (!project) throw new Error('Project unavailable');
+    try {
+      const observed = await this.verify(
+        { remote: project.remote, credential: project.credential ?? undefined },
+        operator,
+      );
+      return { reachable: true, revision: revisionSchema.parse(observed.revision) } as const;
+    } catch {
+      return {
+        reachable: false,
+        diagnostic: 'Repository verification failed for this project binding.',
+      } as const;
+    }
+  }
+
   /** Verify repository access, then create or restore its selection record. */
   async add(operator: string, input: ImportProject) {
     const repository = importSchema.parse(input);
@@ -62,12 +80,9 @@ export class Catalog {
 
   /** Verify the new revision and compare-and-set the selected project's last observed revision. */
   async refresh(operator: string, id: string, expectedRevision: string) {
-    const current = await this.database.query<Project & { credential: string | null }>(
-      'SELECT id, remote, revision, credential FROM arcnexus_catalog.projects WHERE operator=$1 AND id=$2 AND revision=$3 AND NOT retired',
-      [operator, id, expectedRevision],
-    );
-    const project = current.rows[0];
-    if (!project) throw new Error('Project revision changed');
+    const project = await this.binding(operator, id);
+    if (!project || project.revision !== expectedRevision)
+      throw new Error('Project revision changed');
     const verified = await this.verify(
       { remote: project.remote, credential: project.credential ?? undefined },
       operator,
@@ -80,6 +95,15 @@ export class Catalog {
     );
     if (!saved.rows[0]) throw new Error('Project revision changed');
     return saved.rows[0];
+  }
+
+  /** Read the trusted provider binding without exposing it to callers. */
+  private async binding(operator: string, id: string) {
+    const { rows } = await this.database.query<Project & { credential: string | null }>(
+      'SELECT id, remote, revision, credential FROM arcnexus_catalog.projects WHERE operator=$1 AND id=$2 AND NOT retired',
+      [operator, id],
+    );
+    return rows[0];
   }
 
   /** Retire the selection and preserve the project identifier and evidence correlation. */

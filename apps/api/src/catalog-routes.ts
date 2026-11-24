@@ -4,16 +4,17 @@ export const catalogRoutes = [
   { method: 'GET', path: '/projects', operation: 'list', status: 200 },
   { method: 'POST', path: '/projects', operation: 'create', status: 201 },
   { method: 'GET', path: '/projects/{id}', operation: 'read', status: 200 },
+  { method: 'GET', path: '/projects/{id}/reachability', operation: 'probe', status: 200 },
   { method: 'PATCH', path: '/projects/{id}', operation: 'update', status: 200 },
   { method: 'DELETE', path: '/projects/{id}', operation: 'delete', status: 200 },
 ] as const;
 
 export function matchCatalog(method: string, path: string) {
-  const id = /^\/projects\/([^/]+)$/.exec(path)?.[1];
+  const id = /^\/projects\/([^/]+)(?:\/reachability)?$/.exec(path)?.[1];
   const route = catalogRoutes.find(
     (candidate) =>
       candidate.method === method &&
-      (candidate.path === path || (id && candidate.path === '/projects/{id}')),
+      (candidate.path === path || (id && candidate.path.replace('{id}', id) === path)),
   );
   return route && { route, id };
 }
@@ -90,6 +91,7 @@ function catalogOperation(
       },
     };
   if (operation === 'update') return { ...spec, parameters: [projectId, expectedRevision] };
-  if (operation === 'delete' || operation === 'read') return { ...spec, parameters: [projectId] };
+  if (operation === 'delete' || operation === 'read' || operation === 'probe')
+    return { ...spec, parameters: [projectId] };
   return spec;
 }

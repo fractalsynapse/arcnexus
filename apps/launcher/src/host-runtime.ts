@@ -13,12 +13,15 @@ import { textDigest } from '../../../packages/foundation/src/index.js';
 import { hostAssignmentSchema, type HostAssignment } from './host-assignment.js';
 import { docker, verifyHostImage } from './docker-host-image.js';
 import { hostPolicyIdentity, matchesHostPolicy, withHostPolicy } from './host-policy.js';
+import { provisionHostCheckout } from './host-workspace.js';
+import { waitForHost } from './host-readiness.js';
 
 const checkout = '/var/lib/arcnexus/repository';
 const storage = '/var/lib/arcnexus/state';
 const credential = '/run/arcnexus/credential';
 const assignment = '/run/arcnexus/assignment.json';
 const database = '/run/arcnexus/database';
+const githubKey = '/run/arcnexus/github-app.pem';
 
 function regularPath(path: string, directory: boolean) {
   const stat = lstatSync(path);
@@ -63,11 +66,20 @@ function verifyCheckout(config: HostAssignment) {
 }
 
 function prepare(config: HostAssignment) {
+  mkdirSync(config.storage, { recursive: true, mode: 0o700 });
   regularPath(config.storage, true);
   if (regularPath(config.database, false).mode & 0o077)
     throw new Error('Hosted database credential must be private');
+  provisionHostCheckout(config, (directory) => regularPath(directory, true));
   verifyCheckout(config);
   credentials(config);
+  if (config.github && regularPath(config.github.privateKeyFile, false).mode & 0o077)
+    throw new Error('Hosted GitHub App credential must be private');
+  return writeAssignment(config);
+}
+
+/** Persist the credential reference and exact source and runtime across Host replacement. */
+function writeAssignment(config: HostAssignment) {
   const runtime = { image: config.image.approvedImage, base: config.image.base };
   const file = join(
     config.storage,
@@ -79,6 +91,7 @@ function prepare(config: HostAssignment) {
     directory: checkout,
     storage,
     runtime,
+    githubAppId: config.github?.appId,
   });
   try {
     writeFileSync(file, value, { mode: 0o600, flag: 'wx' });
@@ -104,6 +117,7 @@ function containerArguments(config: HostAssignment, file: string, name: string, 
     name,
     '--network',
     config.network,
+    ...(config.egress ? ['--network', 'name=' + config.egress + ',gw-priority=1'] : []),
     '--label',
     'io.arcnexus.assignment=' + binding,
     '--env',
@@ -121,6 +135,7 @@ function containerArguments(config: HostAssignment, file: string, name: string, 
     ...mount(config.credentials, credential),
     ...mount(config.database, database, true),
     ...mount(file, assignment, true),
+    ...(config.github ? mount(config.github.privateKeyFile, githubKey, true) : []),
   ];
 }
 
@@ -140,7 +155,7 @@ async function existingHost(name: string) {
       Id: string;
       Image: string;
       Config: { Labels: Record<string, string> };
-      State: { Running: boolean };
+      State: { Running: boolean; StartedAt: string };
     } & Parameters<typeof matchesHostPolicy>[0]
   >;
   return rows[0];
@@ -153,6 +168,7 @@ export async function startHost(input: unknown) {
     Internal: boolean;
   }>;
   if (!network[0]?.Internal) throw new Error('Host requires the private platform data network');
+  if (config.egress) await verifyEgress(config.egress);
   const image = await verifyHostImage(config.image);
   const file = prepare(config);
   const name = 'arcnexus-host-' + textDigest(config.credentials);
@@ -166,11 +182,22 @@ export async function startHost(input: unknown) {
     )
       throw new Error('Existing Host belongs to a different approved assignment');
     if (!existing.State.Running) await docker('start', name);
+    await waitForHost(existing.Id);
     return { id: existing.Id, name };
   }
   const args = containerArguments(config, file, name, binding);
   const id = await withHostPolicy(async (policy) =>
     (await docker('run', '-d', ...policy, ...args, image)).trim(),
   );
+  await waitForHost(id);
   return { id, name };
+}
+
+async function verifyEgress(network: string) {
+  const [bridge] = JSON.parse(await docker('network', 'inspect', network)) as Array<{
+    Internal: boolean;
+    Driver: string;
+  }>;
+  if (!bridge || bridge.Internal || bridge.Driver !== 'bridge')
+    throw new Error('Host outbound access requires a dedicated Docker bridge');
 }

@@ -1,4 +1,5 @@
 import type { RuntimeImage } from '../../foundation/src/runtime-image.js';
+import type { GitHubCredential } from '../../collaboration/src/index.js';
 import type { Architecture } from '../../architecture/src/index.js';
 import type { Coordination } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
@@ -24,6 +25,7 @@ export class Execution {
     private readonly coordination: Coordination,
     private readonly storage: string,
     private readonly runtime?: RuntimeImage,
+    private readonly github?: GitHubCredential,
   ) {}
 
   /** Resolve the binding and capture the repository before claiming the project lane. */
@@ -73,7 +75,11 @@ export class Execution {
       parent || input.standing || input.planning || input.architecture || input.scope === 'refine',
     );
     const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
-    return { ...preflight(selected, this.storage, fresh), runtime: this.runtime };
+    return {
+      ...preflight(selected, this.storage, fresh),
+      runtime: this.runtime,
+      github: this.github,
+    };
   }
 
   /** Adopt an approved guide at a safe activity boundary once its required handlers are available. */

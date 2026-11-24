@@ -25,6 +25,7 @@ function Projects() {
     projects,
     select: (project) => setSession({ ...session, project }),
     selected: session.project?.id,
+    token: session.token,
     error,
     change,
   });
@@ -61,12 +62,13 @@ function useProjects() {
 interface ProjectRowsProps {
   projects: Project[];
   selected?: string;
+  token?: string;
   select(project?: Project): void;
   change(project?: Project, remote?: string): Promise<void>;
   error?: string;
 }
 
-function ProjectRows({ projects, selected, select, change, error }: ProjectRowsProps) {
+function ProjectRows({ projects, selected, token, select, change, error }: ProjectRowsProps) {
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -82,27 +84,60 @@ function ProjectRows({ projects, selected, select, change, error }: ProjectRowsP
     h(
       'ul',
       { className: 'arc-management-list', 'aria-label': 'Projects' },
-      projects.map((project) => projectRow(project, () => void change(project))),
+      projects.map((project) =>
+        h(ProjectRow, { key: project.id, project, token, remove: () => void change(project) }),
+      ),
     ),
     h(ImportProject, { submit: (remote) => change(undefined, remote) }),
     error && h('p', { role: 'alert' }, error),
   );
 }
 
-function projectRow(project: Project, remove: () => void) {
+type Probe = { reachable: true; revision: string } | { reachable: false; diagnostic: string };
+
+interface ProjectRowProps {
+  project: Project;
+  token?: string;
+  remove(): void;
+}
+
+function ProjectRow({ project, token, remove }: ProjectRowProps) {
+  const { probe, checking, check } = useProjectProbe(project.id, token);
+  const { remote } = project;
+  const name = projectName(project);
   return h(ManagementRow, {
-    key: project.id,
-    title: h(
-      'a',
-      { href: project.remote, target: '_blank', rel: 'noreferrer' },
-      projectName(project),
-    ),
-    detail: project.remote,
-    status: { label: 'Revision verified', tone: 'positive' },
+    title: h('a', { href: remote, target: '_blank', rel: 'noreferrer' }, name),
+    detail: probe?.reachable === false ? probe.diagnostic : remote,
+    status: {
+      label: probe ? (probe.reachable ? 'Reachable' : 'Unavailable') : 'Revision verified',
+      tone: probe?.reachable === false ? 'neutral' : 'positive',
+    },
     action: h(
-      Button,
-      { 'aria-label': 'Remove ' + projectName(project), onClick: remove },
-      'Remove',
+      'div',
+      { className: 'arc-platform-stack' },
+      h(
+        Button,
+        { disabled: checking || !token, onClick: () => void check() },
+        checking ? 'Checking…' : 'Check reachability',
+      ),
+      h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
     ),
   });
+}
+
+function useProjectProbe(id: string, token?: string) {
+  const [probe, setProbe] = useState<Probe>();
+  const [checking, setChecking] = useState(false);
+  async function check() {
+    if (!token) return;
+    setChecking(true);
+    try {
+      setProbe(await api<Probe>('/projects/' + id + '/reachability', token));
+    } catch {
+      setProbe({ reachable: false, diagnostic: 'The gateway could not check this project.' });
+    } finally {
+      setChecking(false);
+    }
+  }
+  return { probe, checking, check };
 }

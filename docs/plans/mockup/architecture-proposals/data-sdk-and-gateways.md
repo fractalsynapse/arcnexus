@@ -29,12 +29,19 @@ PostgreSQL, and DB setup with distinct runtime grants. Use the
 [Host and launcher setup](../../../../apps/host/README.md) to run workflows
 with isolated checkouts, provider fixtures and a dedicated PostgreSQL role.
 
-Remaining release evidence includes a live private GitHub import, native
-ARM64 execution, and a matched deployment restore with the original Host
-volumes. Live qualification governs external launcher publication and
-operator-facing activation for real projects. In-progress bare Run receipts
-from before aggregate checkpointing still require trusted reconciliation
-if they have a closed round and no retained result.
+Isolated AMD64 verification covered live private GitHub import and refresh,
+launcher enrollment and checkout provisioning, and two scoped checks in a
+derivative Host. The Host startup probe verifies confinement before it can
+claim work. An optional trusted egress network lets the Host reach its
+providers, and its GitHub App grants are scoped to the assigned repository.
+
+A scripted Plan completed through the REST gateway against PostgreSQL.
+The real Codex-backed steward delivery and matched deployment recovery on
+the current build are still acceptance items. Native ARM64 is deferred.
+Live qualification governs external launcher publication and operator-facing
+activation for real projects. In-progress bare Run receipts from before
+aggregate checkpointing require trusted reconciliation if they have a closed
+round and no retained result.
 
 
 ## Browser command acceptance

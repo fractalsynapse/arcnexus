@@ -4,7 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { parse } from 'yaml';
 import type { RuntimeImage } from '../../foundation/src/runtime-image.js';
 import type { Capture } from '../../architecture/src/index.js';
-import { GitHub } from '../../collaboration/src/index.js';
+import { GitHub, type GitHubCredential } from '../../collaboration/src/index.js';
 import { git } from './git.js';
 
 export interface HostConfig {
@@ -15,6 +15,7 @@ export interface HostConfig {
   fresh: boolean;
   storage: string;
   runtime?: RuntimeImage;
+  github?: GitHubCredential;
 }
 
 /** Refuse dirty or unverified source and executable settings before writing a lane row. */

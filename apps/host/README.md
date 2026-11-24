@@ -42,6 +42,26 @@ isolated verification. Real-project activation requires the existing
    launcher's control. Use `start <assignment.json>` with one object to
    start the Host explicitly.
 
+Use `arcnexus-launcher doctor` to verify the configured API and MCP
+endpoints. When `source` names an existing verified local checkout, the launcher
+copies its committed Git objects into an absent `checkout` and checks out the
+pinned revision. The Host installs its Codex binding if the checkout has none.
+Launch returns after the container passes its sandbox and database startup
+checks.
+
+For a fixture that uses real external providers, create a dedicated Docker
+bridge ending in `_outbound` and set the trusted assignment's `egress` to its
+name. The Host also joins its internal data network. Scope any outbound firewall
+rules to the trusted provider endpoints. Project checks use a separate network
+namespace regardless of the Host's egress network.
+
+Set the optional `github` assignment to
+`{"appId":"<client-id>","privateKeyFile":"/private/host-app.pem"}` to
+authenticate GitHub operations. Use a private file outside the project and
+install the App on the approved targets. The Host obtains repository-scoped
+tokens and supplies them to Git and GitHub CLI. Keep gateway read tokens and
+the Host's publication key on their respective trusted mounts.
+
 The Host holds its journal lane until committed completion or trusted
 reconciliation. Restarting the same scoped container lets its new init
 process reconcile the former process and resume retained work. A changed

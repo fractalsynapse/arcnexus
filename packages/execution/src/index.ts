@@ -331,7 +331,7 @@ export class HostTask implements TaskSession {
   /** Select the captured GitHub provider for this task. */
   provider(signal: AbortSignal) {
     this.journal.assertWriter();
-    return new GitHub(this.capture.source.remote, signal);
+    return new GitHub(this.capture.source.remote, signal, this.config.github);
   }
 
   /** Verify the local commit and retained worktree before any new push. */

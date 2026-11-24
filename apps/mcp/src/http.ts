@@ -8,7 +8,10 @@ export function operatorMcpHttp(
   authenticate: ResolveDataScope<Request>,
 ) {
   return async (request: Request) => {
-    const match = /^\/projects\/([^/]+)\/mcp$/.exec(new URL(request.url).pathname);
+    const path = new URL(request.url).pathname;
+    if (path === '/health' && request.method === 'GET')
+      return new Response(null, { status: 204, headers: { 'X-ArcNexus-Service': 'mcp' } });
+    const match = /^\/projects\/([^/]+)\/mcp$/.exec(path);
     if (!match) return new Response(null, { status: 404 });
     let project: string;
     try {

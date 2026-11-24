@@ -13,11 +13,17 @@ export const hostAssignmentSchema = z.strictObject({
   remote: z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\.git$/),
   revision,
   checkout: local,
+  source: local.optional(),
   storage: local,
   credentials: local,
   seedCredentials: local.optional(),
   database: local,
   network: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*_data$/),
+  egress: z
+    .string()
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*_outbound$/)
+    .optional(),
+  github: z.strictObject({ appId: z.string().min(1), privateKeyFile: local }).optional(),
   image: z.discriminatedUnion('source', [
     z.strictObject({
       ...base,

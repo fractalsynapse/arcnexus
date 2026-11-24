@@ -31,3 +31,15 @@ test('a Host assignment requires approved image identities and local absolute pa
   const image = { ...assignment.image, ref: 'registry.test/arc/host:latest' };
   assert.equal(hostAssignmentSchema.safeParse({ ...assignment, image }).success, false);
 });
+
+test('trusted assignments can provision a local source and opt into separate Host egress', () => {
+  const hosted = {
+    ...assignment,
+    source: '/fixture/source',
+    egress: 'arcnexus_outbound',
+    github: { appId: 'fixture', privateKeyFile: '/secrets/github.pem' },
+  };
+  assert.deepEqual(hostAssignmentSchema.parse(hosted), hosted);
+  assert.equal(hostAssignmentSchema.safeParse({ ...hosted, egress: 'host' }).success, false);
+  assert.equal(hostAssignmentSchema.safeParse({ ...hosted, source: './source' }).success, false);
+});

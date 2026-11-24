@@ -44,6 +44,11 @@ const tools = {
     operation: 'read',
     description: 'Read a verified project binding.',
   },
+  probe_project: {
+    resource: 'projects',
+    operation: 'probe',
+    description: 'Verify repository reachability without changing the selected revision.',
+  },
   import_project: {
     resource: 'projects',
     operation: 'create',

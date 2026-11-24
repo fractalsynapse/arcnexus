@@ -34,9 +34,16 @@ export const catalogDataPlugin = {
 };
 
 const id = z.strictObject({ id: z.uuid() });
+const reachability = z.discriminatedUnion('reachable', [
+  z.strictObject({ reachable: z.literal(true), revision: revisionSchema }),
+  z.strictObject({ reachable: z.literal(false), diagnostic: z.string() }),
+]);
 
 function catalogReads(catalog: Catalog) {
   return {
+    probe: dataOperation(id, reachability, (scope, input) =>
+      catalog.probe(scope.principal, input.id),
+    ),
     list: dataOperation(
       z.strictObject({}),
       z.strictObject({ entries: z.array(projectSchema) }),

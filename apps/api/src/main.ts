@@ -17,8 +17,10 @@ await context.use(
 );
 const builds = launcherBuilds(process.env.ARC_LAUNCHER_ARTIFACTS);
 const { url } = await serveApi(
-  (request) => {
+  async (request) => {
     const path = new URL(request.url).pathname;
+    if (path === '/health' && request.method === 'GET')
+      return new Response(null, { status: 204, headers: { 'X-ArcNexus-Service': 'api' } });
     if (path === '/launcher-builds' || path.startsWith('/launcher-builds/')) return builds(request);
     if (path.startsWith('/capacity-providers')) return context.capacityApi(request);
     return context.api(request);

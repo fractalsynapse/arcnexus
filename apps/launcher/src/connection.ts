@@ -5,6 +5,21 @@ import type { z } from 'zod';
 
 export type Identity = z.output<typeof providerIdentitySchema>;
 
+/** Confirm that both configured endpoints lead to the expected gateway. */
+export async function doctor(api: string, mcp: string) {
+  const [apiReady, mcpReady] = await Promise.all([health(api, 'api'), health(mcp, 'mcp')]);
+  return { api: apiReady, mcp: mcpReady };
+}
+
+async function health(url: string, service: string) {
+  try {
+    const response = await fetch(endpoint(url) + '/health', { redirect: 'error' });
+    return response.status === 204 && response.headers.get('X-ArcNexus-Service') === service;
+  } catch {
+    return false;
+  }
+}
+
 /** Exchange the setup code for a credential that can only start work after admission. */
 export async function enroll(api: string, code: string, name: string, platform: string) {
   const result = await fetch(endpoint(api) + '/capacity-providers/enrollment', {

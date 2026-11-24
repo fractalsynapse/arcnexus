@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, verify } from 'node:crypto';
 import test from 'node:test';
-import { githubAppReadToken } from '../../src/index.js';
+import { githubAppPublication, githubAppReadToken } from '../../src/index.js';
 
 export const suite = {
   owner: 'collaboration',
@@ -25,6 +25,24 @@ test('a GitHub App resolves the exact repository installation and mints a Conten
     'https://api.github.com/app/installations/456/access_tokens',
   ]);
   assert.equal(token, 'installation-fixture');
+});
+
+test('publication credentials stay scoped to the Host repository', async () => {
+  const token = githubAppPublication(remote, {
+    appId: '123',
+    privateKey: key,
+    async request(_url, init) {
+      if (init?.method === 'GET') return Response.json({ id: 456 });
+      const { repositories, permissions } = JSON.parse(String(init?.body));
+      assert.deepEqual(repositories, ['private-fixture']);
+      assert.equal(permissions.contents, 'write');
+      assert.equal(permissions.pull_requests, 'write');
+      assert.equal(permissions.issues, 'write');
+      return Response.json({ token: 'publication-fixture' });
+    },
+  });
+  assert.equal(await token(remote), 'publication-fixture');
+  await assert.rejects(token('https://github.com/example/other.git'), /another repository/);
 });
 
 function installedApp(requests: string[]): typeof fetch {

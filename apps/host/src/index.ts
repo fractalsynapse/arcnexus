@@ -1,5 +1,6 @@
 import type { RuntimeImage } from '../../../packages/foundation/src/runtime-image.js';
 import type { Context } from 'cordis';
+import type { GitHubCredential } from '../../../packages/collaboration/src/index.js';
 export { runHostedRequest } from './request-worker.js';
 export { serveHostedRequests } from './request-loop.js';
 import {
@@ -27,12 +28,13 @@ export function hostPlugin(storage = applicationStorage()) {
 /** Use a PostgreSQL writer with the same Execution and Workflow plugins. */
 export function hostedHostPlugin(
   storage: string,
-  assignment: HostedProject & { runtime?: RuntimeImage },
+  assignment: HostedProject & { runtime?: RuntimeImage; github?: GitHubCredential },
 ) {
   return mountHost(
     storage,
     (context) => context.provide('coordination', hostedProjectCoordination(assignment)),
     assignment.runtime,
+    assignment.github,
   );
 }
 
@@ -40,10 +42,11 @@ function mountHost(
   storage: string,
   coordination: (context: Context) => unknown,
   runtime?: RuntimeImage,
+  github?: GitHubCredential,
 ) {
   return async (context: Context) => {
     await context.use(coordination);
-    await context.use(executionPluginFor(storage, runtime));
+    await context.use(executionPluginFor(storage, runtime, github));
     await context.use(plannerPlugin);
     await context.use(nativeWorkflow);
   };
