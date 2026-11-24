@@ -304,7 +304,11 @@ function failedCommand(fixture: PreparedRecoveryFixture, evidence: readonly stri
   const log = review.assignment.checks[1]!.log;
   assert(evidence.includes(log));
   const text = readFileSync(log, 'utf8');
-  assert(text.endsWith('Recovered required command rejected baseline:\ninvalid recovered baseline\n  café detail\n'));
+  assert(
+    text.endsWith(
+      'Recovered required command rejected baseline:\ninvalid recovered baseline\n  café detail\n',
+    ),
+  );
   const history = fixture.observed.at(-1)! as Array<{ verdict?: { kind: string } }>;
   assert.equal(history.findLast((event) => event.verdict)?.verdict?.kind, 'blocked');
   return { log, text };
