@@ -99,8 +99,11 @@ export class RefusedWorkflow {
       },
       direction: {
         plan: async () => ({
-          focus: { purpose: 'Recover refused correction', objectives: [], constraints: [] },
-          milestones: [{ ...correction, id: 'original' }],
+          kind: 'plan',
+          plan: {
+            focus: { purpose: 'Recover refused correction', objectives: [], constraints: [] },
+            milestones: [{ ...correction, id: 'original' }],
+          },
         }),
         revise: async (session, plan, feedback, abort) =>
           direct(this.agent, session, abort, { plan, feedback }),
