@@ -7,8 +7,11 @@ class InspectionProvider {
   /** Capture stdin, argv, guidance visibility, tool discovery and refused effect attempts. */
   async run() {
     const input = readFileSync(0, 'utf8');
-    const tools = await this.rpc('tools/list');
-    const refusals = await this.refuse(tools.tools);
+    const tools = input.includes('Fixture mode: no MCP requests')
+      ? undefined
+      : await this.rpc('tools/list');
+    const refusals =
+      tools && !input.includes('Fixture mode: listing only') ? await this.refuse(tools.tools) : [];
     this.emit({
       type: 'fixture.inspection',
       input,
