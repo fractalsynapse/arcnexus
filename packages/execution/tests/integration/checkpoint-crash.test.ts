@@ -63,11 +63,14 @@ function abandoned(scenario: RecoveryScenario, ack: Acknowledgment, t: TestConte
   assert.equal(scenario.observe('show', '7-task:first.txt'), 'first');
   assert.equal(scenario.observe('status', '--porcelain'), '');
   const worktrees = scenario.observe('worktree', 'list', '--porcelain');
-  t.diagnostic(JSON.stringify({
-    beforeRestart: { taskID: ack.taskID, receipt: ack.receipt, artifact: ack.artifact,
-      worktree: ack.worktree, bytes: readFileSync(join(ack.worktree, 'first.txt'), 'utf8'),
-      committedBytes: scenario.observe('show', '7-task:first.txt'), worktrees },
-  }));
+  t.diagnostic(
+    JSON.stringify({
+      beforeRestart: ack,
+      bytes: readFileSync(join(ack.worktree, 'first.txt'), 'utf8'),
+      committedBytes: scenario.observe('show', '7-task:first.txt'),
+      worktrees,
+    }),
+  );
   assert(worktrees.includes(ack.worktree));
 }
 
