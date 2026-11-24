@@ -7,12 +7,12 @@ import { PublicationProvider } from '../fixtures/publication-provider.js';
 export const suite = { owner: 'delivery', level: 'integration', tags: ['regression'] } as const;
 
 type AcceptanceEvent = {
-    verification?: {
-      identity: import('../../../verification/src/index.js').VerificationIdentity;
-      checks: Array<{ id: string; status: number }>;
-    };
-    verdict?: import('../../../verification/src/index.js').Verdict;
+  verification?: {
+    identity: import('../../../verification/src/index.js').VerificationIdentity;
+    checks: Array<{ id: string; status: number }>;
   };
+  verdict?: import('../../../verification/src/index.js').Verdict;
+};
 
 /** Secure actual checked bytes and a human answer before starting final publication. */
 async function prepared(fixture: PreparedRecoveryFixture) {
