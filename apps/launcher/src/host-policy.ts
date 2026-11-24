@@ -5,6 +5,7 @@ import mobyDefault from '../policy/moby-default.json' with { type: 'json' };
 import { textDigest } from '../../../packages/foundation/src/index.js';
 
 const namespaceFlags = 0x7e020000;
+const codexFilesystemNamespaces = 0x78020000;
 const newUserNamespace = 0x10000000;
 const sharedOrMoveMount = 0x102000; // MS_SHARED | MS_MOVE
 
@@ -13,18 +14,18 @@ export const hostSeccomp = {
   ...mobyDefault,
   syscalls: [
     ...mobyDefault.syscalls,
-    {
+    ...[namespaceFlags, codexFilesystemNamespaces].map((namespaces) => ({
       names: ['clone'],
       action: 'SCMP_ACT_ALLOW',
       args: [
         {
           index: 0,
           value: namespaceFlags,
-          valueTwo: namespaceFlags,
+          valueTwo: namespaces,
           op: 'SCMP_CMP_MASKED_EQ',
         },
       ],
-    },
+    })),
     {
       names: ['unshare'],
       action: 'SCMP_ACT_ALLOW',

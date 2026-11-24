@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
-import { matchesHostPolicy, withHostPolicy } from '../../src/host-policy.js';
+import { hostSeccomp, matchesHostPolicy, withHostPolicy } from '../../src/host-policy.js';
 
 export const suite = { owner: 'launcher-app', level: 'unit', tags: ['host'] } as const;
 
@@ -52,4 +52,26 @@ test('Docker receives the bundled Host policy and reuse refuses broader settings
     }),
     false,
   );
+});
+
+test('Host permits the Codex filesystem sandbox and the project check namespace sets', () => {
+  const cloneRules = hostSeccomp.syscalls.filter(
+    (rule) => rule.action === 'SCMP_ACT_ALLOW' && rule.names.includes('clone'),
+  );
+  for (const flags of [0x78020000, 0x7e020000]) {
+    assert.ok(
+      cloneRules.some(
+        (rule) =>
+          'args' in rule &&
+          rule.args?.some(
+            (arg) =>
+              arg.index === 0 &&
+              arg.op === 'SCMP_CMP_MASKED_EQ' &&
+              arg.value === 0x7e020000 &&
+              'valueTwo' in arg &&
+              arg.valueTwo === flags,
+          ),
+      ),
+    );
+  }
 });

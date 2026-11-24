@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { Agent } from '../../../agent/src/index.js';
 import { Execution, type HostTask } from '../../src/index.js';
 import { GitHub } from '../../../collaboration/src/index.js';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { parse } from 'yaml';
@@ -166,6 +166,27 @@ for (const [component, activity, actor, names, web] of [
     );
   });
 }
+
+test('native activation mounts the target of a symlinked Codex executable', async (t) => {
+  const fixture = new InspectionFixture(t);
+  const executable = join(fixture.root, '.git', 'inspection-provider.mjs');
+  const alias = join(fixture.root, '.git', 'codex');
+  symlinkSync(executable, alias);
+  fixture.write('.git/bindings.yaml', { schemaVersion: 1, tools: { codex: alias } });
+  const task = await fixture.open(t);
+  await task.activate(
+    fixture.agent,
+    { component: 'work', activity: 'testing' },
+    context(task),
+    new AbortController().signal,
+  );
+  const probe = readProbe(task);
+  assert.equal(probe.executable, alias);
+  const filesystem = probe.args.find((arg) => arg.startsWith('permissions.arcnexus.filesystem='));
+  assert.ok(filesystem);
+  assert.ok(filesystem.includes(JSON.stringify(executable) + '="read"'));
+  assert.ok(!filesystem.includes(JSON.stringify(alias) + '="read"'));
+});
 
 test('inspection is repeatable with named live inputs and no admission, provider or worktree effects', (t) => {
   const fixture = new InspectionFixture(t);

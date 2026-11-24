@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Start the Codex filesystem sandbox inside the confined Docker Host and support Codex installations with a symlinked executable (#706).
+
 - Equip the Docker Host with Bubblewrap overlay support and require the launcher's scoped runtime policy before it can claim work (#706).
 
 - Match the React frame to the approved layout settings and header action, and theme open selectors and tooltips across the app (#704).

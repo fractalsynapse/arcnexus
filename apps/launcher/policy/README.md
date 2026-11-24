@@ -5,10 +5,11 @@ runs as a non-root user with an empty capability bounding set and Linux
 no-new-privileges. Project images, remote assignments and operations cannot
 select the container's security profile.
 
-- The launcher starts with Moby's default seccomp profile and adds the namespace
-  flags Bubblewrap uses, the mount and pivot calls for its private filesystem,
-  and detached unmount. It returns `ENOSYS` for `mount_setattr` so Bubblewrap
-  uses the AppArmor-mediated remount fallback.
+- The launcher starts with Moby's default seccomp profile and adds the exact
+  namespace sets for project checks and Codex's filesystem sandbox. It also
+  permits the mount and pivot calls for the private filesystem and detached
+  unmount. It returns `ENOSYS` for `mount_setattr` so Bubblewrap uses the
+  AppArmor-mediated remount fallback.
 - AppArmor permits the private filesystem's mount types and destinations.
   Docker's masked procfs mounts prevent Bubblewrap from mounting procfs for
   its inner PID namespace. The launcher selects the container-specific
