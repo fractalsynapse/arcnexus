@@ -255,7 +255,9 @@ test('staging moves again after outdated PR recovery obtains fresh acceptance', 
   assert.equal(provider.merged, 0);
   const calls = provider.calls.slice(offset);
   assert.equal(calls[0], 'observe PR 7-task');
-  assert(calls.indexOf('observe branch 7-task') < calls.findIndex((call) => call.startsWith('push ')));
+  assert(
+    calls.indexOf('observe branch 7-task') < calls.findIndex((call) => call.startsWith('push ')),
+  );
   assert(!calls.some((call) => call.startsWith('merge ') || call.startsWith('open ')));
   preserved(fixture, original);
 });
