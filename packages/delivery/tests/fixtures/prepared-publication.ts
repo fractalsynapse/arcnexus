@@ -75,19 +75,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     const agent = new Agent(this.architecture);
     return new Workflow({
       execution: this.execution(execution),
-      direction: {
-        track,
-        plan: async () => {
-          this.plans += 1;
-          return { kind: 'plan', plan: recoveryPlan() };
-        },
-        revise: async (_session, plan, feedback) => {
-          assert(this.repairFailedCheck && feedback.kind === 'rejection');
-          assert(plan);
-          const correction = { ...plan.milestones[0]!, id: 'correct-required-check' };
-          return { kind: 'plan', plan: { ...plan, milestones: [...plan.milestones, correction] } };
-        },
-      },
+      direction: this.direction(),
       agent: {
         execute: async (session, milestone) => {
           const task = hostTask(session);
@@ -102,6 +90,23 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         this.retainArtifacts();
         return outcome;
       });
+  }
+
+  /** Preserve the accepted plan and append only accountable correction after rejection. */
+  private direction(): WorkflowServices['direction'] {
+    return {
+        track,
+        plan: async () => {
+          this.plans += 1;
+          return { kind: 'plan', plan: recoveryPlan() };
+        },
+        revise: async (_session, plan, feedback) => {
+          assert(this.repairFailedCheck && feedback.kind === 'rejection');
+          assert(plan);
+          const correction = { ...plan.milestones[0]!, id: 'correct-required-check' };
+          return { kind: 'plan', plan: { ...plan, milestones: [...plan.milestones, correction] } };
+        },
+    };
   }
 
   /** Retain each native source artifact once in the enclosing check log before temporary cleanup. */
@@ -201,11 +206,18 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       async (...[agent, selection, data, cancellation]: Parameters<HostTask['activate']>) => {
         if (selection.component !== 'reviewer')
           return activate(agent, selection, data, cancellation);
-        const assignment = data.assignment as {
+        this.reviews.push(structuredClone(data));
+        return this.reviewReply(task, data);
+      },
+    );
+  }
+
+  /** Model a favorable verdict or an evidence-linked rejection of the actual failed command. */
+  private reviewReply(task: HostTask, data: Parameters<HostTask['activate']>[2]) {
+    const assignment = data.assignment as {
           accepted: Record<string, unknown>;
           checks: Array<{ status: number; log: string }>;
         };
-        this.reviews.push(structuredClone(data));
         const failed = assignment.checks.find(({ status }) => status !== 0);
         if (this.repairFailedCheck && failed)
           return {
@@ -224,8 +236,6 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
           criteria: [criterion.id],
           evidence: task.evidence,
         };
-      },
-    );
   }
 
   /** Interrupt after the answer is durable but before activity completion is acknowledged. */
