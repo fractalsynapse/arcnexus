@@ -315,10 +315,18 @@ export class RecoveryScenario {
   /** Leave the real acknowledged checkpoint and workspace untouched by normal cleanup. */
   private exitAfterAcknowledgment(task: HostTask, receipt: unknown): never {
     const artifact = task.store('acknowledged-edit.json', JSON.stringify(receipt));
-    writeFileSync(join(dirname(this.root), 'acknowledgment.json'), JSON.stringify({
-      receipt, artifact, taskID: task.taskID, issue: task.issue,
-      branch: task.branch, worktree: task.worktree, node: process.version,
-    }));
+    writeFileSync(
+      join(dirname(this.root), 'acknowledgment.json'),
+      JSON.stringify({
+        receipt,
+        artifact,
+        taskID: task.taskID,
+        issue: task.issue,
+        branch: task.branch,
+        worktree: task.worktree,
+        node: process.version,
+      }),
+    );
     process.exit(73);
   }
 
