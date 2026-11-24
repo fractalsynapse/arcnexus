@@ -58,7 +58,7 @@ export class ReviewedTask {
     this.source();
     this.task = this.open(t);
     this.rejection = this.reviewEvidence();
-    this.recordReview();
+    if (retainedReview) this.recordReview();
     t.after(() => {
       this.task.close();
       rmSync(this.directory, { recursive: true, force: true });
