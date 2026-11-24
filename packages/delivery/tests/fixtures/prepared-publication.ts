@@ -15,6 +15,8 @@ import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round
 
 import { verify } from '../../../verification/src/index.js';
 import { integrate, resume } from '../../src/index.js';
+import { assertExecutedChecks } from './recovery-evidence.js';
+import type { CheckResult } from '../../../execution/src/check.js';
 
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
 export const continuationQuestion = 'Which newly captured requirement governs this continuation?';
@@ -216,8 +218,9 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   private reviewReply(task: HostTask, data: Parameters<HostTask['activate']>[2]) {
     const assignment = data.assignment as {
           accepted: Record<string, unknown>;
-          checks: Array<{ status: number; log: string }>;
+          checks: CheckResult[];
         };
+        assertExecutedChecks(task, assignment.checks);
         const failed = assignment.checks.find(({ status }) => status !== 0);
         if (this.repairFailedCheck && failed)
           return {
