@@ -9,9 +9,10 @@ This document changes no contract, ownership or acceptance.
 
 ## Current characterization scope: issue #720
 
-This assessment is source inspection at captured revision
-`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`, before any behavioral change for
-`prepared-recovery-current-evidence`. The earlier correction intents and run
+This assessment characterizes the existing behavior at captured revision
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8` for
+`prepared-recovery-current-evidence`. Testing observed the existing assertions
+passing; no product or fixture correction was needed. The earlier correction intents and run
 results below retain their original dates, identities and evidence scope.
 They are history, not a claim that their failures remain present or that their
 passes apply to this candidate.
@@ -59,14 +60,12 @@ pending activities, and obtains a merge tree before recording a new checkpoint.
 These source observations explain the refusal boundary; they are not execution
 results.
 
-### Evidence still needed
+### Current execution and remaining boundaries
 
-At this documentation position there is no current mapped behavioral or owner
-quality result for this milestone. The next Testing activity should execute the
-existing prepared and caller recovery scenarios as expected-pass characterization.
-Retain the actual assertion failures if any; add coverage only where an accepted
-observation is absent. No new behavioral defect or intended red is established
-by this source review.
+Testing executed the existing prepared and caller recovery scenarios as
+expected-pass characterization. The run 145 observations below supersede the
+initial documentation position's missing execution evidence. They establish no
+new behavioral defect or intended red.
 
 Concrete limits of the existing fixture are visible: its provider publication
 lookup always returns no PR, and final Verification and Delivery return controlled
@@ -80,11 +79,10 @@ hosted PR. Those observations belong to the accepted subsequent
 `retained-publication-current-evidence` (Delivery) milestones. They remain required
 before the host's assembled acceptance and delivery.
 
-Implementation should reconcile the actual characterization results and replace
-stale pending descriptions only with supported observations. Applicable formatting,
-lint, strict types and build evidence must identify the assessed candidate,
-resolved operation, cwd, exit and complete log; historical quality results below
-do not establish current quality. Native confinement, live inference, hosted CI,
+Implementation reconciles these passing observations without a behavioral edit.
+The current formatting, lint, strict types and build observations below identify
+the assessed checkpoint, resolved operation, cwd, exit and complete log;
+older quality results remain historical. Native confinement, live inference, hosted CI,
 configured review and confirmed staging integration remain distinct observations.
 
 ### Simplification ledger
@@ -95,6 +93,92 @@ configured review and confirmed staging integration remain distinct observations
   earlier red and passing observations without manufacturing another defect.
 - Keep required-check execution and publication reconciliation with their accepted
   owning milestones and the single later host assessment and delivery.
+
+## Executed prepared recovery characterization: run 145
+
+Issue #720 retains branch `720-task` from staging base
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. Documentation checkpoint
+`2d0591cde71cfe0d30bf714d001a4288415218a5` records the initial assessment;
+Testing changed no source or fixture. The prepared test and fixture hashes above
+therefore identify the exercised sources. The caller-consumer test SHA-256 is
+`bd60d3afbc8608e315dfcf30e44704203f867b4b4433c3009aa76091adc87808`;
+the caller-authority test SHA-256 is
+`f99f7d8f351f6f166d89e1e779ba046f69613ab1bb2cdb7fdc472ccd4afd4d8b`.
+
+Complete evidence is retained outside source under invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`.
+The mapped retained-evidence index and `145-1-run-timeline.jsonl` resolve the
+following filenames. Completed MCP observations `145-243`, `145-262`,
+`145-265`, `145-268` and `145-271-mcp-observation.json` retain exact
+commands, argv, cwd, statuses, durations and full log paths.
+
+| Observation | Resolved command | Exit | Complete log |
+| --- | --- | --- | --- |
+| Owner characterization | `npm test -- execution` | 0 | `145-242-owner-tests.log` |
+| Owner formatting | `npm run format:check -- execution` | 0 | `145-261-owner-format.log` |
+| Owner lint | `npm run lint -- execution` | 0 | `145-264-owner-lint.log` |
+| Strict repository types | `npm run check` | 0 | `145-267-repository-types.log` |
+| Repository build | `npm run build` | 0 | `145-270-repository-build.log` |
+
+These observations ran from the captured `runs/145/worktree` directory.
+The owner log SHA-256 is
+`be99360a2acb4d847354998be190b663585c7463e92931af84dd8b896482db75`.
+It records 268 tests: 252 passed, none failed or cancelled, and 16 skipped.
+Prepared cases 161–169, caller-consumer cases 38–42 and caller-authority case 33
+all passed without skips. Skipped native cases remain gaps.
+
+For `prepared-retained-continuity`, the executed prepared cases compare the
+original task, issue, accepted criterion, historical base and original receipt,
+the exact multiline answer and its canonical artifact. They retain one original
+prompt and acknowledged edit. Identical MCP edit replay returns the original
+receipt after staging moves; a distinct recovered question supplies its complete
+new answer while retaining the original. The caller-consumer cases also compare
+complete original and recovered answers and readable artifacts through public
+hold reconstruction. Dropped, paraphrased, duplicated or transient answers would
+fail these assertions.
+
+For `prepared-current-authority`, the resumed executable receives the new
+capture revision, original criterion, owner roots and discovered MCP tools;
+the captured acceptance includes both original and newly declared check IDs.
+Changed ownership and missing pending activity refuse before another provider
+activation or checkpoint movement. The authority case retains its original
+host decision but cannot retrieve it under the recovered capture; changed
+proposal/question and changed review candidate, owner evidence or acceptance
+produce distinct scopes. This establishes decision and conversation identity,
+not a fresh independent verdict or attempted publication.
+
+For `prepared-conflict-preservation`, compatible recovery retains both Git
+ancestries and the checked blob. Conflicting additions preserve the checkpoint,
+branch head and both sides' exact bytes; the refusal contains the complete real
+`merge-tree` output, including stage entries and messages. Repeated staging
+movement requires a second captured base before activation. Abandoned-workspace
+coverage reconstructs a clean workspace explicitly and observes its removal
+before a fresh attempt; it is not an abrupt process-exit demonstration.
+
+The enclosing owner log embeds complete `controlledRecoveryArtifact` diagnostics
+with original paths, SHA-256 and text before temporary cleanup. These preserve
+prepared requests, controlled provider events, MCP results and answer artifacts
+after the temporary projects disappear. The executable provider reports its
+actual argv, cwd, executable and Node runtime in those observations. It is a
+deterministic fixture, not a live Codex model. Research and legacy supplier
+records in the consumer scenarios are explicitly seeded; actual unanswered
+clarification gates retain their required action and evidence.
+
+For `prepared-evidence-accurate`, this is passing characterization of existing
+product behavior and a documentation reconciliation. No new production code,
+fixture, recovery path or state store was introduced. Earlier run 125 red and
+passing results, run 129 rejection and run 136 checkpoint observations retain
+their historical scope. Statements of correction intent below describe those
+earlier baselines; they do not leave the currently passing caller regression
+pending.
+
+Required final-check execution and independent assessment remain with
+`recovered-acceptance-current-evidence`; uncertain or outdated PR reconciliation
+remains with `retained-publication-current-evidence`. Neither is a prerequisite
+for this unchanged Execution characterization's quality checks. Their results
+and the later host assessment are required for assembled acceptance. No live
+inference, native confinement, hosted CI, configured PR review or confirmed
+staging merge is established by this Execution fixture.
 
 ## Retain the task and its history
 
