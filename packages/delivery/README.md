@@ -114,9 +114,9 @@ reused merge commit distinct from the accepted head. Call-sequence assertions
 show that refused paths do not perform prohibited subsequent effects.
 
 The earlier documentation correction cited that retained owner result and source
-inspection. This documentation reconciliation changes no executable behavior. These deterministic tests
-use simulated providers without live GitHub access. They establish owner behavior,
-not a real delivery or hosted gate outcomes.
+inspection. This documentation reconciliation changes no executable behavior.
+These deterministic tests use simulated providers without live GitHub access.
+They establish owner behavior, not a real delivery or hosted gate outcomes.
 
 Separate real-delivery evidence remains required under DE-4, DE-6 and DE-14:
 independent acceptance of the exact candidate tree, configured hosted CI and review,
