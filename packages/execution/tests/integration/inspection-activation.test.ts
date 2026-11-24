@@ -89,12 +89,10 @@ function context(task: HostTask, review = false) {
 /** Author registered round inputs independently of the request builder and retain the live timeline. */
 function enrichment(task: HostTask) {
   task.listen(() => undefined);
-  const report = task.store(
-    'prior-round.md',
-    'Distinct prior round finding\nFinal authored line.\n',
-  );
+  const report = task.store('prior-round.md', 'Prior round finding\nFinal line.\n');
   const round = { invocation: 'prior-invocation', round: '1' as const, report };
-  task.record({ completedRound: { ...round, findings: [], measurements: [], evidence: [report] } });
+  const completedRound = { ...round, findings: [], measurements: [], evidence: [report] };
+  task.record({ completedRound });
   task.record({
     completedRound: {
       ...round,
@@ -391,10 +389,7 @@ async function returningScenario(t: TestContext) {
   questionBinding(fixture);
   const task = await fixture.open(t);
   const enriched = enrichment(task);
-  const explicit = task.store(
-    'explicit.log',
-    'Original supplied observation\nFinal original line.\n',
-  );
+  const explicit = task.store('explicit.log', 'Original observation\nFinal original line.\n');
   const data = context(task);
   data.assignment.instructions += '\nFixture mode: clarification';
   data.evidence.push(explicit);
