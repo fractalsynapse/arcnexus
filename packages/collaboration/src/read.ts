@@ -1,7 +1,7 @@
 import { setImmediate } from 'node:timers/promises';
 
 const transientReadFailure =
-  /\bi\/o timeout\b|connection reset by peer|TLS handshake timeout|temporary failure in name resolution|\(HTTP (?:500|502|503|504)\)/i;
+  /\bi\/o timeout\b|connection reset by peer|TLS handshake timeout|temporary failure in name resolution|(?:^|\()HTTP (?:500|502|503|504)(?:\)|:)/im;
 
 /** Retry a read after a known transient provider failure while respecting task cancellation. */
 export async function retryRead<T>(read: () => Promise<T>, signal: AbortSignal): Promise<T> {

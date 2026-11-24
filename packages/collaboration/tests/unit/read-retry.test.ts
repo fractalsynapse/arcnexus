@@ -61,6 +61,19 @@ test('a temporarily unavailable GitHub comparison is retried as a read', async (
   assert.equal(attempts, 2);
 });
 
+test('GitHub CLI service unavailability while checking a PR is retried as a read', async () => {
+  let attempts = 0;
+  const result = await retryRead(async () => {
+    if (++attempts === 1)
+      throw new Error(
+        'Command failed: /usr/bin/gh pr view\nHTTP 503: 503 Service Unavailable (https://api.github.com/graphql)\n',
+      );
+    return 'checked';
+  }, new AbortController().signal);
+  assert.equal(result, 'checked');
+  assert.equal(attempts, 2);
+});
+
 test('transient provider reads recover without an application retry-count ceiling', async () => {
   let calls = 0;
   const result = await retryRead(async () => {
