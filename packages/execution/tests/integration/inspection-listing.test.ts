@@ -10,14 +10,20 @@ export const suite = { owner: 'execution', level: 'integration', tags: ['regress
 
 /** Read durable journal metadata, never substituting transient observer details for retention. */
 function timeline(task: HostTask): Array<any> {
-  return task.readFile(task.timeline!).text.trim().split('\n').map((line) => JSON.parse(line));
+  return task.readFile(task.timeline!).text
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
 }
 
 /** Read the actual provider receipt from its complete registered transcript. */
 function receipt(task: HostTask) {
   const path = task.evidence.find((path) => path.endsWith('codex.jsonl'));
   assert.ok(path);
-  const frames = readFileSync(path, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+  const frames = readFileSync(path, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
   const probe = frames.find((frame) => frame.type === 'fixture.inspection');
   assert.ok(probe, 'the controlled executable must complete its actual MCP exchange');
   return probe;
@@ -26,9 +32,10 @@ function receipt(task: HostTask) {
 /** Require complete response bytes, attribution and call identity inside the native journal span. */
 function assertRetained(task: HostTask, view: AgentInspection, tools: unknown) {
   const events = timeline(task);
-  const listings = events.filter((event) =>
-    event.observation.operation?.name === 'tools/list' &&
-    event.observation.operation.phase === 'completed',
+  const listings = events.filter(
+    (event) =>
+      event.observation.operation?.name === 'tools/list' &&
+      event.observation.operation.phase === 'completed',
   );
   assert.equal(listings.length, 1, 'retain the single requested tools/list response');
   const event = listings[0]!;
