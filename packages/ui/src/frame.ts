@@ -1,4 +1,4 @@
-import { createElement as h, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createElement as h, useEffect, useState, useSyncExternalStore } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import brandMark from '../assets/brain.webp';
 import wordmark from '../assets/wordmark.webp';
@@ -7,22 +7,25 @@ import { ColorSchemes } from './schemes.js';
 import { Dialog, IconButton } from './controls.js';
 import { themeStyle, useTheme } from './theme.js';
 import type { CommandBinding, Workspace } from './types.js';
+import type { UiRegistry } from './index.js';
+import { PageLayout } from './page-layout.js';
 
 type Navigate = (event: MouseEvent<HTMLElement>, path: string) => void;
 
 interface FrameProps {
-  workspaces: readonly Workspace[];
+  registry: UiRegistry;
   commands: CommandBinding;
 }
 
 /** Compose the reusable navigation, theme, workspace region and command dock. */
-export function WebFrame({ workspaces, commands }: FrameProps) {
+export function WebFrame({ registry, commands }: FrameProps) {
+  const workspaces = useSyncExternalStore(registry.subscribe, registry.workspaces);
   const [path, navigate] = useWorkspacePath();
   const theme = useTheme();
   const [schemes, setSchemes] = useState(false);
   const home = workspaces[0];
   const workspace = workspaces.find((item) => item.path === path) ?? home;
-  if (!home || !workspace) throw new Error('The web frame requires a registered home workspace.');
+  if (!home || !workspace) return null;
   return h(
     'div',
     { className: 'arc-app', style: themeStyle(theme.current, theme.defaultColors) },
@@ -33,7 +36,7 @@ export function WebFrame({ workspaces, commands }: FrameProps) {
       openSchemes: () => setSchemes(true),
     }),
     h(Navigation, { workspaces, active: workspace.path, navigate }),
-    h(PageLayout, { workspace, path }),
+    h(PageLayout, { key: workspace.path, workspace, path }),
     h(CommandPanel, { binding: commands, workspace: workspace.path }),
     h(
       Dialog,
@@ -107,22 +110,6 @@ function Navigation({
         label,
       ),
     ),
-  );
-}
-
-/** Focus the destination heading while retaining normal anchor behavior for modified clicks. */
-export function PageLayout({ workspace, path }: { workspace: Workspace; path: string }) {
-  const heading = useRef<HTMLHeadingElement>(null);
-  useLayoutEffect(() => {
-    document.title = workspace.label + ' · ArcNexus';
-    heading.current?.focus({ preventScroll: true });
-    window.scrollTo(0, 0);
-  }, [path, workspace.label]);
-  return h(
-    'main',
-    { className: 'arc-main' },
-    h('h1', { ref: heading, tabIndex: -1 }, workspace.label),
-    workspace.content,
   );
 }
 

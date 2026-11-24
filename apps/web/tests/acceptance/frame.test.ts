@@ -64,16 +64,31 @@ test('built shell exposes all workspaces and reports unavailable live commands',
     await (await view(page, 'Architect')).evaluate((element) => document.activeElement === element),
     true,
   );
-  await page.reload();
-  await page.getByRole('heading', { name: 'Architect', level: 1 }).waitFor();
+  await assertReloadedWorkspace(page, 'Architect');
   await view(page, 'Release');
   assert.equal(
     await navigation.getByRole('link', { name: 'Release' }).getAttribute('aria-current'),
     'page',
   );
-  assert.equal(await button(page, 'Refine').count(), 0);
+  assert.equal(await button(page, 'Refine').isDisabled(), true);
   await assertUnavailableMetrics(page);
 });
+
+async function assertReloadedWorkspace(page: Page, name: string) {
+  await page.reload();
+  await page.getByRole('heading', { name, level: 1 }).waitFor();
+  const images = await page.getByRole('link', { name: 'ArcNexus home' }).locator('img').all();
+  assert.equal(images.length, 2);
+  for (const image of images) {
+    assert.equal(
+      await image.evaluate(async (element: HTMLImageElement) => {
+        await element.decode();
+        return element.naturalWidth > 0;
+      }),
+      true,
+    );
+  }
+}
 
 async function assertUnavailableMetrics(page: Page) {
   await button(page, 'Round metrics').click();
@@ -191,3 +206,125 @@ test('mobile starts compact and puts the operation row above the optional instru
   await button(page, 'Collapse command panel').click();
   assert.equal(await page.getByLabel('Operation', { exact: true }).isVisible(), false);
 });
+
+test('header tooltips clear the narrow navigation and menu options share the field theme', async (t) => {
+  const page = await browser.newPage({
+    viewport: { width: 360, height: 660 },
+    colorScheme: 'dark',
+  });
+  t.after(() => page.close());
+  await page.goto(application.url + '/release/');
+  await button(page, 'Color schemes').hover();
+  const tooltip = page.locator('.arc-tooltip:popover-open').filter({ hasText: /^Color schemes$/ });
+  await tooltip.waitFor();
+  assert.equal(
+    await tooltip.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const hints = element as HTMLElement;
+      hints.style.pointerEvents = 'auto';
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.bottom - 2);
+      hints.style.removeProperty('pointer-events');
+      return hit === element;
+    }),
+    true,
+  );
+  await button(page, 'Color schemes').click();
+  await assertStyledMenu(page, 'Site background and default scheme');
+  await button(page, 'Close').click();
+  await button(page, 'Expand command panel').click();
+  await assertStyledMenu(page, 'Operation');
+});
+
+async function assertStyledMenu(page: Page, label: string) {
+  const select = page.getByLabel(label, { exact: true });
+  await select.click();
+  await page.locator('select:open').waitFor();
+  assert.equal(
+    await select.evaluate((element) => {
+      const trigger = getComputedStyle(element);
+      const menu = getComputedStyle(element, '::picker(select)');
+      return (
+        menu.appearance === 'base-select' &&
+        menu.backgroundColor === trigger.backgroundColor &&
+        menu.borderColor === trigger.borderColor
+      );
+    }),
+    true,
+  );
+  await page.keyboard.press('Escape');
+}
+
+test('page settings save layout and panel placement, while plugin contributions update mounted pages', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  await page.getByRole('heading', { name: 'Planning data' }).waitFor();
+  await page.evaluate(() => window.frameFixture.toggleDisplay?.());
+  const evidence = page.getByRole('heading', { name: 'Supporting evidence' });
+  await evidence.waitFor();
+  await page.evaluate(() => window.frameFixture.toggleDisplay?.());
+  await evidence.waitFor({ state: 'detached' });
+
+  await configureLayout(page);
+  await assertResize(page);
+  await page.reload();
+  await page.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
+  assert.equal(
+    await page.locator('.arc-layout-column').nth(2).getByText('Planner outcome').count(),
+    1,
+  );
+  await assertMobilePanelOrder(page);
+});
+
+async function assertMobilePanelOrder(page: Page) {
+  await page.setViewportSize({ width: 360, height: 800 });
+  assert.equal(await page.getByRole('separator').count(), 0);
+  assert.deepEqual(
+    await page.locator('.arc-display').evaluateAll((panels) =>
+      panels
+        .map((panel) => [panel.textContent?.trim(), panel.getBoundingClientRect().top])
+        .sort((left, right) => Number(left[1]) - Number(right[1]))
+        .map(([label]) => label),
+    ),
+    ['Planner outcomeFixture outcome', 'Planning data'],
+  );
+}
+
+async function configureLayout(page: Page) {
+  const settings = button(page, 'Plan page settings');
+  await settings.click();
+  assert.equal(await page.getByRole('heading', { name: 'Planning data' }).count(), 0);
+  await page.getByRole('radio', { name: 'Three columns' }).check();
+  await button(page, 'Remove Planner outcome').click();
+  await button(page, 'Available panels').click();
+  await button(page, 'Add Planner outcome').click();
+  await button(page, 'Active panels').click();
+  await assertStyledMenu(page, 'Planner outcome region');
+  await page.getByLabel('Planner outcome region').selectOption({ label: 'Right' });
+  await button(page, 'Reorder Planner outcome').press('ArrowUp');
+  await button(page, 'Save').click();
+  assert.equal(await settings.evaluate((element) => document.activeElement === element), true);
+  await settings.click();
+  await page.getByRole('radio', { name: 'One column' }).check();
+  await button(page, 'Close').click();
+  assert.equal(await page.locator('.arc-layout-column').count(), 3);
+}
+
+async function assertResize(page: Page) {
+  const splitter = page.getByRole('separator', { name: 'Resize columns 1 and 2' });
+  const opacity = () =>
+    splitter.evaluate((element) => getComputedStyle(element, '::before').opacity);
+  assert.equal(await opacity(), '0');
+  const bounds = await splitter.boundingBox();
+  assert.ok(bounds);
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + 40);
+  assert.equal(await opacity(), '1');
+  const before = await splitter.getAttribute('aria-valuenow');
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width / 2 + 42, bounds.y + 40);
+  await page.mouse.up();
+  const afterDrag = await splitter.getAttribute('aria-valuenow');
+  assert.notEqual(afterDrag, before);
+  await splitter.press('ArrowRight');
+  assert.notEqual(await splitter.getAttribute('aria-valuenow'), afterDrag);
+}

@@ -120,27 +120,65 @@ body {
   background: transparent;
 }
 .arc-icon-wrap {
-  position: relative;
   display: inline-flex;
   align-self: start;
 }
 .arc-tooltip {
-  display: none;
-  position: absolute;
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-inline-size: calc(100vw - 2 * var(--pad));
   pointer-events: none;
-  z-index: 1;
-  inset-block-start: calc(100% + 4px);
-  inset-inline-end: 0;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--quiet);
   color: var(--ink);
   padding: 4px 7px;
-  white-space: nowrap;
   font-size: 12px;
 }
-.arc-icon-wrap:has(button:is(:hover, :focus-visible)) > .arc-tooltip {
-  display: block;
+.arc-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@supports (appearance: base-select) {
+  .arc-app select,
+  .arc-app select::picker(select) {
+    appearance: base-select;
+  }
+  .arc-app select::picker(select) {
+    inline-size: anchor-size(width);
+    min-inline-size: 0;
+    margin-block: 4px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 5px 16px #0b182a32;
+    font: inherit;
+    overscroll-behavior: contain;
+  }
+  .arc-app select::picker-icon {
+    color: var(--muted);
+    align-self: center;
+  }
+  .arc-app select:open::picker-icon {
+    rotate: 180deg;
+  }
+  .arc-app select option {
+    padding: 7px 9px;
+    border-radius: 5px;
+    color: var(--ink);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .arc-app select option:is(:hover, :focus, :checked) {
+    background: var(--tint);
+    color: var(--link);
+  }
 }
 .arc-header,
 .arc-nav {
@@ -237,12 +275,6 @@ body {
 }
 .arc-command-panel[data-collapsed] {
   padding-block: 2px;
-}
-.arc-command-panel .arc-tooltip {
-  inset: auto auto calc(100% + 4px) 0;
-}
-.arc-command-panel .arc-icon-wrap:last-child .arc-tooltip {
-  inset-inline: auto 0;
 }
 .arc-command-panel .arc-icon-button {
   inline-size: 30px;
@@ -367,7 +399,7 @@ body {
   border-top: 1px solid var(--line);
   padding-block-start: 12px;
 }
-.arc-scheme-control {
+.arc-field-with-prefix {
   display: flex;
   gap: 8px;
   align-items: center;

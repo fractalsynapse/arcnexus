@@ -5,7 +5,9 @@ Open the loopback URL printed by the server. To reuse a local port, pass it
 with `npm run web -- <port>`.
 
 Review the header and pinned workspace navigation, named site schemes,
-responsive command panel, and round metrics dialog. The frame reports
+responsive command panel, and round metrics dialog. The page gear opens
+layout settings, where workspaces use one shared editor for registered
+panels, desktop columns, placement and mobile display order. The frame reports
 commands and metrics as unavailable until workspace integration.
 
 For browser acceptance, install Chromium with

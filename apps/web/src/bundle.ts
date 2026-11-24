@@ -15,6 +15,7 @@ export async function bundleWeb(entry: string, output: string) {
     define: { 'process.env.NODE_ENV': '"production"' },
     loader: { '.webp': 'file' },
     assetNames: 'assets/[name]-[hash]',
+    publicPath: '/',
     logLevel: 'warning',
   });
   await copyFile(resolve('apps/web/index.html'), resolve(output, 'index.html'));

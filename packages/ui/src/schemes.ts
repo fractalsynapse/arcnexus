@@ -1,5 +1,7 @@
-import { createElement as h, useId, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import { createElement as h, useState } from 'react';
+import type { FormEvent } from 'react';
+import { Button } from './controls.js';
+import { SelectField } from './fields.js';
 import { ColorPicker, Swatch } from './color-picker.js';
 import { colorFields, contrastWarning, type Palette, type Scheme, type Theme } from './theme.js';
 
@@ -14,38 +16,18 @@ interface SelectProps {
 
 /** Present a named scheme and its three swatches using a shared selector. */
 export function SchemeSelect(props: SelectProps) {
-  const id = useId();
   const displayed = props.schemes.find((scheme) => scheme.id === props.selected);
-  return h(
-    'div',
-    { className: 'arc-field' },
-    h('label', { htmlFor: id }, props.label),
-    h(
-      'span',
-      { className: 'arc-scheme-control' },
-      h(SchemeSwatches, { colors: displayed?.colors ?? props.defaultColors }),
-      h(SchemeOptions, { ...props, id, selected: displayed?.id ?? '' }),
-    ),
-  );
-}
-
-function SchemeOptions({
-  id,
-  selected,
-  schemes,
-  defaultName,
-  choose,
-}: SelectProps & { id: string }) {
-  return h(
-    'select',
-    {
-      id,
-      value: selected,
-      onChange: ({ currentTarget }: ChangeEvent<HTMLSelectElement>) => choose(currentTarget.value),
-    },
-    h('option', { value: '' }, defaultName),
-    schemes.map((scheme) => h('option', { key: scheme.id, value: scheme.id }, scheme.name)),
-  );
+  const options = [
+    { value: '', label: props.defaultName },
+    ...props.schemes.map(({ id, name }) => ({ value: id, label: name })),
+  ];
+  return h(SelectField<string>, {
+    label: props.label,
+    value: displayed?.id ?? '',
+    options,
+    onChange: props.choose,
+    prefix: h(SchemeSwatches, { colors: displayed?.colors ?? props.defaultColors }),
+  });
 }
 
 function SchemeSwatches({ colors }: { colors: Palette }) {
@@ -109,7 +91,7 @@ function SchemeSave({ feedback }: { feedback: string }) {
     'div',
     { className: 'arc-form-actions' },
     h('span', { role: 'status' }, feedback),
-    h('button', { type: 'submit', className: 'arc-button arc-solid' }, 'Save scheme'),
+    h(Button, { type: 'submit', className: 'arc-solid' }, 'Save scheme'),
   );
 }
 

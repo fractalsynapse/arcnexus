@@ -1,7 +1,7 @@
 import { createElement as h, useId, useState, useSyncExternalStore } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Dialog, IconButton, useMedia } from './controls.js';
-import { Icon } from './icons.js';
+import { Button, Dialog, IconButton, useMedia } from './controls.js';
+import { SelectField } from './fields.js';
 import { operations } from './types.js';
 import type { CommandBinding, CommandRequest, CommandState, Operation } from './types.js';
 
@@ -122,17 +122,14 @@ function Composer(props: ComposerProps) {
     { className: 'arc-composer', onSubmit: send },
     h(InstructionField, { instruction, setInstruction }),
     h(OperationField, { options, operation, setSelection }),
-    h(
-      'button',
-      {
-        type: 'submit',
-        className: 'arc-button arc-solid arc-send',
-        disabled: !enabled,
-        'aria-label': 'Send',
-        title: 'Send',
-      },
-      h(Icon, { name: 'send' }),
-    ),
+    h(Button, {
+      icon: 'send',
+      type: 'submit',
+      className: 'arc-solid arc-send',
+      disabled: !enabled,
+      'aria-label': 'Send',
+      title: 'Send',
+    }),
     error && h('p', { role: 'alert', className: 'arc-composer-error' }, error),
   );
 }
@@ -193,22 +190,13 @@ function OperationField({
   operation: Operation;
   setSelection: (value: Operation) => void;
 }) {
-  const id = useId();
-  return h(
-    'div',
-    { className: 'arc-operation arc-field' },
-    h('label', { htmlFor: id }, 'Operation'),
-    h(
-      'select',
-      {
-        id,
-        value: operation,
-        onChange: ({ currentTarget }: ChangeEvent<HTMLSelectElement>) =>
-          setSelection(currentTarget.value as Operation),
-      },
-      options.map((item) => h('option', { key: item, value: item }, operations[item])),
-    ),
-  );
+  return h(SelectField<Operation>, {
+    label: 'Operation',
+    value: operation,
+    className: 'arc-operation',
+    onChange: setSelection,
+    options: options.map((value) => ({ value, label: operations[value] })),
+  });
 }
 
 async function sendRequest(

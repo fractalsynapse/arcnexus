@@ -1,17 +1,19 @@
 import { createElement as h, useEffect, useId, useRef, useState } from 'react';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { Icon, type IconName } from './icons.js';
+import { Tooltip } from './tooltip.js';
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: IconName;
   label: string;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** Provide the visible tooltip and accessible name for a compact action. */
 export function IconButton({ icon, label, className = '', ...props }: IconButtonProps) {
   return h(
-    'span',
-    { className: 'arc-icon-wrap' },
+    Tooltip,
+    { label },
     h(
       'button',
       {
@@ -22,7 +24,21 @@ export function IconButton({ icon, label, className = '', ...props }: IconButton
       },
       h(Icon, { name: icon }),
     ),
-    h('span', { className: 'arc-tooltip', 'aria-hidden': true }, label),
+  );
+}
+
+/** Render the standard text action, with an optional icon. */
+export function Button({
+  icon,
+  children,
+  className,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon?: IconName }) {
+  return h(
+    'button',
+    { type: 'button', className: ['arc-button', className].filter(Boolean).join(' '), ...props },
+    icon && h(Icon, { name: icon }),
+    children,
   );
 }
 
@@ -49,11 +65,7 @@ export function Dialog({ title, open, onClose, children }: DialogProps) {
       'div',
       { className: 'arc-dialog-header' },
       h('h2', { id: heading }, title),
-      h(
-        'button',
-        { type: 'button', className: 'arc-button', onClick: () => dialog.current?.close() },
-        'Close',
-      ),
+      h(Button, { onClick: () => dialog.current?.close() }, 'Close'),
     ),
     open && h('div', { className: 'arc-dialog-body' }, children),
   );

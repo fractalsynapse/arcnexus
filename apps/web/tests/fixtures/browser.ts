@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import type { Context } from 'cordis';
 import type {
   CommandBinding,
   CommandRequest,
@@ -10,6 +11,7 @@ interface Fixture {
   requests: CommandRequest[];
   wait: () => void;
   fail: () => void;
+  toggleDisplay?: () => Promise<void>;
 }
 
 declare global {
@@ -57,4 +59,49 @@ window.frameFixture = {
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Fixture root is missing');
-await mountWeb(root, binding, h('div', { style: { minBlockSize: '200vh' } }));
+const context = await mountWeb(root, binding, {
+  inject: ['ui'],
+  /** Contribute fixture displays through the same registry as workspace features. */
+  apply(context: Context) {
+    context.effect(() =>
+      context.ui.registerDisplay('/plan/', {
+        id: 'metrics',
+        label: 'Planning data',
+        content: h('div', { style: { minBlockSize: '200vh' } }),
+      }),
+    );
+    context.effect(() =>
+      context.ui.registerDisplay('/plan/', {
+        id: 'outcome',
+        label: 'Planner outcome',
+        defaultColumn: 1,
+        content: 'Fixture outcome',
+      }),
+    );
+  },
+});
+
+let remove: (() => Promise<void>) | undefined;
+window.frameFixture.toggleDisplay = async () => {
+  if (remove) {
+    await remove();
+    remove = undefined;
+    return;
+  }
+  const contribution = await context.use({
+    inject: ['ui'],
+    /** Attach a display after the frame has mounted to verify plugin lifecycle. */
+    apply(context: Context) {
+      context.effect(() =>
+        context.ui.registerDisplay('/plan/', {
+          id: 'evidence',
+          label: 'Supporting evidence',
+          content: 'Fixture evidence',
+        }),
+      );
+    },
+  });
+  remove = async () => {
+    await contribution.dispose();
+  };
+};
