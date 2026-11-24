@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Retain exact requested activity-scoped MCP `tools/list` responses in activation evidence, including requested empty lists, without invoking project handlers or fabricating unrequested listings (#716).
+
 - Reference complete refinement round reports from agent requests so subsequent rounds can start without replaying every historical evidence index (#712).
 
 - Expose the approved Host's pinned Playwright browsers to offline repository checks through the existing read-only toolchain mount (#709).
