@@ -124,11 +124,12 @@ The platform issues a single-use registration code. A launcher exchanges
 it over the configured API for a pending identity. An authenticated
 operator admits or declines that identity. Admission binds a scoped
 credential to the provider and enables authenticated reconnect. Show
-online only during an authenticated connection and use a text label
-alongside the status indicator. Revocation disconnects the provider,
-invalidates its credential and removes it from new launch routing. Host
-and Coordination retain execution evidence and reconcile any interrupted
-work through the existing writer rules. Capacity metrics are deferred.
+green for an authenticated online connection, gray for offline and amber
+for pending admission. Pair each indicator with a text label. Revocation
+disconnects the provider, invalidates its credential and removes it from
+new launch routing. Host and Coordination retain execution evidence and
+reconcile any interrupted work through the existing writer rules. Capacity
+metrics are deferred.
 
 ### Project directories and Codex sign-in
 
@@ -270,13 +271,14 @@ and agent tool inputs. [Current GitHub adapter](../../../../packages/collaborati
 ### Select the active project
 
 Open **Project manager** from the folder icon between Connection manager
-and Color schemes. Put the active project selector first. The catalog
-accepts public and private GitHub repositories. Use an authorized provider
-binding for private repositories. Show reachability and its diagnostic
-separately from a project's registration. Start the review with the
-verified ArcNexus repository. Removing a catalog entry removes it from
-selection and routing while retaining associated Git and run evidence.
-Project metrics are deferred.
+and Color schemes. Put the active project selector first. Show the
+selected project beside the heading on each workspace. Provide an add
+action for public and private GitHub repositories and a remove action on
+each entry. Use an authorized provider binding for private repositories.
+Show reachability and its diagnostic separately from registration. Start
+the review with the verified ArcNexus repository. Removing a catalog entry
+removes it from selection and routing while retaining associated Git and
+run evidence. Project metrics are deferred.
 
 Carry the selected project identity through workspace navigation, API
 requests, command submissions and event subscriptions. Keep per-project
@@ -289,6 +291,10 @@ Both managers use the shared React frame, dialog, theme and controls.
 Trusted Cordis contributions register the header actions. Compose common
 layouts and controls through React props, children and hooks so feature
 components reuse the same presentation and behavior. [Existing dialog](../../../../packages/ui/src/controls/dialog.ts)
+
+The local React preview illustrates these flows with fixture registration
+and project entries. Launcher publishing and live enrollment and
+reachability checks belong to the platform implementation. [Platform setup preview](../../../../apps/web/README.md#platform-setup-design-preview)
 
 ## Concurrent API and MCP requests
 
