@@ -9,7 +9,7 @@ process.stdout.write(
     baseline,
   }) + '\n',
 );
-if (baseline !== 'durable evidence\n') {
+if (process.argv[2] === 'current' && baseline !== 'durable evidence\n') {
   process.stderr.write('Recovered required command rejected baseline:\n' + baseline);
   process.exitCode = 1;
 }
