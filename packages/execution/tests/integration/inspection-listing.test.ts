@@ -67,6 +67,7 @@ for (const activity of ['testing', 'documentation', 'empty'] as const) {
   test('EX-26: retain requested activity tool listing for work/' + activity, async (t) => {
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
+    task.listen(() => undefined);
     const handler = t.mock.method(ActivationTools.prototype, 'invoke', async () =>
       assert.fail('tools/list dispatched a project handler'),
     );
@@ -87,6 +88,7 @@ for (const activity of ['testing', 'empty'] as const) {
   test('EX-26: do not fabricate an unrequested listing for work/' + activity, async (t) => {
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);
+    task.listen(() => undefined);
     const handler = t.mock.method(ActivationTools.prototype, 'invoke', async () =>
       assert.fail('a provider with no MCP requests dispatched a project handler'),
     );
