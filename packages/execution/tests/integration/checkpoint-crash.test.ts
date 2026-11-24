@@ -28,10 +28,17 @@ function crash(scenario: RecoveryScenario, t: TestContext): Acknowledgment {
     dirname(scenario.root),
   ];
   const result = spawnSync(executable, args, { encoding: 'utf8' });
-  t.diagnostic(JSON.stringify({
-    executable, args, node: process.version, status: result.status,
-    signal: result.signal, stdout: result.stdout, stderr: result.stderr,
-  }));
+  t.diagnostic(
+    JSON.stringify({
+      executable,
+      args,
+      node: process.version,
+      status: result.status,
+      signal: result.signal,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    }),
+  );
   assert.ifError(result.error);
   assert.equal(result.signal, null);
   assert.equal(result.status, 73, result.stderr);
@@ -68,11 +75,14 @@ function recovered(task: HostTask, scenario: RecoveryScenario, ack: Acknowledgme
   assert.equal(readFileSync(join(task.worktree, 'first.txt'), 'utf8'), 'first');
   assert(task.evidence.includes(ack.artifact));
   assert.deepEqual(JSON.parse(readFileSync(ack.artifact, 'utf8')), ack.receipt);
-  const receipts = task.observations<{ editReceipt?: Acknowledgment['receipt'] }>()
-    .flatMap(({ editReceipt }) => editReceipt?.path === 'first.txt' ? [editReceipt] : []);
+  const receipts = task
+    .observations<{ editReceipt?: Acknowledgment['receipt'] }>()
+    .flatMap(({ editReceipt }) => (editReceipt?.path === 'first.txt' ? [editReceipt] : []));
   assert.deepEqual(receipts, [ack.receipt]);
-  const edits = task.observations<{ editIntent?: { path: string }[] }>()
-    .flatMap(({ editIntent }) => editIntent ?? []).filter(({ path }) => path === 'first.txt');
+  const edits = task
+    .observations<{ editIntent?: { path: string }[] }>()
+    .flatMap(({ editIntent }) => editIntent ?? [])
+    .filter(({ path }) => path === 'first.txt');
   assert.equal(edits.length, 1);
   assert.equal(scenario.observe('worktree', 'list', '--porcelain').split('worktree ').length, 4);
 }
