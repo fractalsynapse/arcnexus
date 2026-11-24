@@ -26,15 +26,17 @@ routes through the public Workflow entry.
 
 ## Recover a steward hold after independent rejection
 
-This is implementation intent for `recover-reviewed-holds`, for Workflow
-implementers and readers deciding whether a retained task can continue. It
-elaborates the [Workflow contract](contract.md), especially WFL-2 and WFL-6,
-within Direction's [DI-7 and DI-21 boundaries](../direction/contract.md).
-It changes no architectural guidance. The current
-[task executor](src/task-run.ts) returns a blocked activity immediately;
-the recovery described here still needs Workflow regression and implementation
-evidence. Execution's [retained hold context](../execution/src/hold-context.ts)
-supplies host-observed facts; its presence alone does not demonstrate this route.
+This explanation is for Workflow implementers and readers deciding whether a
+retained task can continue. It elaborates the [Workflow contract](contract.md),
+especially WFL-2 and WFL-6, within Direction's
+[DI-7 and DI-21 boundaries](../direction/contract.md).
+The current [task executor](src/task-run.ts) routes blocked activities through
+[reviewed-hold recovery](src/reviewed-hold.ts), which consumes Execution's
+[retained hold context](../execution/src/hold-context.ts). A repairable reviewed
+hold reaches Direction's existing revision boundary; an unmet prerequisite or
+unchanged hold after correction remains stopped. A blocked outcome without
+retained hold context stays blocked. These implemented routes still require
+observed public regressions for each claimed evidence category.
 
 Commands submits transport-neutral input to `Workflow.run`. Execution admits the
 task, Direction establishes the accepted plan, and Workflow advances its scoped
@@ -98,21 +100,41 @@ prerequisite satisfaction is observed and recorded. An unanswered question,
 elapsed time or a model assertion does not satisfy a gate. Neither a held task
 nor a stopped correction reaches acceptance or delivery.
 
-### Evidence required before claiming recovery
+### Current scenarios and focused verification intent
 
-Testing must first expose the missing behavior through the public `Workflow.run`
-path, using Execution's actual retained context and the real native revision
-reconstruction and validation boundaries. Use real Git/SQLite state where restart
-and secured bytes matter. Implementation follows the retained intended red;
-Testing need not first complete the future implementation.
+At source baseline `a8affc2f7a678387977de9fed70cf949486a5be6`, the public
+[reviewed-hold scenarios](tests/integration/reviewed-hold.test.ts) cover exact
+check handoff to native Direction, secured sequential contributions, interruption,
+restart, unchanged repetition, meaningful progress and separate prerequisite gates.
+The [ordinary failing-log scenario](tests/integration/reviewed-hold-diagnostic.test.ts)
+uses production HostTask checks with a controlled confinement launcher and asserts
+actual exit/log handoff without a synthetic diagnostic field.
+[Knowledge recovery scenarios](tests/integration/reviewed-hold-knowledge.test.ts)
+cover complete relevant answers and research after restart, excluding duplicate
+or foreign knowledge. These links identify current assertions, not passing-run
+observations. Controlled providers, assessment and transport do not establish live
+inference, native confinement or hosted delivery.
 
-Cover independent rejection followed by a steward hold, exact diagnostic/exit/log
-or receipt handoff to Direction, sequential smaller corrections with evidence
-retained before each successor, and restart preserving complete answers and
-original acceptance. Cover equivalent holds with different artifact names stopping
-before another automatic attempt, and successive meaningful corrections continuing.
-Exercise separate human-decision and external-prerequisite gates, no dependent
-activation while unmet, and continuation only after observed satisfaction.
+The remaining focused coverage gap is Workflow-level checked-edit refusal
+handoff for `hold-exact-handoff` and `hold-retained-continuity`. Extend the existing
+[public fixture](tests/fixtures/reviewed-hold.ts) to observe independent rejection
+and subsequent correction through `Workflow.run`, then obtain a real Execution
+checked-edit refusal after an acknowledged edit. Direction must receive the exact
+refusal, original unresolved criterion and rejected finding, and readable retained
+receipts with their secured checkpoint associations. Assert that no `failedCheck`
+or check exit is fabricated for the refusal. Preserve the same task, issue,
+branch, complete answers, original acceptance and historical evidence through
+correction and restart; an unmet criterion cannot become completed or gain wider
+authority. The existing check-failure fixture and its assertions do not alone
+prove this refusal route or the initial rejection-to-correction transition.
+
+Testing should characterize already-correct behavior with expected pass and retain
+actual exits, complete logs and relevant candidate identity. If the new public
+scenario demonstrates missing behavior, retain its intended red before a product
+correction; Testing need not first complete the future Implementation. Reuse
+Execution's actual retained context, native revision reconstruction and validation,
+and real Git/SQLite state where restart and secured bytes matter. Preserve the
+existing split, progress and gate scenarios while adding this focused coverage.
 
 Assess the assembled corrected candidate against the original acceptance with
 fresh applicable checks and an applicable independent verdict through the
