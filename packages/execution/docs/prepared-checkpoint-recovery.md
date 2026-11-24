@@ -7,6 +7,95 @@ behavioral correction. The governing obligations are
 [Execution EX-11, EX-17, EX-22 and EX-25](../contract.md#acceptance-scenarios).
 This document changes no contract, ownership or acceptance.
 
+## Current characterization scope: issue #720
+
+This assessment is source inspection at captured revision
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`, before any behavioral change for
+`prepared-recovery-current-evidence`. The earlier correction intents and run
+results below retain their original dates, identities and evidence scope.
+They are history, not a claim that their failures remain present or that their
+passes apply to this candidate.
+
+The current [public prepared-recovery scenarios](../tests/integration/prepared-recovery.test.ts)
+have SHA-256
+`6907461fcae8a2cc48efd6aa5a5889b53ad90f26b2c50b2ef22362643631d40e`;
+their [shared fixture](../tests/fixtures/prepared-recovery.ts) has SHA-256
+`ac3d8564a7de71835902f246ea63ee721b547424d3912c8d2f412cd7f7ed6e3b`.
+The fixture uses public Workflow with real Execution admission, preparation,
+assembly, Architecture, Agent, Git and reopened Coordination SQLite state.
+An explicit deterministic executable invokes LocalMcp to acknowledge checked bytes
+and obtain the foreground handler's exact multiline answer before interruption.
+The interruption throws through normal cleanup; the separate abrupt-checkpoint
+characterization below establishes a different boundary.
+
+| Current criterion | Existing source assertions to characterize |
+| --- | --- |
+| `prepared-retained-continuity` | Same task, issue, branch, original base and accepted criterion; exact answer and answer artifact; one prompt and original receipt; identical edit replay returns that receipt; a distinct recovered question retains both exact answers. |
+| `prepared-current-authority` | New capture revision, owner roots, original and newly declared acceptance check IDs, actual discovered MCP tools and configured executable/model; changed owner or missing pending activity refuses before another provider activation or checkpoint movement. |
+| `prepared-conflict-preservation` | Compatible staging and checked contributions retain their Git ancestry and checked blob; conflicting additions retain the task head, checkpoint and both sides' bytes with complete real merge-tree output; another staging advance requires another captured base. |
+| `prepared-evidence-accurate` | Associate actual results with these source identities and the assessed candidate/environment; keep controlled gates, historical observations and missing current execution explicit. |
+
+The [caller-consumer scenarios](../tests/integration/caller-scope-recovery.test.ts)
+also assert actual MCP/public inbox identity and complete recovered answers,
+pending gates, research artifacts and supplier diagnostics. Research and legacy
+supplier observations are explicitly seeded records; their assertions do not
+establish live research or supplier execution. Current
+[HostTask.inboxScope](../src/index.ts) already passes `callerRevision` to
+`inboxIdentity`, matching the [recorded correction](caller-scope-recovery.md).
+The earlier public-scope rejection therefore motivates retained regression
+coverage rather than proving a current defect.
+
+The [authority scenario](../tests/integration/caller-authority-recovery.test.ts)
+keeps host decisions bound to the exact proposal, question and capture, and varies
+review scope with candidate, owner evidence and acceptance. After staging moves,
+the old decision is unavailable and the review scope differs. These are identity
+assertions; they do not execute independent assessment or attempt a real merge.
+
+Current [workspace setup](../src/index.ts) observes publication before checkpoint
+reconciliation, abandoned-workspace recovery and
+[prepared reconciliation](../src/prepared-recovery.ts). The latter verifies local
+and remote checkpoint identity and current staging, validates retained owners and
+pending activities, and obtains a merge tree before recording a new checkpoint.
+These source observations explain the refusal boundary; they are not execution
+results.
+
+### Evidence still needed
+
+At this documentation position there is no current mapped behavioral or owner
+quality result for this milestone. The next Testing activity should execute the
+existing prepared and caller recovery scenarios as expected-pass characterization.
+Retain the actual assertion failures if any; add coverage only where an accepted
+observation is absent. No new behavioral defect or intended red is established
+by this source review.
+
+Concrete limits of the existing fixture are visible: its provider publication
+lookup always returns no PR, and final Verification and Delivery return controlled
+accepted/merged results. It asserts newly declared required check selection but
+does not execute those checks at its final gate. Its authority test compares review
+identities rather than obtaining an independent verdict. Consequently these
+Execution cases cannot establish fresh required checks, stale-verdict refusal at
+publication, uncertain PR reconciliation, confirmed prior merge reuse or one actual
+hosted PR. Those observations belong to the accepted subsequent
+`recovered-acceptance-current-evidence` (Verification) and
+`retained-publication-current-evidence` (Delivery) milestones. They remain required
+before the host's assembled acceptance and delivery.
+
+Implementation should reconcile the actual characterization results and replace
+stale pending descriptions only with supported observations. Applicable formatting,
+lint, strict types and build evidence must identify the assessed candidate,
+resolved operation, cwd, exit and complete log; historical quality results below
+do not establish current quality. Native confinement, live inference, hosted CI,
+configured review and confirmed staging integration remain distinct observations.
+
+### Simplification ledger
+
+- Reuse the existing prepared fixture, caller policy, journal and checked receipts;
+  this assessment introduces no recovery path or durable state.
+- Characterize the existing public assertions before choosing a correction; retain
+  earlier red and passing observations without manufacturing another defect.
+- Keep required-check execution and publication reconciliation with their accepted
+  owning milestones and the single later host assessment and delivery.
+
 ## Retain the task and its history
 
 Resume the same task and issue selected by Direction through Collaboration.
