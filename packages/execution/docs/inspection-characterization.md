@@ -165,6 +165,112 @@ historical attribution, not a newly measured version for run 173. Provider inter
 that are not exposed remain unknown. No model claim, explicit skill read or
 successful mapped tool call is promoted into automatic AGENTS/skill discovery proof.
 
+## Implementation observations for run 173
+
+Implementation retains the passing product and test behavior. Review of the
+shared Agent/Architecture builder, activation enrichment, native adapter and
+LocalMcp found no demonstrated product correction. The evaluated architecture
+and engineering base remain `7d04db61627b4e76e0fda4ac1003ab5b26d18e8e`.
+The candidate before this evidence-only update is Testing's final documentation
+checkpoint `628ec305d059d7ca636ae5fddc606c845303c941`; executable assertions
+retain the source identities recorded above. The checked-edit receipt for this
+account identifies the subsequent documentation candidate.
+
+### Exact assertion and implementation excerpts
+
+These excerpts are from complete mapped source reads, rather than reconstructed
+expectations. The criterion table above remains the full assertion mapping.
+
+- `inspection-request-parity`: [inspection-activation.test.ts](../tests/integration/inspection-activation.test.ts)
+  lines 221 and 422 both assert
+  `assert.equal(probe.input, view.request.input);`. The first covers the
+  actor/activity matrix after independent enrichment; the second covers the
+  returning caller after separate assignment, evidence, milestone and acceptance
+  comparisons. Lines 60 and 63 assert the independent web option and absence of
+  discovery-disabling configuration:
+  `assert.ok(probe.args.includes('web_search=' + JSON.stringify(options.webSearchMode)));`
+  and
+  `assert.ok(!probe.args.some((arg) => /project_doc_max_bytes=0|skills.enabled=false/.test(arg)));`.
+- `inspection-activity-authority`: the same source at line 35 requires
+  `assert.deepEqual(probe.tools, expected);`; `expected` projects each prepared
+  tool's name, description and inputSchema. The following assertions compare
+  rendered operation IDs and descriptions and require exact refusal diagnostics.
+  [inspection-listing.test.ts](../tests/integration/inspection-listing.test.ts)
+  independently requires `assert.deepEqual(stored.result, { tools });` and
+  registered artifacts with selected component/activity and native-span ordering.
+- [activation.ts](../src/activation.ts) preserves returning evidence with
+  `...retainedEvidence(task),` and builds completed-round assignment context with
+  `assignment: rounds.length ? { ...instructions, completedRounds: rounds } : assignment,`.
+  The tests author their round and answer inputs separately, rather than deriving
+  expected input from the retained native-request payload.
+- [mcp.ts](../src/mcp.ts) records the requested response through
+  `this.observe('tools/list', undefined, {` with `call: randomUUID(),`,
+  `phase: 'completed',` and `result,`. Its tool projection removes only the
+  internal handler; no project handler is dispatched to list tools.
+  [codex.ts](../src/codex.ts) separately passes `input,` to the subprocess and
+  sets `web_search=` from `options.webSearchMode`.
+  [host-config.ts](../src/host-config.ts) compares guidance bytes with
+  `readFileSync(absolute, 'utf8') !== capture.source.read(path)` before startup.
+
+### Current observations and applicability
+
+All five mapped Implementation operations returned actual status zero:
+`173-551-owner-format.log`, `173-554-owner-lint.log`,
+`173-557-repository-types.log`, `173-560-repository-build.log` and
+`173-563-owner-tests.log`. These are new observations against the candidate
+above, with unchanged executable inputs, captured operation parameters and
+configured environment. Complete logs were read through mapped file access.
+The host timeline records each resolved command, scope, input identity and status.
+
+The new test log SHA-256 is
+`b52dd2656eab522e34706b54800b00eb505ce42372b948810951a77050ae57ea`.
+Exact excerpts include
+`ok 129 - EX-6: returning caller preserves exact enriched native input`
+(line 1164),
+`ok 132 - EX-26: retain requested activity tool listing for work/empty`
+(line 1185), and
+`ok 134 - EX-26: do not fabricate an unrequested listing for work/empty`
+(line 1197). Lines 2268–2273 report `# tests 269`, `# pass 253`,
+`# fail 0` and `# skipped 16`. Actor matrix and complete CLI comparisons
+pass at lines 1041–1132; repeatability, guidance refusal and assembled CLI cases
+pass at 1145, 1151 and 1157. The skipped cases still supply no native confinement
+proof. This account update changes prose only; subsequent mandatory host checks
+determine applicability to the resulting checkpoint.
+
+Implementation reread the complete configured-provider requests, invocations and
+actual requested listings identified in Testing's section. Comparing each full
+prepared tool array after removing only `handler` against its full response
+array yields exact agreement for all three selected activities, including schemas.
+For example, `173-6-mcp-observation.json` contains
+`"name":"tools/list"`, `"phase":"completed"` and call identity
+`7284af13-3575-4a05-8b02-fd8d4bdd7574`; the timeline attributes it to
+Direction/planning at sequence 135083.
+
+The current Implementation activation adds `173-457-native-request.json`,
+`173-460-native-invocation.json` and `173-461-mcp-observation.json`.
+Its complete requested listing also equals the prepared tools after that same
+projection. Call `ee442291-c518-4227-abf3-cfa0997acba3` is attributed to
+Execution/implementation at sequence 136532; nativeStarted at 136528 records
+profile gpt-sol, gpt-6.1-sol, medium reasoning, Node v22.23.5 and the evaluated
+architecture. The invocation records `web_search="live"`,
+`features.shell_tool=false` and `features.unified_exec=false`.
+This is another populated configured-provider listing, not an empty-binding or
+Reviewer real-provider observation.
+
+Complete reads of `173-3`, `173-85` and `173-161-codex.jsonl` show
+`thread.started`, `turn.started`, `item.started`, `item.completed` and
+`turn.completed`; exposed item types are `agent_message` and
+`mcp_tool_call`. They contain no authoritative discovery or complete
+received-context event. The exact retained host envelope and invocation settings
+can be inspected, but no independent full real-Codex stdin receipt exists here
+to compare with a replay using identical enriched inputs. The controlled
+executable supplies that byte comparison. Normal discovery configuration and
+approved-file visibility remain established at their respective boundaries;
+automatic real-harness selection and complete model context remain unavailable.
+No additional prompt, provider invocation path, project grant or web authority
+was introduced. Independent assembled acceptance, hosted CI and delivery remain
+outside this engineering claim.
+
 ## Historical characterization and run-138 repair
 
 The remainder preserves the prior account. Its uses of “current” refer to the
