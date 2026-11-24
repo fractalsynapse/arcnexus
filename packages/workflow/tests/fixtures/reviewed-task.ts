@@ -52,13 +52,13 @@ export class ReviewedTask {
   private head?: string;
 
   /** Capture committed authority before retaining an independent rejection and its correction plan. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, retainedReview = true) {
     controlledCheckLaunch(t);
     mkdirSync(this.root);
     this.source();
     this.task = this.open(t);
     this.rejection = this.reviewEvidence();
-    this.recordReview();
+    if (retainedReview) this.recordReview();
     t.after(() => {
       this.task.close();
       rmSync(this.directory, { recursive: true, force: true });

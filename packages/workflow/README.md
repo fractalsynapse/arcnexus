@@ -26,15 +26,17 @@ routes through the public Workflow entry.
 
 ## Recover a steward hold after independent rejection
 
-This is implementation intent for `recover-reviewed-holds`, for Workflow
-implementers and readers deciding whether a retained task can continue. It
-elaborates the [Workflow contract](contract.md), especially WFL-2 and WFL-6,
-within Direction's [DI-7 and DI-21 boundaries](../direction/contract.md).
-It changes no architectural guidance. The current
-[task executor](src/task-run.ts) returns a blocked activity immediately;
-the recovery described here still needs Workflow regression and implementation
-evidence. Execution's [retained hold context](../execution/src/hold-context.ts)
-supplies host-observed facts; its presence alone does not demonstrate this route.
+This explanation is for Workflow implementers and readers deciding whether a
+retained task can continue. It elaborates the [Workflow contract](contract.md),
+especially WFL-2 and WFL-6, within Direction's
+[DI-7 and DI-21 boundaries](../direction/contract.md).
+The current [task executor](src/task-run.ts) routes blocked activities through
+[reviewed-hold recovery](src/reviewed-hold.ts), which consumes Execution's
+[retained hold context](../execution/src/hold-context.ts). A repairable reviewed
+hold reaches Direction's existing revision boundary; an unmet prerequisite or
+unchanged hold after correction remains stopped. A blocked outcome without
+retained hold context stays blocked. The controlled public observations below
+establish recovery sequencing and retained evidence through these routes.
 
 Commands submits transport-neutral input to `Workflow.run`. Execution admits the
 task, Direction establishes the accepted plan, and Workflow advances its scoped
@@ -98,21 +100,46 @@ prerequisite satisfaction is observed and recorded. An unanswered question,
 elapsed time or a model assertion does not satisfy a gate. Neither a held task
 nor a stopped correction reaches acceptance or delivery.
 
-### Evidence required before claiming recovery
+### Current scenario observations
 
-Testing must first expose the missing behavior through the public `Workflow.run`
-path, using Execution's actual retained context and the real native revision
-reconstruction and validation boundaries. Use real Git/SQLite state where restart
-and secured bytes matter. Implementation follows the retained intended red;
-Testing need not first complete the future implementation.
+Run 144 characterized the existing recovery path and added the public
+[checked-edit refusal scenario](tests/integration/reviewed-hold-refusal.test.ts).
+That scenario begins without a seeded verdict: `Workflow.run` obtains an
+independent rejection from a controlled assessment, then real Execution refuses
+a foreign-owned edit. After reopening SQLite and reconstructing the Git
+worktree, native Direction receives the exact refusal, original criterion and
+finding, complete retained hold artifact and readable receipts with their
+secured checkpoint associations. The assertions exclude a fabricated
+`failedCheck` or check exit, preserve the task, issue, branch, answers and original
+acceptance, and require corrected bytes and a fresh check before the later
+assessment boundary.
 
-Cover independent rejection followed by a steward hold, exact diagnostic/exit/log
-or receipt handoff to Direction, sequential smaller corrections with evidence
-retained before each successor, and restart preserving complete answers and
-original acceptance. Cover equivalent holds with different artifact names stopping
-before another automatic attempt, and successive meaningful corrections continuing.
-Exercise separate human-decision and external-prerequisite gates, no dependent
-activation while unmet, and continuation only after observed satisfaction.
+The [sequential correction scenarios](tests/integration/reviewed-hold.test.ts)
+observe secured contributions before their successors, interruption after a
+committed contribution, unchanged repetition stops across restart, meaningful
+successive progress and separate human and external prerequisite gates. The
+[ordinary failing-log scenario](tests/integration/reviewed-hold-diagnostic.test.ts)
+uses production `HostTask.check` with a controlled confinement launcher and
+asserts actual exit/log handoff without a synthetic diagnostic field.
+[Knowledge recovery scenarios](tests/integration/reviewed-hold-knowledge.test.ts)
+observe complete relevant answers and research after restart while rejecting
+duplicate reports and foreign knowledge as progress.
+
+The retained `144-345-owner-tests.log` records these scenarios passing within
+the Workflow owner suite: 71 tests passed, with no failures, cancellations or
+skips. Its SHA-256 is
+`e3d57f9020d62254c704918474ff333ed8a86b7750c4a020ed67d36442b50543`;
+`144-346-mcp-observation.json` records the actual exit 0. The run's complete
+retained-evidence index and timeline resolve those artifacts outside source.
+The corresponding owner-format, owner-lint, repository-types and repository-build
+observations also exited 0. Historical failed observations remain retained.
+
+The new refusal regression characterized already-correct behavior; it required no
+Workflow product correction. These observations use real Git/SQLite state,
+checked edits and native revision reconstruction with controlled model responses,
+assessment and remote transport. They establish deterministic recovery behavior,
+not live inference, native confinement or hosted delivery. Live qualification
+remains paused pending the architect's review of D.
 
 Assess the assembled corrected candidate against the original acceptance with
 fresh applicable checks and an applicable independent verdict through the
@@ -125,6 +152,12 @@ remain distinct evidence. The host performs assembled verification and delivery;
 this documentation establishes intent, not those later results.
 
 ### Simplification ledger: reviewed-hold restart correction
+
+Run 144 reuses the existing task executor, reviewed-hold routing, native Direction
+validation and Execution checkpoints unchanged. The refusal fixture adds public
+behavioral evidence without another recovery mechanism or production abstraction.
+The obsolete coverage-gap instructions above are replaced by observed scenario
+status; prior failed artifacts remain in the host evidence path.
 
 Workflow's [retained-check comparison](src/reviewed-hold.ts) reuses
 `checkFailureSignature(log: string): string` from Execution's public entry.
