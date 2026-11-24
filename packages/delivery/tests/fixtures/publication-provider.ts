@@ -12,6 +12,7 @@ export class PublicationProvider {
   merged = 0;
   lose?: 'push' | 'open' | 'merge';
   unavailable = false;
+  branchUnavailable = false;
   moveDuringVerify = false;
 
   /** Bind only external operations while real task services retain their own records. */
@@ -40,10 +41,9 @@ export class PublicationProvider {
         });
       return this.pull && { ...this.pull };
     });
-    mock.method(this.fixture.provider, 'remoteHead', async (branch: string) => {
-      this.calls.push('observe branch ' + branch);
-      return branch === 'staging' ? this.fixture.git('rev-parse', 'staging') : this.head;
-    });
+    mock.method(this.fixture.provider, 'remoteHead', async (branch: string) =>
+      this.observeBranch(branch),
+    );
     mock.method(this.fixture.provider, 'verify', async (url: string, head: string) => {
       this.calls.push('verify ' + head);
       assert.equal(url, this.pull?.url);
@@ -55,6 +55,17 @@ export class PublicationProvider {
       assert.equal(this.fixture.git('rev-parse', commit + '^{tree}'), tree);
       assert.equal(this.fixture.git('merge-base', commit, 'staging'), commit);
     });
+  }
+
+  /** Preserve an unavailable branch lookup as distinct from a successful PR observation. */
+  private observeBranch(branch: string) {
+    this.calls.push('observe branch ' + branch);
+    if (this.branchUnavailable && branch === '7-task')
+      throw Object.assign(new Error('Issue-branch facts unavailable: restore branch access'), {
+        stdout: 'Complete provider observation stdout\n  retained detail\n',
+        stderr: 'Complete provider observation stderr\n  restore credentials\n',
+      });
+    return branch === 'staging' ? this.fixture.git('rev-parse', 'staging') : this.head;
   }
 
   /** Apply each effect before optionally losing its acknowledgment. */

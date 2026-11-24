@@ -99,14 +99,39 @@ Confirm that the actual merge contains the accepted tree on staging; do not
 substitute the latest staging head for a previously confirmed task merge.
 An uncertain confirmation remains pending with its evidence.
 
-The [controlled publication regressions](../../packages/delivery/tests/integration/retained-publication.test.ts)
-exercise lost responses, outdated-PR recovery, preserved bytes and exact answers,
-fresh assessment, conflicting or unavailable facts and repeated staging movement
-through production services with real Git and Coordination state. Controlled
-provider and reviewer responses establish those regression boundaries. They do
-not establish live inference recovery, live GitHub credentials, hosted CI,
-configured repository review or this task's actual staging integration. Those
-claims require the host's corresponding observations.
+### Current characterization: issue #720
+
+The completed Execution, Verification and Delivery contributions characterize
+the existing recovery path from captured revision
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. No production defect requiring
+a behavioral correction was demonstrated. Delivery extended its existing
+[retained-publication regressions](../../packages/delivery/tests/integration/retained-publication.test.ts)
+to distinguish a confirmed historical merge after later staging movement,
+another staging advance after outdated-PR reassessment, and unavailable branch
+facts after successful PR lookup. Earlier correction intent and observations,
+including issue #701, remain historical evidence.
+
+| Accountable contribution | Current observation and scope |
+| --- | --- |
+| [Execution](../../packages/execution/docs/prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145) | `145-392-mcp-observation.json`, log `145-391-owner-tests.log`: 252 passes, no failures, 16 skips. Public recovery cases preserve exact answers and receipts, capture current authority, refuse changed ownership and retain conflict diagnostics. Final acceptance and delivery ports are controlled. |
+| [Verification](../../packages/verification/README.md#executed-public-characterization-run-145) | Later observation `145-799-mcp-observation.json`, log `145-798-owner-tests.log`: 18 passes, no failures or skips. Identity refusal, current evidence selection and complete assessment inputs pass through the public gate; check processes and Reviewer responses are controlled, and history is seeded. |
+| [Delivery](../../packages/delivery/docs/check-recovery.md#executed-production-service-characterization) | `145-1172-mcp-observation.json`, log `145-1171-owner-tests.log`: 49 passes, no failures or skips. Real Git and reopened Coordination state exercise lost responses, outdated-PR reuse, historical merge confirmation, conflicting or unavailable facts and repeated staging movement. Provider effects, check results and Reviewer responses are controlled. |
+
+Complete observations and logs remain outside source under invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`;
+the host's retained-evidence index and `145-1-run-timeline.jsonl` resolve them.
+The accountable references identify source and log digests and preserve earlier
+observations. The owner test commands actually ran; controlled required-check
+responses inside their recovery fixtures do not establish execution of those
+declared commands or live independent reasoning.
+
+These contributions establish deterministic regression evidence. Their thrown
+interruptions follow normal cleanup; they do not demonstrate abrupt process
+death. Skipped native cases remain gaps. Live inference recovery, actual native
+confinement, live GitHub facts and effects, hosted CI, configured repository review
+and this task's confirmed staging integration remain separate host observations.
+The host must still obtain assembled independent acceptance and delivery for the
+final candidate. No production release is established by this characterization.
 
 Staging integration completes an engineering task. Production CI concerns the
 actual main commit; a tag identifies a revision, and publication requires observing

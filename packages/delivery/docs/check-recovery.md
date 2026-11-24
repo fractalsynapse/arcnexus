@@ -2,11 +2,13 @@
 
 This reference is for Delivery maintainers and host consumers deciding whether a
 retained publication can continue after staging moves or a provider response is
-lost. It records implementation intent for `retained-publication-reconciliation`
+lost. It records the accepted boundary and current characterization scope for
+`retained-publication-current-evidence`
 under [DE-2 through DE-6, DE-14 and DE-17](../contract.md).
 It consumes [Execution's prepared recovery](../../execution/docs/prepared-checkpoint-recovery.md)
 and [Verification's recovered acceptance](../../verification/README.md).
-The required scenarios below do not establish passing runtime or live delivery.
+Source assertions, executed owner observations and live delivery have distinct
+scopes, identified below.
 
 ## Bind the production candidate
 
@@ -100,43 +102,142 @@ for accountable correction. Refresh affected checks and independent acceptance
 before continuing the same publication. Delivery cannot edit or accept a candidate,
 bypass gates or merge main. Release and simulation capabilities remain deferred.
 
-## Source observations and required evidence
+## Current characterization scope: issue #720
 
-The activation baseline is `aae84422d50f59311f36cb0cd397c58293fe8c91`;
-the inspected workspace also contains the preceding recovery and verification
-contributions. Current [publication code](../src/publication.ts) observes PR state,
-refuses unexpected heads and targets, checks the staging parent after verification,
-and confirms returned or observed merges. Current [integration and resume](../src/index.ts)
-check candidate/verdict digest equality and recover a retained publication from its
-accepted journal events. These observations alone do not establish complete
-verification-identity admission or reconciliation of an outdated PR to a newly
-accepted candidate. Those are obligations for the subsequent Testing and
-Implementation activities.
+This reconciliation inspects captured revision
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8` and the preceding Execution and
+Verification documentation contributions in the workspace. It replaces the
+earlier `aae84422d50f59311f36cb0cd397c58293fe8c91` pending-implementation
+description. That earlier inspection remains history; it does not establish a
+current defect. The accepted boundary above is unchanged.
 
-Extend the [publication suite](../tests/unit/publication.test.ts) and
-[production-service recovery regression](../tests/integration/check-recovery.test.ts):
+### Existing production path
 
-- `publication-observe-before-effects`: lose push, PR and merge responses after
-  effects occur, reopen retained state, and assert provider observations precede
-  further effects. Include unavailable facts and conflicting identities with no
-  prohibited mutation or success claim.
-- `publication-fresh-acceptance`: vary tree, parent, capture and acceptance
-  independently, including equal-tree cases. Refuse earlier approval, then reuse
-  the same PR only after applicable recovered checks and independent acceptance.
-  Move staging again during verification and assert no merge.
-- `publication-single-delivery`: use real Workflow, Execution, Verification and
-  Delivery services with real Git and Coordination state and controlled external
-  responses. Secure a checked checkpoint and distinct multiline answer, move
-  staging, retain one task, issue and PR, and complete resumed final delivery.
-  Assert preserved bytes, exact answer, original history and recovered identities.
-  Confirm the resulting tree and reviewed parent, reuse a confirmed prior merge
-  without duplicate effects, and retain actionable prerequisite evidence.
+[Integration and resume](../src/index.ts) now call
+[acceptance validation](../src/acceptance.ts). Initial integration reconstructs the
+verification identity from the actual assembled candidate, retained plan and
+assessment checks, compares it with the assessment and verdict, validates criterion
+coverage and requires the currently declared acceptance check IDs with passing
+results before committing the candidate. It retains that identity in Publication.
 
-Use distinct engineering-base, architecture-source, verification-checkout and
-before/after candidate identities. An assignment-shaped fixture or workspace
-reconstruction alone cannot prove resumed production delivery. Retain complete
-failed observations and canonical evidence references through the existing journal.
-Controlled-provider regressions establish interpretation and ordering; they do not
-establish live GitHub credentials, hosted CI, configured review or staging integration.
-Only later host observations can establish the actual reviewed tree, parent,
-required checks, independent verdict, single PR and confirmed staging merge.
+Resume validates the historical publication against its matching accepted journal
+events, then observes PR facts and, for an unmerged publication, issue-branch facts.
+A conflicting target, unknown head or disagreement between PR and branch refuses
+continuation. A known checkpoint or changed current acceptance returns to engineering
+rather than treating historical approval as current. Execution then owns recovery;
+fresh verification precedes integration through the same path. A merged publication
+instead uses its matching historical acceptance and provider confirmation.
+
+[Publication](../src/publication.ts) observes before missing effects, reuses an open
+PR, requests verification of its expected head, rechecks the reviewed staging parent
+and confirms the actual returned merge tree. An already merged PR uses explicit
+merged-state verification and confirmation without another mutation.
+[Provider failure retention](../src/check-failure.ts) preserves complete diagnostics,
+stdout and stderr with a publication hold and the required action to resolve the
+diagnostic and observe PR/branch facts before retry. The executed owner observations
+below exercise these boundaries with controlled provider responses.
+
+### Executed production-service characterization
+
+| Criterion | Existing public assertions and boundary |
+| --- | --- |
+| `publication-observation-order` | [Retained publication scenarios](../tests/integration/retained-publication.test.ts) lose push, PR and merge acknowledgments after the controlled provider effect, reopen production services and require PR inspection first. Push/PR continuations also require branch observation and do not replay the lost completed effect. |
+| `publication-recovered-identity` | The outdated-open-PR case advances staging, requires reassessment and both current check IDs, retains its URL, and checks the final Git tree and staging parent. [Identity scenarios](../tests/integration/acceptance-identity.test.ts) separately refuse changed tree, base, capture, acceptance or inputs before commit/provider access; equal-tree cases change the current base, capture, requirement text or required checks. |
+| `publication-retained-outcomes` | Retained-publication assertions compare task, issue, one plan, exact multiline answer, checked bytes, original history and checkpoint ancestry. Conflicting PR head/target, branch divergence and unavailable PR facts stop effects and retain readable evidence. Lost-merge recovery asserts one PR and one merge. |
+| `publication-evidence-accurate` | [Engineering-parent coverage](../tests/integration/engineering-parent.test.ts) consumes actual Execution assembly with distinct engineering base, adopted architecture source and verification checkout. [Check recovery](../tests/integration/check-recovery.test.ts) retains complete CI diagnostics and reconstructs a checkpoint, but that reconstruction alone does not establish completed resumed publication. |
+
+The retained-publication test SHA-256 is
+`a0597c5e5195f61f61921f48c20612459d07008dff2787c77de0a120ff3f4155`;
+the identity test SHA-256 is
+`12b21cb41062eb7af718184d578fb6647e3f3d91c869777cd3a36319d58223aa`.
+The [prepared fixture](../tests/fixtures/prepared-publication.ts) uses real Workflow,
+Execution admission/preparation/assembly, Architecture, Agent, Verification/Reviewer
+validation, Git and reopened Coordination SQLite. A deterministic executable uses
+LocalMcp for the checked edit and foreground answer. Check process results and
+Reviewer responses are controlled. The [provider fixture](../tests/fixtures/publication-provider.ts)
+controls upstream facts/effects and creates real local squash commits; it does not
+contact GitHub. Throwing after an effect exercises normal error/cleanup recovery,
+not abrupt process death. Its verification stub cannot establish hosted CI or
+configured GitHub review.
+
+The [unit publication suite](../tests/unit/publication.test.ts) separately covers
+closed PRs, missing/conflicting branches, conflicting merged identities, pending
+verification, failed verification and failed confirmation. It checks exact provider
+arguments, including merged-state verification and the observed merge identity.
+
+Testing completed the three transition distinctions identified by the earlier
+documentation assessment, preserving the existing assertions:
+
+- After a lost merge acknowledgment, staging advances again before services reopen.
+  Recovery returns the original task merge, confirms its ancestry on staging and
+  performs only PR observation, merged-state verification and confirmation.
+- An outdated PR first survives staging movement and obtains fresh checks and
+  independent assessment through the production gate. A further staging move during
+  provider verification then prevents merge, retaining the same PR and checked work.
+- A successful PR lookup followed by unavailable issue-branch facts retains the
+  actual PR observation, complete diagnostic artifact and explicit required action.
+  It performs no publication effect and claims no success.
+
+Under retained invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`,
+`145-1172-mcp-observation.json` records `npm test -- delivery` with status 0.
+Its complete log `145-1171-owner-tests.log` has SHA-256
+`79294cd273c4c3d7cc76f1ca4978d40b276fb2f9490f0d8b890bc1d2e4f5240d`
+and reports 49 passes with no failures, cancellations or skips across the five
+Delivery suites. It retains controlled native source artifacts before temporary
+fixture cleanup; these embedded artifacts are deterministic fixture evidence.
+
+The applicable owner quality observations also returned status 0:
+
+| Operation | Complete observation | Log |
+| --- | --- | --- |
+| Owner formatting | `145-1160-mcp-observation.json` | `145-1159-owner-format.log` |
+| Owner lint | `145-1163-mcp-observation.json` | `145-1162-owner-lint.log` |
+| Repository strict types | `145-1166-mcp-observation.json` | `145-1165-repository-types.log` |
+| Repository build | `145-1169-mcp-observation.json` | `145-1168-repository-build.log` |
+
+The retained evidence index and `145-1-run-timeline.jsonl` locate these complete
+artifacts. Formatting and lint select Delivery TypeScript source and fixtures;
+they do not validate Markdown claims. Implementation inspected this reference
+against the current assertions and complete results. Only documentation changed
+after these observations, so their executable inputs remain applicable. Earlier
+fixture and quality failures remain retained history; they are not current
+production defects or intended behavioral red.
+
+No demonstrated production defect required a behavioral correction. The existing
+publication path and Coordination journal satisfy the exercised cases. This
+contribution updates stale evidence descriptions and reuses completed Testing;
+it adds no orchestrator, store, delivery identity or candidate mutation.
+
+### Consume completed supplier evidence without overstating it
+
+[Execution's run 145 characterization](../../execution/docs/prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145)
+establishes exact answers/receipts, newly captured ownership refusal, compatible
+recovery and retained conflict diagnostics through real Git/SQLite and LocalMcp.
+Its final Verification and Delivery ports are controlled.
+[Verification's run 145 characterization](../../verification/README.md#executed-public-characterization-run-145)
+establishes identity refusal, current check selection, complete assessment inputs
+and rejection/hold boundaries through its public gate. Its check processes and
+independent verdict responses are controlled; setup seeds its checkpoint/history.
+
+Under retained invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`,
+complete observations `145-392-mcp-observation.json` and
+`145-799-mcp-observation.json` record the later Execution and Verification owner
+runs, respectively, with status 0. Logs `145-391-owner-tests.log` (SHA-256
+`90a05e7480dd888ebf2ffc301e220786c034c922368721b025635cfc85865f44`)
+and `145-798-owner-tests.log` (SHA-256
+`1b0c6d410430862769d23c40e97b4289ca9899c3175b2efb7f36bcb7b7c3897b`)
+report 252 passes/16 skips and 18 passes/no skips, respectively, with no failures.
+The retained evidence index and `145-1-run-timeline.jsonl` locate the complete
+artifacts and applicable owner formatting, lint, strict types and build observations.
+Their scope complements the Delivery owner result above without replacing it.
+
+This Implementation reconciliation changes no executable behavior. The current
+Delivery characterization and quality observations above supersede the README's
+older owner result for this contribution. No live inference, native confinement,
+hosted CI, configured review or actual staging integration is established here.
+Later host assessment and delivery must identify the reviewed final tree, recovered
+parent, capture, acceptance, required evidence, independent
+verdict, single PR and confirmed provider merge. Only the host performs assembled
+verification and delivery.

@@ -51,11 +51,14 @@ for (const effect of ['push', 'open', 'merge'] as const) {
     const lost = await fixture.run();
     assert.equal(lost.kind, 'failed', JSON.stringify(lost));
     assert.match(lost.reason, new RegExp('Lost ' + effect));
+    const merged = effect === 'merge' ? provider.pull?.commit : undefined;
+    if (merged) fixture.advance('after-merge.txt', 'Later independent staging work\n');
     const offset = provider.calls.length;
     const recovered = await fixture.run();
     assert.equal(recovered.kind, 'merged', JSON.stringify(recovered));
     assert(recovered.kind === 'merged');
     assert.equal(recovered.commit, provider.pull?.commit);
+    if (merged) historicalMerge(fixture, provider, offset, merged, recovered.commit);
     assert.equal(provider.opened, 1);
     assert.equal(provider.merged, 1);
     assert.equal(provider.calls[offset], 'observe PR 7-task');
@@ -87,7 +90,7 @@ test('outdated open PR is reconciled to fresh recovered acceptance and the same 
   preserved(fixture, original);
 });
 
-for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
+for (const conflict of ['head', 'target', 'branch', 'unavailable', 'branch-unavailable'] as const) {
   test('retained publication ' + conflict + ' refuses effects and retains evidence', async (t) => {
     const fixture = new PreparedRecoveryFixture(t);
     const provider = new PublicationProvider(fixture, t);
@@ -95,6 +98,7 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
     provider.lose = 'open';
     assert.equal((await fixture.run()).kind, 'failed');
     if (conflict === 'unavailable') provider.unavailable = true;
+    else if (conflict === 'branch-unavailable') provider.branchUnavailable = true;
     else if (conflict === 'branch') provider.head = 'unrelated-branch-head';
     else provider.pull = { ...provider.pull!, [conflict]: 'unrelated-identity' };
     const offset = provider.calls.length;
@@ -105,7 +109,14 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable'] as const) {
     assert.equal(provider.opened, 1);
     assert.equal(provider.merged, 0);
     assert(result.evidence.length);
-    if (conflict === 'unavailable') unavailableEvidence(result.evidence);
+    if (conflict.includes('unavailable')) unavailableEvidence(result.evidence);
+    if (conflict === 'branch-unavailable') {
+      assert.deepEqual(provider.calls.slice(offset), [
+        'observe PR 7-task',
+        'observe branch 7-task',
+      ]);
+      retainedHold(fixture, provider, result.evidence);
+    }
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
     preserved(fixture, original);
   });
@@ -153,11 +164,15 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
     };
     verdict?: import('../../../verification/src/index.js').Verdict;
   }>;
+  const prior = history.find((event) => event.verification)?.verification;
   const assessment = history.findLast((event) => event.verification)?.verification;
   const verdict = history.findLast((event) => event.verdict)?.verdict;
   assert(assessment && verdict?.kind === 'accepted');
   assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
   assert.equal(assessment.identity.base, staging);
+  assert.notEqual(assessment.identity.capture, prior?.identity.capture);
+  assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
+  assert.notEqual(assessment.identity.inputs, prior?.identity.inputs);
   assert.deepEqual(verdict.verification, assessment.identity);
   assert.deepEqual(verdict.criteria, ['continuity']);
   assert.deepEqual(
@@ -177,3 +192,75 @@ function unavailableEvidence(evidence: readonly string[]) {
   assert(log.includes('Complete provider observation stdout\n  retained detail\n'));
   assert(log.includes('Complete provider observation stderr\n  restore credentials\n'));
 }
+
+/** Confirm the historical merge after staging advances without replaying any external effect. */
+function historicalMerge(
+  fixture: PreparedRecoveryFixture,
+  provider: PublicationProvider,
+  offset: number,
+  merged: string,
+  recovered: string,
+) {
+  assert.equal(recovered, merged);
+  assert.notEqual(fixture.git('rev-parse', 'staging'), merged);
+  assert.equal(fixture.git('merge-base', merged, 'staging'), merged);
+  assert.deepEqual(provider.calls.slice(offset), [
+    'observe PR 7-task',
+    'observe PR 7-task',
+    'verify ' + provider.pull!.head,
+    'confirm ' + merged,
+  ]);
+}
+
+/** Require the current prerequisite to retain the observed PR and complete diagnostic artifact. */
+function retainedHold(
+  fixture: PreparedRecoveryFixture,
+  provider: PublicationProvider,
+  evidence: readonly string[],
+) {
+  const history = fixture.observed.at(-1)! as Array<{
+    publicationObserved?: { pull?: unknown };
+    publicationHold?: { diagnostic: string; requiredAction: string; evidence: string[] };
+  }>;
+  assert.deepEqual(
+    history.findLast((event) => event.publicationObserved?.pull)?.publicationObserved?.pull,
+    provider.pull,
+  );
+  const hold = history.findLast((event) => event.publicationHold)?.publicationHold;
+  assert(hold);
+  assert.match(hold.diagnostic, /Issue-branch facts unavailable/);
+  assert.equal(
+    hold.requiredAction,
+    'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
+  );
+  assert(hold.evidence.every((path) => evidence.includes(path)));
+}
+
+test('staging moves again after outdated PR recovery obtains fresh acceptance', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const provider = new PublicationProvider(fixture, t);
+  const original = await prepared(fixture);
+  provider.lose = 'open';
+  assert.equal((await fixture.run()).kind, 'failed');
+  const prior = structuredClone(provider.pull);
+  const reviews = fixture.reviews.length;
+  const { staging } = fixture.advance();
+  provider.moveDuringVerify = true;
+  const offset = provider.calls.length;
+  const result = await fixture.run();
+  assert.equal(result.kind, 'failed', JSON.stringify(result));
+  assert.match(result.reason, /reviewed staging base moved/);
+  assert(fixture.reviews.length > reviews);
+  recoveredAcceptance(fixture, staging, provider.head!);
+  assert.notEqual(fixture.git('rev-parse', 'staging'), staging);
+  assert.equal(provider.pull?.url, prior?.url);
+  assert.equal(provider.opened, 1);
+  assert.equal(provider.merged, 0);
+  const calls = provider.calls.slice(offset);
+  assert.equal(calls[0], 'observe PR 7-task');
+  assert(
+    calls.indexOf('observe branch 7-task') < calls.findIndex((call) => call.startsWith('push ')),
+  );
+  assert(!calls.some((call) => call.startsWith('merge ') || call.startsWith('open ')));
+  preserved(fixture, original);
+});
