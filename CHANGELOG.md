@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Organize the web UI into individual layout and React component files grouped by responsibility (#704).
+
 ### Fixed
 
 - Match the React frame to the approved layout settings and header action, and theme open selectors and tooltips across the app (#704).

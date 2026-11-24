@@ -18,6 +18,21 @@ desktop columns and display arrangement. The panel layout uses the same display
 order for its mobile stack. Host admission and task lifecycle belong to the
 application's future trusted transport.
 
+## Source organization
+
+Each React component has its own file. The public entry in `src/index.ts`
+continues to collect the components and the Cordis plugin.
+
+- `layouts/frame`, `layouts/page` and `layouts/panels` own the frame,
+  workspace page and display arrangement. `layouts/panels/presets` defines
+  each desktop layout in a separate file. Page Settings and the column
+  renderer use the same layout definitions. The mobile stack has its own
+  stylesheet.
+- `displays` owns reusable display components. Feature plugins register
+  them against a workspace through the UI registry.
+- `controls`, `commands`, `settings/page` and `theme` group components
+  by responsibility. Related hooks, types and styles live with their feature.
+
 The [web app browser suite](../../apps/web/tests/acceptance/frame.test.ts)
 checks the composed entry, responsive layout, dialogs, persistence and
 controlled command interactions.

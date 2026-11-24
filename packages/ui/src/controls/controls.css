@@ -1,0 +1,93 @@
+.arc-button,
+.arc-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 0 12px;
+  min-block-size: 38px;
+  font-weight: 640;
+}
+.arc-button:hover:not(:disabled),
+.arc-icon-button:hover:not(:disabled) {
+  background: var(--tint);
+}
+.arc-app .arc-solid {
+  color: var(--on-accent);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.arc-app .arc-solid:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent), var(--paper) 14%);
+}
+.arc-icon-button {
+  inline-size: 36px;
+  min-block-size: 36px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.arc-icon-wrap {
+  display: inline-flex;
+  align-self: start;
+}
+.arc-tooltip {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-inline-size: calc(100vw - 2 * var(--pad));
+  pointer-events: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--quiet);
+  color: var(--ink);
+  padding: 4px 7px;
+  font-size: 12px;
+}
+.arc-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@supports (appearance: base-select) {
+  .arc-app select,
+  .arc-app select::picker(select) {
+    appearance: base-select;
+  }
+  .arc-app select::picker(select) {
+    inline-size: anchor-size(width);
+    min-inline-size: 0;
+    margin-block: 4px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 5px 16px #0b182a32;
+    font: inherit;
+    overscroll-behavior: contain;
+  }
+  .arc-app select::picker-icon {
+    color: var(--muted);
+    align-self: center;
+  }
+  .arc-app select:open::picker-icon {
+    rotate: 180deg;
+  }
+  .arc-app select option {
+    padding: 7px 9px;
+    border-radius: 5px;
+    color: var(--ink);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .arc-app select option:is(:hover, :focus, :checked) {
+    background: var(--tint);
+    color: var(--link);
+  }
+}

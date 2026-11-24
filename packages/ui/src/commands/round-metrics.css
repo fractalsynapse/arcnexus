@@ -1,0 +1,14 @@
+.arc-metric-list {
+  display: grid;
+  gap: 6px;
+}
+.arc-metric-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.arc-metric-list dt {
+  color: var(--muted);
+}

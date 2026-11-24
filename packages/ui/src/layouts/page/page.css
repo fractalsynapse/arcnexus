@@ -1,0 +1,29 @@
+.arc-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.arc-page-heading .arc-icon-button {
+  color: var(--link);
+}
+.arc-surface {
+  min-inline-size: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.arc-page-settings,
+.arc-display {
+  padding: 14px 15px;
+}
+.arc-page-settings,
+.arc-display-settings {
+  display: grid;
+  gap: var(--gap);
+}
+.arc-page-settings,
+.arc-panel-layout {
+  margin-block-start: var(--gap);
+}

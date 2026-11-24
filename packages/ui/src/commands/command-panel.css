@@ -1,0 +1,83 @@
+.arc-command-panel {
+  --paper: #35383e;
+  --quiet: #33363c;
+  --tint: #474b52;
+  --ink: #fff;
+  --muted: #f1f3f5;
+  --line: #62666e;
+  --link: #fff;
+  z-index: 4;
+  position: sticky;
+  inset-block-end: 0;
+  color-scheme: dark;
+  color: var(--ink);
+  background: #282b30;
+  padding: 12px var(--pad);
+  border-top: 1px solid var(--line);
+}
+.arc-command-panel[data-collapsed] {
+  padding-block: 2px;
+}
+.arc-command-panel .arc-icon-button {
+  inline-size: 30px;
+  min-block-size: 30px;
+}
+.arc-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content auto;
+  grid-template-areas: 'instruction operation send';
+  align-items: end;
+  gap: 9px;
+  reading-flow: grid-rows;
+}
+.arc-instruction {
+  grid-area: instruction;
+}
+.arc-instruction small {
+  font-weight: 400;
+}
+.arc-operation {
+  grid-area: operation;
+}
+.arc-send {
+  grid-area: send;
+}
+.arc-composer textarea {
+  display: block;
+  resize: vertical;
+}
+.arc-composer-error {
+  grid-column: 1 / -1;
+}
+.arc-command-readout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 11px;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--line);
+}
+.arc-command-panel[data-collapsed] .arc-command-readout {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.arc-round-values,
+.arc-round-details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+}
+.arc-round-values {
+  font-size: 12px;
+}
+.arc-status {
+  border-radius: 16px;
+  padding: 3px 8px;
+  background: var(--tint);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+}
