@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Add Workflow regression coverage for independent rejection followed by a checked-edit refusal and restart, verifying exact diagnostic and receipt handoff to Direction while preserving the issue, checkpoint, answers and original acceptance. Revalidate sequential corrections, progress detection and prerequisite gates, and correct stale recovery documentation. Controlled-provider observations with real Git/SQLite state establish deterministic coverage; live qualification, assembled independent acceptance, hosted CI and staging delivery remain separate ([#718](https://github.com/fractalsynapse/arcnexus/issues/718)).
+
 - Retain exact requested activity-scoped MCP `tools/list` responses in activation evidence, including requested empty lists, without invoking project handlers or fabricating unrequested listings (#716).
 
 - Reference complete refinement round reports from agent requests so subsequent rounds can start without replaying every historical evidence index (#712).
