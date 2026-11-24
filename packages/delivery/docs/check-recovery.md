@@ -102,6 +102,60 @@ for accountable correction. Refresh affected checks and independent acceptance
 before continuing the same publication. Delivery cannot edit or accept a candidate,
 bypass gates or merge main. Release and simulation capabilities remain deferred.
 
+## Pending executed-check evidence: issue #720 continuation
+
+For milestone `recovered-publication-executed-checks`, this intent is recorded
+at captured architecture revision `650b1a356e1525862717cff8f194ff99e628f214`
+before changing the recovery scenarios. The run 145 results below remain
+historical evidence with their original limitations.
+
+The current [prepared fixture](../tests/fixtures/prepared-publication.ts),
+SHA-256 `97276456b9a73d771a805b8c357ec0288811e5d1d83d5f14f111908ec98ae8ed`,
+calls `controlChecks` on each admitted HostTask. That method replaces
+`HostTask.check`, resolves the operation and candidate inputs, then records status
+0 and a “Controlled process result” log without executing the declared command.
+The retained-publication assertions inspect both `fixture-check` and
+`current-check` results and the recovered identity. They establish selection and
+binding under controlled results, not actual passing check processes. This is a
+fixture evidence gap; it does not demonstrate a defect in production checks.
+
+The intended extension uses the existing public recovery journey: secure checked
+bytes and the exact answer, retain an uncertain/open publication, advance staging
+and its required-check mapping, then reopen services for the same task and issue.
+Execute the applicable original and newly required commands through
+[Verification's checklist](../../verification/src/native.ts) and the unmodified
+HostTask check path:
+[runCheck](../../execution/src/run-check.ts) resolves inputs and reuse, and
+[check](../../execution/src/check.ts) executes the captured command in its confined
+environment. Assert the actual executable, complete arguments, resolved working
+directory, numeric exit, complete log and check-input identity before assessment.
+Changed relevant inputs must produce executions rather than reuse of historical
+synthetic passes. An unavailable executable, dependency or confinement prerequisite
+is retained as unavailable evidence, not a successful check or the intended
+command failure.
+
+| Accepted measure | Intended distinguishing evidence |
+| --- | --- |
+| `recovered-check-process-evidence` | Original and newly captured required commands actually run on the recovered candidate. Assessment receives their complete observations; tree, staging base, capture, acceptance and input identities match the final candidate. |
+| `recovered-check-failure-refusal` | The newly required command actually exits nonzero with a distinctive diagnostic retained verbatim. Even a controlled favorable reviewer response cannot authorize successful publication or merge while that required check fails. After accountable correction through the normal workflow, applicable passing checks and fresh assessment permit continuation of the same retained publication. |
+| `recovered-publication-continuity` | Preserve the existing exact-answer, receipt, checkpoint-byte, original acceptance/history and single issue/PR assertions. Keep stale approval refusal, changed ownership, checked conflicts, conflicting/unavailable provider facts and further staging movement covered by their applicable existing regressions. |
+| `recovered-evidence-scope` | Map each measure to inspected assertions and complete executed observations with source revision/file digests and recovered candidate identities. Record applicable owner quality results, skipped/unavailable cases and remaining evidence gaps. |
+
+The failure and corrected continuation must retain the original task, issue,
+requirements, acceptance and publication, along with the failed observation.
+Correction cannot weaken the required check or substitute an earlier tree, base
+or capture approval. The successful result identifies the newly assessed tree,
+reviewed staging parent, required process results, independent verdict and
+provider-confirmed merge identity for the same PR.
+
+These are pending scenario requirements, not new execution results. Reviewer
+responses and provider facts may remain controlled to isolate deterministic
+recovery; label them separately from actual local check processes and local Git
+merge observations. They do not establish live independent inference, hosted CI,
+configured GitHub review or an actual upstream staging merge. Preserve the run 145
+observations below unchanged and append later evidence with its own source and
+candidate identities; only the host performs assembled verification and delivery.
+
 ## Current characterization scope: issue #720
 
 This reconciliation inspects captured revision
