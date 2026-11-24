@@ -10,10 +10,8 @@ export const suite = { owner: 'execution', level: 'integration', tags: ['regress
 
 /** Read durable journal metadata, never substituting transient observer details for retention. */
 function timeline(task: HostTask): Array<any> {
-  return task.readFile(task.timeline!).text
-    .trim()
-    .split('\n')
-    .map((line) => JSON.parse(line));
+  const text = task.readFile(task.timeline!).text;
+  return text.trim().split('\n').map((line) => JSON.parse(line));
 }
 
 /** Read the actual provider receipt from its complete registered transcript. */
