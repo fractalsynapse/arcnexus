@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { release } from 'node:os';
+import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { parse, stringify } from 'yaml';
 import { Coordination } from '../../../coordination/src/index.js';
@@ -21,8 +21,11 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
     const work = parse(readFileSync(path, 'utf8'));
     work.owns = ['baseline', 'nested'];
     work.activities.testing = {
-      role: 'assessor', profile: 'work', operations: ['fixture-check', 'failing-check'],
-      standards: [], instructions: ['Exercise captured native commands'],
+      role: 'assessor',
+      profile: 'work',
+      operations: ['fixture-check', 'failing-check'],
+      standards: [],
+      instructions: ['Exercise captured native commands'],
     };
     writeFileSync(path, stringify(work));
     this.commands();
@@ -35,11 +38,20 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
     mkdirSync(join(this.root, 'nested'));
     const command = readFileSync(new URL('./production-check-command.js', import.meta.url), 'utf8');
     writeFileSync(join(this.root, 'nested/command.mjs'), command);
-    for (const [id, phase] of [['fixture-check', 'success'], ['failing-check', 'failure']]) {
-      writeFileSync(join(this.root, catalog, 'operations', id + '.yaml'), stringify({
-        id, category: 'check', tool: 'check', command: '/usr/bin/node',
-        args: ['command.mjs', phase], cwd: 'nested', network: false,
-      }));
+    for (const [id, phase] of [
+      ['fixture-check', 'success'],
+      ['failing-check', 'failure'],
+    ]) {
+      const operation = {
+        id,
+        category: 'check',
+        tool: 'check',
+        command: '/usr/bin/node',
+        args: ['command.mjs', phase],
+        cwd: 'nested',
+        network: false,
+      };
+      writeFileSync(join(this.root, catalog, 'operations', id + '.yaml'), stringify(operation));
     }
   }
 
@@ -47,31 +59,30 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
   async open(t: TestContext) {
     const execution = new Execution(this.architecture, new Coordination(this.storage), this.storage);
     const signal = new AbortController().signal;
-    const task = await execution.admit({ directory: this.root, goal: 'Diagnose native checks' }, signal);
+    const task = await execution.admit(
+      { directory: this.root, goal: 'Diagnose native checks' },
+      signal,
+    );
     assert(task instanceof HostTask, JSON.stringify(task));
     task.planningWorkspace(signal);
-    t.after(() => { task.cleanup(); task.close(); });
+    t.after(() => {
+      task.cleanup();
+      task.close();
+    });
     return task;
   }
 
-  /** Retain complete observable runtime policy and minimal namespace probes before the check attempts. */
+  /** Retain complete observable runtime policy and namespace probes before the check attempts. */
   diagnose(task: HostTask) {
     const observations = {
-      node: process.versions, kernel: release(), runtime: task.config.runtime ?? 'unavailable',
-      capture: task.capture.source.revision, tree: this.git('rev-parse', 'HEAD^{tree}'),
+      node: process.versions,
+      kernel: release(),
+      runtime: task.config.runtime ?? 'unavailable',
+      capture: task.capture.source.revision,
+      tree: this.git('rev-parse', 'HEAD^{tree}'),
       environment: checkEnvironment,
       sandbox: checkMounts(task.worktree!, task.config.common),
-      files: Object.fromEntries(policyPaths.map((path) => [path, readPolicy(path)])),
-      namespaces: Object.fromEntries(['user', 'net', 'mnt'].map((name) =>
-        [name, readlinkSync('/proc/self/ns/' + name)])),
-      probes: [
-        probe('/usr/bin/bwrap', ['--version']),
-        probe('/usr/bin/unshare', ['--version']),
-        probe('/usr/bin/unshare', ['--user', '/usr/bin/true']),
-        probe('/usr/bin/bwrap', ['--unshare-user', '--ro-bind', '/usr', '/usr',
-          '--symlink', 'usr/lib', '/lib', '--symlink', 'usr/lib64', '/lib64',
-          '--', '/usr/bin/true']),
-      ],
+      ...runtimePolicy(),
     };
     const path = task.store('namespace-prerequisite.json', JSON.stringify(observations, null, 2));
     console.log(JSON.stringify({ nativeCheckDiagnostic: { path, ...observations } }));
@@ -79,20 +90,64 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
 }
 
 const policyPaths = [
-  '/proc/self/status', '/proc/self/uid_map', '/proc/self/gid_map', '/proc/self/attr/current',
-  '/proc/sys/user/max_user_namespaces', '/proc/sys/kernel/unprivileged_userns_clone',
+  '/proc/self/status',
+  '/proc/self/uid_map',
+  '/proc/self/gid_map',
+  '/proc/self/attr/current',
+  '/proc/sys/user/max_user_namespaces',
+  '/proc/sys/kernel/unprivileged_userns_clone',
   '/proc/sys/kernel/apparmor_restrict_unprivileged_userns',
 ];
 
+/** Compare raw user-namespace creation with Bubblewrap before any overlay or command can interfere. */
+function runtimePolicy() {
+  return {
+    files: Object.fromEntries(policyPaths.map((path) => [path, readPolicy(path)])),
+    namespaces: Object.fromEntries(
+      ['user', 'net', 'mnt'].map((name) => [name, readlinkSync('/proc/self/ns/' + name)]),
+    ),
+    probes: [
+      probe('/usr/bin/bwrap', ['--version']),
+      probe('/usr/bin/unshare', ['--version']),
+      probe('/usr/bin/unshare', ['--user', '/usr/bin/true']),
+      probe('/usr/bin/bwrap', [
+        '--unshare-user',
+        '--ro-bind',
+        '/usr',
+        '/usr',
+        '--symlink',
+        'usr/lib',
+        '/lib',
+        '--symlink',
+        'usr/lib64',
+        '/lib64',
+        '--',
+        '/usr/bin/true',
+      ]),
+    ],
+  };
+}
+
 /** Preserve unavailable policy fields explicitly rather than guessing effective host configuration. */
 function readPolicy(path: string) {
-  try { return { text: readFileSync(path, 'utf8') }; }
-  catch (error) { return { unavailable: String(error) }; }
+  try {
+    return { text: readFileSync(path, 'utf8') };
+  } catch (error) {
+    return { unavailable: String(error) };
+  }
 }
 
 /** Observe a minimal subprocess solely for diagnosis, without substituting its exit for a check. */
 function probe(command: string, args: string[]) {
   const result = spawnSync(command, args, { encoding: 'utf8' });
-  return { command, args, cwd: process.cwd(), status: result.status, signal: result.signal,
-    stdout: result.stdout, stderr: result.stderr, error: result.error?.message };
+  return {
+    command,
+    args,
+    cwd: process.cwd(),
+    status: result.status,
+    signal: result.signal,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    error: result.error?.message,
+  };
 }
