@@ -409,11 +409,38 @@ Workflow owns the durable position and repair routing. Final independent
 Verification and Delivery retain their gates; a checkpoint push cannot discharge
 them.
 
-### Current source coverage and execution still required
+### Current checkpoint assessment scope: run 183
 
-This reconciliation uses the source available under captured revision
-`6c2bc586329939deb57ba69366331e4d00680406`. It records source inspection, not
-a current passing test or quality result.
+This section is for Execution maintainers selecting characterization and reviewers
+assessing its applicability. It records documentation-only source assessment for
+`checkpoint-current-evidence`, issue #726, branch `726-task`, at engineering
+base and captured revision `7beffb8f5dcd1e6f971d341101e35e6ef80ddf97`.
+Run 183's `183-1-run-timeline.jsonl` records that base, accepted plan and
+host-prepared issue branch under invocation
+`087b55f1fba63518c4dced8ba8c4f9d83c82670e0f57bfc92344c909672f14df`.
+Its complete retained index is
+`183-63-retained-evidence-986cb2e8c33711f3f83ae2a8ba9fe9a2e5ddafa54a5e5d73fc2ad376576132d9.json`.
+These are identity and planning observations, not current checkpoint execution
+or quality results.
+
+The inspected source identities are:
+
+| Source | SHA-256 |
+| --- | --- |
+| [Checkpoint scenarios](../tests/integration/checkpoint.test.ts) | `5da4127b7f65b26daf41d27d74835191111141a9e2200e32a8d19c297777afff` |
+| [Crash scenario](../tests/integration/checkpoint-crash.test.ts) | `7d7c3d196c46f8e35f3604e73b826a874375965031780a760f968f0483da981d` |
+| [Interrupted-check scenarios](../tests/integration/interrupted-check.test.ts) | `eb7bcc6da783680d1c6e8adaa2e62ed2551d6987c78ab781e422c7a63cc736b7` |
+| [Shared checkpoint fixture](../tests/fixtures/checkpoint.ts) | `8886c07d85e64230e84dfb50cb8a2d75c6ed4df16b4c5e5d12184c453070b0a0` |
+| [Crash child entry](../tests/fixtures/checkpoint-crash-child.ts) | `883a6a4d2035eef3bb26b6377a0ec92f53803e20a9459699e316ca6b5211c3f9` |
+
+The three scenario hashes match the run-136 account below. That match alone
+does not establish unchanged production dependencies, resolved operation inputs,
+authority or environment. Preserve run 136 as historical characterization;
+reuse an observation only after establishing all relevant identities match.
+Run 175's inspection-parity acceptance does not itself assess these checkpoint
+criteria. No new behavioral defect is established by this source reconciliation.
+
+### Existing checkpoint coverage
 
 [Checkpoint scenarios](../tests/integration/checkpoint.test.ts) and their
 [shared fixture](../tests/fixtures/checkpoint.ts) contain lost-response,
@@ -430,12 +457,13 @@ abrupt boundary. The child runs the shared fixture and exits with status 73 afte
 `ActivationTools.invoke` acknowledges the checked edit, before Workflow cleanup.
 It writes the actual receipt, retained artifact path, task, issue, branch,
 worktree and Node version to the acknowledgment record. The parent records the
-child executable, arguments, version, status, signal, stdout, stderr and
-acknowledgment in test diagnostics.
+child executable, arguments, inherited cwd, version, status, signal, stdout,
+stderr and acknowledgment in test diagnostics.
 
 Before reopening, parent assertions inspect the abandoned checkout, exact
 `first.txt` bytes, committed branch bytes, receipt artifact and Git worktree
-registration. A callback before each resumed controlled activation asserts the
+registration. The existing `beforeRestart` diagnostic retains those bytes,
+original acknowledgment and registration before the call that reopens the task. A callback before each resumed controlled activation asserts the
 same task, issue and branch, restored bytes, original receipt and artifact,
 one original edit intent, removal of the abandoned workspace and only one
 active task worktree alongside the repository and unrelated checkout. The resumed
@@ -472,15 +500,28 @@ behavior with expected-pass evidence. If an execution reaches a relevant missing
 behavior, retain its distinguishing failing assertion before correction; no such
 new defect is established by this documentation review.
 
-For `checkpoint-abrupt-preservation`, retain an explicit parent observation of
-the abandoned workspace before reopening, including actual bytes, receipt identity
-and worktree registration. The current parent checks those facts with assertions
-but does not emit a dedicated pre-restart observation in its diagnostics. Preserve
-that observation even if reopening later fails. For `checkpoint-current-quality`,
-retain the child working directory as well as the already reported executable,
-arguments, status and complete output; its current spawn diagnostics omit cwd.
-These are evidence corrections to make through the existing fixture and diagnostics,
-without replacing the real child boundary or weakening its assertions.
+The existing crash diagnostics already retain child cwd and an explicit
+pre-restart abandoned-workspace observation. Run 136 records their correction
+and passing execution. Do not recreate that correction or describe it as missing.
+The remaining gap is current applicability: obtain current executed observations
+through the declared owner checks, or establish valid reuse against matching
+source dependencies, operation parameters, captured authority and environment.
+The inspected run-183 retained index supplies no such completed checkpoint or
+quality observation for this milestone.
+
+For `checkpoint-observe-before-retry`, assess the ordered issue-branch
+observation before any repeated mutation and rejection of duplicate push of the
+secured head. For `checkpoint-abrupt-preservation`, retain child diagnostics,
+acknowledgment and the pre-restart observation even if reopening fails; assess
+restored exact bytes, original receipt, reconciliation before activation, one
+active task worktree and preservation before task-owned cleanup.
+For `checkpoint-pending-successor`, assess the original expectation, exits
+37 and 43 with both readable logs, pending state despite omitted checks, correction
+under the original expectation and successor-only resumption after completion.
+These existing assertions are characterization targets, not evidence of a new
+failure. The child exit 73 is the deliberate crash boundary; controlled failed
+check exits are retained negative observations inside the scenario, distinct
+from the enclosing owner's actual operation exit.
 
 Associate executed scenarios and applicable formatting, lint, strict types and
 build observations with the actual assessed source/candidate and environment.
@@ -500,7 +541,17 @@ result and complete diagnostics. Live inference, native confinement, hosted CI,
 independent acceptance and observed staging integration remain separate evidence;
 unavailable prerequisites and missing observations remain explicit gaps.
 
-### Executed checkpoint characterization: run 136
+### Simplification ledger for the current checkpoint assessment
+
+- Reuse existing checkpoint scenarios, the real child boundary, checked receipts,
+  Coordination journal and Workflow cursor; introduce no recovery path or state.
+- Retain the diagnostic correction already present and the historical run-136
+  observations. Refresh only affected evidence; add behavioral red only for a
+  demonstrated new regression before correcting it.
+- Keep complete logs outside source and link actual operation provenance here.
+  Final independent assessment and staging publication remain host-owned.
+
+### Historical executed checkpoint characterization: run 136
 
 Testing for `checkpoint-current-evidence` executed the existing scenarios against
 captured revision `6c2bc586329939deb57ba69366331e4d00680406`, with the crash
@@ -564,9 +615,10 @@ behavioral red. Dropping the pending obligation, replacing the original diagnost
 with the latest one, replaying the completed activity or reversing gates would fail.
 
 This is expected-pass characterization and evidence correction, with no observed
-new behavioral defect and no production behavior change. The earlier paragraphs
-describe the pre-correction inspection; the current crash diagnostics now include
-both the child cwd and explicit pre-restart observation they identified as missing.
+new behavioral defect and no production behavior change. The original run-136 inspection identified missing child cwd and pre-restart
+diagnostics; that correction is present in the current sources inspected above.
+This historical result does not establish current candidate or environment
+applicability by itself.
 The temporary fixture's original artifact is read and compared during execution;
 its exact receipt and abandoned-state contents survive in the retained test log
 after the temporary fixture is removed. Fixture command outcomes, actors,
