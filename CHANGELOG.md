@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Reconcile prepared-work recovery guidance with the completed Execution, Verification and Delivery characterization, preserving the historical #701 claims. Extend publication regressions for prior-merge reuse after later staging movement, another staging advance after outdated-PR reassessment, and unavailable branch facts after successful PR lookup. Link current accountable observations and distinguish controlled check and Reviewer responses from live recovery, assembled independent acceptance, hosted gates and confirmed staging delivery ([#720](https://github.com/fractalsynapse/arcnexus/issues/720)). See the [current recovery evidence](docs/release/verification.md#current-characterization-issue-720). These contributions demonstrate no production defect requiring a behavioral correction and make no production-release claim.
+
 - Add Workflow regression coverage for independent rejection followed by a checked-edit refusal and restart, verifying exact diagnostic and receipt handoff to Direction while preserving the issue, checkpoint, answers and original acceptance. Revalidate sequential corrections, progress detection and prerequisite gates, and correct stale recovery documentation. Controlled-provider observations with real Git/SQLite state establish deterministic coverage; live qualification, assembled independent acceptance, hosted CI and staging delivery remain separate ([#718](https://github.com/fractalsynapse/arcnexus/issues/718)).
 
 - Retain exact requested activity-scoped MCP `tools/list` responses in activation evidence, including requested empty lists, without invoking project handlers or fabricating unrequested listings (#716).
