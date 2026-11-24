@@ -1,0 +1,31 @@
+.arc-platform-stack {
+  display: grid;
+  min-inline-size: 0;
+  gap: 12px;
+}
+.arc-platform-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.arc-platform-inline small {
+  color: var(--muted);
+}
+.arc-platform-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--quiet);
+}
+.arc-platform-code code {
+  color: var(--link);
+}
+.arc-management-record a {
+  color: var(--link);
+}

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Workspace, DisplayRegistration } from './workspace.js';
 
 /** Collect the workspace definitions contributed by trusted browser plugins. */
@@ -5,7 +6,38 @@ export class UiRegistry {
   private readonly entries = new Map<string, Omit<Workspace, 'displays'>>();
   private readonly displays = new Map<string, Map<string, DisplayRegistration>>();
   private readonly listeners = new Set<() => void>();
+  private readonly controls = new Map<string, ReactNode>();
   private snapshot: readonly Workspace[] = [];
+  private controlSnapshot: ReadonlyArray<readonly [string, ReactNode]> = [];
+  private context: ReactNode;
+
+  /** Add a global header control in plugin registration order until disposal. */
+  registerHeaderControl(id: string, control: ReactNode) {
+    if (this.controls.has(id)) throw new Error('Duplicate header control: ' + id);
+    this.controls.set(id, control);
+    this.publish();
+    return () => {
+      this.controls.delete(id);
+      this.publish();
+    };
+  }
+
+  /** Keep header contributions stable until the registry changes. */
+  readonly headerControls = () => this.controlSnapshot;
+
+  /** Set the context displayed alongside every workspace heading. */
+  registerWorkspaceContext(content: ReactNode) {
+    if (this.context !== undefined) throw new Error('Workspace context is already registered');
+    this.context = content;
+    this.publish();
+    return () => {
+      this.context = undefined;
+      this.publish();
+    };
+  }
+
+  /** Return the workspace context contributed to the frame. */
+  readonly workspaceContext = () => this.context;
 
   /** Register one workspace and remove it when its owning plugin is disposed. */
   register(workspace: Omit<Workspace, 'displays'>) {
@@ -47,6 +79,7 @@ export class UiRegistry {
 
   /** Rebuild the renderable workspace registrations in navigation order. */
   private publish() {
+    this.controlSnapshot = [...this.controls];
     this.snapshot = [...this.entries.values()].map((workspace) => ({
       ...workspace,
       displays: [...(this.displays.get(workspace.path)?.values() ?? [])],

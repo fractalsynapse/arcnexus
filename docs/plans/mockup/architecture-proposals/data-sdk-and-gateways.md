@@ -110,6 +110,26 @@ platform network and checks schema compatibility before accepting work.
 Configure the platform addresses used by the native launcher separately
 from the worker's internal service addresses.
 
+### Connect a capacity provider
+
+An authorized operator opens **Connection manager** from the computer icon
+in the web header. With no providers, show the launcher download for the
+detected operating system and architecture when a matching build is
+published. Offer explicit target selection for other machines and when the
+browser cannot identify the target. Show the registration code with setup
+instructions. With providers present, list online, offline and pending
+connections and keep setup available for the next provider.
+
+The platform issues a single-use registration code. A launcher exchanges
+it over the configured API for a pending identity. An authenticated
+operator admits or declines that identity. Admission binds a scoped
+credential to the provider and enables authenticated reconnect. Show
+online only during an authenticated connection and use a text label
+alongside the status indicator. Revocation disconnects the provider,
+invalidates its credential and removes it from new launch routing. Host
+and Coordination retain execution evidence and reconcile any interrupted
+work through the existing writer rules. Capacity metrics are deferred.
+
 ### Project directories and Codex sign-in
 
 The operator registers a local project directory with the launcher. Verify
@@ -246,6 +266,29 @@ project's delivery policy. Catalog records carry credential references.
 Secrets stay with the trusted provider and outside clone URLs, event payloads
 and agent tool inputs. [Current GitHub adapter](../../../../packages/collaboration/src/index.ts)
 · [GitHub App installation authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation)
+
+### Select the active project
+
+Open **Project manager** from the folder icon between Connection manager
+and Color schemes. Put the active project selector first. The catalog
+accepts public and private GitHub repositories. Use an authorized provider
+binding for private repositories. Show reachability and its diagnostic
+separately from a project's registration. Start the review with the
+verified ArcNexus repository. Removing a catalog entry removes it from
+selection and routing while retaining associated Git and run evidence.
+Project metrics are deferred.
+
+Carry the selected project identity through workspace navigation, API
+requests, command submissions and event subscriptions. Keep per-project
+request caches and cursor state. Switching projects closes subscriptions
+for the old selection and resolves the new workspace context. If the
+active project is removed, select another reachable project when possible
+or show the unselected state.
+
+Both managers use the shared React frame, dialog, theme and controls.
+Trusted Cordis contributions register the header actions. Compose common
+layouts and controls through React props, children and hooks so feature
+components reuse the same presentation and behavior. [Existing dialog](../../../../packages/ui/src/controls/dialog.ts)
 
 ## Concurrent API and MCP requests
 

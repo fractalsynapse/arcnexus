@@ -1,6 +1,16 @@
 import { createElement as h } from 'react';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { IconButton } from '../../controls/icon-button.js';
+
+interface PageHeadingProps {
+  label: string;
+  title: string;
+  heading: Ref<HTMLHeadingElement>;
+  gear: Ref<HTMLButtonElement>;
+  settings: boolean;
+  toggle: () => void;
+  context?: ReactNode;
+}
 
 export function PageHeading({
   label,
@@ -9,14 +19,8 @@ export function PageHeading({
   gear,
   settings,
   toggle,
-}: {
-  label: string;
-  title: string;
-  heading: Ref<HTMLHeadingElement>;
-  gear: Ref<HTMLButtonElement>;
-  settings: boolean;
-  toggle: () => void;
-}) {
+  context,
+}: PageHeadingProps) {
   return h(
     'div',
     { className: 'arc-page-heading' },
@@ -28,5 +32,6 @@ export function PageHeading({
       onClick: toggle,
     }),
     h('h1', { ref: heading, tabIndex: -1 }, label),
+    context && h('div', { className: 'arc-page-context' }, context),
   );
 }

@@ -18,3 +18,17 @@ For browser acceptance, install Chromium with
 `npm test -- web-app`. The same suite can use an existing Chromium binary
 through `ARC_CHROMIUM_PATH`. It exercises the built local entry and uses
 the same composition with a controlled binding for command interaction.
+
+## Platform setup design preview
+
+From the repository root, run `npm run build`, then run
+`node dist/apps/web/previews/platform/serve.js 38647`. Open
+[the local preview](http://127.0.0.1:38647/plan/). The computer and folder
+icons open Connection manager and Project manager in the shared frame.
+Start with [sample providers](http://127.0.0.1:38647/plan/?providers=sample)
+to exercise admission and revocation.
+
+The preview represents registration and project entries with local fixture
+state. ArcNexus is the initial project. Additional URLs can be entered and
+selected for design review. Live reachability, registration and published
+launcher binaries depend on the platform implementation.
