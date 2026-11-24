@@ -138,6 +138,31 @@ for (const [component, activity, actor, names, web] of [
   ['work', 'empty-web', 'steward', [], 'live'],
   ['reviewer', 'review', 'reviewer', ['inspect-read'], 'disabled'],
 ] as const) {
+  test('complete CLI inspection parity for ' + component + '/' + activity, (t) => {
+    const fixture = new InspectionFixture(t);
+    const cli = fileURLToPath(new URL('../../../../apps/cli/src/index.js', import.meta.url));
+    const run = (...args: string[]) =>
+      execFileSync(process.execPath, [cli, 'inspect', component, activity, ...args], {
+        cwd: fixture.root,
+        encoding: 'utf8',
+      });
+    const view = fixture.agent.inspect({ directory: fixture.root, component, activity });
+    assert.deepEqual(JSON.parse(run('--json')), view);
+    const rendered = run();
+    const marker = '--- Codex input ---\n';
+    const start = rendered.indexOf(marker);
+    assert.ok(start >= 0);
+    const header = rendered.slice(0, start);
+    const options = header.indexOf('Invocation options:\n');
+    assert.ok(options >= 0);
+    assert.equal(header.slice(0, options), 'Placeholders: ' + view.placeholders.join(', ') + '\n');
+    assert.deepEqual(
+      JSON.parse(header.slice(options + 'Invocation options:\n'.length)),
+      view.request.options,
+    );
+    assert.equal(rendered.slice(start + marker.length), view.request.input + '\n');
+  });
+
   test('EX-6/EX-16: native inspection parity for ' + component + '/' + activity, async (t) => {
     const fixture = new InspectionFixture(t);
     const task = await fixture.open(t);

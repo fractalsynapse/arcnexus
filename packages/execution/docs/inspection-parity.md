@@ -3,7 +3,8 @@
 This intent is for Execution maintainers preparing regressions and reviewers
 deciding whether inspection describes the authority and request actually used by
 an activation. It records the accepted boundary before behavioral changes for
-`execution-inspection-activation-parity`. The governing obligations are
+`execution-inspection-activation-parity`, and updates the evidence scope for
+`inspection-current-parity`. The governing obligations are
 [Execution EX-6, EX-16 and EX-24](../contract.md#acceptance-scenarios),
 [Architecture ARC-9, ARC-13, ARC-18 and ARC-24](../../architecture/contract.md#acceptance-scenarios)
 and the [Agent interface](../../agent/contract.md#public-interface).
@@ -42,7 +43,7 @@ AGENTS files and skills remain available through normal harness discovery.
 Do not paste another selected copy into the request or relax captured-guidance
 validation to make a fixture pass.
 
-## Production path and uncovered comparisons
+## Production path and existing comparisons
 
 [Agent.prepareRequest and activate](../../agent/src/index.ts) delegate to
 [Architecture's request builder](../../architecture/src/request.ts).
@@ -64,12 +65,65 @@ cover selected activity content, source references, repeatability, required
 component/activity positions and special actors. These remain the assembled CLI
 regression entry points.
 
-Those comparisons do not observe bytes received by a native subprocess for every
-actor. The [activity-tool scenarios](../tests/integration/activity-tools.test.ts)
-exercise real MCP transport and refusals with handwritten bindings and a partial
-host fixture; they do not compare production-captured inspection with activation.
-A substituted Agent view, reconstructed prompt or handwritten binding cannot
-establish the missing assembled parity.
+The existing [inspection-activation regression](../tests/integration/inspection-activation.test.ts)
+adds the production subprocess comparison. Its
+[committed generic fixture](../tests/fixtures/inspection.ts) uses real Architecture,
+Agent, Execution admission and task preparation, with an explicitly configured
+[controlled executable](../tests/fixtures/inspection-provider.ts). For Director,
+steward and Reviewer, assertions compare complete received stdin with the prepared
+request and check effective model, reasoning, web and working-directory options.
+They also check selected purpose and activity text, source labels and the named
+placeholders. Reviewer comparisons include the host-retained candidate diff.
+
+The same executable queries production MCP `tools/list`; assertions compare exact
+identities, descriptions and schemas with structured request tools and operation
+identities and descriptions with the rendered Operations section. Cases include
+disjoint steward activities, explicitly empty lists, and cached, disabled and live
+web settings independent of the project-tool list. Foreign writes, another
+activity's operation and unmapped shell calls are refused, with foreign source
+unchanged. Separate cases assert repeatable inspection without model, admission,
+upstream, storage or worktree effects, and refusal of changed captured guidance
+before provider startup. The suite also invokes the assembled CLI request-parity
+and inspection scenarios.
+
+The [activity-tool scenarios](../tests/integration/activity-tools.test.ts) remain
+complementary transport and caller-repair coverage with handwritten bindings and
+a partial host fixture. They do not replace the production-captured comparisons.
+A substituted Agent view, reconstructed prompt or handwritten binding alone
+cannot establish assembled parity.
+
+## Current evidence gaps
+
+At evaluated source revision `8b369c4fe0ba7bba585fc2530f2e085899edd5c2`,
+the scenarios above exist in source. Their presence does not establish a current
+passing observation. Testing must characterize them through the declared checks,
+retain actual status and complete logs, and inspect assertions against each
+criterion below. Working behavior may pass immediately; add regression assertions
+only for an identified coverage gap and observe intended public red before any
+behavioral correction.
+
+Comparisons must account for all current host enrichment. The
+[activation context](../src/activation.ts) supplies completed-round references,
+registered timelines and returning-caller evidence in addition to the explicit
+task inputs. Inspection must receive those identical effective inputs; comparing
+an unenriched fixture assignment or evidence list with a host-enriched activation
+does not test identical-input parity.
+
+The controlled executable explicitly reads AGENTS.md and a skill file and checks
+that native options do not disable their discovery. This establishes approved
+file visibility and adapter configuration, not real Codex discovery or selection.
+Configured real-provider observations must separately identify the executable,
+version, runtime, captured guidance and actual exposed discovery evidence.
+Mismatched-guidance refusal remains required. Do not substitute file visibility,
+a controlled response or an unrelated live activation for that observation.
+
+Historical results retain their original candidate, environment and criteria.
+The accepted plan records that run 136 reported passing repository checks, but
+its supplied acceptance concerns checkpoints; that report alone does not
+discharge these parity criteria. Reuse requires matching relevant inputs and
+observable coverage. Current owner quality results, criterion-linked provider
+evidence and independent assembled acceptance remain to be established or
+explicitly justified from applicable retained artifacts.
 
 ## Evidence required for completion
 
@@ -94,10 +148,15 @@ status and retained artifact against the candidate it assessed; a later edit doe
 not turn an old observation into current evidence. Bulk transcripts remain in
 external task storage through the existing journal, not source.
 
-At this documentation step, the source review is anchored to captured authority
-revision `83acc2f956b3595a2594c6051c3e541928427919`. The references above identify
-existing coverage and the comparisons still required; no fresh behavioral,
-native, quality, CI or assembled pass is claimed. Testing and Implementation
-must establish the criterion-linked observations before the host's assembled
-verification. Recovery and final publication continue through
+The earlier intent was anchored to revision
+`83acc2f956b3595a2594c6051c3e541928427919`; its uncovered-comparison statements
+are historical, superseded by the existing inspection-activation regression
+described above. This documentation review uses evaluated revision
+`8b369c4fe0ba7bba585fc2530f2e085899edd5c2` and the accepted
+`inspection-current-parity` plan recorded in run 138's retained timeline
+(`138-1-run-timeline.jsonl`). It records source-reviewed coverage and outstanding
+observations, without claiming a fresh behavioral, native, quality, CI or
+assembled pass. Testing and Implementation must establish the criterion-linked
+observations before the host's assembled verification. Recovery and final
+publication continue through
 [Workflow](../../workflow/contract.md) and [Delivery](../../delivery/contract.md).

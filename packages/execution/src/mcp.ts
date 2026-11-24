@@ -79,9 +79,7 @@ export class LocalMcp {
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
-    server.setRequestHandler(ListToolsRequestSchema, () => ({
-      tools: [...this.bindings.values()].map(({ tool: { handler: _handler, ...tool } }) => tool),
-    }));
+    server.setRequestHandler(ListToolsRequestSchema, () => this.listTools());
     server.setRequestHandler(CallToolRequestSchema, ({ params }) => {
       const result = this.pending.then(() => this.call(params.name, params.arguments ?? {}));
       this.pending = result.catch(() => {});
@@ -95,6 +93,19 @@ export class LocalMcp {
     } finally {
       await server.close();
     }
+  }
+
+  /** Retain the exact requested discovery response before returning it without dispatching a tool. */
+  private listTools() {
+    const result = {
+      tools: [...this.bindings.values()].map(({ tool: { handler: _handler, ...tool } }) => tool),
+    };
+    this.observe('tools/list', undefined, {
+      call: randomUUID(),
+      phase: 'completed',
+      result,
+    });
+    return result;
   }
 
   /** Give the SDK complete parsed input instead of imposing its HTTP body-size default on valid tools. */

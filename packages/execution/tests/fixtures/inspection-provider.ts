@@ -7,8 +7,20 @@ class InspectionProvider {
   /** Capture stdin, argv, guidance visibility, tool discovery and refused effect attempts. */
   async run() {
     const input = readFileSync(0, 'utf8');
-    const tools = await this.rpc('tools/list');
-    const refusals = await this.refuse(tools.tools);
+    const tools = input.includes('Fixture mode: no MCP requests')
+      ? undefined
+      : await this.rpc('tools/list');
+    const refusals =
+      tools && !input.includes('Fixture mode: listing only') ? await this.refuse(tools.tools) : [];
+    this.record(input, tools, refusals);
+    this.emit({
+      type: 'item.completed',
+      item: { type: 'agent_message', text: '{"kind":"completed"}' },
+    });
+  }
+
+  /** Preserve complete subprocess receipt independently of whether discovery was requested. */
+  private record(input: string, tools: any, refusals: unknown[]) {
     this.emit({
       type: 'fixture.inspection',
       input,
@@ -16,14 +28,10 @@ class InspectionProvider {
       cwd: process.cwd(),
       node: process.version,
       executable: process.argv[1],
-      tools: tools.tools,
+      tools: tools?.tools,
       refusals,
       guidance: readFileSync(join(process.cwd(), 'AGENTS.md'), 'utf8'),
       skill: readFileSync(join(process.cwd(), '.agents/skills/example/SKILL.md'), 'utf8'),
-    });
-    this.emit({
-      type: 'item.completed',
-      item: { type: 'agent_message', text: '{"kind":"completed"}' },
     });
   }
 
