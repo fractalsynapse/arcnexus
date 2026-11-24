@@ -168,7 +168,8 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
   assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
   assert.equal(assessment.identity.base, staging);
   assert.notEqual(assessment.identity.capture, prior?.identity.capture);
-  assert.notEqual(assessment.identity.acceptance, prior?.identity.acceptance);
+  assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
+  assert.notEqual(assessment.identity.inputs, prior?.identity.inputs);
   assert.deepEqual(verdict.verification, assessment.identity);
   assert.deepEqual(verdict.criteria, ['continuity']);
   assert.deepEqual(
@@ -218,11 +219,17 @@ function retainedHold(
     publicationObserved?: { pull?: unknown };
     publicationHold?: { diagnostic: string; requiredAction: string; evidence: string[] };
   }>;
-  assert.deepEqual(history.findLast((event) => event.publicationObserved?.pull)?.publicationObserved?.pull, provider.pull);
+  assert.deepEqual(
+    history.findLast((event) => event.publicationObserved?.pull)?.publicationObserved?.pull,
+    provider.pull,
+  );
   const hold = history.findLast((event) => event.publicationHold)?.publicationHold;
   assert(hold);
   assert.match(hold.diagnostic, /Issue-branch facts unavailable/);
-  assert.equal(hold.requiredAction, 'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects');
+  assert.equal(
+    hold.requiredAction,
+    'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
+  );
   assert(hold.evidence.every((path) => evidence.includes(path)));
 }
 
