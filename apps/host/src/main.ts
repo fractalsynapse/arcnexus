@@ -7,6 +7,7 @@ import { agentPlugin } from '../../../packages/agent/src/index.js';
 import { Architecture, architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
 import { WorkflowRequests } from '../../../packages/coordination/src/index.js';
+import { verifyCheckSandbox } from '../../../packages/execution/src/index.js';
 import { readSecret } from '../../../packages/platform/src/index.js';
 import { runtimeImageSchema } from '../../../packages/foundation/src/runtime-image.js';
 import { teamPlugin } from '../../../packages/team/src/index.js';
@@ -36,7 +37,10 @@ function assignedProject() {
 }
 
 async function main() {
+  if (process.getuid?.() === 0)
+    throw new Error('The execution Host must run as a dedicated non-root user');
   const assignment = assignedProject();
+  verifyCheckSandbox(assignment.storage);
   const context = new Context();
   for (const dependency of [teamPlugin, architecturePlugin, agentPlugin])
     await context.use(dependency);

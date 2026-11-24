@@ -29,6 +29,7 @@ import { readToolFile } from './tool-files.js';
 import { approvedArchitecture } from './architecture-edits.js';
 
 export { Execution };
+export { verifyCheckSandbox } from './check-sandbox.js';
 export { type CheckedEdit, editFingerprint } from './edits.js';
 export { Clarifications };
 export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';

@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { textDigest } from '../../../packages/foundation/src/index.js';
 import { hostAssignmentSchema, type HostAssignment } from './host-assignment.js';
 import { docker, verifyHostImage } from './docker-host-image.js';
+import { hostPolicyIdentity, matchesHostPolicy, withHostPolicy } from './host-policy.js';
 
 const checkout = '/var/lib/arcnexus/repository';
 const storage = '/var/lib/arcnexus/state';
@@ -134,12 +135,14 @@ async function existingHost(name: string) {
     '{{.ID}}',
   );
   if (!running.trim()) return undefined;
-  const rows = JSON.parse(await docker('container', 'inspect', name)) as Array<{
-    Id: string;
-    Image: string;
-    Config: { Labels: Record<string, string> };
-    State: { Running: boolean };
-  }>;
+  const rows = JSON.parse(await docker('container', 'inspect', name)) as Array<
+    {
+      Id: string;
+      Image: string;
+      Config: { Labels: Record<string, string> };
+      State: { Running: boolean };
+    } & Parameters<typeof matchesHostPolicy>[0]
+  >;
   return rows[0];
 }
 
@@ -153,15 +156,21 @@ export async function startHost(input: unknown) {
   const image = await verifyHostImage(config.image);
   const file = prepare(config);
   const name = 'arcnexus-host-' + textDigest(config.credentials);
-  const binding = textDigest(JSON.stringify(config));
+  const binding = textDigest(JSON.stringify([config, hostPolicyIdentity]));
   const existing = await existingHost(name);
   if (existing) {
-    if (existing.Image !== image || existing.Config.Labels['io.arcnexus.assignment'] !== binding)
+    if (
+      existing.Image !== image ||
+      existing.Config.Labels['io.arcnexus.assignment'] !== binding ||
+      !matchesHostPolicy(existing)
+    )
       throw new Error('Existing Host belongs to a different approved assignment');
     if (!existing.State.Running) await docker('start', name);
     return { id: existing.Id, name };
   }
   const args = containerArguments(config, file, name, binding);
-  const id = (await docker('run', '-d', ...args, image)).trim();
+  const id = await withHostPolicy(async (policy) =>
+    (await docker('run', '-d', ...policy, ...args, image)).trim(),
+  );
   return { id, name };
 }

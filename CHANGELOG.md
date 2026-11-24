@@ -22,6 +22,8 @@
 
 ### Fixed
 
+- Equip the Docker Host with Bubblewrap overlay support and require the launcher's scoped runtime policy before it can claim work (#706).
+
 - Match the React frame to the approved layout settings and header action, and theme open selectors and tooltips across the app (#704).
 
 - Use the default scheme from the mockup's palette popup for the background behind panels on every page (#703).

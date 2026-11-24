@@ -12,7 +12,7 @@ export const suite = {
 class ParameterScenario {
   private readonly task;
 
-  /** Configure two activities against one authored operation using the existing check fixture. */
+  /** Bind different activities and stewards to one authored operation. */
   constructor(context: TestContext) {
     this.task = new CheckCacheFixture(context).task;
     const task = this.task;
@@ -26,6 +26,20 @@ class ParameterScenario {
       testing: { operations: [{ operation: 'fixture-check', parameters: { tag: 'testing-tag' } }] },
       implementation: {
         operations: [{ operation: 'fixture-check', parameters: { tag: 'implementation-tag' } }],
+      },
+    });
+    const owner = task.capture.components.owner!;
+    Object.assign(task.capture.components, {
+      second: {
+        ...owner,
+        id: 'second',
+        owns: ['other'],
+        activities: {
+          implementation: {
+            ...owner.activities.implementation!,
+            operations: [{ operation: 'fixture-check', parameters: { tag: 'second-tag' } }],
+          },
+        },
       },
     });
   }
@@ -43,11 +57,19 @@ class ParameterScenario {
       activity: 'implementation',
       expected: 'pass',
     });
+    const second = await this.task.check('fixture-check', signal, {
+      owner: 'second',
+      activity: 'implementation',
+      expected: 'pass',
+    });
     assert.equal(testing.status, 0);
     assert.equal(implementation.status, 0);
+    assert.equal(second.status, 0);
     assert.deepEqual(testing.args, ['%s', 'testing-tag']);
     assert.deepEqual(implementation.args, ['%s', 'implementation-tag']);
+    assert.deepEqual(second.args, ['%s', 'second-tag']);
     assert.notEqual(testing.log, implementation.log);
+    assert.notEqual(implementation.log, second.log);
   }
 }
 
