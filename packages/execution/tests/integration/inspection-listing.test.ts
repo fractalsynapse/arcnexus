@@ -8,6 +8,18 @@ import { InspectionFixture } from '../fixtures/inspection.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
+/** Supply all required activation inputs while selecting only the controlled provider's probe mode. */
+function context(task: HostTask, mode: string) {
+  return {
+    assignment: { instructions: 'Fixture mode: ' + mode },
+    milestone: { id: 'listing-retention', owner: 'work' },
+    acceptance: [{ id: 'parity-captured-activity-tools' }],
+    evidence: [],
+    goal: task.goal,
+    worktree: task.worktree,
+  };
+}
+
 /** Read durable journal metadata, never substituting transient observer details for retention. */
 function timeline(task: HostTask): Array<any> {
   const text = task.readFile(task.timeline!).text;
@@ -59,7 +71,7 @@ for (const activity of ['testing', 'documentation', 'empty'] as const) {
       assert.fail('tools/list dispatched a project handler'),
     );
     const selection = { component: 'work', activity };
-    const data = { assignment: { instructions: 'Fixture mode: listing only' } };
+    const data = context(task, 'listing only');
     const view = fixture.agent.prepareRequest(task.capture, selection, data);
     await task.activate(fixture.agent, selection, data, new AbortController().signal);
     const probe = receipt(task);
@@ -81,7 +93,7 @@ for (const activity of ['testing', 'empty'] as const) {
     await task.activate(
       fixture.agent,
       { component: 'work', activity },
-      { assignment: { instructions: 'Fixture mode: no MCP requests' } },
+      context(task, 'no MCP requests'),
       new AbortController().signal,
     );
     assert.equal(Object.hasOwn(receipt(task), 'tools'), false);
