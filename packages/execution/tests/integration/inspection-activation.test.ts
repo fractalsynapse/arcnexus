@@ -138,7 +138,7 @@ for (const [component, activity, actor, names, web] of [
   ['work', 'empty-web', 'steward', [], 'live'],
   ['reviewer', 'review', 'reviewer', ['inspect-read'], 'disabled'],
 ] as const) {
-  test('rendered and structured inspection agree completely for ' + component + '/' + activity, (t) => {
+  test('complete CLI inspection parity for ' + component + '/' + activity, (t) => {
     const fixture = new InspectionFixture(t);
     const cli = fileURLToPath(new URL('../../../../apps/cli/src/index.js', import.meta.url));
     const run = (...args: string[]) =>
