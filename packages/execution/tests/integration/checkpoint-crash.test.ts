@@ -23,15 +23,20 @@ interface Acknowledgment {
 /** Run the actual checkpoint writer in a child that cannot execute Workflow's cleanup. */
 function crash(scenario: RecoveryScenario, t: TestContext): Acknowledgment {
   const executable = process.execPath;
-  const args = [fileURLToPath(new URL('../fixtures/checkpoint-crash-child.js', import.meta.url)),
-    dirname(scenario.root)];
+  const args = [
+    fileURLToPath(new URL('../fixtures/checkpoint-crash-child.js', import.meta.url)),
+    dirname(scenario.root),
+  ];
   const result = spawnSync(executable, args, { encoding: 'utf8' });
-  t.diagnostic(JSON.stringify({ executable, args, node: process.version,
-    status: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr }));
+  t.diagnostic(JSON.stringify({
+    executable, args, node: process.version, status: result.status,
+    signal: result.signal, stdout: result.stdout, stderr: result.stderr,
+  }));
   assert.ifError(result.error);
   assert.equal(result.signal, null);
   assert.equal(result.status, 73, result.stderr);
-  const ack = JSON.parse(readFileSync(join(dirname(scenario.root), 'acknowledgment.json'), 'utf8')) as Acknowledgment;
+  const path = join(dirname(scenario.root), 'acknowledgment.json');
+  const ack = JSON.parse(readFileSync(path, 'utf8')) as Acknowledgment;
   t.diagnostic(JSON.stringify({ acknowledged: ack }));
   return ack;
 }
