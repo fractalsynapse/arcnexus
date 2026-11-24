@@ -44,6 +44,19 @@ async function view(page: Page, name: string) {
   return heading;
 }
 
+test('web server defaults to loopback and can listen on the container interface', async (t) => {
+  const local = application.server.address();
+  assert.ok(local && typeof local === 'object');
+  assert.equal(local.address, '127.0.0.1');
+
+  const container = await serveWeb('dist/apps/web/site', 0, '0.0.0.0');
+  t.after(() => container.server.close());
+  const binding = container.server.address();
+  assert.ok(binding && typeof binding === 'object');
+  assert.equal(binding.address, '0.0.0.0');
+  assert.equal((await fetch(container.url + '/plan/')).status, 200);
+});
+
 test('built shell exposes all workspaces and reports unavailable live commands', async (t) => {
   const page = await browser.newPage();
   t.after(() => page.close());

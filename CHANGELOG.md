@@ -75,6 +75,8 @@
 
 - Add a local React preview for capacity provider setup and project selection using the shared frame and dialogs (#704).
 
+- Serve the React web frame with Docker Compose and provision a private PostgreSQL service for migration work (#704).
+
 - Add the local React web frame with a reusable Cordis UI plugin, named site schemes and a responsive command panel (#704).
 
 - Create and edit reusable color schemes from the mockup header. Choose a site default for all pages and select individual panel overrides by name and swatches (#703).

@@ -32,3 +32,25 @@ The preview represents registration and project entries with local fixture
 state. ArcNexus is the initial project. Additional URLs can be entered and
 selected for design review. Live reachability, registration and published
 launcher binaries depend on the platform implementation.
+
+## Local Compose stack
+
+Run these commands from the repository root with Docker Compose and OpenSSL.
+
+```sh
+cd apps/web
+mkdir -p .docker
+if [ ! -f .docker/postgres-password ]; then
+  (umask 077 && openssl rand -hex 32 > .docker/postgres-password)
+fi
+docker compose up --build --wait
+```
+
+Open [http://127.0.0.1:38646/plan/](http://127.0.0.1:38646/plan/).
+Set `ARC_WEB_PORT` when invoking Compose to use a different host port.
+The web container runs the same built shell as the native preview. The
+PostgreSQL service runs independently on a private network with a named data
+volume. ArcNexus continues to use SQLite for coordination until the storage
+migration. Use `docker compose exec postgres psql -U arcnexus -d arcnexus`
+to inspect the new database. From this directory, `docker compose down`
+stops the stack and retains the named volume.
