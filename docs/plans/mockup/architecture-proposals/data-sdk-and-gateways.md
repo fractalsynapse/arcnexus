@@ -34,10 +34,14 @@ launcher enrollment and checkout provisioning, and two scoped checks in a
 derivative Host. The Host startup probe verifies confinement before it can
 claim work. An optional trusted egress network lets the Host reach its
 providers, and its GitHub App grants are scoped to the assigned repository.
+The Host used the scoped App token to create an issue, push a pinned commit,
+open a pull request and comment on both records in the private fixture.
 
-A scripted Plan completed through the REST gateway against PostgreSQL.
-The real Codex-backed steward delivery and matched deployment recovery on
-the current build are still acceptance items. Native ARM64 is deferred.
+A scripted Plan paused for a question through the REST gateway. The matched
+PostgreSQL and Host state restore preserved the receipt and its operation
+evidence. A replacement Host accepted the answer and finished the same
+execution. The real Codex-backed steward delivery is still an acceptance
+item. Native ARM64 is deferred.
 Live qualification governs external launcher publication and operator-facing
 activation for real projects. In-progress bare Run receipts from before
 aggregate checkpointing require trusted reconciliation if they have a closed
