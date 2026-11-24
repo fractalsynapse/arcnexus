@@ -45,10 +45,7 @@ test('a secured checkpoint resumes on a disjoint staging advance', async (t) => 
   const stopped = await scenario.run();
   assert.equal(stopped.kind, 'failed');
   assert.match(stopped.reason, /Interrupted after secured checkpoint/);
-  const { oldBase, checkpoint, staging } = scenario.advance(
-    'staging-only.txt',
-    'staging contribution',
-  );
+  const { oldBase, checkpoint, staging } = scenario.advance('staging-only.txt', 'staging contribution');
   const checkedBlob = scenario.observe('rev-parse', `${checkpoint}:first.txt`);
   const resumed = await scenario.run();
   assert.equal(resumed.kind, 'merged', JSON.stringify(resumed));
