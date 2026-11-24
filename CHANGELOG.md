@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Reference complete refinement round reports from agent requests so subsequent rounds can start without replaying every historical evidence index (#712).
+
 - Expose the approved Host's pinned Playwright browsers to offline repository checks through the existing read-only toolchain mount (#709).
 
 - Clear a departed native writer during PostgreSQL cutover so hosted commands can resume the imported task and its retained evidence (#706).

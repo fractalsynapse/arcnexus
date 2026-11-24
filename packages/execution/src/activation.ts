@@ -4,6 +4,7 @@ import type {
   AgentInspection,
   TaskContext,
 } from '../../architecture/src/index.js';
+import type { CompletedRefinementRound } from '../../workflow/src/index.js';
 import { candidateDiff } from './git.js';
 import { verifyNativeGuidance } from './host-config.js';
 import type { HostTask } from './index.js';
@@ -94,10 +95,11 @@ function invocationContext(task: HostTask, current: ActivityData, observed?: num
 /** Add compact round references and readable registered sources to the prepared observation. */
 function completedRoundContext(task: HostTask, assignment: unknown) {
   const rounds = task.journal.completedRounds().flatMap((event) => {
-    const observation = event.observation as { completedRound?: { report?: unknown } };
-    const report = observation.completedRound?.report;
-    return typeof report === 'string' && task.journal.artifactRecorded(report)
-      ? [observation.completedRound!]
+    const { completedRound: round } = event.observation as {
+      completedRound?: CompletedRefinementRound;
+    };
+    return typeof round?.report === 'string' && task.journal.artifactRecorded(round.report)
+      ? [{ invocation: round.invocation, round: round.round, report: round.report }]
       : [];
   });
   const instructions =
@@ -111,7 +113,7 @@ function completedRoundContext(task: HostTask, assignment: unknown) {
   );
   return {
     assignment: rounds.length ? { ...instructions, completedRounds: rounds } : assignment,
-    evidence: [...rounds.map(({ report }) => report as string), ...timelines],
+    evidence: [...rounds.map(({ report }) => report), ...timelines],
   };
 }
 
