@@ -12,7 +12,6 @@ import { activities, track, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
 import { Execution, hostTask, type HostTask } from '../../../execution/src/index.js';
 import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round-consumption.js';
-
 import { verify } from '../../../verification/src/index.js';
 import { integrate, resume } from '../../src/index.js';
 import { assertExecutedChecks } from './recovery-evidence.js';
@@ -96,18 +95,18 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 
   /** Preserve the accepted plan and append only accountable correction after rejection. */
   private direction(): WorkflowServices['direction'] {
-    return {
-        track,
-        plan: async () => {
-          this.plans += 1;
-          return { kind: 'plan', plan: recoveryPlan() };
-        },
-        revise: async (_session, plan, feedback) => {
-          assert(this.repairFailedCheck && feedback.kind === 'rejection');
-          assert(plan);
-          const correction = { ...plan.milestones[0]!, id: 'correct-required-check' };
-          return { kind: 'plan', plan: { ...plan, milestones: [...plan.milestones, correction] } };
-        },
+  return {
+      track,
+      plan: async () => {
+        this.plans += 1;
+        return { kind: 'plan', plan: recoveryPlan() };
+      },
+      revise: async (_session, plan, feedback) => {
+        assert(this.repairFailedCheck && feedback.kind === 'rejection');
+        assert(plan);
+        const correction = { ...plan.milestones[0]!, id: 'correct-required-check' };
+        return { kind: 'plan', plan: { ...plan, milestones: [...plan.milestones, correction] } };
+      },
     };
   }
 
@@ -217,28 +216,30 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   /** Model a favorable verdict or an evidence-linked rejection of the actual failed command. */
   private reviewReply(task: HostTask, data: Parameters<HostTask['activate']>[2]) {
     const assignment = data.assignment as {
-          accepted: Record<string, unknown>;
-          checks: CheckResult[];
-        };
-        assertExecutedChecks(task, assignment.checks);
-        const failed = assignment.checks.find(({ status }) => status !== 0);
-        if (this.repairFailedCheck && failed)
-          return {
-            ...assignment.accepted,
-            kind: 'rejected',
-            findings: [{
-              criterion: criterion.id,
-              owner: 'work',
-              reason: 'Correct the baseline rejected by the required command',
-              evidence: [failed.log],
-            }],
-          };
-        return {
-          ...assignment.accepted,
-          kind: 'accepted',
-          criteria: [criterion.id],
-          evidence: task.evidence,
-        };
+      accepted: Record<string, unknown>;
+      checks: CheckResult[];
+    };
+    assertExecutedChecks(task, assignment.checks);
+    const failed = assignment.checks.find(({ status }) => status !== 0);
+    if (this.repairFailedCheck && failed)
+      return {
+        ...assignment.accepted,
+        kind: 'rejected',
+        findings: [
+          {
+            criterion: criterion.id,
+            owner: 'work',
+            reason: 'Correct the baseline rejected by the required command',
+            evidence: [failed.log],
+          },
+        ],
+      };
+    return {
+      ...assignment.accepted,
+      kind: 'accepted',
+      criteria: [criterion.id],
+      evidence: task.evidence,
+    };
   }
 
   /** Interrupt after the answer is durable but before activity completion is acknowledged. */
