@@ -64,6 +64,106 @@ accepted plan. No behavioral correction or software check was performed in this
 documentation activity. The host determines evidence reuse and assembled
 acceptance after the remaining activities.
 
+## Testing observations for run 173
+
+Testing characterizes existing behavior with expected pass; it changes no product
+code and claims no new behavioral red. Engineering base and captured authority are
+`7d04db61627b4e76e0fda4ac1003ab5b26d18e8e`. Documentation finished at
+`1ff975274ea5f75bfaadf8408164d64a38d41590`. The final tested source checkpoint is
+`47fa89c994a832a285d569049fb41b5d56d0c5d1`, journal sequence 136308.
+The test file SHA-256 is
+`a556a23d714e68ed9222c36b9472dec2838537dd9b5e4502654a26de6849cb14`;
+the controlled provider SHA-256 is
+`d91ba5a398742169a5d7c6b9b2d585ca59beb404688c427831b087bfa1c552db`.
+The evidence-only update containing this account follows that tested checkpoint.
+
+The initial current characterization, `173-200-owner-tests.log`, passed 252 of
+268 cases with zero failures and 16 skips. Source review demonstrated an enrichment
+coverage gap. The existing activity matrix now supplies a registered timeline
+and an explicitly authored, registered completed-round report to the real SQLite
+journal, independently constructing the identical effective inspection context.
+A second round with an unregistered report must remain absent. The matrix still
+covers Director, steward, Reviewer, disjoint activities and both empty-tool policies,
+including the independently retained Reviewer diff. This fixture establishes
+request consumption of explicit journal records, not production of a real
+refinement round or live model reasoning.
+
+A returning-caller scenario adds an explicitly captured question operation to its
+isolated fixture before admission. The controlled executable invokes that mapped
+operation; the host answers with distinguishable multiline text, including leading
+and trailing spaces, and records a distinct new observation. Foreground snapshots
+identify artifacts allocated before each native request without reading its payload
+as the expected input. `returningContext` constructs the expected assignment and
+ordered evidence; `retainedIndex` checks the complete index against those original
+artifacts and reads every reference. Assertions compare the exact assignment,
+acceptance, milestone, evidence order and complete subprocess stdin with shared
+Agent preparation. Dropped answers, missing rounds, reordered references,
+current-attempt-only evidence, duplicate returns and unregistered reports cannot
+satisfy these comparisons. No transcript is recursively copied into a later prompt.
+
+The final complete observation is `173-408-owner-tests.log`, SHA-256
+`8c963fd9be0ea7b7487432ef52e10f46c2601196549168a6d6f5df7f3313f308`.
+It returned actual status zero at journal sequence 136350, check-input identity
+`404fe850435b224e6e2312844cd8fd06c1bec9de894edca0b35e5b30beb0cd6c`.
+Lines 2268–2273 report 269 tests, 253 passes, zero failures and 16 skips.
+The skips remain unavailable native evidence, not passing confinement scenarios.
+
+| Current criterion | Exact assertions and current retained observation |
+| --- | --- |
+| `inspection-request-parity` | `inspection-activation.test.ts`: `enrichment`, `liveContext`, `assertSelected`, `assertInvocation`, native activity matrix and complete CLI cases. Log lines 1041–1132 pass complete input/options comparisons for all actors and empty/disjoint activities. Lines 1163–1169 pass the returning caller and retain its complete controlled receipt. `context` includes the real Reviewer diff. Named placeholders and no-effects inspection pass at 1145; assembled CLI scenarios at 1157–1162 include seven passes and no skips. |
+| `inspection-activity-authority` | `assertTools` compares names, exact descriptions and schemas with actual HTTP MCP responses and rendered Operations; refusal assertions preserve exact foreign bytes. `inspection-listing.test.ts` `assertRetained` compares complete registered response artifacts, call identity, selected attribution and native-span order. Lines 1173–1197 pass populated, disjoint, empty and unrequested cases. Throwing dispatch sentinels reject project-handler effects during listing. |
+| `inspection-effects-and-policy` | The activity matrix and `assertInvocation` compare cached, disabled and live web options independently of project tools, and approved file visibility without pasted guidance. Repeatability and no model/admission/upstream/storage/worktree effects pass at 1145. Changed captured guidance is refused before provider startup at 1151. These are controlled transport and configuration observations. |
+| `inspection-evidence-accuracy` | This section maps current observations to exact tracked assertions, authority, checkpoint, input identity and log excerpts. Complete stdin/argv/cwd/tools/guidance receipts remain in the owner log; configured-provider records below have separate provenance. Host assembled verification, CI and delivery are not claimed. |
+
+Applicable current quality operations all returned actual status zero:
+`173-396-owner-format.log` (sequence 136316),
+`173-399-owner-lint.log` (136324),
+`173-402-repository-types.log` (136332), and
+`173-405-repository-build.log` (136340). They assess the full restored source,
+including the returning-caller assertion. The host retains their resolved commands,
+selection, durations and individual check-input identities in the run timeline.
+
+Preserve the failed observations. `173-259-owner-tests.log` reached the returning
+subprocess but its expected assignment placed completedRounds before clarifications,
+unlike actual host enrichment. Correcting that fixture's insertion order preserved
+the complete byte comparison; it is setup feedback, not intended behavioral red.
+Formatting/lint failures remain registered. The checked formatter reported
+“Installed project formatter unavailable”; manual source corrections and temporary
+declaration isolation diagnosed formatting. Intermediate format-only passes on
+partial diagnostic source are not acceptance evidence. All assertions were restored
+before the final passing quality and behavioral observations above.
+
+### Current configured-provider observations
+
+Complete mapped reads of `173-2-native-request.json`,
+`173-84-native-request.json` and `173-160-native-request.json` retain the prepared
+Director/planning, Execution/documentation and Execution/testing requests.
+Their invocation artifacts are `173-5`, `173-87` and
+`173-163-native-invocation.json`. They record `/usr/local/bin/codex`,
+gpt-6.1-sol, medium reasoning, independently configured live web policy, disabled
+native shell and unified execution, and a required local MCP endpoint. Timeline
+sequences 135079, 135328 and 135567 attribute those activations to the evaluated
+revision, profile gpt-sol and host Node v22.23.5. These are host-side preparation
+and invocation records, not independent complete received-context receipts.
+
+Unlike the old pre-repair research, current requested listings are retained.
+Complete reads of `173-6`, `173-88` and `173-164-mcp-observation.json` compare
+exactly with the corresponding prepared tool arrays after removing only internal
+handler fields: names, descriptions and schemas all agree. Journal sequences
+135083, 135332 and 135571 attribute them respectively to the same selected
+activities and preserve their call identities. These configured-provider requests
+all have populated bindings; no real empty listing or Reviewer receipt is inferred.
+Controlled empty/disjoint and no-request assertions remain the evidence for those
+cases. Prepared arrays alone are never reported as requested listing receipts.
+
+No new authoritative real-harness discovery or complete received-context receipt
+is established by these artifacts. Current invocation configuration preserves
+normal discovery, while controlled subprocess file reads establish only approved
+file visibility. The earlier operator-supplied Codex version and image remain
+historical attribution, not a newly measured version for run 173. Provider internals
+that are not exposed remain unknown. No model claim, explicit skill read or
+successful mapped tool call is promoted into automatic AGENTS/skill discovery proof.
+
 ## Historical characterization and run-138 repair
 
 The remainder preserves the prior account. Its uses of “current” refer to the
