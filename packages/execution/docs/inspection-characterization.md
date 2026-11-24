@@ -42,6 +42,30 @@ Listing alone must never dispatch a project handler. These assertions reject
 dropped listings, fabricated empty listings, foreign activity metadata and
 description/schema loss; production correction belongs to Implementation.
 
+The new [listing regression](../tests/integration/inspection-listing.test.ts)
+uses the existing controlled executable in listing-only and no-request modes.
+It registers the normal foreground timeline before activation, then reads durable
+metadata and registered response artifacts through HostTask.readFile. A throwing
+project-dispatch sentinel detects any handler invocation during discovery.
+
+Run 138 retained the intended red in `138-779-owner-tests.log`: each of
+work/testing, work/documentation and work/empty receives the exact advertised
+response, but fails “retain the single requested tools/list response” with zero
+retained responses instead of one. Both no-request cases pass. Existing
+inspection/activation, activity-tool and assembled CLI comparisons still pass.
+The whole observation reports 249 passes, these three intended failures and
+16 existing skips; skipped native scenarios remain unproven. No production
+implementation changed. Initial missing activation inputs and an unregistered
+foreground timeline were corrected fixture setup failures, retained respectively
+in `138-748-owner-tests.log` and `138-758-owner-tests.log`.
+
+Current required quality observations are `138-782-owner-format.log`,
+`138-785-owner-lint.log`, `138-788-repository-types.log` and
+`138-791-repository-build.log`, all actual exit zero. Formatter transformation
+was unavailable in the managed checkout; literal checked edits corrected source
+formatting, with failed formatting observations preserved. Checkpoint identities
+and complete logs remain in the host journal; bulk output is not copied here.
+
 Retain the prior passing characterization separately from the new intended red.
 Host clarification 138-567 records operator-observed codex-cli 0.172.0 and the
 qualification image identity. The configured provider exposes neither a complete
