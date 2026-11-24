@@ -348,9 +348,11 @@ function retainedIndex(task: HostTask, before: string[]) {
   assert.equal(indexes.length, 1);
   const index = indexes[0]!;
   const references = JSON.parse(task.readFile(index).text).references;
-  assert.deepEqual(references, before.filter((path) => path !== index));
+  const originals = before.filter((path) => path !== index);
+  assert.deepEqual(references, originals);
   for (const path of references) {
-    assert.equal(typeof task.readFile(path).text, 'string');
+    const contents = task.readFile(path);
+    assert.equal(typeof contents.text, 'string');
   }
   return index;
 }
