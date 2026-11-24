@@ -14,7 +14,13 @@ test('retry confirms a lost checkpoint push, reconstructs the worktree and resum
   assert.deepEqual(scenario.activations, ['first']);
   scenario.checkCleanup();
 
+  const boundary = scenario.remote.events.length;
+  const secured = scenario.remote.head;
   const retry = await scenario.run();
+  const resumed = scenario.remote.events.slice(boundary).filter(({ branch }) => branch === '7-task');
+  assert.deepEqual(resumed[0], { kind: 'observe', branch: '7-task', head: secured });
+  assert(!resumed.some(({ kind, head }) => kind === 'push' && head === secured));
+  assert.equal(scenario.identities[0], scenario.identities[1]);
   assert.equal(retry.kind, 'merged', JSON.stringify(retry));
   assert.deepEqual(scenario.activations, ['first', 'second']);
   assert.equal(scenario.remote.pushes.length, 2);
