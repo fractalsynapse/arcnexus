@@ -92,14 +92,18 @@ export class RefusedWorkflow {
   private proposal(request: RevisionRequest) {
     this.revisions.push(request);
     if (request.finding.kind === 'supplier') this.onHoldRevision?.();
-    this.calls.push(request.finding.kind === 'rejection' ? 'Direction:rejection' : 'Direction:hold');
+    this.calls.push(
+      request.finding.kind === 'rejection' ? 'Direction:rejection' : 'Direction:hold',
+    );
     const accepted = JSON.parse(this.fixture.task.readFile(request.acceptedPlan).text);
     const pending = accepted.milestones.slice(request.position.completed).map((m: Milestone) => ({
       id: m.id,
       steps: m.steps.slice(request.position.activities[m.id] ?? 0),
     }));
     const contribution =
-      request.finding.kind === 'rejection' ? correction : { ...correction, id: 'refusal-correction' };
+      request.finding.kind === 'rejection'
+        ? correction
+        : { ...correction, id: 'refusal-correction' };
     return { kind: 'plan', plan: { milestones: [contribution, ...pending] } };
   }
 
@@ -117,7 +121,9 @@ export class RefusedWorkflow {
           direct(this.agent, session, abort, { plan, feedback }),
       },
       agent: { execute: async (_session, milestone) => this.execute(milestone) },
-      verification: { assess: async (_session, plan, candidate) => this.assess(plan, candidate.digest) },
+      verification: {
+        assess: async (_session, plan, candidate) => this.assess(plan, candidate.digest),
+      },
       delivery: {
         integrate: async () => {
           this.calls.push('Delivery');
@@ -146,7 +152,8 @@ export class RefusedWorkflow {
   /** Reject the initial public assessment and accept only corrected bytes under original acceptance. */
   private assess(plan: Plan, digest: string) {
     this.calls.push('Review');
-    for (const milestone of plan.milestones) assert.deepEqual(milestone.criteria, correction.criteria);
+    for (const milestone of plan.milestones)
+      assert.deepEqual(milestone.criteria, correction.criteria);
     if (!this.revisions.length)
       return {
         kind: 'rejected' as const,
@@ -170,7 +177,13 @@ export class RefusedWorkflow {
       await this.fixture.edit('fixture.txt', 'corrected');
       return { kind: 'completed' as const, evidence: [] };
     }
-    const result = await steward(this.agent, this.fixture.task, milestone, 'implementation', signal);
+    const result = await steward(
+      this.agent,
+      this.fixture.task,
+      milestone,
+      'implementation',
+      signal,
+    );
     if (result.holdContext) this.holds.push(result.holdContext);
     return result;
   }
@@ -187,7 +200,10 @@ export class RefusedWorkflow {
   /** Reopen the retained task without changing its plan, answers, receipts or cursor. */
   async reopen() {
     const old = this.fixture.task;
-    const journal = new Coordination(this.fixture.storage).admit(old.capture.source.remote, old.goal);
+    const journal = new Coordination(this.fixture.storage).admit(
+      old.capture.source.remote,
+      old.goal,
+    );
     assert(journal instanceof Journal);
     this.fixture.task = new HostTask(old.config, old.goal, journal);
     this.bind();
