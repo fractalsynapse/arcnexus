@@ -12,6 +12,7 @@ export class PublicationProvider {
   merged = 0;
   lose?: 'push' | 'open' | 'merge';
   unavailable = false;
+  branchUnavailable = false;
   moveDuringVerify = false;
 
   /** Bind only external operations while real task services retain their own records. */
