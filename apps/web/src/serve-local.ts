@@ -1,4 +1,8 @@
 import { serveWeb } from './serve.js';
 
-const { url } = await serveWeb('dist/apps/web/site', Number(process.argv[2] ?? 0));
+const { url } = await serveWeb(
+  'dist/apps/web/site',
+  Number(process.argv[2] ?? 0),
+  process.env.ARC_WEB_HOST,
+);
 console.log(url);

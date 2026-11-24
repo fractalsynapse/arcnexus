@@ -4,18 +4,24 @@ import { join } from 'node:path';
 
 const types = { js: 'text/javascript', css: 'text/css', webp: 'image/webp', html: 'text/html' };
 
-/** Serve the compiled browser entry and its public assets on loopback. */
-export async function serveWeb(directory: string, port = 0) {
+/** Serve the compiled browser entry and its public assets on the requested interface. */
+export async function serveWeb(directory: string, port = 0, host = '127.0.0.1') {
   const server = createServer((request, response) => {
     void serveAsset(directory, request, response);
   });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', resolve);
+    server.listen(port, host, resolve);
   });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Web server has no TCP address');
-  return { server, url: 'http://127.0.0.1:' + address.port };
+  const hostname =
+    address.family === 'IPv6'
+      ? `[${address.address === '::' ? '::1' : address.address}]`
+      : address.address === '0.0.0.0'
+        ? '127.0.0.1'
+        : address.address;
+  return { server, url: `http://${hostname}:${address.port}` };
 }
 
 /** Give workspace addresses the same shell while serving generated assets by exact path. */
