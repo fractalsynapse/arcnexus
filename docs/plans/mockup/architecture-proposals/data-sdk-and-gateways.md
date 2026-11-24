@@ -90,8 +90,8 @@ Codex and Bubblewrap. Run it as a dedicated non-root user on the private
 service network. Publish the operator-facing API and MCP entry points and
 keep Host discovery and requests internal. Give it outbound access for
 approved Git remotes and configured execution providers. Keep Docker daemon
-access with the operator. Start with one Host serving the local platform,
-with each project's repository, worktrees and execution lane isolated.
+access with the operator and isolate each project's repository, worktrees and
+execution lane.
 
 Mount trusted bindings read-only from deployment configuration. Supply
 credentials through the platform secret mechanism and resolve them in the
@@ -105,14 +105,14 @@ execution files on scratch space. PostgreSQL retains the journal and execution
 positions. A matched database and Host state restore should recover the same
 checkpoints and evidence after container replacement.
 
-Build the Host image from ArcNexus source. Each admitted project uses a pinned
-Git revision and its approved check bindings inside its own confined worktree.
-As project toolchains diverge, select an approved runtime profile at
-admission and keep its identity in the evidence.
+Bubblewrap (`bwrap`) launches a process in a Linux sandbox. ArcNexus uses it
+to run native checks with a restricted filesystem and environment, an isolated
+network and a disposable overlay over the task worktree. Writes to the overlay
+disappear when the check exits. Docker packages and runs Host. Bubblewrap
+sets the boundaries around individual checks inside it.
 
-Qualify the existing execution boundary inside the image on the target Linux
-runtime. ArcNexus uses Bubblewrap namespaces and a disposable filesystem
-overlay for native checks. Docker's runtime policies affect which namespace
+Qualify the existing execution boundary inside each approved image on the
+target Linux runtime. Docker's runtime policies affect which namespace
 operations work. Verify the real model and check paths, network and workspace
 confinement, secret isolation, cancellation and restart. If a Docker runtime
 cannot enforce the existing contract, keep execution unavailable there. A
@@ -120,6 +120,46 @@ native Linux deployment can run the same Host composition when explicitly
 selected as that project's execution authority. [Execution contract](../../../../packages/execution/contract.md)
 · [Check sandbox](../../../../packages/execution/src/check-sandbox.ts)
 · [Docker seccomp profiles](https://docs.docker.com/engine/security/seccomp/)
+· [Bubblewrap](https://github.com/containers/bubblewrap#sandboxing)
+
+## Project-specific Host images
+
+Publish an ArcNexus Host base image with the shared Host entry point, Cordis
+plugins and required runtime tools. The Host steward owns the base. The
+steward responsible for a toolchain owns its derivative build and verification.
+Build derivatives using the base digest in `FROM`. Install pinned project
+tools during the build and keep the inherited Host entry point and execution
+boundaries. The same derivative can serve several projects with the same
+toolchain.
+[Dockerfile FROM](https://docs.docker.com/reference/dockerfile/#from)
+
+Trusted deployment configuration maps a verified project to an approved
+image digest. A local Compose installation can select one derivative for its
+Host service. A stack serving different toolchains can start separate private
+Host services and route each project to the service running its assigned
+image. API and MCP keep the same contracts. Coordination enforces the same
+project writer across all services. Persist the project's repositories,
+worktrees and evidence across image changes. A repository import can propose
+toolchain requirements. The deployment operator approves the image assignment.
+
+Keep operation definitions in the project's approved architecture. For
+example, install ShellCheck in a derivative image, declare `shell-lint` once
+and reference it from each activity that needs it. Each activity can bind its
+own validated file inputs. Execution resolves the command in the confined
+environment and applies the activity's captured authorization. The image
+supplies the executable. The operation binding supplies permission to invoke
+it. A required operation with an unavailable executable reports a failure.
+[Operation parameter resolution](../../../../packages/architecture/src/operation.ts)
+· [Confined check execution](../../../../packages/execution/src/check.ts)
+
+Capture the Host image digest, its base digest and relevant tool identities
+at admission. Include them in execution evidence and check reuse decisions.
+For the first deployment, apply a replacement image to new work after the
+project lane is clear. Resume interrupted work on its captured image. If
+that image is unavailable, report the prerequisite so the operator can
+restore it or review a runtime adoption under the existing approval rules.
+[Project contract](../../../interface/arcnexus-project.md)
+· [Check evidence identity](../../../../packages/execution/src/check-cache.ts)
 
 ## Git-backed project catalog
 
@@ -303,8 +343,13 @@ sequences are illustrative.
 - Exercise public and private catalog imports with a permitted repository
   and a refused credential binding. Confirm that import cannot change the
   trusted runtime and an updated catalog preserves active run provenance.
-  Replace the Host container and verify recovery from the retained position
-  with real confinement and authorized evidence intact.
+  Replace the Host container using the same image and verify recovery from
+  the retained position with real confinement and authorized evidence intact.
+- Qualify a derivative image with a tool absent from the base image. Bind
+  the same operation for two stewards and verify each gets its own inputs
+  and the same confined tool. Confirm an activity without the binding
+  cannot call it. Switch the assignment between tasks and verify affected
+  checks refresh while retained runs still identify their original image.
 - Review exact contract amendments and the existing qualification gate
   before activating live gateways or adding CLI modes. Exercise each released
   MCP command against the equivalent CLI operation under the same authority
