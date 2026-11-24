@@ -41,11 +41,69 @@ from its operations and the registered schemas. MCP uses those same schemas
 for the data tools it exposes. This lets a component add a model or compatible
 field through its own public entry. [Team contract](../../../../packages/team/contract.md) · [Direction contract](../../../../packages/direction/contract.md) · [OpenAPI operations](https://spec.openapis.org/oas/latest.html#operation-object)
 
-Architecture would register `data` for `packages/data`, and `api-app` and
-`mcp-app` for `apps/api` and `apps/mcp`. The CLI and web stewards own their
-existing app surfaces. Hosted API and MCP access the shared PostgreSQL service
-through the owning plugins after cutover. A future `apps/db` can compose
-operations for migration, backup and restore.
+Architecture would register `data` for `packages/data`, and separate app
+stewards for `apps/api`, `apps/mcp`, `apps/db` and the trusted execution host.
+The CLI and web stewards own their existing app surfaces.
+
+## Local platform services
+
+Include `apps/db` in the first local deployment that runs Web, API and MCP
+together. A shared root `compose.yaml` would assemble the platform under the
+Release steward. Each application steward owns its image and entry point.
+
+| Compose service | Responsibility |
+| --- | --- |
+| **PostgreSQL** | Run the shared database on a private network with a persistent volume. Model owners keep their schemas and storage rules. |
+| **DB setup** | Run the `apps/db` migration command once per deployment. It composes the migration steps from model owners, records applied versions, and exits successfully when the schema is ready. The first slice covers migration and schema status. Backup and restore also belong to this app as operator commands. |
+| **Execution host** | Run the trusted Cordis composition for Commands and Workflow as a private service, proposed under `apps/host`. The host owns project worktrees, provider access and effectful execution. API and MCP pass the initiating caller and request to this same host. |
+| **API and MCP** | Run separate adapters. Both compose Data and its owner bindings and connect to the same PostgreSQL database for permitted model operations. Workflow actions go through the execution host. Give each adapter a runtime role scoped to its allowed database operations. |
+| **Web** | Serve the browser app and connect it to the API through the local same-origin entry point. The browser requests resources from the API and receives status independently for each display. |
+
+Compose starts PostgreSQL and waits for database health. It then runs the DB
+setup job and uses successful completion as the startup dependency for API,
+MCP and the execution host. Those services can start in parallel after the
+schema is ready. On startup, a failed migration surfaces through the DB job
+and blocks the dependent services. Web can serve its shell while the API is
+unavailable. At runtime the adapters report database or host unavailability
+through the affected operation. [Compose startup dependencies](https://docs.docker.com/compose/how-tos/startup-order/)
+
+DB setup uses a dedicated migration role. Serialize migration attempts and
+make a repeated startup recognize already applied versions. API, MCP and the
+execution host check schema compatibility at startup and use runtime roles
+without schema-changing privileges. Model owners supply migration ordering or
+dependencies through their public entries. An incompatible upgrade first
+quiesces the affected writers. Importing an existing SQLite project is a
+separate operator action with retained verification evidence. The local
+platform uses the same authoritative journal for each project after its
+cutover. [Coordination contract](../../../../packages/coordination/contract.md)
+
+Project bindings identify which verified repositories the local host serves.
+The owning services provide authorized reads of Git revisions and retained
+artifacts to Data. These bindings keep file-backed resources usable across
+containers and leave worktree and provider effects with the execution host.
+
+## Concurrent API and MCP requests
+
+API and MCP can read the same data and perform authorized CRUD concurrently.
+The owner applies a revision check atomically with each revisioned write.
+If both adapters submit edits against the same revision, the accepted change
+advances it and the stale request reports a conflict. Operations that change
+workflow state, such as answering an approval question, go through Commands.
+
+If the browser starts Plan through API and an MCP client submits Run for the
+same project, the host checks both requests against Coordination's single
+writer. The competing request receives the active execution identity under
+the existing admission rules. Both gateways can read retained events for
+that execution. Restarting an adapter interrupts its connections. The host
+continues the workflow and clients reconnect from their journal cursor.
+
+The PostgreSQL amendment must define how Coordination proves writer
+ownership across process and container boundaries. The current SQLite lease
+uses the local kernel's process identity. Test loss of a writer connection,
+cessation of host effects, and reconciliation of retained work before
+readmission. For projects assigned to the stack, the platform CLI reaches
+that hosted authority through the API. Standalone CLI execution is for
+projects assigned to local mode. [Current writer identity](../../../../packages/coordination/src/lease.ts) · [Existing host composition](../../../../apps/cli/src/host.ts)
 
 ## REST resources for independent Plan displays
 
@@ -110,8 +168,8 @@ that support those operations and are authorized for the caller. An update
 tool accepts the same expected revision as its REST counterpart. Tool
 contracts come from the Data registrations used by REST and by future CLI
 data commands. Command tools delegate to Commands, while resource tools
-delegate to Data. A future
-`POST /plan-executions` can represent starting Plan through Commands.
+delegate to Data. A future `POST /plan-executions` can represent starting
+Plan through Commands.
 Read-only Plan integration can be reviewed first. [Commands SDK](../../../../packages/commands/contract.md) · [MCP structured tool results](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#structured-content)
 
 ## Resumable event log
@@ -174,6 +232,12 @@ sequences are illustrative.
 - Keep the first read slice storage-independent. PostgreSQL migration needs
   an approved Coordination amendment and an import that preserves event
   identities, approvals, unfinished positions and the single project writer.
+- Start the assembled local stack with API and MCP together. Verify clean
+  setup, repeat startup, and a migration failure that prevents dependent
+  services from starting. Race an API command against an MCP command on one
+  project and confirm Coordination admits one writer. Race conditional data
+  writes and confirm a stale revision fails. Restart each adapter during an
+  active run and confirm that the host and retained timeline continue.
 - Review exact contract amendments and the existing qualification gate
   before activating live gateways or adding CLI modes. Exercise each released
   MCP command against the equivalent CLI operation under the same authority
