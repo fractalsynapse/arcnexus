@@ -57,7 +57,11 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
 
   /** Admit through Execution and materialize the captured tree before invoking HostTask.check. */
   async open(t: TestContext) {
-    const execution = new Execution(this.architecture, new Coordination(this.storage), this.storage);
+    const execution = new Execution(
+      this.architecture,
+      new Coordination(this.storage),
+      this.storage,
+    );
     const signal = new AbortController().signal;
     const task = await execution.admit(
       { directory: this.root, goal: 'Diagnose native checks' },
