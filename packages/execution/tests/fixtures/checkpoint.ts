@@ -268,6 +268,7 @@ export class RecoveryScenario {
 
   /** Apply owned edits through the production path and observe the recovered first contribution. */
   private async edit(task: HostTask, id: string, step: string) {
+    this.beforeActivation?.(task);
     this.activations.push(id);
     if (id === 'second') assert(task.evidence.includes(this.artifacts[0]!));
     this.artifacts.push(task.store(`${id}.log`, id));
