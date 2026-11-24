@@ -1,5 +1,75 @@
 # Inspection parity characterization
 
+## Review at the evaluated revision
+
+This account supports maintainers and reviewers deciding which observations
+apply to `inspection-current-evidence` at
+`7d04db61627b4e76e0fda4ac1003ab5b26d18e8e`. Run 173's accepted plan is
+recorded in `173-1-run-timeline.jsonl`, task
+`69522e511245ab8e4416a6fe34091d5a0a3344a2a6faebfa00a098f6fd660c44`.
+Its initial complete artifact index is
+`173-83-retained-evidence-64baea19ec58d9d2a1e82ceac756d1780f7bf6ed6e8e7fd6ff1ca490a1cdd50a.json`.
+Read registered references through the mapped read operation; an index alone
+does not establish the contents of a response or check log.
+
+The documentation review inspected the shared Agent and Architecture request
+path, activation enrichment, guidance validation, native observation, LocalMcp
+and the tracked parity/listing assertions. It also consulted the retained
+Execution provider-evidence research and completed-round report
+`158-2-refinement-round-1.md` (SHA-256
+`97f30806693a11052cb4f1075a11a8b780295d5d4ef1344d94702d7c500b6717`).
+That report cites run 147's repository checks at the evaluated revision, tree
+`faddf36c0ba3e3ba4dac1f108577b97c50585085`, PR 721, against recovery and
+publication criteria. This is reported broad verification, not a newly inspected
+criterion-linked parity log or independent parity verdict.
+
+| Current measure | Exact tracked assertion anchors | Observation still needed or applicability decision |
+| --- | --- | --- |
+| `inspection-request-parity` | [inspection-activation.test.ts](../tests/integration/inspection-activation.test.ts): native activity matrix, `context`, `assertSelected`, `assertInvocation`, `readProbe` and complete CLI inspection cases. | Current complete subprocess input/options and rendered/structured observations for every actor. Assess completed-round, registered timeline and returning-caller evidence coverage against `invocationContext`; the current helper explicitly supplies assignment and Reviewer diff, without explicit completed-round/returning-caller cases. |
+| `inspection-activity-authority` | Same suite: `assertTools`, refusal assertions and unchanged foreign file. [inspection-listing.test.ts](../tests/integration/inspection-listing.test.ts): `assertRetained`, populated/disjoint/empty matrix and no-request cases. | Applicable actual MCP response comparisons and complete registered response artifacts with call identity, component/activity and native-span ordering. Current source already contains the listing retention repair; no new retention red is presumed. |
+| `inspection-effects-and-policy` | Same parity suite: no-effects/repeatability case, web-policy activity matrix, `assertInvocation` and changed-guidance refusal. | Current controlled observations for these assertions. Preserve the distinction between approved file visibility/configuration and authoritative harness discovery. Examine available current configured-provider artifacts without inferring unexposed context. |
+| `inspection-evidence-accuracy` | This account and [intent](inspection-parity.md), linked source anchors and host journal receipts. | Add actual current status/logs, candidate and check-input identities, quality results and any justified reuse. Record unavailable real-context/discovery receipts and skipped native cases explicitly. Independent verification, CI and delivery remain host observations. |
+
+Reviewed source identities provide comparison anchors, not passing checks:
+
+- `inspection-activation.test.ts`: SHA-256 `345b3a22b04e23cdfebee6f7bdc2be717f5d8a86e6fc1c11fc4e9c7a47cb5e90`.
+- `inspection-listing.test.ts`: SHA-256 `c62a0c1e87dd7f4afe3365e014f5c1b4f699fdb9f829a32145126ab91649e99b`.
+- `src/mcp.ts`: SHA-256 `0374073cec864afc11d9382bf431fff8a80f59395efce24ac9bf124c1fafc3f5`, matching the historical run-138 repaired file.
+- `src/activation.ts`: SHA-256 `de2435c9cebcc5991ae53983154fb13603793c47735aea7a08bd484152b0b28a`.
+
+Matching one file does not establish unchanged dependencies, environment, operation
+selection or authority. Testing should characterize existing behavior with
+expected pass, retain ordinary failures and repair their actual cause; add
+behavioral red only for a demonstrated new gap. Implementation should preserve
+passing behavior unless current observations identify an owned correction.
+
+Run-138 controlled results and owner quality logs below retain their original
+base, candidate, check-input identity and criteria. They are historical observations
+documented by that run, not checks newly executed or all reread during this
+documentation activity. The retained research was consulted as historical
+evidence; its statement that tools/list was unretained predates the repair below.
+Do not revive that resolved defect or erase its original red.
+
+The run-138 clarification's unavailable complete received-context and authoritative
+guidance-discovery receipts remain recorded limitations of those observations.
+Its installed version/image statement is operator attribution. No current
+Reviewer, empty-operation real-provider listing or discovery receipt is inferred
+from that history. The earlier oversized report read failure is also historical:
+this activity neither repeats it nor assumes the current read mapping has the
+same range support. No missing report contents are inferred from a reference.
+
+Document validation for this contribution consists of checking current facts,
+source anchors, local links and consistency of the current criteria with the
+accepted plan. No behavioral correction or software check was performed in this
+documentation activity. The host determines evidence reuse and assembled
+acceptance after the remaining activities.
+
+## Historical characterization and run-138 repair
+
+The remainder preserves the prior account. Its uses of “current” refer to the
+candidate and observations identified within that historical section; they do
+not assert a fresh run-173 pass.
+
 Testing for `execution-inspection-activation-parity` characterizes the existing
 production behavior. No product behavior was changed and no behavioral red is
 claimed. The governing intent remains [inspection parity](inspection-parity.md).
