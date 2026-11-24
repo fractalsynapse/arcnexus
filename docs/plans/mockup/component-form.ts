@@ -1,0 +1,208 @@
+import { parseDocument } from 'yaml';
+import { escape } from './view.ts';
+import type { Activity, ActivityList, Component, ParameterValue, YamlPath } from './yaml-schema.ts';
+import { activityLists, componentSchema, defaultActivityFlow } from './yaml-schema.ts';
+import {
+  disclosure,
+  group,
+  markdownDisclosure,
+  reorderableList,
+  selectField,
+  textField,
+  textList,
+  valueField,
+  yamlList,
+} from './yaml-fields.ts';
+
+export function componentForm(component: Component, selected = 'objectives') {
+  return (
+    group(
+      'Component',
+      `<label class="arc-yaml-kind">Kind<input readonly value="${escape(component.kind)}"></label>
+      ${textField('Summary', ['summary'], component.summary ?? '', {
+        multiline: true,
+        description: 'Brief description for other agents in the component catalog.',
+      })}
+      ${markdownDisclosure(['purpose'], 'Purpose')}`,
+    ) +
+    componentTabs(component, selected) +
+    componentDefaults(component.operationParameters) +
+    componentActivities(component, true)
+  );
+}
+
+export function componentReadout(source: string) {
+  const component = readComponent(source);
+  if (!component) return '';
+  return (
+    markdownDisclosure(['purpose'], 'Purpose', component.purpose) + componentActivities(component, false)
+  );
+}
+
+const projectSelected = 'Project-selected';
+const participation: [string, string][] = [
+  ['sequence', activityLists.sequence],
+  ['requested', activityLists.requested],
+  ['project', projectSelected],
+];
+
+function componentActivities(component: Component, editing: boolean) {
+  const { activities } = component;
+  const { sequence, requested } = component.activityFlow ?? defaultActivityFlow(activities);
+  const direct = Object.keys(activities).filter(
+    (id) => !sequence.includes(id) && !requested.includes(id),
+  );
+  const activity = (id: string, list: ActivityList | 'project') => {
+    const definition = activities[id];
+    if (!definition) return '';
+    return editing ? activityForm(id, definition, list) : activityReadout(id, definition);
+  };
+  const sequenceRows = editing && sequence.length
+    ? reorderableList(['activityFlow', 'sequence'], sequence, (id) => activity(id, 'sequence'))
+    : sequence.map((id) => activity(id, 'sequence')).join('');
+  const requestedRows = requested.map((id) => activity(id, 'requested')).join('');
+  const directRows = direct.map((id) => activity(id, 'project')).join('');
+  return group(
+    'Activities',
+    group(activityLists.sequence, sequenceRows || '<small>No activities in the milestone sequence.</small>') +
+      group(activityLists.requested, requestedRows || '<small>No activities available on request.</small>') +
+      (directRows ? group(projectSelected, directRows) : ''),
+  );
+}
+
+function activityReadout(id: string, activity: Activity) {
+  const path = ['activities', id];
+  return disclosure(
+    path,
+    id,
+    activity.instructions
+      .map((prose, i) => markdownDisclosure([...path, 'instructions', i], 'Instruction ' + (i + 1), prose))
+      .join(''),
+    activity.executor ? 'Host' : 'Agent',
+  );
+}
+
+function readComponent(source: string) {
+  const document = parseDocument(source);
+  if (document.errors.length) return undefined;
+  try {
+    return componentSchema.safeParse(document.toJS()).data;
+  } catch {
+    return undefined;
+  }
+}
+
+const componentSectionText = {
+  objectives: {
+    title: 'Objectives',
+    description: 'Describe how to tell whether this component is meeting its purpose.',
+  },
+  constraints: {
+    title: 'Constraints',
+    description: 'List the outcomes or behavior this component must prevent.',
+  },
+  ownership: {
+    title: 'Ownership',
+    description: 'List the repository paths this component is responsible for.',
+  },
+};
+
+type ComponentSection = [id: keyof typeof componentSectionText, fields: string];
+
+function componentTabs(component: Component, selected: string) {
+  const sections = componentSections(component);
+  const tabs = sections.map(([key]) => {
+    const active = key === selected;
+    return `<button type="button" role="tab" data-component-tab="${key}" id="component-${key}-tab"
+      aria-controls="component-${key}" aria-selected="${active}" tabindex="${active ? 0 : -1}">${componentSectionText[key].title}</button>`;
+  });
+  const panels = sections.map(
+    ([key, content]) =>
+      `<div role="tabpanel" id="component-${key}" aria-labelledby="component-${key}-tab" ${key === selected ? '' : 'hidden'}>
+      <p class="arc-component-tab-description">${escape(componentSectionText[key].description)}</p>${content}</div>`,
+  );
+  return `<div class="arc-component-tabs">
+    <div class="arc-tabs" role="tablist" aria-label="Component details">${tabs.join('')}</div>${panels.join('')}</div>`;
+}
+
+function componentSections(component: Component): ComponentSection[] {
+  const multiline = { multiline: true, hideLabel: true };
+  const objectives = yamlList(
+    ['objectives'],
+    'measure',
+    component.objectives ?? [],
+    (value, path, label) => textField(label, [...path, 'measure'], value.measure, multiline),
+    { measure: '' },
+  );
+  const constraints = yamlList(
+    ['constraints'],
+    'failure condition',
+    component.constraints ?? [],
+    (value, path, label) => textField(label, [...path, 'failure'], value.failure, multiline),
+    { failure: '' },
+  );
+  const ownership = yamlList(['owns'], 'owned path', component.owns, (value, path, label) =>
+    textField(label, path, value, { hideLabel: true }),
+  );
+  return [
+    ['objectives', objectives],
+    ['constraints', constraints],
+    ['ownership', ownership],
+  ];
+}
+
+function componentDefaults(config?: Component['operationParameters']) {
+  if (!config) return '';
+  return group(
+    'Operation defaults',
+    Object.entries(config)
+      .map(([id, parameters]) =>
+        group(id, configuredParameters(['operationParameters', id], parameters)),
+      )
+      .join(''),
+  );
+}
+
+function activityForm(name: string, activity: Activity, list: ActivityList | 'project') {
+  const path = ['activities', name];
+  const actor = activity.executor ? 'Host' : 'Agent';
+  return disclosure(
+    path,
+    name,
+    `
+      ${selectField('Participation', ['activityFlow', 'participation', name], participation, list)}
+      <div class="arc-form-grid">
+        ${textField('Role', [...path, 'role'], activity.role)}
+        ${activity.executor ? '' : textField('Execution profile', [...path, 'profile'], activity.profile ?? '')}
+      </div>
+      ${group(
+        'Instructions',
+        yamlList(
+          [...path, 'instructions'],
+          'instruction',
+          activity.instructions,
+          (_, entry, label) =>
+            markdownDisclosure(entry, label.charAt(0).toUpperCase() + label.slice(1)),
+        ),
+      )}
+      ${group('Operations', yamlList([...path, 'operations'], 'operation', activity.operations, operationBinding))}
+      ${group('Standards', textList([...path, 'standards'], 'standard', activity.standards))}
+      ${group('Verification', textList([...path, 'verification'], 'required check', activity.verification ?? []))}
+    `,
+    actor,
+  );
+}
+
+function operationBinding(binding: Activity['operations'][number], path: YamlPath, label: string) {
+  if (typeof binding === 'string') return textField(label, path, binding);
+  return (
+    textField(label, [...path, 'operation'], binding.operation) +
+    configuredParameters([...path, 'parameters'], binding.parameters ?? {})
+  );
+}
+
+function configuredParameters(path: YamlPath, parameters: Record<string, ParameterValue>) {
+  return Object.entries(parameters)
+    .map(([key, value]) => valueField(key, [...path, key], value))
+    .join('');
+}
