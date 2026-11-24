@@ -4,8 +4,9 @@ Verification binds engineering acceptance to the assembled work and its captured
 requirements. This reference is for maintainers implementing recovery and consumers
 deciding whether retained evidence can authorize the candidate now being delivered.
 The [locked contract](contract.md) governs the gate, especially VI-3, VI-5, VI-12,
-VI-18 and VI-19. The rules below record implementation intent for
-`recovered-acceptance-binding`; they do not establish passing runtime behavior.
+VI-18 and VI-19. The rules below preserve the accepted recovery intent. The
+current-source reconciliation for `recovered-acceptance-current-evidence` appears
+below; source assertions and retained Execution results have different scopes.
 
 ## Assess the recovered identity
 
@@ -84,7 +85,7 @@ historical red does not replace required current passing evidence.
 
 ### Route observed failures to correction
 
-For `recovered-check-applicability`, the intended correction distinguishes an
+The current [assembled gate](src/native.ts) distinguishes an
 ordinary numeric check failure from missing, skipped or unavailable required
 evidence. A completed assembled check with a nonzero numeric status must reach
 independent assessment with its complete diagnostics, current resolved inputs and
@@ -110,8 +111,9 @@ the failed evidence and Verification returning `rejected`, allowing the existing
 correction lifecycle to proceed. Companion assertions must refuse acceptance over
 that failed check and retain explicit holds for missing, skipped or unavailable
 required evidence. Keep stale-identity refusal and recovered-check applicability
-coverage intact. These are intended observations for Testing and Implementation;
-this documentation does not establish that the runtime correction has passed.
+coverage intact. The current [failed-check rejection scenario](tests/integration/failed-check-rejection.test.ts)
+contains these assertions. Current execution remains to be characterized; this
+source inspection does not establish a passing runtime result.
 
 ## Give the independent Reviewer complete inputs
 
@@ -173,13 +175,99 @@ evidence, alongside valid reuse of an unaffected scoped observation. Inspect the
 independent request for preserved original requirements, distinguishable complete
 historical observations and the exact retained multiline answer.
 
-The inspected baseline at `aae84422d50f59311f36cb0cd397c58293fe8c91` exposes
-[Candidate and verdict validation](src/index.ts) and the
-[captured checklist and pending-review reuse path](src/native.ts).
-Candidate currently carries a tree digest, owner-evidence digest and evidence
-references; pending-review reuse compares candidate digest, capture source revision,
-owner-evidence digest and retained log membership. Those source observations alone
-do not prove the recovery identity and changed-checklist cases above. The later
-Testing and Implementation activities must establish them through public regressions.
-Only subsequent host assessment and delivery evidence can establish the reviewed
-tree, staging parent, required checks, independent verdict and confirmed staging merge.
+## Current source and retained evidence: issue #720
+
+This reconciliation inspects captured revision
+`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. It replaces the earlier
+`aae84422d50f59311f36cb0cd397c58293fe8c91` implementation-gap description;
+that earlier inspection is history, not evidence of a current defect. No contract,
+criterion or production behavior changes in this documentation contribution.
+
+[Identity construction](src/identity.ts) now records `tree` from the assembled
+candidate digest, `base` from the retained engineering configuration capture,
+`capture` from active approved authority, `acceptance` from the complete goal
+and plan, and `inputs` from owner evidence and current checklist observations.
+[Verdict validation](src/index.ts) compares the supplied verification identity
+structurally as well as checking the tree and complete criterion coverage.
+[Verification](src/native.ts) runs the active captured acceptance operation IDs,
+records identity and checks, and supplies that binding to
+[Reviewer's assessment builder](../reviewer/src/index.ts). Numeric failures reach
+assessment; an accepting response still cannot bypass failed or invalid-scope
+required evidence. Null or not-applicable required results retain an unavailable
+hold before review.
+
+The current gate calls the existing check path on every assessment. It does not
+restore an earlier checklist solely from a pending-review record.
+[Execution's check identity](../execution/src/check-cache.ts) includes clean
+committed revision, authority, operation declaration, resolved arguments and
+parameters, relative cwd, scope and environment. Its environment includes runtime,
+tool identities, confinement and installed dependency identity. Matching retained
+numeric observations with readable logs may be reused, including failures as
+failures. This implementation is conservative: a changed committed revision or
+authority invalidates that identity even if some source bytes match. The broader
+scoped-reuse rule above does not claim finer dependency analysis exists.
+
+### Public assertions awaiting current execution
+
+The [recovered acceptance scenarios](tests/integration/recovered-acceptance.test.ts)
+have SHA-256
+`2d732405a3b87a9c1c5dda1036bb343bf5ded2e8c1bd920b54d1577418d86510`;
+the [failed-check rejection scenario](tests/integration/failed-check-rejection.test.ts)
+has SHA-256
+`c1d6b099544fbd683f738b87dce2ebb86ada790bac84286116908cbe7c0b78bc`.
+These identify inspected assertions, not a current passing observation.
+
+| Accepted criterion | Current source assertion and remaining observation |
+| --- | --- |
+| `recovered-identity-refusal` | Varies tree, base, capture and acceptance separately; equal-tree cases and changed requirement text under the same criterion ID reject replay of the earlier verdict. Historical observations are compared unchanged. A further case supplies distinct recovered base and active capture to the new assessment. Execute these assertions against the current candidate. |
+| `recovered-required-evidence` | Changed operation mapping and added required check reach the assessment with current argv and logs. An incomplete pending checklist cannot bypass the added check. Failed, unavailable, skipped and invalid-scope results cannot accept; unchanged interrupted inputs reuse exact observations, while changed dependency installation on the same tree/capture refreshes evidence. Execute these assertions and the separate valid numeric-failure rejection case. |
+| `recovered-review-inputs` | Assessment references retain the original goal/plan, exact multiline answer, distinguishable original and resumed findings and current acceptance. Complete artifacts are read and compared through the task boundary. Execute these comparisons; seeded history is not a live human conversation. |
+
+The [assessment fixture](tests/fixtures/recovered-assessment.ts), SHA-256
+`fefd52f0c59ab695a20f8e16b05862f927cf04a2dfb95fb1e09448cdc556a98d`,
+uses the real public Verification/Reviewer path, operation resolver, check-input
+identity and journal. Its [project fixture](tests/fixtures/recovered-project.ts),
+SHA-256
+`c233c1d1598e9e1df6dfe5bdf544d3cf473f40798ee16018a7b3ff29e6e10b78`,
+constructs HostTask with real committed Git captures, Execution assembly and
+reopened Coordination SQLite state. It creates the checkpoint and retained history
+as setup. It does not drive prepared recovery admission or obtain an actual
+checked-edit receipt or human answer.
+
+HostTask check and activation responses are controlled: declared commands are
+resolved but their processes do not run, and the accepted/rejected model verdicts
+are simulated. These cases can characterize gate ordering, identity refusal,
+evidence selection and complete assessment inputs. They cannot establish actual
+required-command execution, live independent reasoning, native confinement,
+publication refusal, hosted CI or a confirmed staging merge.
+
+### Execution's completed contribution
+
+[Execution's run 145 characterization](../execution/docs/prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145)
+already establishes the prepared-recovery boundary for the same issue and captured
+revision. Its complete host observation `145-243-mcp-observation.json` records
+`owner-tests`, status 0 and log `145-242-owner-tests.log` under invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`.
+The retained evidence index and `145-1-run-timeline.jsonl` locate those complete
+external artifacts. The log SHA-256 is
+`be99360a2acb4d847354998be190b663585c7463e92931af84dd8b896482db75`.
+Prepared cases 161–169, caller-consumer cases 38–42 and authority case 33 pass;
+the enclosing run records 252 passes, no failures and 16 skips.
+
+Those cases exercise public Workflow, real Git/SQLite and a deterministic
+executable using LocalMcp: exact answers, retained receipts and replay, changed
+ownership refusal and conflict preservation are observed. Their final Verification
+and Delivery results remain controlled, and the authority case compares review
+identities rather than obtaining a verdict. They therefore supply continuity and
+authority evidence without discharging this milestone's recovered assessment
+observations. Skipped native cases remain gaps.
+
+Current Verification characterization and applicable quality observations are
+still needed after this documentation position. Preserve matching historical
+evidence without claiming it proves the current candidate. Delivery's accepted
+`retained-publication-current-evidence` milestone owns provider reconciliation,
+stale publication refusal and one retained PR; no new supplier milestone is needed
+for that already sequenced work. The later host assessment and delivery must
+identify the reviewed final tree, recovered staging parent, required checks,
+independent verdict and confirmed merge. No current live or hosted success is
+established by this reconciliation.
