@@ -95,7 +95,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
 
   /** Preserve the accepted plan and append only accountable correction after rejection. */
   private direction(): WorkflowServices['direction'] {
-  return {
+    return {
       track,
       plan: async () => {
         this.plans += 1;
