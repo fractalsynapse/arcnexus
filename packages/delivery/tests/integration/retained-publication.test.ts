@@ -111,7 +111,10 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable', 'branch-unava
     assert(result.evidence.length);
     if (conflict.includes('unavailable')) unavailableEvidence(result.evidence);
     if (conflict === 'branch-unavailable') {
-      assert.deepEqual(provider.calls.slice(offset), ['observe PR 7-task', 'observe branch 7-task']);
+      assert.deepEqual(provider.calls.slice(offset), [
+        'observe PR 7-task',
+        'observe branch 7-task',
+      ]);
       retainedHold(fixture, provider, result.evidence);
     }
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
