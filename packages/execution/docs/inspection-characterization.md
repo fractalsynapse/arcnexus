@@ -1,6 +1,120 @@
 # Inspection parity characterization
 
-## Review at the evaluated revision
+## Review at revision cd5c2b30
+
+This account supports maintainers and reviewers assessing run 185's
+`inspection-current-assessment` milestone at
+`cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1`. The accepted plan is retained
+in `185-1-run-timeline.jsonl`, sequence 142460, task
+`44c36124967005da7c9255e1c839803f6d37789a00cf257bfe2816208ff56c9b`.
+Its initial readable index is
+`185-91-retained-evidence-d2cfd8ca34cb4ae89d87f63166c6d4133cf1f88081be08bbf524eba4bd505151.json`.
+Registered artifacts remain outside source and are read through mapped file access.
+
+The [intent](inspection-parity.md) and this review reflect current source before
+behavior changes. The shared Agent/Architecture builder, activation enrichment,
+native observation, adapter, guidance validation and LocalMcp were inspected.
+The locked EX-6/EX-16 and ARC-9/ARC-13/ARC-18/ARC-24 boundaries support the
+requested account; no contract change or authority expansion is needed.
+
+### Existing coverage and historical observations
+
+The current [parity suite](../tests/integration/inspection-activation.test.ts)
+already contains `enrichment`, `liveContext`, `returningContext`,
+`retainedIndex` and `taskSection`. Its SHA-256 is
+`a556a23d714e68ed9222c36b9472dec2838537dd9b5e4502654a26de6849cb14`,
+matching the final run-173 account. The controlled
+[provider](../tests/fixtures/inspection-provider.ts) likewise retains
+`d91ba5a398742169a5d7c6b9b2d585ca59beb404688c427831b087bfa1c552db`.
+The matrix supplies a registered completed-round report and timeline for every
+actor and excludes an unregistered report. The returning caller independently
+compares complete assignment, milestone, acceptance and ordered evidence, including
+a whitespace-preserving multiline answer, prior observations, a retained index
+and a distinguishable new observation, before the whole-input comparison.
+The original run-173 Documentation handoff's enrichment gap was resolved in
+Testing. It is not a missing assertion at this evaluated revision.
+
+The [listing suite](../tests/integration/inspection-listing.test.ts) retains
+SHA-256 `c62a0c1e87dd7f4afe3365e014f5c1b4f699fdb9f829a32145126ab91649e99b`.
+Current activation and LocalMcp hashes are respectively
+`de2435c9cebcc5991ae53983154fb13603793c47735aea7a08bd484152b0b28a`
+and `0374073cec864afc11d9382bf431fff8a80f59395efce24ac9bf124c1fafc3f5`.
+These match the prior documented sources; a file match alone is not a reuse
+decision for all dependencies, captured authority, parameters or environment.
+
+Complete mapped reads during this documentation review reexamined
+`173-563-owner-tests.log` and `173-1-run-timeline.jsonl`, retained under task
+`69522e511245ab8e4416a6fe34091d5a0a3344a2a6faebfa00a098f6fd660c44`.
+The log SHA-256 is
+`b52dd2656eab522e34706b54800b00eb505ce42372b948810951a77050ae57ea`.
+The host recorded status zero at sequence 136839 with check-input identity
+`0965fe5c69ba2a292cfa818492b48258a21a665381c77f0189fd86d37e72533d`.
+It reports 269 tests, 253 passes, zero failures and 16 skips, including complete
+actor/CLI parity, returning-caller parity and requested/unrequested listings.
+The run-173 sections below identify the tested checkpoints and exact assertion
+excerpts. These are historical controlled results, not fresh run-185 execution.
+
+The complete historical quality logs were also reread:
+`173-551-owner-format.log`, `173-554-owner-lint.log`,
+`173-557-repository-types.log` and `173-560-repository-build.log`.
+The host timeline records status zero at sequences 136806, 136814, 136822 and
+136830 respectively. These establish their original selections and results.
+This activity neither reruns them nor declares them applicable to the new
+candidate. The historical failed assertions, formatter/lint diagnostics and
+run-138 listing-retention red remain below with their original interpretation.
+
+### Current acceptance and remaining observations
+
+| Current measure | Tracked assertions and remaining observation |
+| --- | --- |
+| `inspection-request-parity` | `assertSelected`, `assertInvocation`, native actor matrix, complete CLI cases, named placeholders and returning-caller scenario in the parity suite. Establish applicable complete rendered/structured and actual confined subprocess input/options results for Director, steward and Reviewer using the already authored enriched inputs. Run-173 passing assertions are available for a justified reuse decision; source presence is not a current pass. |
+| `inspection-project-authority` | `assertTools`, refusal/foreign-byte assertions and listing suite `assertRetained` compare exact identities, descriptions and schemas, populated/disjoint/empty grants, complete registered responses, call identities, selected attribution and native-span ordering. No-request cases and throwing dispatch sentinels prohibit fabricated listings and project effects. Establish current applicability or obtain fresh observations. |
+| `inspection-effects-provider-policy` | Repeatability/no-effects, native policy matrix, `assertInvocation` and changed-guidance refusal cover inspection without model, admission, storage, worktree or upstream effects; cached/disabled/live web options independent of tools; approved file visibility and unchanged discovery configuration. Establish applicable results at these boundaries. Keep skipped confinement and unexposed harness internals distinct. |
+| `inspection-evidence-quality` | Testing classifies applicable controlled and configured-provider artifacts. Implementation records actual current or justified reused owner format/lint/tests and repository types/build status, logs and input identities. The host alone supplies assembled verification, independent acceptance, required hosted CI/review and staging delivery for the exact candidate. |
+
+The run-185 plan explicitly distinguishes the supplied run-183 checkpoint
+verification from criterion-linked parity evidence. Repository-wide success for
+different criteria does not establish unexercised parity or live behavior.
+Testing should characterize existing behavior with expected pass; only a
+demonstrated uncovered behavioral requirement calls for new red. Implementation
+corrects demonstrated defects and preserves passing behavior otherwise.
+
+### Provider provenance and document validation
+
+The retained [provider research](../../../.arc/research/execution/00ffe9d0f3fd962bb54eb21db01bbae6521269e7c2b4e4c1fb1953bcb86fd761.md)
+was consulted. Its missing tools/list-retention finding predates the run-138
+repair. Run-173 configured-provider records below already document populated
+requested listings; do not revive that defect or infer real empty/Reviewer
+listings from prepared arrays. Current Testing must classify relevant retained
+request, invocation, requested-listing and event artifacts through the journal,
+naming actual source/candidate, runtime and settings and what can be compared.
+No new configured-provider comparison is claimed by this documentation review.
+
+Controlled executable receipts establish actual transport and approved-file
+visibility. Prepared real-provider requests and invocation artifacts establish
+host preparation and settings. Neither supplies an independent complete
+model-received-context receipt or authoritative automatic guidance-discovery
+record unless the provider exposes one. The historical operator-supplied Codex
+version/image retains that provenance. Unexposed provider internals remain
+unavailable observations, not required new event types assumed to exist.
+Preserve normal discovery and captured-byte validation without pasting guidance
+into the prompt, adding another invocation path or changing project/web grants.
+
+Documentation validation inspected source facts, assertion anchors, local links
+and agreement with the current accepted plan. This prose-only contribution
+changes neither product behavior nor tests, runs no software checks and claims
+no assembled readiness. Its checked-edit receipts identify the resulting
+documentation checkpoints; the evaluated base/authority above and historical
+tested candidates remain distinct. All remaining software/provider observations
+and host acceptance retain their normal activity boundaries.
+
+## Historical review at revision 7d04db61
+
+The following run-173 handoff, Testing and Implementation records preserve their
+original criteria and results. References to “current” in those records mean
+that run's identified candidate. Its initial enrichment-gap description records
+what Documentation requested then; the subsequent Testing observations resolve
+it and are the current source baseline described above.
 
 This account supports maintainers and reviewers deciding which observations
 apply to `inspection-current-evidence` at
