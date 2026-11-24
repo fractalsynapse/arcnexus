@@ -265,7 +265,7 @@ test('staging moves again after outdated PR recovery obtains fresh acceptance', 
   preserved(fixture, original);
 });
 
-test('a real recovered required command failure holds the retained PR until checked correction', async (t) => {
+test('a real required command failure holds the recovered PR until checked correction', async (t) => {
   const fixture = new PreparedRecoveryFixture(t);
   const provider = new PublicationProvider(fixture, t);
   const original = await prepared(fixture);
