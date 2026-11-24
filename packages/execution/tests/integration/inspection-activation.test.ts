@@ -344,11 +344,14 @@ function taskSection(input: string) {
 
 /** Verify retained index contents against allocated artifacts rather than against prompt text. */
 function retainedIndex(task: HostTask, before: string[]) {
-  const index = before.find((path) => /-retained-evidence-[a-f0-9]+\.json$/.test(path));
-  assert.ok(index);
+  const indexes = before.filter((path) => path.includes('-retained-evidence-'));
+  assert.equal(indexes.length, 1);
+  const index = indexes[0]!;
   const references = JSON.parse(task.readFile(index).text).references;
   assert.deepEqual(references, before.filter((path) => path !== index));
-  for (const path of references) assert.equal(typeof task.readFile(path).text, 'string');
+  for (const path of references) {
+    assert.equal(typeof task.readFile(path).text, 'string');
+  }
   return index;
 }
 
