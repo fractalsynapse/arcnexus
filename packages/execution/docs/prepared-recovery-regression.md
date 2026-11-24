@@ -79,8 +79,15 @@ check confinement, hosted CI, uncertain PR reconciliation or final delivery.
 Those remain with the later accepted milestones and host assembled verification.
 The existing skipped native cases remain gaps, not passes.
 
-Implementation must restore caller answer continuity without reauthorizing an
-old host approval: exact proposal, candidate and verification gates still require
-their current identities. The original acceptance and earlier observations remain
-historical evidence. The public regression is deliberately left red for that
-Implementation step.
+At the original Testing position this public regression was deliberately left
+red for Implementation to restore caller answer continuity without reauthorizing
+an old host approval. Exact proposal, candidate and verification gates retain
+their current identities; original acceptance and observations remain history.
+
+The [implementation record](prepared-recovery-implementation.md) retains the
+subsequent run 125 pass. The [run 145 characterization](prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145)
+records current passing execution of these unchanged sources, caller-consumer
+recovery and authority identity coverage, with exact evidence references and
+quality observations. No new behavioral red or product correction was needed.
+The controlled final gates still do not establish independent acceptance or
+hosted publication recovery.
