@@ -52,7 +52,7 @@ export class ReviewedTask {
   private head?: string;
 
   /** Capture committed authority before retaining an independent rejection and its correction plan. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, retainedReview = true) {
     controlledCheckLaunch(t);
     mkdirSync(this.root);
     this.source();
