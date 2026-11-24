@@ -134,10 +134,10 @@ and confirms the actual returned merge tree. An already merged PR uses explicit
 merged-state verification and confirmation without another mutation.
 [Provider failure retention](../src/check-failure.ts) preserves complete diagnostics,
 stdout and stderr with a publication hold and the required action to resolve the
-diagnostic and observe PR/branch facts before retry. These are source observations,
-not newly executed Delivery results.
+diagnostic and observe PR/branch facts before retry. The executed owner observations below exercise these boundaries with controlled
+provider responses.
 
-### Characterize the existing scenarios before changing behavior
+### Executed production-service characterization
 
 | Criterion | Existing public assertions and boundary |
 | --- | --- |
@@ -147,7 +147,7 @@ not newly executed Delivery results.
 | `publication-evidence-accurate` | [Engineering-parent coverage](../tests/integration/engineering-parent.test.ts) consumes actual Execution assembly with distinct engineering base, adopted architecture source and verification checkout. [Check recovery](../tests/integration/check-recovery.test.ts) retains complete CI diagnostics and reconstructs a checkpoint, but that reconstruction alone does not establish completed resumed publication. |
 
 The retained-publication test SHA-256 is
-`d8975a27ebe746f7f7cdd4127f368e43adf56174b87147642d1398e94c88476b`;
+`a0597c5e5195f61f61921f48c20612459d07008dff2787c77de0a120ff3f4155`;
 the identity test SHA-256 is
 `12b21cb41062eb7af718184d578fb6647e3f3d91c869777cd3a36319d58223aa`.
 The [prepared fixture](../tests/fixtures/prepared-publication.ts) uses real Workflow,
@@ -165,26 +165,49 @@ closed PRs, missing/conflicting branches, conflicting merged identities, pending
 verification, failed verification and failed confirmation. It checks exact provider
 arguments, including merged-state verification and the observed merge identity.
 
-The next Testing activity should first characterize these existing assertions with
-expected-pass observations. Current source inspection identifies these remaining
-transition distinctions:
+Testing completed the three transition distinctions identified by the earlier
+documentation assessment, preserving the existing assertions:
 
-- The lost-merge scenario resumes immediately. Add an explicit later staging
-  advance before reopening, then require the original confirmed task merge identity
-  with no duplicate effects. The unit merged case alone does not prove this
-  production-service transition.
-- The case named “another staging movement during recovered provider verification”
-  starts from prepared work and moves staging inside verification; it does not first
-  reconcile an outdated PR. Exercise that additional move after the outdated-PR
-  recovery has already obtained fresh acceptance.
-- Unavailable retained-provider coverage currently fails PR lookup. Distinguish a
-  successful PR read followed by unavailable issue-branch facts, retaining that
-  diagnostic and prerequisite without mutation or a success claim.
+- After a lost merge acknowledgment, staging advances again before services reopen.
+  Recovery returns the original task merge, confirms its ancestry on staging and
+  performs only PR observation, merged-state verification and confirmation.
+- An outdated PR first survives staging movement and obtains fresh checks and
+  independent assessment through the production gate. A further staging move during
+  provider verification then prevents merge, retaining the same PR and checked work.
+- A successful PR lookup followed by unavailable issue-branch facts retains the
+  actual PR observation, complete diagnostic artifact and explicit required action.
+  It performs no publication effect and claims no success.
 
-These are characterization gaps, not demonstrated product failures. Preserve the
-existing assertions and use the same fixtures and journal. Observe any relevant
-failing public assertion before a behavioral correction; do not manufacture red
-for already working behavior or create another recovery lifecycle.
+Under retained invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`,
+`145-1172-mcp-observation.json` records `npm test -- delivery` with status 0.
+Its complete log `145-1171-owner-tests.log` has SHA-256
+`79294cd273c4c3d7cc76f1ca4978d40b276fb2f9490f0d8b890bc1d2e4f5240d`
+and reports 49 passes with no failures, cancellations or skips across the five
+Delivery suites. It retains controlled native source artifacts before temporary
+fixture cleanup; these embedded artifacts are deterministic fixture evidence.
+
+The applicable owner quality observations also returned status 0:
+
+| Operation | Complete observation | Log |
+| --- | --- | --- |
+| Owner formatting | `145-1160-mcp-observation.json` | `145-1159-owner-format.log` |
+| Owner lint | `145-1163-mcp-observation.json` | `145-1162-owner-lint.log` |
+| Repository strict types | `145-1166-mcp-observation.json` | `145-1165-repository-types.log` |
+| Repository build | `145-1169-mcp-observation.json` | `145-1168-repository-build.log` |
+
+The retained evidence index and `145-1-run-timeline.jsonl` locate these complete
+artifacts. Formatting and lint select Delivery TypeScript source and fixtures;
+they do not validate Markdown claims. Implementation inspected this reference
+against the current assertions and complete results. Only documentation changed
+after these observations, so their executable inputs remain applicable. Earlier
+fixture and quality failures remain retained history; they are not current
+production defects or intended behavioral red.
+
+No demonstrated production defect required a behavioral correction. The existing
+publication path and Coordination journal satisfy the exercised cases. This
+contribution updates stale evidence descriptions and reuses completed Testing;
+it adds no orchestrator, store, delivery identity or candidate mutation.
 
 ### Consume completed supplier evidence without overstating it
 
@@ -208,13 +231,12 @@ and `145-798-owner-tests.log` (SHA-256
 report 252 passes/16 skips and 18 passes/no skips, respectively, with no failures.
 The retained evidence index and `145-1-run-timeline.jsonl` locate the complete
 artifacts and applicable owner formatting, lint, strict types and build observations.
-Their scope does not supply a current Delivery owner result.
+Their scope complements the Delivery owner result above without replacing it.
 
-This documentation activity changes no executable behavior. Current Delivery
-characterization and applicable quality observations remain for its subsequent
-activities; the README's older owner result is historical. No live inference,
-native confinement, hosted CI, configured review or actual staging integration is
-established here. Later host assessment and delivery must identify the reviewed
+This Implementation reconciliation changes no executable behavior. The current
+Delivery characterization and quality observations above supersede the README's
+older owner result for this contribution. No live inference, native confinement,
+hosted CI, configured review or actual staging integration is established here. Later host assessment and delivery must identify the reviewed
 final tree, recovered parent, capture, acceptance, required evidence, independent
 verdict, single PR and confirmed provider merge. Only the host performs assembled
 verification and delivery.
