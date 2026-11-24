@@ -1,5 +1,11 @@
 # Prepared recovery implementation
 
+This records the historical `prepared-recovery-continuity` correction and run
+125 observations. The [run 145 characterization](prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145)
+records current passing prepared, caller-consumer and authority observations for
+#720, with exact evidence and remaining Verification/Delivery boundaries. No new
+product correction was needed in that assessment.
+
 The `prepared-recovery-continuity` correction restores the exact answered
 clarification to an ordinary activity after staging movement. The public
 [recovery regression](../tests/integration/prepared-recovery.test.ts) retains its
