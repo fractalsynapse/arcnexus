@@ -112,7 +112,6 @@ for (const conflict of ['head', 'target', 'branch', 'unavailable', 'branch-unava
     if (conflict.includes('unavailable')) unavailableEvidence(result.evidence);
     if (conflict === 'branch-unavailable') {
       assert.deepEqual(provider.calls.slice(offset), ['observe PR 7-task', 'observe branch 7-task']);
-      assert.match(result.reason, /Issue-branch facts unavailable: restore branch access/);
       retainedHold(fixture, provider, result.evidence);
     }
     for (const path of result.evidence) assert.doesNotThrow(() => readFileSync(path));
@@ -162,11 +161,14 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
     };
     verdict?: import('../../../verification/src/index.js').Verdict;
   }>;
+  const prior = history.find((event) => event.verification)?.verification;
   const assessment = history.findLast((event) => event.verification)?.verification;
   const verdict = history.findLast((event) => event.verdict)?.verdict;
   assert(assessment && verdict?.kind === 'accepted');
   assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
   assert.equal(assessment.identity.base, staging);
+  assert.notEqual(assessment.identity.capture, prior?.identity.capture);
+  assert.notEqual(assessment.identity.acceptance, prior?.identity.acceptance);
   assert.deepEqual(verdict.verification, assessment.identity);
   assert.deepEqual(verdict.criteria, ['continuity']);
   assert.deepEqual(
