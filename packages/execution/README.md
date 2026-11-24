@@ -158,9 +158,11 @@ assembled recovery verification remain pending.
 The [prepared-checkpoint recovery intent](docs/prepared-checkpoint-recovery.md)
 records continuity after staging moves: preserve checked bytes, verbatim answers
 and historical acceptance, capture current authority before continuation, and
-retain conflicts before overwrite. It distinguishes existing recovery mechanisms
-from the public regression and fresh independent acceptance still required for
-the recovered candidate. Its [abrupt-interruption intent](docs/prepared-checkpoint-recovery.md#abrupt-interruption-and-activity-checkpoints)
+retain conflicts before overwrite. Its [run 145 characterization](docs/prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-145)
+records current passing public recovery and caller-consumer observations, exact
+source identities and quality evidence. Fresh independent acceptance and retained
+publication reconciliation remain with their later owning milestones and the
+host's assembled verification. Its [abrupt-interruption intent](docs/prepared-checkpoint-recovery.md#abrupt-interruption-and-activity-checkpoints)
 also defines the receipt-before-cleanup subprocess boundary, observation before
 retry, pending check evidence and successor resumption required for #708.
 
