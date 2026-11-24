@@ -19,8 +19,11 @@ for real projects follows the existing live qualification requirement.
 | Enrollment and catalog | The launcher can configure endpoints, exchange a one-use code and check its admission state. The API can admit and revoke providers. The catalog can list, verify imports through an injected repository verifier, and retire entries by operator. |
 | Trusted Host composition | The existing CLI workflow delegates to the shared Host plugin. The built CLI still exercises the same Workflow, Coordination and Execution services. |
 
-The deployment work still includes the PostgreSQL writer and cutover,
-runtime database roles and the assembled Compose services, remote Commands
+The [local review stack](../../../../apps/api/README.md) runs Web, API, MCP, PostgreSQL,
+and DB setup with dedicated gateway database roles. It serves retained journals from
+verified PostgreSQL imports.
+
+The deployment work still includes the PostgreSQL writer and cutover, remote Commands
 admission and recovery, native launcher assignment and image lifecycle,
 private GitHub provider bindings, and the live web connection/project managers
 and Plan displays. The current web setup preview uses fixture data. The native

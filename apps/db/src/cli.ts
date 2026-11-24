@@ -1,18 +1,17 @@
 import { Context } from 'cordis';
-import { Client } from 'pg';
+import { connectDatabase } from '../../../packages/platform/src/index.js';
 import { Architecture } from '../../../packages/architecture/src/index.js';
+import { configureRuntimeRoles } from './runtime-roles.js';
 import { databaseSetupPlugin } from './index.js';
 
 const [command, project, storage] = process.argv.slice(2);
-const connectionString = process.env.ARC_DATABASE_URL;
-if (!connectionString) throw new Error('ARC_DATABASE_URL is required');
-const database = new Client({ connectionString });
-await database.connect();
+const database = await connectDatabase();
 try {
   const context = new Context();
   await context.use(databaseSetupPlugin(database));
   if (command === 'migrate' && process.argv.length === 3) {
     await context.databaseSetup.migrate();
+    await configureRuntimeRoles(database);
     console.log('Database migrations verified');
   } else if (command === 'rehearse-import' && project && storage && process.argv.length === 5) {
     const { source } = new Architecture().capture(project);

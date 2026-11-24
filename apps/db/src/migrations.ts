@@ -42,3 +42,15 @@ export async function migrate(database: Client, migrations: readonly Migration[]
     throw error;
   }
 }
+
+/** Validate the deployed owner schema series without applying changes. */
+export async function verifyMigrations(database: Client, migrations: readonly Migration[]) {
+  const { rows } = await database.query<{ id: string; digest: string }>(
+    'SELECT id, digest FROM arcnexus_platform.migrations',
+  );
+  const applied = new Map(rows.map(({ id, digest }) => [id, digest]));
+  for (const migration of migrations) {
+    if (applied.get(migration.id) !== textDigest(migration.sql))
+      throw new Error('Platform migration unavailable: ' + migration.id);
+  }
+}

@@ -3,13 +3,17 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
 /** Expose an assembled API on loopback for isolated gateway verification. */
-export async function serveApi(handle: (request: Request) => Promise<Response>, port = 0) {
+export async function serveApi(
+  handle: (request: Request) => Promise<Response>,
+  port = 0,
+  host = '127.0.0.1',
+) {
   const server = createServer((request, response) => {
     void forward(handle, request, response).catch(() => response.destroy());
   });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', resolve);
+    server.listen(port, host, resolve);
   });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('API has no TCP listener');

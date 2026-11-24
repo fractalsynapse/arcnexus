@@ -6,6 +6,8 @@
 
 - Add the shared Data registry and isolated REST and MCP reads for captured Plan guides and execution timelines. Add resumable HTTP event streaming, verified PostgreSQL import rehearsal, operator-scoped project catalog records, and launcher enrollment and revocation (#706).
 
+- Run Web, API, MCP, and DB setup in one local review stack. Give the gateways separate PostgreSQL roles and verify migration digests before serving requests (#706).
+
 ### Changed
 
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).

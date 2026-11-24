@@ -1,3 +1,4 @@
+import { proxyApi } from './api-proxy.js';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -5,8 +6,12 @@ import { join } from 'node:path';
 const types = { js: 'text/javascript', css: 'text/css', webp: 'image/webp', html: 'text/html' };
 
 /** Serve the compiled browser entry and its public assets on the requested interface. */
-export async function serveWeb(directory: string, port = 0, host = '127.0.0.1') {
+export async function serveWeb(directory: string, port = 0, host = '127.0.0.1', api?: URL) {
   const server = createServer((request, response) => {
+    if (api && request.url?.startsWith('/api/')) {
+      proxyApi(api, request, response);
+      return;
+    }
     void serveAsset(directory, request, response);
   });
   await new Promise<void>((resolve, reject) => {

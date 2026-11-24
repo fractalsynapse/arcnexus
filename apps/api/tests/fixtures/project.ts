@@ -4,15 +4,15 @@ import { join } from 'node:path';
 
 export const remote = 'https://example.com/arc-gateway-fixture.git';
 
-export function createProject(root: string) {
+export function createProject(root: string, repository = remote) {
   const git = (...args: string[]) => execFileSync('git', args, { cwd: root, stdio: 'ignore' });
   git('init', '-q');
-  git('remote', 'add', 'origin', remote);
+  git('remote', 'add', 'origin', repository);
   mkdirSync(join(root, '.arc/architecture'), { recursive: true });
   mkdirSync(join(root, '.arc/goals'), { recursive: true });
   writeFileSync(
     join(root, '.arc/architecture/project.yaml'),
-    'id: fixture\nremote: ' + remote + '\ncontractRegistry: registry.yaml\n',
+    'id: fixture\nremote: ' + repository + '\ncontractRegistry: registry.yaml\n',
   );
   writeFileSync(join(root, 'registry.yaml'), 'contracts: []\n');
   writeFileSync(join(root, '.arc/goals/first.md'), '---\npriority: 1\n---\n# First goal\n');

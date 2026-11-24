@@ -6,7 +6,14 @@ import {
   coordinationMigration,
   importSqliteJournal,
 } from '../../../packages/coordination/src/index.js';
-import { migrate } from './migrations.js';
+import { migrate, verifyMigrations } from './migrations.js';
+
+const modelMigrations = [coordinationMigration, capacityMigration, catalogMigration];
+
+/** Refuse runtime schema mismatches before admitting requests. */
+export function verifyPlatformDatabase(database: Client) {
+  return verifyMigrations(database, modelMigrations);
+}
 
 declare module 'cordis' {
   interface Context {
@@ -22,8 +29,7 @@ export function databaseSetupPlugin(database: Client) {
     /** Compose owner migrations and rehearsal operations through the DB entry. */
     apply(context: Context) {
       context.provide('databaseSetup', {
-        migrate: () =>
-          migrate(database, [coordinationMigration, capacityMigration, catalogMigration]),
+        migrate: () => migrate(database, modelMigrations),
         rehearseImport: (storage: string, remote: string) =>
           importSqliteJournal(database, storage, remote),
       });
