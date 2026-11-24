@@ -463,8 +463,9 @@ stderr and acknowledgment in test diagnostics.
 Before reopening, parent assertions inspect the abandoned checkout, exact
 `first.txt` bytes, committed branch bytes, receipt artifact and Git worktree
 registration. The existing `beforeRestart` diagnostic retains those bytes,
-original acknowledgment and registration before the call that reopens the task. A callback before each resumed controlled activation asserts the
-same task, issue and branch, restored bytes, original receipt and artifact,
+original acknowledgment and registration before the call that reopens the task.
+A callback before each resumed controlled activation asserts the same task, issue
+and branch, restored bytes, original receipt and artifact,
 one original edit intent, removal of the abandoned workspace and only one
 active task worktree alongside the repository and unrelated checkout. The resumed
 fixture replays the identical checked edit and compares its retained receipt.
