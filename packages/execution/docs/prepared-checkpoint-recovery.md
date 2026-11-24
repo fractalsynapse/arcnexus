@@ -182,3 +182,85 @@ versions, request, status and complete logs; unavailable prerequisites remain ga
 Only the host's later assembled verification and delivery can establish the final
 reviewed tree, staging parent, required checks, independent verdict and confirmed
 staging merge.
+
+## Abrupt interruption and activity checkpoints
+
+For `checkpoint-recovery-evidence` (#708), maintainers must distinguish a secured
+file receipt from a completed activity. This intent is recorded against source
+revision `7be51bf590b673e5904ef3f17a83354efd81eee7`, before behavioral changes.
+It extends the recovery observations above under EX-11, EX-17, EX-22 and EX-27.
+
+[ActivationTools](../src/activation-tools.ts) retains a checked file and its receipt
+through [saveCheckpoint](../src/checkpoint.ts) before returning acknowledgment.
+That file checkpoint carries no completed activity position. A later activity
+checkpoint reconciles remote state before recording completion.
+[HostTask.setupWorkspace](../src/index.ts) reconciles retained checkpoints,
+recovers the recorded abandoned workspace, and reconstructs the next attempt
+before steward activation. Cleanup secures checked contents before removing the
+task-owned worktree. These are source observations, not executed crash evidence.
+
+The accepted abrupt boundary is a real subprocess exiting after the actual mapped
+checked-edit acknowledgment and before normal termination cleanup. The parent
+must observe that receipt and the abandoned workspace before reopening the task.
+A thrown exception or cancellation that runs cleanup, or a workspace recreated
+after cleanup, does not establish this boundary. Use isolated Git and durable
+Coordination state, with a generic committed project and explicit provider
+bindings; do not depend on the developer's live repository or credentials.
+
+Reopen through the existing admission, preparation and Workflow lifecycle. Before
+another steward activates, recover the same task, issue and issue branch, preserve
+the acknowledged bytes and original receipt, and reconcile the recorded abandoned
+workspace. Remove it only after securing its contents, then reconstruct a fresh
+attempt from the retained checkpoint. Observe that only the current task worktree
+is active and that unrelated checkouts survive. Replaying the identical checked
+edit must return its original receipt without another write. If the activity was
+unfinished, resume it with that receipt and complete recorded answers; if its
+completion was checkpointed, resume its successor without replaying completed
+edits. The repository checkout and a read-only verification checkout are distinct
+from this task workspace.
+
+The criterion-linked observations are:
+
+| Criterion | Observation required from execution |
+| --- | --- |
+| `checkpoint-observed-retry` | Lose a checkpoint push response after the controlled remote accepts the head. Record ordered remote observations and mutations across restart. Observe that head before any repeated mutation, reuse task/issue/branch, and do not push the already secured effect again. A total push count alone does not establish ordering. |
+| `checkpoint-abrupt-recovery` | Retain the actual child acknowledgment, child exit and pre-restart abandoned-worktree observation. After ordinary reopening, assert exact restored bytes, original receipt identity, reconciliation before activation, one active task worktree and eventual removal of task-owned worktrees after preservation. |
+| `checkpoint-pending-successor` | Interrupt after recording a check but before feedback. Recover its original expectation, exact numeric exit and readable original log while the activity remains pending. An omitted recheck cannot clear it. Correct the relevant inputs and satisfy the original expectation; then interrupt after completed checkpoint and observe only the successor on restart, with verification preceding delivery. |
+| `checkpoint-current-quality` | Retain applicable formatting, lint, strict types, build and recovery observations for the current candidate, including resolved commands, arguments, directories, exits and complete logs. |
+
+An unresolved check retains its failed observation and acknowledged edits even if
+a later attempt fails differently. Neither cleanup nor a completed model response
+marks it satisfied. Preserve deliberate expected-red observations separately from
+required-pass failures; correction does not rewrite historical exits or logs.
+Workflow owns the durable position and repair routing. Final independent
+Verification and Delivery retain their gates; a checkpoint push cannot discharge
+them.
+
+### Existing coverage and remaining demonstration
+
+[Checkpoint scenarios](../tests/integration/checkpoint.test.ts) and their
+[fixture](../tests/fixtures/checkpoint.ts) contain lost-response, receipt replay,
+cleanup and successor assertions using real local Git and Coordination with
+controlled actors and Collaboration. The abandoned-workspace case recreates a
+clean workspace after a prior run; it is not the required abrupt child exit.
+[Interrupted-check scenarios](../tests/integration/interrupted-check.test.ts)
+contain expectation, numeric-exit, readable-log, pending correction and successor
+assertions. They control command outcomes and final verification/delivery ports.
+Their simulated `merged` result is not a hosted staging merge.
+
+At this documentation activity these references identify current test source,
+not a matching executed recovery or quality result. Testing must execute the
+relevant scenarios and add the distinguishing abrupt subprocess observation.
+Characterize working behavior with expected-pass evidence; retain an intended
+behavioral failure before correcting any demonstrated defect. Keep commands and
+bulk logs in external task evidence, associated with the assessed source and
+candidate rather than copied into this intent.
+
+Production activation continues through the trusted composition and the shared
+[single-string Agent request and activity-scoped local MCP path](inspection-parity.md).
+Provider web policy remains independent. A controlled executable or provider
+proves only its exercised boundary. Native/provider verification under EX-24
+must name the actual configured executable, versions, request, confinement,
+result and complete diagnostics. Live inference, native confinement, hosted CI,
+independent acceptance and observed staging integration remain separate evidence;
+unavailable prerequisites and missing observations remain explicit gaps.
