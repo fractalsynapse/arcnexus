@@ -326,3 +326,77 @@ must name the actual configured executable, versions, request, confinement,
 result and complete diagnostics. Live inference, native confinement, hosted CI,
 independent acceptance and observed staging integration remain separate evidence;
 unavailable prerequisites and missing observations remain explicit gaps.
+
+### Executed checkpoint characterization: run 136
+
+Testing for `checkpoint-current-evidence` executed the existing scenarios against
+captured revision `6c2bc586329939deb57ba69366331e4d00680406`, with the crash
+diagnostic correction retained by checked edit. The assessed crash-test SHA-256 is
+`7d7c3d196c46f8e35f3604e73b826a874375965031780a760f968f0483da981d`.
+The unchanged checkpoint-test SHA-256 is
+`5da4127b7f65b26daf41d27d74835191111141a9e2200e32a8d19c297777afff`;
+the unchanged interrupted-check-test SHA-256 is
+`eb7bcc6da783680d1c6e8adaa2e62ed2551d6987c78ab781e422c7a63cc736b7`.
+These identify the exercised sources rather than claiming the base revision
+alone includes the diagnostic correction.
+
+The complete host observations live outside source under evidence invocation
+`9a1c52455e6a6866b778feafae23143d78bf7bd4ccd1d26472282b61951da530`
+in run 136's retained evidence directory. Retrieve these filenames through mapped
+read-file and the run timeline; retain their complete contents.
+
+| Operation | Command and arguments | Exit | Complete log |
+| --- | --- | --- | --- |
+| Owner characterization | `npm test -- execution` | 0 | `136-226-owner-tests.log` |
+| Owner formatting | `npm run format:check -- execution` | 0 | `136-217-owner-format.log` |
+| Owner lint | `npm run lint -- execution` | 0 | `136-220-owner-lint.log` |
+| Strict repository types | `npm run check` | 0 | `136-223-repository-types.log` |
+| Repository build | `npm run build` | 0 | `136-231-repository-build.log` |
+
+Each operation ran from the captured `runs/136/worktree` directory; the host
+receipt retains its full absolute working directory, argv, duration and log path.
+The owner test log's SHA-256 is
+`a99ea8dabe63390f9487757283f1e74d5e880d770b5ff7a1223adbb2f0adb066`.
+It reports 241 passes, no failures and 16 skips. The named checkpoint, abrupt
+crash and interrupted-check cases executed and passed without skips; the total
+does not turn skipped native cases into evidence.
+
+For `checkpoint-observe-before-retry`, the lost-response case passed with
+ordered remote-event assertions: the first retry event on `7-task` observes the
+accepted head, no push repeats that secured head, and task identity is unchanged.
+The fixture also rejects another issue allocation through its retained count and
+checks each push's exact branch and observed lease. Replaying the secured push
+or creating a replacement task would fail these assertions.
+
+For `checkpoint-abrupt-preservation`, the log records executable
+`/usr/local/bin/node`, Node `v22.23.5`, child argv and cwd, actual exit 73,
+null signal and complete empty stdout/stderr. It retains the acknowledged receipt
+and a distinct `beforeRestart` diagnostic containing its original artifact
+identity, task, issue, branch, abandoned worktree, exact working and committed
+bytes and Git worktree registration. This diagnostic precedes reopening.
+Before resumed activation, assertions require restored bytes, the same receipt,
+one original edit intent, removal of the abandoned workspace and one active task
+worktree alongside the repository and unrelated checkout. Final assertions retain
+committed bytes after cleanup and leave the unrelated checkout intact. Lost bytes,
+a fresh receipt, duplicate writes or cleanup of that unrelated checkout would fail.
+
+For `checkpoint-pending-successor`, both original-expectation cases and both
+omitted-recheck cases passed. Required-pass coverage preserves the original exit
+37 and readable log, retains the later exit 43 and both log references, and prevents
+verification or delivery while unresolved. Correcting checked bytes produces exit
+0 under the original expectation. Interruption after completed checkpoint then
+resumes only review, with verification before delivery. The separate expected-fail
+variant preserves its original expectation and exits without representing a new
+behavioral red. Dropping the pending obligation, replacing the original diagnostic
+with the latest one, replaying the completed activity or reversing gates would fail.
+
+This is expected-pass characterization and evidence correction, with no observed
+new behavioral defect and no production behavior change. The earlier paragraphs
+describe the pre-correction inspection; the current crash diagnostics now include
+both the child cwd and explicit pre-restart observation they identified as missing.
+The temporary fixture's original artifact is read and compared during execution;
+its exact receipt and abandoned-state contents survive in the retained test log
+after the temporary fixture is removed. Fixture command outcomes, actors,
+Collaboration and final verification/delivery ports remain controlled as described
+above. This does not establish full production admission, MCP transport, native
+confinement, live inference, hosted CI or an actual staging merge.
