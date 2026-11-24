@@ -1,6 +1,6 @@
 import { useState, createElement as h } from 'react';
 import type { FormEvent } from 'react';
-import type { Theme, Scheme } from '../theme.js';
+import type { Theme, Scheme } from '../theme-preferences.js';
 import { SchemeFields } from './scheme-fields.js';
 import { SchemeSave } from './scheme-save.js';
 import { SchemeSelect } from './scheme-select.js';

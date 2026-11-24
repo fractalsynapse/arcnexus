@@ -32,6 +32,8 @@ continues to collect the components and the Cordis plugin.
   them against a workspace through the UI registry.
 - `controls`, `commands`, `settings/page` and `theme` group components
   by responsibility. Related hooks, types and styles live with their feature.
+  Theme preferences own the saved scheme state. The theme color module
+  derives presentation tokens and contrast warnings.
 
 The [web app browser suite](../../apps/web/tests/acceptance/frame.test.ts)
 checks the composed entry, responsive layout, dialogs, persistence and

@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Organize the web UI into individual layout and React component files grouped by responsibility (#704).
+- Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
 

@@ -1,7 +1,7 @@
 import { createElement as h } from 'react';
 import { ColorPicker } from '../color-picker/color-picker.js';
-import { colorFields, contrastWarning } from '../theme.js';
-import type { Scheme } from '../theme.js';
+import { contrastWarning } from '../theme-colors.js';
+import { colorFields, type Scheme } from '../theme-preferences.js';
 
 export function SchemeFields({ draft, update }: { draft: Scheme; update: (next: Scheme) => void }) {
   return h(

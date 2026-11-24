@@ -1,6 +1,6 @@
 import { createElement as h } from 'react';
 import { SelectField } from '../../controls/select-field.js';
-import type { Scheme, Palette } from '../theme.js';
+import type { Scheme, Palette } from '../theme-preferences.js';
 import { SchemeSwatches } from './scheme-swatches.js';
 
 interface SelectProps {

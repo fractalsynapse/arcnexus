@@ -1,4 +1,4 @@
-import { colorFields } from '../theme.js';
+import { colorFields } from '../theme-preferences.js';
 
 export const families = {
   Neutral: ['#090a0c', '#22252b', '#383d45', '#66707d', '#aeb8c4', '#e2e7ee', '#ffffff'],

@@ -10,6 +10,9 @@ layout settings, where workspaces use one shared editor for registered
 panels, desktop columns, placement and mobile display order. The frame reports
 commands and metrics as unavailable until workspace integration.
 
+The browser entry composes the UI plugin with separate workspace, command
+binding, and React frame plugins in `src/plugins`.
+
 For browser acceptance, install Chromium with
 `npx --no-install playwright install chromium` and run
 `npm test -- web-app`. The same suite can use an existing Chromium binary

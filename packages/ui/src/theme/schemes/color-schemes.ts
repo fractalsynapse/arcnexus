@@ -1,5 +1,5 @@
 import { createElement as h } from 'react';
-import type { Theme } from '../theme.js';
+import type { Theme } from '../theme-preferences.js';
 import { SchemeEditor } from './scheme-editor.js';
 import { SchemeSelect } from './scheme-select.js';
 
