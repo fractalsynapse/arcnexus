@@ -54,6 +54,7 @@ class CheckpointRemote extends GitHub {
   loseRecoveryPush = false;
   pushes: string[] = [];
   issues = 0;
+  readonly events: { kind: 'observe' | 'push'; branch: string; head?: string }[] = [];
   loseFirstPush = true;
 
   /** Bind the fixed fake repository without performing external operations. */
@@ -84,13 +85,16 @@ class CheckpointRemote extends GitHub {
 
   /** Observe the current branch head even after a lost push response. */
   override async remoteHead(branch: string) {
-    return branch === 'staging' ? this.staging : this.head;
+    const head = branch === 'staging' ? this.staging : this.head;
+    this.events.push({ kind: 'observe', branch, head });
+    return head;
   }
 
   /** Simulate GitHub accepting the first push before its response was lost. */
   override async push(_root: string, branch: string, head: string, previous?: string) {
     assert.equal(branch, '7-task');
     assert.equal(previous, this.head);
+    this.events.push({ kind: 'push', branch, head });
     this.pushes.push(head);
     this.head = head;
     if (
@@ -118,15 +122,16 @@ export class RecoveryScenario {
 
   /** Build one real local Git base and isolated application storage. */
   constructor(
-    t: TestContext,
+    t: Pick<TestContext, 'after' | 'mock'>,
     private readonly useTools = false,
     private readonly movedStaging = false,
     private readonly sharedFile = false,
+    private readonly options: { directory?: string; abrupt?: boolean } = {},
   ) {
-    const directory = mkdtempSync(join(tmpdir(), 'arcnexus-checkpoint-'));
+    const directory = options.directory ?? mkdtempSync(join(tmpdir(), 'arcnexus-checkpoint-'));
     this.root = join(directory, 'project');
     this.storage = join(directory, 'state');
-    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    if (!options.directory) t.after(() => rmSync(directory, { recursive: true, force: true }));
     this.capture = this.createSource();
     this.remote.loseFirstPush = !movedStaging;
     this.services = this.compose(t);
@@ -189,7 +194,7 @@ export class RecoveryScenario {
   }
 
   /** Supply the real execution ports with fake model and Collaboration boundaries. */
-  private compose(t: TestContext): WorkflowServices {
+  private compose(t: Pick<TestContext, 'after' | 'mock'>): WorkflowServices {
     const coordination = new Coordination(this.storage);
     const execution = new Execution(new Architecture(), coordination, this.storage);
     return {
@@ -239,7 +244,7 @@ export class RecoveryScenario {
   };
 
   /** Claim the same logical task using real Coordination and an isolated provider. */
-  private admit(coordination: Coordination, goal: string, t: TestContext) {
+  private admit(coordination: Coordination, goal: string, t: Pick<TestContext, 'after' | 'mock'>) {
     const journal = coordination.admit(remote, goal);
     assert('record' in journal);
     const task = new HostTask(
@@ -292,6 +297,7 @@ export class RecoveryScenario {
     );
     const first = { path: `${id}.txt`, expected: null, content: id };
     const receipt = await actions.invoke(editTool, first);
+    if (this.options.abrupt) this.exitAfterAcknowledgment(task, receipt);
     assert.deepEqual(await actions.invoke(editTool, first), receipt);
     if (id !== 'first') return;
     await assert.rejects(
@@ -304,8 +310,30 @@ export class RecoveryScenario {
     assert.throws(() => actions.finish({ kind: 'completed', edits: [first] }), /mapped MCP tools/);
   }
 
+  /** Leave the real acknowledged checkpoint and workspace untouched by normal cleanup. */
+  private exitAfterAcknowledgment(task: HostTask, receipt: unknown): never {
+    const artifact = task.store('acknowledged-edit.json', JSON.stringify(receipt));
+    writeFileSync(join(dirname(this.root), 'acknowledgment.json'), JSON.stringify({
+      receipt, artifact, taskID: task.taskID, issue: task.issue,
+      branch: task.branch, worktree: task.worktree, node: process.version,
+    }));
+    process.exit(73);
+  }
+
+  /** Expose durable observations for assertions about original receipt and edit identities. */
+  observations<T>() {
+    assert(this.task);
+    return this.task.observations<T>();
+  }
+
   /** Initialize an exact base and two paths owned by one fixture steward. */
   private createSource() {
+    if (!existsSync(this.root)) this.initializeSource();
+    return this.captureSource();
+  }
+
+  /** Commit the generic fixture independently of developer state or credentials. */
+  private initializeSource() {
     mkdirSync(this.root);
     this.git('init');
     this.git('config', 'user.name', 'ArcNexus Fixture');
@@ -315,6 +343,10 @@ export class RecoveryScenario {
     writeFileSync(join(this.root, 'contracts.yaml'), 'contracts: []\n');
     this.git('add', '.');
     this.git('commit', '-m', 'base');
+  }
+
+  /** Supply the captured authority read by the actual HostTask and checkpoint lifecycle. */
+  private captureSource() {
     return {
       source: { root: this.root, remote, revision: this.git('rev-parse', 'HEAD') },
       project: { contractRegistry: 'contracts.yaml' },
