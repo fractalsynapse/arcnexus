@@ -1,6 +1,8 @@
 import type { Context } from 'cordis';
 import type { InspectionInput } from '../../agent/src/index.js';
 import type { TaskInput, TaskObserver } from '../../workflow/src/index.js';
+export { dispatchWorkflow, workflowRequest, type WorkflowRequest } from './request.js';
+export { commandInspectionPlugin } from './inspection-data.js';
 
 declare module 'cordis' {
   interface Context {

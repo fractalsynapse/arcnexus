@@ -3,7 +3,7 @@ import type { Client } from 'pg';
 import { z } from 'zod';
 import { dataOperation } from '../../data/src/index.js';
 import { Catalog, type VerifyRepository } from './catalog.js';
-import { importSchema, projectSchema } from './schema.js';
+import { importSchema, projectSchema, revisionSchema } from './schema.js';
 
 export { catalogMigration, importSchema, projectSchema } from './schema.js';
 export type { VerifyRepository } from './catalog.js';
@@ -28,21 +28,42 @@ export const catalogDataPlugin = {
   /** Publish platform-scoped catalog resource operations and their schemas. */
   apply(context: Context) {
     const catalog = context.catalog;
-    context.effect(() =>
-      context.data.register({
-        id: 'projects',
-        operations: {
-          list: dataOperation(z.strictObject({}), z.array(projectSchema), (scope) =>
-            catalog.list(scope.principal),
-          ),
-          create: dataOperation(importSchema, projectSchema, (scope, repository) =>
-            catalog.add(scope.principal, repository),
-          ),
-          delete: dataOperation(z.strictObject({ id: z.uuid() }), projectSchema, (scope, { id }) =>
-            catalog.remove(scope.principal, id),
-          ),
-        },
-      }),
-    );
+    const operations = { ...catalogReads(catalog), ...catalogWrites(catalog) };
+    context.effect(() => context.data.register({ id: 'projects', operations }));
   },
 };
+
+const id = z.strictObject({ id: z.uuid() });
+
+function catalogReads(catalog: Catalog) {
+  return {
+    list: dataOperation(
+      z.strictObject({}),
+      z.strictObject({ entries: z.array(projectSchema) }),
+      async (scope) => ({
+        entries: await catalog.list(scope.principal),
+      }),
+    ),
+    read: dataOperation(id, projectSchema, async (scope, { id }) => {
+      const project = await catalog.resolve(scope.principal, id);
+      if (!project) throw new Error('Project unavailable');
+      return project;
+    }),
+  };
+}
+
+function catalogWrites(catalog: Catalog) {
+  return {
+    update: dataOperation(
+      id.extend({ expectedRevision: revisionSchema }),
+      projectSchema,
+      (scope, { id, expectedRevision }) => catalog.refresh(scope.principal, id, expectedRevision),
+    ),
+    create: dataOperation(importSchema, projectSchema, (scope, repository) =>
+      catalog.add(scope.principal, repository),
+    ),
+    delete: dataOperation(id, projectSchema, (scope, { id }) =>
+      catalog.remove(scope.principal, id),
+    ),
+  };
+}

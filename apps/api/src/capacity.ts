@@ -19,12 +19,43 @@ async function enrollment(capacity: Capacity, request: Request) {
   return Response.json(await capacity.claim(code, info), { status: 201, headers: privateHeaders });
 }
 
-async function providerStatus(capacity: Capacity, request: Request, id: string) {
+function credential(request: Request, id: string) {
   const token = request.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1];
   const identity = providerIdentitySchema.safeParse({ id, token });
-  if (!identity.success) return error(401);
-  const provider = await capacity.authenticate(id, identity.data.token);
+  return identity.success ? identity.data.token : undefined;
+}
+
+async function providerStatus(capacity: Capacity, request: Request, id: string) {
+  const token = credential(request, id);
+  const provider = token && (await capacity.authenticate(id, token));
   return provider ? Response.json(provider, { headers: privateHeaders }) : error(401);
+}
+
+async function providerConnection(capacity: Capacity, request: Request, id: string) {
+  const token = credential(request, id);
+  const presence = token && (await capacity.connect(id, token));
+  if (!presence) return error(403);
+  const signal = AbortSignal.any([presence.signal, request.signal]);
+  const ready = new TextEncoder().encode('event: ready\ndata: {}\n\n');
+  let cancelled = false;
+  const body = new ReadableStream({
+    start(stream) {
+      const close = () => {
+        if (!cancelled) stream.close();
+        presence.close();
+      };
+      if (signal.aborted) return close();
+      stream.enqueue(ready);
+      signal.addEventListener('abort', close, { once: true });
+    },
+    cancel() {
+      cancelled = true;
+      presence.close();
+    },
+  });
+  return new Response(body, {
+    headers: { ...privateHeaders, 'Content-Type': 'text/event-stream' },
+  });
 }
 
 async function operate(capacity: Capacity, operator: string, request: Request, path: string) {
@@ -53,6 +84,9 @@ export function capacityHttp(capacity: Capacity, authenticate: AuthenticateOpera
       const status = /^\/capacity-providers\/([^/]+)\/status$/.exec(path);
       if (status?.[1] && request.method === 'GET')
         return await providerStatus(capacity, request, status[1]);
+      const connection = /^\/capacity-providers\/([^/]+)\/connection$/.exec(path);
+      if (connection?.[1] && request.method === 'GET')
+        return await providerConnection(capacity, request, connection[1]);
       const operator = await authenticate(request);
       if (!operator) return error(401);
       return await operate(capacity, operator, request, path);

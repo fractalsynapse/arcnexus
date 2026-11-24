@@ -1,8 +1,18 @@
+import { agentPlugin } from '../../agent/src/index.js';
+import { architecturePlugin } from '../../architecture/src/index.js';
+import { commandInspectionPlugin, commandsPlugin } from '../../commands/src/index.js';
+import { teamPlugin } from '../../team/src/index.js';
+import { workflowPlugin } from '../../workflow/src/index.js';
 import { timingSafeEqual } from 'node:crypto';
 import { Context } from 'cordis';
 import type { Client } from 'pg';
 import { catalogDataPlugin, catalogPlugin } from '../../catalog/src/index.js';
-import { importedCoordinationDataPlugin } from '../../coordination/src/index.js';
+import {
+  hasPlanRevision,
+  importedCoordinationDataPlugin,
+  planExecutionDataPlugin,
+  postgresTimelineChanges,
+} from '../../coordination/src/index.js';
 import { dataPlugin } from '../../data/src/index.js';
 import { textDigest } from '../../foundation/src/index.js';
 import { plannerDataPlugin } from '../../planner/src/index.js';
@@ -44,8 +54,21 @@ function platformPlugin(database: Client, configuration: ReturnType<typeof bindi
       ),
     );
     await context.use(catalogDataPlugin);
+    await context.use(readOnlyCommands);
     await context.use(projectReads(database, configuration));
   };
+}
+
+async function readOnlyCommands(context: Context) {
+  for (const plugin of [
+    teamPlugin,
+    architecturePlugin,
+    agentPlugin,
+    workflowPlugin(),
+    commandsPlugin,
+  ]) {
+    await context.use(plugin);
+  }
 }
 
 function projectReads(database: Client, configuration: ReturnType<typeof bindings>) {
@@ -58,16 +81,36 @@ function projectReads(database: Client, configuration: ReturnType<typeof binding
       await context.use(
         plannerDataPlugin(async (scope, expected) => {
           const project = await resolve(scope);
-          if (!project || (expected !== undefined && expected !== project.revision))
-            return undefined;
-          return configuration.capture(project.remote, project.revision);
+          if (!project || !(await allowsRevision(database, project, expected))) return;
+          return configuration.capture(project.remote, expected ?? project.revision);
         }),
       );
       await context.use(
-        importedCoordinationDataPlugin(database, async (scope) => (await resolve(scope))?.remote),
+        commandInspectionPlugin(async (scope) => {
+          const project = await resolve(scope);
+          if (!project) return;
+          const capture = configuration.capture(project.remote, project.revision);
+          return capture && { directory: capture.source.root, revision: capture.source.revision };
+        }),
       );
+      const journalProject = async (scope: Parameters<typeof resolve>[0]) =>
+        (await resolve(scope))?.remote;
+      await context.use(importedCoordinationDataPlugin(database, journalProject));
+      await context.use(planExecutionDataPlugin(database, journalProject));
     },
   };
+}
+
+async function allowsRevision(
+  database: Client,
+  project: { remote: string; revision: string },
+  expected?: string,
+) {
+  if (!expected || project.revision === expected) return true;
+  return (
+    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(expected) &&
+    (await hasPlanRevision(database, project.remote, expected))
+  );
 }
 
 /** Compose the shared operator and project scope for isolated gateway deployments. */
@@ -78,6 +121,10 @@ export async function openPlatform(options: PlatformOptions) {
   await context.use(platformPlugin(options.database, configuration));
   return {
     context,
+    followTimeline: postgresTimelineChanges(
+      options.database,
+      async (scope) => (await context.catalog.resolve(scope.principal, scope.project))?.remote,
+    ),
     async authenticate(request: Request, project: string) {
       if (!accepts(request)) return undefined;
       const principal = configuration.operator;

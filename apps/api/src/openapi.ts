@@ -8,8 +8,8 @@ function parametersFor(route: (typeof routes)[number]) {
   const parameters = [{ name: 'project', in: 'path', required: true, schema: string }];
   if (route.parameter)
     parameters.push({ name: route.parameter, in: 'path', required: true, schema: string });
-  for (const name of route.cursor ? ['after', 'through'] : ['revision'])
-    parameters.push({ name, in: 'query', required: false, schema: string });
+  for (const name of route.cursor ? ['after', 'through'] : (route.query ?? ['revision']))
+    parameters.push({ name, in: 'query', required: Boolean(route.query), schema: string });
   return parameters;
 }
 

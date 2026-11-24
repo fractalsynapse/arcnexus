@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { textDigest } from '../../foundation/src/index.js';
+import { Presence } from './presence.js';
 export { capacityMigration } from './schema.js';
 
 export type CapacityState = 'pending' | 'admitted' | 'revoked';
@@ -30,6 +31,8 @@ function secret() {
 
 /** Own the database-backed launcher enrollment and its credential state. */
 export class Capacity {
+  private readonly presence = new Presence();
+
   /** Use the operator platform store prepared by database setup. */
   constructor(private readonly database: Client) {}
 
@@ -65,7 +68,7 @@ export class Capacity {
       'SELECT id, name, platform, state FROM arcnexus_capacity.providers WHERE operator = $1 ORDER BY name, id',
       [operator],
     );
-    return rows;
+    return rows.map((provider) => ({ ...provider, online: this.presence.online(provider.id) }));
   }
 
   /** Admit exactly a pending registration or revoke an existing authorization. */
@@ -77,6 +80,7 @@ export class Capacity {
       [operator, id, state],
     );
     if (!rows[0]) throw new Error('Provider action unavailable');
+    if (state === 'revoked') this.presence.disconnect(id);
     return rows[0];
   }
 
@@ -88,6 +92,12 @@ export class Capacity {
       [id, textDigest(token)],
     );
     return rows[0];
+  }
+
+  /** Maintain one active connection for an admitted credential. */
+  async connect(id: string, token: string) {
+    const provider = await this.authenticate(id, token);
+    return provider?.state === 'admitted' ? this.presence.attach(id) : undefined;
   }
 }
 

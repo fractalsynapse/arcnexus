@@ -29,3 +29,27 @@
 .arc-management-record a {
   color: var(--link);
 }
+.arc-guide-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.arc-plan-metrics {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.arc-plan-metrics div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  justify-content: space-between;
+}
+.arc-plan-metrics dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.arc-plan-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

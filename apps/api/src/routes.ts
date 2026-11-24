@@ -1,12 +1,40 @@
 type Route = {
   path: string;
   resource: string;
-  operation: 'list' | 'read';
+  operation: string;
   parameter?: string;
   cursor?: boolean;
+  query?: readonly string[];
 };
 
 export const routes: readonly Route[] = [
+  {
+    path: '/plan-executions/current',
+    resource: 'plan-executions',
+    operation: 'current',
+    query: [],
+  },
+  ...['outcome', 'metrics', 'tool-counts'].map((operation) => ({
+    path: '/plan-executions/{execution}/' + operation,
+    resource: 'plan-executions',
+    operation,
+    parameter: 'execution',
+    query: [],
+  })),
+  {
+    path: '/plan-executions/{execution}/events',
+    resource: 'execution-events',
+    operation: 'read',
+    parameter: 'execution',
+    cursor: true,
+  },
+  {
+    path: '/inspection',
+    resource: 'agent-inspection',
+    operation: 'read',
+    query: ['component', 'activity'],
+  },
+
   { path: '/goals', resource: 'goals', operation: 'list' },
   { path: '/goals/{id}', resource: 'goals', operation: 'read', parameter: 'id' },
   { path: '/objectives', resource: 'objectives', operation: 'list' },
@@ -39,8 +67,10 @@ export function routeInput(match: NonNullable<ReturnType<typeof matchRoute>>, ur
         input[key] = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
     }
   } else {
-    const revision = url.searchParams.get('revision');
-    if (revision !== null) input.revision = revision;
+    for (const key of route.query ?? ['revision']) {
+      const value = url.searchParams.get(key);
+      if (value !== null) input[key] = value;
+    }
   }
   return input;
 }

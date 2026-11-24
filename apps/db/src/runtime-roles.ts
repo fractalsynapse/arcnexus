@@ -20,7 +20,8 @@ const roles = {
       GRANT USAGE ON SCHEMA arcnexus_platform TO arc_mcp;
       GRANT SELECT ON arcnexus_platform.migrations TO arc_mcp;
       GRANT USAGE ON SCHEMA arcnexus_catalog, arcnexus_coordination TO arc_mcp;
-      GRANT SELECT ON arcnexus_catalog.projects, arcnexus_coordination.runs, arcnexus_coordination.events TO arc_mcp;
+      GRANT SELECT, INSERT, UPDATE ON arcnexus_catalog.projects TO arc_mcp;
+      GRANT SELECT ON arcnexus_coordination.runs, arcnexus_coordination.events TO arc_mcp;
     `,
   },
 } as const;

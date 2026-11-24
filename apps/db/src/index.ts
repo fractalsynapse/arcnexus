@@ -5,10 +5,19 @@ import { catalogMigration } from '../../../packages/catalog/src/index.js';
 import {
   coordinationMigration,
   importSqliteJournal,
+  cutoverSqliteJournal,
+  hostedCoordinationMigration,
+  journalNotificationMigration,
 } from '../../../packages/coordination/src/index.js';
 import { migrate, verifyMigrations } from './migrations.js';
 
-const modelMigrations = [coordinationMigration, capacityMigration, catalogMigration];
+const modelMigrations = [
+  coordinationMigration,
+  journalNotificationMigration,
+  hostedCoordinationMigration,
+  capacityMigration,
+  catalogMigration,
+];
 
 /** Refuse runtime schema mismatches before admitting requests. */
 export function verifyPlatformDatabase(database: Client) {
@@ -19,6 +28,7 @@ declare module 'cordis' {
   interface Context {
     databaseSetup: {
       migrate(): Promise<void>;
+      cutover(storage: string, remote: string): ReturnType<typeof cutoverSqliteJournal>;
       rehearseImport(storage: string, remote: string): ReturnType<typeof importSqliteJournal>;
     };
   }
@@ -30,6 +40,8 @@ export function databaseSetupPlugin(database: Client) {
     apply(context: Context) {
       context.provide('databaseSetup', {
         migrate: () => migrate(database, modelMigrations),
+        cutover: (storage: string, remote: string) =>
+          cutoverSqliteJournal(database, storage, remote),
         rehearseImport: (storage: string, remote: string) =>
           importSqliteJournal(database, storage, remote),
       });

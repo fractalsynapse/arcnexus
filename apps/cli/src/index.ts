@@ -22,11 +22,12 @@ function parseOutputOption(args: string[]) {
 async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
+  if (command === 'platform') return runPlatform(component, activity, extra, json);
   if (command === 'task' || command === 'architecture')
     return runCommand(command, component, activity, extra, json);
   if (command === 'refine') {
     const rounds = parseRounds(positionals.slice(1));
-    return runTask(await mountCommands(true), undefined, json, 'refine', rounds);
+    return runTask(await mountCommands(true), { command: 'refine', rounds }, json);
   }
   if (command !== 'inspect')
     throw new Error(`Command unavailable in this build: ${command ?? '<missing>'}`);
@@ -41,6 +42,31 @@ async function main(args: string[]) {
   }
   const commands = await mountCommands();
   const result = commands.inspect({ component, activity, directory: process.cwd() });
+  printInspection(result, json);
+}
+
+/** Route explicit hosted inspection through REST while reusing terminal rendering. */
+async function runPlatform(
+  verb: string | undefined,
+  component: string | undefined,
+  rest: string[],
+  json: boolean,
+) {
+  const [activity, extra] = rest;
+  if (
+    verb !== 'inspect' ||
+    !component ||
+    !activity ||
+    extra !== undefined ||
+    component.startsWith('-') ||
+    activity.startsWith('-')
+  )
+    throw new Error('Usage: arcnexus platform inspect <component> <activity>');
+  const { inspectPlatform } = await import('./platform-inspect.js');
+  printInspection(await inspectPlatform(component, activity), json);
+}
+
+function printInspection(result: ReturnType<Context['commands']['inspect']>, json: boolean) {
   console.log(json ? JSON.stringify(result, null, 2) : renderInspection(result));
 }
 
@@ -103,7 +129,11 @@ async function runCommand(
   if (command === 'architecture') {
     if (component !== 'update' || extra.length || (activity !== undefined && !activity.trim()))
       throw new Error('Usage: arcnexus architecture update ["<feedback>"]');
-    return runTask(await mountCommands(true), activity, json, 'update');
+    return runTask(
+      await mountCommands(true),
+      { command: 'architecture_update', feedback: activity },
+      json,
+    );
   }
   if (command === 'task') {
     const usage = component === 'plan' ? 'plan ["<objective>"]' : 'run ["<goal>"]';
@@ -113,6 +143,12 @@ async function runCommand(
       extra.length
     )
       throw new Error(`Usage: arcnexus task ${usage}`);
-    return runTask(await mountCommands(true), activity, json, component);
+    return runTask(await mountCommands(true), taskRequest(component, activity), json);
   }
+}
+
+function taskRequest(component: 'plan' | 'run', activity?: string) {
+  return component === 'plan'
+    ? ({ command: 'task_plan', objective: activity } as const)
+    : ({ command: 'task_run', goal: activity } as const);
 }

@@ -8,6 +8,37 @@ import {
 import type { Data, DataScope } from '../../../packages/data/src/index.js';
 
 const tools = {
+  list_projects: {
+    resource: 'projects',
+    operation: 'list',
+    description: 'List selectable projects.',
+  },
+  read_project: {
+    resource: 'projects',
+    operation: 'read',
+    description: 'Read a verified project binding.',
+  },
+  import_project: {
+    resource: 'projects',
+    operation: 'create',
+    description: 'Import an authorized project.',
+  },
+  refresh_project: {
+    resource: 'projects',
+    operation: 'update',
+    description: 'Verify and refresh a project at its expected revision.',
+  },
+  retire_project: {
+    resource: 'projects',
+    operation: 'delete',
+    description: 'Retire a project selection.',
+  },
+  inspect: {
+    resource: 'agent-inspection',
+    operation: 'read',
+    description:
+      'Inspect the exact Agent prompt and allowed operations at the pinned project revision.',
+  },
   list_goals: {
     resource: 'goals',
     operation: 'list',
@@ -27,6 +58,26 @@ const tools = {
     resource: 'objectives',
     operation: 'read',
     description: 'Read an objective record at an approved project revision.',
+  },
+  read_current_plan: {
+    resource: 'plan-executions',
+    operation: 'current',
+    description: 'Read the latest retained Plan execution reference.',
+  },
+  read_plan_outcome: {
+    resource: 'plan-executions',
+    operation: 'outcome',
+    description: 'Read the recorded outcome for a pinned Plan execution.',
+  },
+  read_plan_metrics: {
+    resource: 'plan-executions',
+    operation: 'metrics',
+    description: 'Read measured elapsed time and token usage for a pinned Plan.',
+  },
+  read_plan_tool_counts: {
+    resource: 'plan-executions',
+    operation: 'tool-counts',
+    description: 'Read observed tool frequency for a pinned Plan execution.',
   },
   read_execution_timeline: {
     resource: 'execution-events',

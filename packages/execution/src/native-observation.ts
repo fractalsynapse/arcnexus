@@ -81,18 +81,27 @@ export class NativeObservation {
   }
 }
 
-/** Keep accounting/discovery fields in state; complete messages remain in their retained source files. */
+/** Retain complete exposed messages and compact tool references on the ordered journal. */
 function eventMetadata(event: unknown) {
   if (!event || typeof event !== 'object') return undefined;
   const value = event as {
     type?: unknown;
     usage?: unknown;
-    item?: { id?: unknown; type?: unknown };
+    item?: { id?: unknown; type?: unknown; text?: unknown; tool?: unknown };
   };
   return {
     type: value.type,
     usage: value.usage,
-    ...(value.item ? { item: { id: value.item.id, type: value.item.type } } : {}),
+    ...(value.item ? { item: itemMetadata(value.item) } : {}),
+  };
+}
+
+function itemMetadata(item: { id?: unknown; type?: unknown; text?: unknown; tool?: unknown }) {
+  return {
+    id: item.id,
+    type: item.type,
+    ...(item.type === 'agent_message' && typeof item.text === 'string' && { text: item.text }),
+    ...(item.type === 'mcp_tool_call' && typeof item.tool === 'string' && { tool: item.tool }),
   };
 }
 

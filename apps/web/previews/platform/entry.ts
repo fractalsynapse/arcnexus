@@ -1,23 +1,13 @@
-import { createElement as h } from 'react';
-import type { Context } from 'cordis';
 import { mountWeb } from '../../src/composition.js';
-import { ProjectContext } from './active-project.js';
-import { ConnectionManager } from './connection-manager.js';
-import { ProjectManager } from './project-manager.js';
-import './platform.css';
+import { platformUiPlugin } from '../../src/platform/index.js';
+import { setPlatformTransport } from '../../src/platform/resource.js';
+import { setSession } from '../../src/platform/session.js';
+import { fixtureTransport, project } from './fixture-api.js';
 
 const showProviders = new URLSearchParams(location.search).get('providers') === 'sample';
+setPlatformTransport(fixtureTransport(showProviders));
+setSession({ token: 'preview', project });
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Platform preview root is missing');
-await mountWeb(root, undefined, {
-  inject: ['ui'],
-  /** Contribute preview controls to the regular application frame. */
-  apply(context: Context) {
-    context.effect(() =>
-      context.ui.registerHeaderControl('connections', h(ConnectionManager, { showProviders })),
-    );
-    context.effect(() => context.ui.registerHeaderControl('projects', h(ProjectManager)));
-    context.effect(() => context.ui.registerWorkspaceContext(h(ProjectContext)));
-  },
-});
+await mountWeb(root, undefined, platformUiPlugin);

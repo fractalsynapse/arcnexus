@@ -118,7 +118,10 @@ export function recordAdmission(
   if (!config.fresh) return;
   const revision = config.capture.source.revision;
   if (!journal.retained) {
-    journal.record({ baseRevision: revision });
+    journal.record({
+      baseRevision: revision,
+      ...(planning && { planningExecution: { revision } }),
+    });
     return;
   }
   if (!planning) return;
@@ -129,5 +132,9 @@ export function recordAdmission(
   }[];
   const previous = events.findLast((event) => event.baseRevision)?.baseRevision;
   if (previous === revision || events.some((event) => event.workspace || event.publication)) return;
-  journal.record({ baseRevision: revision, plannerRefresh: revision });
+  journal.record({
+    baseRevision: revision,
+    plannerRefresh: revision,
+    planningExecution: { revision },
+  });
 }

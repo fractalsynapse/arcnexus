@@ -9,6 +9,7 @@ import type {
 
 export interface InspectionInput extends ActivitySelection {
   directory: string;
+  revision?: string;
 }
 
 export interface ActivationInput {
@@ -54,7 +55,7 @@ export class Agent {
 
   /** Preview an actor's request before task admission. */
   inspect(input: InspectionInput): AgentInspection {
-    return this.prepareRequest(this.architecture.capture(input.directory), input);
+    return this.prepareRequest(this.architecture.capture(input.directory, input.revision), input);
   }
 
   /** Prepare the model envelope from a captured project and optional admitted task data. */

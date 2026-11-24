@@ -6,6 +6,7 @@ import { matchesTestFilter, SuiteMetadataReader, type TestFilter } from './test-
 import { team } from '../../team/src/index.js';
 
 export { unifiedDiff, type ContentPatch } from './diff.js';
+export { platformEndpoint } from './platform-endpoint.js';
 export { TestSelection, type TestFilter } from './test-selection.js';
 export { Quality, qualityScopePrefix, type QualityScope } from './quality.js';
 

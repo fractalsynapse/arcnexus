@@ -1,21 +1,9 @@
+import { platformEndpoint as endpoint } from '../../../packages/foundation/src/index.js';
+export { endpoint };
 import { providerIdentitySchema, providerSchema } from '../../../packages/capacity/src/index.js';
 import type { z } from 'zod';
 
 export type Identity = z.output<typeof providerIdentitySchema>;
-
-export function endpoint(input: string) {
-  const url = new URL(input);
-  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
-  if (
-    !(url.protocol === 'https:' || (url.protocol === 'http:' && loopback)) ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash
-  )
-    throw new Error('Use HTTPS or a local loopback endpoint');
-  return url.href.replace(/\/$/, '');
-}
 
 /** Exchange the setup code for a credential that can only start work after admission. */
 export async function enroll(api: string, code: string, name: string, platform: string) {
@@ -37,4 +25,16 @@ export async function status(api: string, identity: Identity) {
   });
   if (!result.ok) throw new Error('Launcher authorization unavailable');
   return providerSchema.parse(await result.json());
+}
+
+/** Open the authenticated outbound connection for an admitted launcher. */
+export async function connect(api: string, identity: Identity, signal?: AbortSignal) {
+  const target = endpoint(api) + '/capacity-providers/' + identity.id + '/connection';
+  const response = await fetch(target, {
+    signal,
+    redirect: 'error',
+    headers: { authorization: 'Bearer ' + identity.token, accept: 'text/event-stream' },
+  });
+  if (!response.ok || !response.body) throw new Error('Launcher connection not admitted');
+  return response.body;
 }

@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { projectFixture } from '../../../cli/tests/fixtures/project.js';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,23 +13,23 @@ import { openPlatform } from '../../../../packages/platform/src/index.js';
 import { databaseSetupPlugin } from '../../../db/src/index.js';
 import { Context } from 'cordis';
 import { createProject } from '../fixtures/project.js';
+import { apiPlugin, serveApi } from '../../src/index.js';
 
 export const suite = { owner: 'api-app', level: 'acceptance', tags: ['postgresql'] } as const;
 
 const url = process.env.ARC_TEST_DATABASE_URL;
-const remote = 'https://github.com/arcnexus-fixtures/read-only.git';
 
 test(
   'API and MCP platform scopes can share the catalog without exposing arbitrary worktrees',
   { skip: !url },
   async (t) => {
-    const { token, platform } = await fixture(t);
+    const { token, platform, repository } = await fixture(t);
     const request = new Request('http://arc.test/', {
       headers: { authorization: 'Bearer ' + token },
     });
     const scope = await platform.authenticate(request, 'platform');
     assert.ok(scope);
-    const record = await platform.context.catalog.add(scope.principal, { remote });
+    const record = await platform.context.catalog.add(scope.principal, { remote: repository });
     const project = await platform.authenticate(request, record.id);
     assert.ok(project);
     assert.equal(await platform.authenticate(request, randomUUID()), undefined);
@@ -41,17 +45,21 @@ test(
   },
 );
 
-async function fixture(t: TestContext) {
+async function fixture(t: TestContext, withAgent = false) {
   const root = mkdtempSync(join(tmpdir(), 'arc-platform-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const directory = join(root, 'project');
-  mkdirSync(directory);
-  createProject(directory, remote);
+  const repository = 'https://github.com/arcnexus-fixtures/' + randomUUID() + '.git';
+  const directory = withAgent ? projectFixture(repository) : join(root, 'project');
+  if (withAgent) t.after(() => rmSync(directory, { recursive: true, force: true }));
+  else {
+    mkdirSync(directory);
+    createProject(directory, repository);
+  }
   const token = randomUUID();
   const file = join(root, 'bindings.json');
   writeFileSync(
     file,
-    JSON.stringify({ operator: randomUUID(), projects: [{ directory, remote }] }),
+    JSON.stringify({ operator: randomUUID(), projects: [{ directory, remote: repository }] }),
   );
   const database = new Client({ connectionString: url });
   await database.connect();
@@ -60,5 +68,172 @@ async function fixture(t: TestContext) {
   await setup.use(databaseSetupPlugin(database));
   await setup.databaseSetup.migrate();
   const platform = await openPlatform({ database, file, token });
-  return { token, platform };
+  return { token, platform, repository, directory, root };
+}
+
+test(
+  'PostgreSQL follow resumes at a scoped cursor after a gateway disconnect',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token, accept: 'text/event-stream' };
+    const authentication = new Request('http://arc.test/', { headers });
+    const scope = await platform.authenticate(authentication, 'platform');
+    assert.ok(scope);
+    const record = await platform.context.catalog.add(scope.principal, { remote: repository });
+    const execution = randomUUID();
+    const address =
+      'http://arc.test/projects/' + record.id + '/executions/' + execution + '/events';
+    await platform.context.use(apiPlugin(platform.authenticate, platform.followTimeline));
+    const first = await platform.context.api(new Request(address, { headers }));
+    assert.equal(first.headers.get('content-type'), 'text/event-stream');
+    const reader = first.body!.getReader();
+    await reader.read();
+    await append(repository, execution, 1, 'opening');
+    const opening = await frame(reader);
+    await reader.cancel();
+    await append(repository, execution, 2, 'closing');
+    const resumed = await platform.context.api(
+      new Request(address, {
+        headers: { ...headers, 'last-event-id': opening.id },
+      }),
+    );
+    const result = resumed.body!.getReader();
+    const closing = await frame(result);
+    await result.cancel();
+    assert.equal(closing.message, 'closing');
+  },
+);
+
+async function append(
+  repository: string,
+  execution: string,
+  sequence: number,
+  message: string,
+  detail?: object,
+) {
+  const writer = new Client({ connectionString: url });
+  await writer.connect();
+  try {
+    await writer.query('BEGIN');
+    await writer.query(
+      'INSERT INTO arcnexus_coordination.runs (project,id,goal_id,task_id,goal,active) VALUES ($1,$2,$3,$3,$3,1) ON CONFLICT DO NOTHING',
+      [repository, 1, execution],
+    );
+    await writer.query(
+      'INSERT INTO arcnexus_coordination.events (project,id,run,content) VALUES ($1,$2,1,$3)',
+      [repository, sequence, JSON.stringify({ message, ...detail })],
+    );
+    await writer.query('COMMIT');
+  } finally {
+    await writer.end();
+  }
+}
+
+async function frame(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  const result = await reader.read();
+  assert.equal(result.done, false);
+  const decoded = new TextDecoder().decode(result.value);
+  const id = /^id: (.+)$/m.exec(decoded)?.[1];
+  const data = /^data: (.+)$/m.exec(decoded)?.[1];
+  assert.ok(id);
+  assert.ok(data);
+  const event = JSON.parse(data) as { observation: { message: string } };
+  return { id, message: event.observation.message };
+}
+
+test(
+  'REST inspection returns the same scoped Commands result as the built CLI',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository, directory, root } = await fixture(t, true);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const path =
+      'http://arc.test/projects/' + project.id + '/inspection?component=work&activity=testing';
+    const cli = fileURLToPath(new URL('../../../cli/src/index.js', import.meta.url));
+    const expected = execFileSync(process.execPath, [cli, 'inspect', 'work', 'testing', '--json'], {
+      cwd: directory,
+      encoding: 'utf8',
+    });
+    const response = await platform.context.api(new Request(path, { headers }));
+    assert.equal(response.status, 200);
+    const result: unknown = await response.json();
+    assert.deepEqual(result, JSON.parse(expected));
+    assert.deepEqual(await platformCli(t, platform.context, project.id, root, token), result);
+  },
+);
+
+async function platformCli(
+  t: TestContext,
+  context: Context,
+  project: string,
+  root: string,
+  token: string,
+) {
+  const { url, server } = await serveApi(context.api);
+  t.after(() => server.close());
+  const file = join(root, 'operator-token');
+  writeFileSync(file, token, { mode: 0o600 });
+  const cli = fileURLToPath(new URL('../../../cli/src/index.js', import.meta.url));
+  const { stdout } = await promisify(execFile)(
+    process.execPath,
+    [cli, '--json', 'platform', 'inspect', 'work', 'testing'],
+    {
+      env: {
+        ...process.env,
+        ARC_API_URL: url,
+        ARC_PROJECT_ID: project,
+        ARC_OPERATOR_TOKEN_FILE: file,
+      },
+    },
+  );
+  return JSON.parse(stdout) as unknown;
+}
+
+test(
+  'Plan panels resolve a recorded planning execution and read its projections separately',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    const execution = randomUUID();
+    await append(repository, execution, 1, 'started', {
+      planningExecution: { revision: project.revision },
+    });
+    await append(repository, execution, 2, 'finished', {
+      outcome: { kind: 'planned', summary: 'Targets mapped' },
+    });
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
+    await verifyPlanPanelResponses(platform.context, address, headers, execution);
+  },
+);
+
+async function verifyPlanPanelResponses(
+  context: Context,
+  address: string,
+  headers: Record<string, string>,
+  execution: string,
+) {
+  const current = await context.api(new Request(address + 'current', { headers }));
+  assert.equal(current.status, 200);
+  assert.equal((await current.json()).execution, execution);
+  const outcome = await context.api(new Request(address + execution + '/outcome', { headers }));
+  assert.equal((await outcome.json()).outcome.summary, 'Targets mapped');
+  const metrics = await context.api(new Request(address + execution + '/metrics', { headers }));
+  assert.equal(metrics.status, 200);
+  assert.ok('wallElapsedMs' in (await metrics.json()));
 }

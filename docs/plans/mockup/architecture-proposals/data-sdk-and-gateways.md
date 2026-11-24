@@ -13,21 +13,21 @@ for real projects follows the existing live qualification requirement.
 
 | Available for isolated review | Evidence |
 | --- | --- |
-| Data and Plan reads | Owner-registered, validated goal and objective reads at a captured Git revision. REST publishes the registered schemas through OpenAPI. The operator MCP transport uses the same Data operations and authorization hook. |
-| Journal replay and follow | REST returns finite JSON or follows the SQLite journal through server-sent events. The scoped Last-Event-ID is the same cursor used for MCP replay. Read-only replay can also use a verified PostgreSQL import. |
-| PostgreSQL setup and rehearsal | DB setup applies owner migrations through an advisory lock and records their digests. Rehearsal copies an isolated SQLite snapshot and verifies the PostgreSQL rows, event identities and cursor behavior before reporting success. |
-| Enrollment and catalog | The launcher can configure endpoints, exchange a one-use code and check its admission state. The API can admit and revoke providers. The catalog can list, verify imports through an injected repository verifier, and retire entries by operator. |
-| Trusted Host composition | The existing CLI workflow delegates to the shared Host plugin. The built CLI still exercises the same Workflow, Coordination and Execution services. |
+| Data and Plan reads | REST and MCP use the same owner-authored schemas for pinned goal and objective reads, Plan selection, outcome, measurements, and tool frequency. The UI loads enabled displays and opens file detail or tool frequencies on demand. |
+| Journal replay and follow | The API follows committed SQLite or PostgreSQL observations and replays after the same scoped cursor used by MCP. Newly captured native agent messages retain complete text in the journal. Raw tool data remains in its registered artifacts. |
+| PostgreSQL setup, rehearsal and cutover | DB setup checks migration digests. An isolated cutover verifies the copied observations and registered artifact paths and digests, binds the native write fence to a PostgreSQL deployment, and enables one hosted journal writer. A disconnected writer retains its lane until the trusted caller confirms its prior owner stopped. |
+| Enrollment and catalog | An admitted launcher can maintain an authenticated connection. Revocation closes that connection. REST and MCP share catalog CRUD and compare-and-set revision refresh. The web app and mockup reuse the same manager components. |
+| Commands and Host composition | Local CLI, platform CLI, REST and MCP share the pinned inspection result. The native CLI uses the common workflow command selector and the shared Host plugin. |
 
-The [local review stack](../../../../apps/api/README.md) runs Web, API, MCP, PostgreSQL,
-and DB setup with dedicated gateway database roles. It serves retained journals from
-verified PostgreSQL imports.
+The [local review stack](../../../../apps/api/README.md) runs Web, API, MCP,
+PostgreSQL, and DB setup with distinct runtime grants. Its per-project journal
+may be imported and cut over for isolated verification.
 
-The deployment work still includes the PostgreSQL writer and cutover, remote Commands
-admission and recovery, native launcher assignment and image lifecycle,
-private GitHub provider bindings, and the live web connection/project managers
-and Plan displays. The current web setup preview uses fixture data. The native
-SQLite workflow remains the execution authority.
+Full hosted workflow execution still needs the native Host integration with the
+PostgreSQL writer, remote workflow Commands admission, approvals and recovery,
+and launcher assignment and container lifecycle. Private GitHub provider bindings,
+launcher binary publishing, and lazy raw tool artifact inspection also remain open.
+Real-project activation requires the approved live qualification.
 
 ## Unified data management
 

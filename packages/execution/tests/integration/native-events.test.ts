@@ -95,6 +95,7 @@ class NativeScenario {
         ({ event }) => event?.type === 'item.completed' && event.item.type === 'mcp_tool_call',
       ),
     );
+    assertMessages(events);
     assert(events.some(({ event }) => event?.usage?.cached_input_tokens === 80));
     const end = records.find(({ nativeFinished }) => nativeFinished)?.nativeFinished;
     assert(end && end.durationMs >= 0);
@@ -108,6 +109,12 @@ class NativeScenario {
     );
     for (const line of readFileSync(start.activation, 'utf8').trim().split('\n')) JSON.parse(line);
   }
+}
+
+function assertMessages(events: Array<{ event?: { item?: { text?: unknown } } }>) {
+  const messages = events.map(({ event }) => event?.item?.text);
+  assert(messages.includes('Opening café 🛠\nChecking the project'));
+  assert(messages.includes('{"kind":"completed"}'));
 }
 
 test('EX-26: production activation streams and retains requests, unknown events, tools and usage', async (t) => {

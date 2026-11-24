@@ -46,8 +46,8 @@ function useLauncherTarget() {
   return [target, select] as const;
 }
 
-/** Pick a launcher target and show a clearly marked preview registration code. */
-export function LauncherSetup() {
+/** Pick a launcher target and display the operator-issued registration code. */
+export function LauncherSetup({ code, issue }: { code?: string; issue(): void }) {
   const [target, select] = useLauncherTarget();
   return h(
     'section',
@@ -63,13 +63,15 @@ export function LauncherSetup() {
       'div',
       { className: 'arc-platform-inline' },
       h(Button, { disabled: true }, 'Download launcher'),
-      h('small', null, 'Binary publishing is unavailable in this preview.'),
+      h('small', null, 'A launcher download is unavailable for this deployment.'),
     ),
-    h(
-      'div',
-      { className: 'arc-platform-code' },
-      h('span', null, 'Registration code · Preview'),
-      h('code', null, 'PREVIEW-SETUP'),
-    ),
+    h(Button, { onClick: issue }, 'Create registration code'),
+    code &&
+      h(
+        'div',
+        { className: 'arc-platform-code' },
+        h('span', null, 'Registration code'),
+        h('code', null, code),
+      ),
   );
 }

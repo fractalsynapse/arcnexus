@@ -61,3 +61,25 @@ test(
     await assert.rejects(launcher.status(url, identity), /authorization unavailable/);
   },
 );
+
+test(
+  'only admitted launcher connections are online and revocation closes the stream',
+  { skip: !databaseUrl },
+  async (t) => {
+    const { url, request, launcher } = await platform(t);
+    const root = '/capacity-providers';
+    const issued = await request(root + '/codes', 'POST');
+    const { code } = (await issued.json()) as { code: string };
+    const identity = await launcher.enroll(url, code, 'Fixture', 'Linux');
+    const path = root + '/' + identity.id;
+    await assert.rejects(launcher.connect(url, identity), /not admitted/);
+    assert.equal((await request(path, 'PATCH', { state: 'admitted' })).status, 200);
+    const stream = (await launcher.connect(url, identity)).getReader();
+    const ready = await stream.read();
+    assert.match(new TextDecoder().decode(ready.value), /event: ready/);
+    assert.equal((await (await request(root, 'GET')).json())[0].online, true);
+    assert.equal((await request(path, 'PATCH', { state: 'revoked' })).status, 200);
+    assert.equal((await stream.read()).done, true);
+    assert.equal((await (await request(root, 'GET')).json())[0].online, false);
+  },
+);

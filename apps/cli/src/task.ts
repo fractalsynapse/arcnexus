@@ -1,4 +1,5 @@
 import type { Context } from 'cordis';
+import { dispatchWorkflow, type WorkflowRequest } from '../../../packages/commands/src/index.js';
 import { createInterface } from 'node:readline';
 import type { JournalEvent } from '../../../packages/coordination/src/index.js';
 import type {
@@ -11,16 +12,14 @@ import type {
 /** Start a foreground operation and forward Ctrl-C through structured cancellation. */
 export async function runTask(
   commands: Context['commands'],
-  goal: string | undefined,
+  input: WorkflowRequest,
   json: boolean,
-  verb: 'run' | 'plan' | 'update' | 'refine',
-  rounds = '1',
 ) {
   const controller = new AbortController();
   const abort = () => controller.abort(new Error('Task cancelled by SIGINT'));
   process.on('SIGINT', abort);
   try {
-    await dispatchTask(commands, goal, json, verb, rounds, controller.signal);
+    await dispatchTask(commands, input, json, controller.signal);
   } finally {
     process.off('SIGINT', abort);
   }
@@ -29,10 +28,8 @@ export async function runTask(
 /** Translate this foreground invocation into the corresponding structured SDK operation. */
 async function dispatchTask(
   commands: Context['commands'],
-  goal: string | undefined,
+  input: WorkflowRequest,
   json: boolean,
-  verb: 'run' | 'plan' | 'update' | 'refine',
-  rounds: string,
   signal: AbortSignal,
 ) {
   const observer: TaskObserver = {
@@ -41,16 +38,9 @@ async function dispatchTask(
     measurements: (entry) => reportMeasurements(entry, json),
     answer: ask,
   };
-  const directory = process.cwd();
-  if (verb === 'update')
-    return finish(await commands.updateArchitecture(directory, goal, observer, signal), json);
-  if (verb === 'plan')
-    return finish(await commands.planTask(directory, goal, observer, signal), json);
-  if (verb === 'refine')
-    return finish(await commands.refine(directory, rounds, observer, signal), json);
-  if (goal === undefined)
-    finishRound(await commands.runRound(directory, observer, signal), json, signal);
-  else finish(await commands.runTask({ directory, goal }, observer, signal), json);
+  const outcome = await dispatchWorkflow(commands, process.cwd(), input, observer, signal);
+  if (outcome.kind === 'round') finishRound(outcome, json, signal);
+  else finish(outcome, json);
 }
 
 /** Stream task progress in the chosen output representation. */

@@ -3,8 +3,7 @@
 The root [Compose definition](../../compose.yaml) runs Web, API, MCP,
 PostgreSQL and the one-shot DB setup job. The native CLI continues to own
 workflow execution during this review. The adapters accept an explicit
-operator bearer credential and use distinct PostgreSQL roles. MCP has
-read-only catalog and journal grants. API additionally has catalog and
+operator bearer credential and use distinct PostgreSQL roles. API and MCP have journal read and catalog CRUD grants. API additionally has
 enrollment grants. Only DB setup applies migrations.
 
 Use separate directories and credentials for this isolated review. Set
@@ -43,9 +42,22 @@ OpenAPI document at `/api/projects/{project}/openapi.json`. Connect an MCP
 client with the same bearer credential at `/projects/{project}/mcp` on the
 MCP port.
 
-The review stack serves pinned Plan guide reads and finite replay of
-verified PostgreSQL imports. The SQLite adapter provides live SSE in
-isolated verification. The web management dialogs still use fixtures, and
-this stack does not submit workflows or provision an execution container.
-Follow the [architecture proposal](../../docs/plans/mockup/architecture-proposals/data-sdk-and-gateways.md)
-for the scope and activation gates.
+The review stack serves pinned Plan guide reads, outcome and metric projections,
+and replay and live follow of retained PostgreSQL observations. The browser uses
+an operator credential held in memory for the review session. A registered
+launcher can use `connect` to keep its authorized presence active.
+
+The explicit read-only CLI mode is `arcnexus platform inspect <component> <activity>`.
+Set `ARC_API_URL` to the API base, including the Web proxy's `/api` prefix if
+applicable, and supply `ARC_PROJECT_ID` and `ARC_OPERATOR_TOKEN_FILE`.
+
+The DB app supports `rehearse-import <project-directory> <journal-storage>`.
+With `ARC_ISOLATED_REVIEW=1`, it also accepts
+`cutover <project-directory> <journal-storage>`. Cutover fences that fixture's
+SQLite store to the verified PostgreSQL deployment. The hosted coordination
+primitive can admit one writer and requires a trusted stop confirmation to
+release an unfinished lane. The deployed review scope currently exposes read-only
+Commands inspection. Workflow submission, container launch and private GitHub
+bindings remain pending. Follow the
+[architecture proposal](../../docs/plans/mockup/architecture-proposals/data-sdk-and-gateways.md)
+for the current implementation and activation gate.
