@@ -330,12 +330,6 @@ export class RecoveryScenario {
     process.exit(73);
   }
 
-  /** Expose durable observations for assertions about original receipt and edit identities. */
-  observations<T>() {
-    assert(this.task);
-    return this.task.observations<T>();
-  }
-
   /** Initialize an exact base and two paths owned by one fixture steward. */
   private createSource() {
     if (!existsSync(this.root)) this.initializeSource();
