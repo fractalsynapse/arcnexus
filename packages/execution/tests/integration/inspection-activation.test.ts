@@ -335,3 +335,87 @@ function questionBinding(fixture: InspectionFixture) {
   fixture.git('add', '.');
   fixture.git('commit', '-m', 'Capture explicit returning-caller question binding');
 }
+
+/** Read only the authored task section, independently asserting fields before whole-request parity. */
+function taskSection(input: string) {
+  const section = input.split('## Task\n')[1]!.split('\n\n## Activity')[0]!;
+  return parse(section.slice(section.indexOf('\n\nassignment:') + 2));
+}
+
+/** Verify retained index contents against allocated artifacts rather than against prompt text. */
+function retainedIndex(task: HostTask, before: string[]) {
+  const index = before.find((path) => /-retained-evidence-[a-f0-9]+\.json$/.test(path));
+  assert.ok(index);
+  const references = JSON.parse(task.readFile(index).text).references;
+  assert.deepEqual(references, before.filter((path) => path !== index));
+  for (const path of references) assert.equal(typeof task.readFile(path).text, 'string');
+  return index;
+}
+
+/** Construct the exact expected returning context from authored inputs and allocated artifacts. */
+function returningContext(
+  task: HostTask,
+  before: string[],
+  start: number,
+  enriched: ReturnType<typeof enrichment>,
+  data: ReturnType<typeof context>,
+  answer: string,
+) {
+  const clarification = before.find((path) => path.endsWith('-clarification.json'));
+  assert.ok(clarification);
+  const index = retainedIndex(task, before);
+  const direct = [...data.evidence, clarification, ...enriched.evidence, index];
+  const evidence = [...new Set([...direct, ...before.slice(start)])];
+  return {
+    ...data,
+    assignment: {
+      ...data.assignment,
+      clarifications: [{ question: 'Which exact context survives?', answer }],
+      completedRounds: enriched.assignment.completedRounds,
+    },
+    evidence,
+  };
+}
+
+/** Prepare a real returning caller with distinguishable retained and newly observed artifacts. */
+async function returningScenario(t: TestContext) {
+  const fixture = new InspectionFixture(t);
+  questionBinding(fixture);
+  const task = await fixture.open(t);
+  const enriched = enrichment(task);
+  const explicit = task.store('explicit.log', 'Original observation\nFinal original line.\n');
+  const data = context(task);
+  data.assignment.instructions += '\nFixture mode: clarification';
+  data.evidence.push(explicit);
+  const snapshots: string[][] = [];
+  task.listen((event) => {
+    const started = (event.observation as { nativeStarted?: { request: string } }).nativeStarted;
+    if (started) snapshots.push(task.evidence.slice(0, task.evidence.indexOf(started.request)));
+  });
+  const answer = '  Preserve the complete answer.\nDistinct final answer line.  ';
+  task.ask = async () => {
+    task.store('answer-observation.log', 'New host observation\nFinal new line.\n');
+    return answer;
+  };
+  return { fixture, task, enriched, data, snapshots, answer, start: task.evidence.length };
+}
+
+test('EX-6: returning caller preserves exact enriched native input', async (t) => {
+  const scenario = await returningScenario(t);
+  const { fixture, task, enriched, data, snapshots, answer, start } = scenario;
+  const selection = { component: 'work', activity: 'testing' };
+  await task.activate(fixture.agent, selection, data, new AbortController().signal);
+  assert.equal(snapshots.length, 2, 'the mapped question resumes the same caller exactly once');
+  const expected = returningContext(task, snapshots[1]!, start, enriched, data, answer);
+  const view = fixture.agent.prepareRequest(task.capture, selection, expected);
+  const probe = readProbe(task, true);
+  const actual = taskSection(probe.input);
+  assert.deepEqual(actual.assignment, expected.assignment);
+  assert.deepEqual(actual.evidence, expected.evidence);
+  assert.deepEqual(actual.milestone, data.milestone);
+  assert.deepEqual(actual.acceptance, data.acceptance);
+  assert.equal(probe.input, view.request.input);
+  assertInvocation(view, probe);
+  const observed = { revision: task.capture.source.revision, probe };
+  t.diagnostic(JSON.stringify({ returningNativeObservation: observed }));
+});
