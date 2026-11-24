@@ -1,0 +1,60 @@
+.arc-color-picker {
+  --family-width: 3.5rem;
+  --shade-gap: 6px;
+  inline-size: min(25rem, calc(100vw - 2 * var(--pad)));
+  padding: 12px;
+}
+.arc-color-picker:popover-open {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.arc-color-picker .arc-dialog-header {
+  padding: 0;
+  border: 0;
+}
+.arc-shade-scale {
+  display: flex;
+  justify-content: space-between;
+  padding-inline-start: calc(var(--family-width) + var(--shade-gap));
+  color: var(--muted);
+  font-size: 11px;
+}
+.arc-shade-grid {
+  display: grid;
+  gap: 4px;
+  min-block-size: 0;
+  padding: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.arc-shade-row {
+  display: grid;
+  grid-template-columns: var(--family-width) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--shade-gap);
+}
+.arc-shades {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+}
+.arc-shade {
+  min-block-size: 26px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--swatch);
+}
+.arc-shade[aria-pressed='true'] {
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+}
+.arc-color-custom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--line);
+}

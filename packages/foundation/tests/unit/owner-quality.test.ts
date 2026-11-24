@@ -114,3 +114,15 @@ test('an owner lint selection does not evaluate another plugin configuration', a
   const selected = await scenario.quality().select('lint', 'alpha');
   assert.deepEqual(selected.files, ['packages/alpha/src/main.ts']);
 });
+
+test('formatting includes owned web styles and templates', async (context) => {
+  const scenario = new QualityScenario(context);
+  scenario.write('packages/alpha/src/shell.css', 'header{color:red}\n');
+  scenario.write('packages/alpha/src/shell.html', '<header>Frame</header>\n');
+  const quality = scenario.quality();
+  assert.deepEqual((await quality.select('format:check', 'alpha')).files, [
+    'packages/alpha/src/main.ts',
+    'packages/alpha/src/shell.css',
+    'packages/alpha/src/shell.html',
+  ]);
+});

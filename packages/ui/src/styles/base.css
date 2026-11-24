@@ -1,0 +1,89 @@
+html {
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+}
+.arc-app {
+  --paper: light-dark(#fff, #112239);
+  --quiet: light-dark(#f4f8ff, #172c46);
+  --line: light-dark(#d6e4f4, #284263);
+  --muted: light-dark(#536b88, #a1b8d4);
+  --tint: light-dark(#e8f1ff, #182f51);
+  --accent: #195ac4;
+  --on-accent: #fff;
+  --pad: 16px;
+  --gap: 12px;
+  --header-height: 66px;
+  --nav-height: 52px;
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  color: var(--ink);
+  font:
+    400 13px/1.45 Inter,
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+}
+.arc-app *,
+.arc-app *::before,
+.arc-app *::after {
+  box-sizing: border-box;
+}
+.arc-app [hidden] {
+  display: none;
+}
+.arc-app :is(h1, h2, h3, p, dl, dd) {
+  margin: 0;
+}
+.arc-app h1 {
+  font-size: 25px;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+.arc-app h2 {
+  font-size: 17px;
+  letter-spacing: -0.025em;
+}
+.arc-app h3 {
+  font-size: 14px;
+}
+.arc-app :is(button, input, select, textarea) {
+  color: inherit;
+  font: inherit;
+}
+.arc-app :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.arc-app h1:focus {
+  outline: none;
+}
+.arc-app button {
+  cursor: pointer;
+}
+.arc-app button:disabled {
+  opacity: 0.54;
+  cursor: default;
+}
+.arc-app label,
+.arc-field {
+  display: grid;
+  min-inline-size: 0;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 640;
+}
+.arc-app :is(input, select, textarea) {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--paper);
+  color: var(--ink);
+}

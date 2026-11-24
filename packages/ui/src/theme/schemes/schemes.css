@@ -1,0 +1,55 @@
+.arc-schemes,
+.arc-scheme-editor,
+.arc-scheme-fields {
+  display: grid;
+  gap: 12px;
+}
+.arc-scheme-editor {
+  border-top: 1px solid var(--line);
+  padding-block-start: 12px;
+}
+.arc-field-with-prefix {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.arc-scheme-swatches {
+  display: inline-flex;
+  gap: 4px;
+}
+.arc-swatch {
+  display: inline-block;
+  inline-size: 16px;
+  block-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--swatch);
+}
+.arc-color-trigger .arc-swatch {
+  inline-size: 24px;
+  block-size: 24px;
+}
+.arc-color-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 8px;
+}
+.arc-color-trigger {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  inline-size: 100%;
+  padding-block: 7px;
+  text-align: start;
+}
+.arc-color-trigger code {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+.arc-form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}

@@ -1,0 +1,27 @@
+@media (max-width: 660px) {
+  .arc-app {
+    --pad: 12px;
+  }
+  .arc-nav {
+    align-self: stretch;
+    justify-content: space-between;
+    margin: 0;
+    padding: 4px var(--pad);
+    min-block-size: 40px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .arc-nav a {
+    flex: 1 1 0;
+    padding-inline: 5px;
+  }
+}
+@media (max-width: 590px) {
+  .arc-composer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'operation send' 'instruction instruction';
+  }
+  .arc-app :is(.arc-button, .arc-nav a, input, select, textarea) {
+    min-block-size: 44px;
+  }
+}

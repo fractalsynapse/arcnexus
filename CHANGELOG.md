@@ -2,7 +2,59 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
+
 ### Fixed
+
+- Match the React frame to the approved layout settings and header action, and theme open selectors and tooltips across the app (#704).
+
+- Use the default scheme from the mockup's palette popup for the background behind panels on every page (#703).
+
+- Reveal desktop layout dividers and resize handles on hover or keyboard focus (#703).
+
+- Use one theme color picker with dark-to-light presets and custom hex entry in the mockup's page and panel settings (#703).
+
+- Pad the desktop's pinned workspace links evenly and round the bottom corners (#703).
+
+- Give the header and pinned workspace links a black background and default the command panel to collapsed in the narrow layout (#703).
+
+- Keep Plan, Architect, Run, and Release pinned while the logo and header actions scroll away (#703).
+
+- Give the docked command panel a dark gray finish and let the round metrics row collapse it to a compact status strip (#703).
+
+- Fill the viewport without a site frame and keep the mockup's instruction and round metrics controls at the bottom while scrolling (#703).
+
+- Separate the file path from the revision controls with a divider that matches the breadcrumb spacing (#703).
+
+- Align Progress, Edit, and Save with the bottom of the file revision selector (#703).
+
+- Move file type and Git revisions into a compact dialog opened from the breadcrumb, leaving the title and path visible on file pages (#703).
+
+- Open goal progress from each Plan goal file in a dialog with a Close button (#703).
+
+- Describe each component tab above its list and align editable rows with their reorder and remove buttons (#703).
+
+- Pin the fullscreen Markdown toolbar flush below the popup header while scrolling (#703).
+
+- Group Kind, Summary, and Purpose in the component form, use expandable Markdown fields for prose, and add Objectives, Constraints, and Ownership tabs (#703).
+
+- Grow the mockup's Purpose field with its text, simplify the operation form, and edit Network access with a checkbox (#703).
+
+- Fit the mockup's instruction, operation selector, and Send in one row on wide layouts and give the operation selector the remaining space beside Send on narrow layouts (#703).
+
+- Show unchanged lines as context between separate edits in the mockup's draft diffs (#703).
+
+- Link the mockup's displayed commit refs to GitHub (#703).
+
+- Theme the mockup's selector menus, add keyboard-selectable topic autocomplete, and simplify file information (#703).
+
+- Start mockup page navigation at the destination heading, align wrapped page context to the left, and remove the redundant footer caption. Reuse the expandable file panels for explorers and event logs (#703).
+
+- Use one readable tooltip style for mockup controls, file descriptions, and the Markdown editor toolbar in light and dark mode (#703).
+
+- Match the mockup’s Raw Markdown editor to the blue palette in light and dark mode while keeping syntax highlighting readable (#703).
 
 - Recover prepared work when staging moves while preserving the existing issue and branch, secured checked bytes and receipts, complete evidence and verbatim human answers. Retain original bases, acceptance and review observations as history; capture current staging, ownership and applicable acceptance before continuation, enforce changed ownership and retain conflicts for accountable resolution. Preserve original requirements and architectural decision gates. Require current applicable checks and fresh independent acceptance for the recovered tree, base and capture; earlier approval cannot authorize it ([#701](https://github.com/fractalsynapse/arcnexus/issues/701)).
   Observe issue-branch and PR facts before retrying uncertain or outdated publication, reconcile and reuse the same PR or confirm its prior merge without duplicate delivery, and refuse conflicting identities. Retain genuine human or external prerequisite gates with evidence. Pin delivery to the newly reviewed tree and staging parent; further staging movement requires renewed reconciliation. See the [publication recovery guide](docs/release/verification.md#publication-recovery-evidence) and its accountable component references.
@@ -20,6 +72,41 @@
 - Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
 
 ### Added
+
+- Add the local React web frame with a reusable Cordis UI plugin, named site schemes and a responsive command panel (#704).
+
+- Create and edit reusable color schemes from the mockup header. Choose a site default for all pages and select individual panel overrides by name and swatches (#703).
+
+- Preview configurable panels across the mockup, with per-page desktop layouts and mobile order, plus site and panel palettes with dark shades for every color family (#703).
+
+- Preview production specialist reviews, exact release approval, merge and publication evidence, and failed-check incident follow-up for a pinned staging candidate (#703).
+
+- Add an independent Release workspace with a verified staging revision selector, an included PR list, and a pinned candidate preview (#703).
+
+- Propose milestone Release checkpoints and show four expandable stages of goal-level release evidence, including post-merge checks, in the Run mockup (#703).
+
+- Propose OGSM governance and preview the link from Plan goal progress to Direction strategy and steward milestone measures (#703).
+
+- Preview direct inbox repair routing for milestone review and release, and show Direction routing for final review and release in the Run mockup (#703).
+
+- Propose configurable component activities and preview milestone ordering, on-request participation, and project-selected activities in the Architect component editor (#703).
+
+- Add bottom Collapse controls and fullscreen Markdown reading and editing for component purpose and instructions (#703).
+
+- Use the shared Form, Raw, and Changes editor for every captured operation and component in the Architect mockup (#703).
+
+- Add a dedicated Purpose section above the operation settings in the `owner-tests.yaml` mockup form (#703).
+
+- Record the decision to remove operation categories and preview the proposed YAML in the `owner-tests.yaml` mockup editor (#703).
+
+- Share topic suggestions between the file explorer and Plan and Architect file editors. Add topics with Enter and reorder YAML arguments and selectors with drag handles and a visible insertion gap (#703).
+
+- Record the draft architecture proposal to remove operation applicability and preview the YAML change in the `owner-tests.yaml` mockup editor (#703).
+
+- Prototype a schema-validated Form editor for `owner-tests.yaml` with Raw YAML and live draft changes in the local mockup (#703).
+
+- Version the mobile-first ArcNexus UI design mockup with refinement metrics, grouped tool calls, and local previews of the shared operator composer. Generate the Codex viewer preview from the current mockup source after each design revision. Refine Plan with distinct phase and Codex timing, a draft-preserving approval view, and a filter for changed files. Open detailed round metrics from an icon beside the footer state readout and format final responses as collapsible JSON. Reuse the file and approval views across Plan and Architect, and apply the shared metrics, expandable timeline and changes panels, delivery references, and active-agent steering to Run (#703).
+- Add MDXEditor with a compact visual toolbar and syntax-highlighted Markdown source editing to mockup file pages (#703).
 
 - Add `arcnexus refine [--rounds N]` through the shared Commands SDK and Workflow lifecycle: default to one round, preserve positive decimal counts exactly without a numeric ceiling, and run Planner, Architect and every captured approved goal in priority order each round. Retain one foreground project writer across sequential child sessions, with fresh staging authority at phase/task admission and the normal Director, steward, independent Reviewer and verified staging delivery path ([#615](https://github.com/fractalsynapse/arcnexus/issues/615)).
   Resume the first unfinished phase or goal with the same requested total, retaining exact proposals, approvals, answers, checkpoints and the captured Run inventory; reconcile uncertain effects and reuse successful children after an interrupted parent acknowledgement. Completed invocations permit fresh identities. Stream current round/phase, complete provider/tool observations and measurements through human output or ordered JSONL with one terminal result. Retain readable reports outside source and expose prior findings and profile-attributed time/token references to subsequent assessments; unknown usage, pricing and cost remain unknown.

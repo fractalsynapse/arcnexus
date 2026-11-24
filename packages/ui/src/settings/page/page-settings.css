@@ -1,0 +1,84 @@
+.arc-layout-choices {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+.arc-layout-choices > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  inline-size: min(100%, 20rem);
+  gap: 8px;
+}
+.arc-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.arc-layout-choices label {
+  position: relative;
+  justify-items: center;
+  text-align: center;
+  cursor: pointer;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.arc-layout-choices label:has(:checked),
+.arc-settings-tabs button[aria-pressed='true'] {
+  background: var(--tint);
+  border-color: var(--link);
+  color: var(--link);
+}
+.arc-layout-choices label:has(:focus-visible) {
+  outline: 2px solid var(--link);
+}
+.arc-layout-choices input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.arc-layout-diagram {
+  inline-size: min(100%, 68px);
+  block-size: 31px;
+  padding: 8px 4px 4px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  display: flex;
+  gap: 4px;
+}
+.arc-layout-diagram i {
+  flex: 1;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+.arc-panel-settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+.arc-panel-settings-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  min-block-size: 38px;
+  border-bottom: 1px solid var(--line);
+}
+.arc-panel-settings-list li:not([data-panel-order]) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.arc-settings-actions {
+  justify-content: end;
+}
+.arc-app .arc-order-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.arc-app .arc-order-handle:active {
+  cursor: grabbing;
+  background: var(--tint);
+}

@@ -16,7 +16,7 @@ export interface QualityScope {
 export const qualityScopePrefix = 'ArcNexus quality selection: ';
 const formatPatterns = [
   '*.{ts,json}',
-  '{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml}',
+  '{apps,packages,scripts,fixtures}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,yaml,yml,html,css}',
 ];
 
 /** Select maintained owner inputs and run read-only quality tools inside the caller's environment. */

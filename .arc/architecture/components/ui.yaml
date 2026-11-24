@@ -1,0 +1,26 @@
+id: ui
+kind: plugin
+purpose: |
+  Own ArcNexus's reusable browser layouts, displays, theme and visual assets.
+  Provide the shared UI registration service through Cordis. Render the same
+  components for web application data and controlled fixture data.
+objectives:
+  - measure: The web frame and its controls are reusable through the UI plugin's public entry.
+  - measure: One selected theme supplies the site background and default presentation across registered workspaces.
+constraints:
+  - failure: UI code imports a trusted host, makes an agent operation, or owns a release decision.
+  - failure: A second implementation of a shared display or layout is authored for fixture use.
+owns:
+  - packages/ui
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Work through the browser UI plugin's public entry. Keep shared structure,
+        visual tokens and interactions in UI. Respect the command binding's
+        availability and preserve keyboard use, focus and responsive layout.
+    operations: [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types]

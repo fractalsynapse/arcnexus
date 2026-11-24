@@ -1,0 +1,13 @@
+@media (max-width: 899px) {
+  .arc-panel-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+  .arc-layout-column {
+    display: contents;
+  }
+  .arc-app .arc-column-divider {
+    display: none;
+  }
+}
