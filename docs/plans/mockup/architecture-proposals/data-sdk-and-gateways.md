@@ -133,14 +133,27 @@ boundaries. The same derivative can serve several projects with the same
 toolchain.
 [Dockerfile FROM](https://docs.docker.com/reference/dockerfile/#from)
 
-Trusted deployment configuration maps a verified project to an approved
-image digest. A local Compose installation can select one derivative for its
-Host service. A stack serving different toolchains can start separate private
-Host services and route each project to the service running its assigned
-image. API and MCP keep the same contracts. Coordination enforces the same
-project writer across all services. Persist the project's repositories,
-worktrees and evidence across image changes. A repository import can propose
-toolchain requirements. The deployment operator approves the image assignment.
+A project can select either of these image sources in trusted deployment
+configuration.
+
+| Source | Validation and resolution |
+| --- | --- |
+| **Local Dockerfile** | Use a local Dockerfile path and its declared build context. Validate the exact build inputs, including the pinned ArcNexus base and the files available to the build. Build through the operator's builder, record the local image ID or exported manifest digest, and retain the artifact for restart and recovery. |
+| **Registry image** | Use a public or private registry reference. Resolve any tag to a digest for the target platform, pull that exact image, and validate its ArcNexus base, inherited Host entry point and toolchain. Pin deployment to the verified digest. |
+
+Both paths qualify the resulting image on the target runtime before the
+operator approves it for the project. Record the source, the resolved image
+identity and the target platform. A change to the approved build inputs or
+selected image requires fresh validation. [Docker build context](https://docs.docker.com/build/concepts/context/)
+· [Docker image digests](https://docs.docker.com/dhi/explore/security-concepts/digests/)
+
+A local Compose installation can select one approved derivative for its Host
+service. A stack serving different toolchains can start separate private Host
+services and route each project to its assigned image. API and MCP keep the
+same contracts. Coordination enforces the same project writer across all
+services. Persist the project's repositories, worktrees and evidence across
+image changes. A repository import can propose an image source or toolchain
+requirements for the operator to review.
 
 Keep operation definitions in the project's approved architecture. For
 example, install ShellCheck in a derivative image, declare `shell-lint` once
@@ -152,8 +165,9 @@ it. A required operation with an unavailable executable reports a failure.
 [Operation parameter resolution](../../../../packages/architecture/src/operation.ts)
 · [Confined check execution](../../../../packages/execution/src/check.ts)
 
-Capture the Host image digest, its base digest and relevant tool identities
-at admission. Include them in execution evidence and check reuse decisions.
+Capture the resolved Host image identity, its base digest and relevant tool
+identities at admission. Include them in execution evidence and check reuse
+decisions.
 For the first deployment, apply a replacement image to new work after the
 project lane is clear. Resume interrupted work on its captured image. If
 that image is unavailable, report the prerequisite so the operator can
@@ -350,6 +364,10 @@ sequences are illustrative.
   and the same confined tool. Confirm an activity without the binding
   cannot call it. Switch the assignment between tasks and verify affected
   checks refresh while retained runs still identify their original image.
+- Verify both image source paths. Change a local build input or move a
+  registry tag and confirm the existing assignment still points to the
+  approved artifact. Confirm an interrupted run resumes on its captured
+  image and reports a missing artifact if it is unavailable.
 - Review exact contract amendments and the existing qualification gate
   before activating live gateways or adding CLI modes. Exercise each released
   MCP command against the equivalent CLI operation under the same authority
