@@ -19,9 +19,9 @@ export function assertExecutedChecks(task: HostTask, checks: readonly CheckResul
     const output = JSON.stringify({ phase, cwd: check.cwd, checked, baseline }) + '\n';
     const diagnostic = status ? 'Recovered required command rejected baseline:\n' + baseline : '';
     assert.equal(readFileSync(check.log, 'utf8'), output + diagnostic);
-    const observed = task.observations<{
-      check?: CheckResult; checkInput?: string; reusedFrom?: string;
-    }>().findLast((event) => event.check?.log === check.log);
+    const observed = task
+      .observations<{ check?: CheckResult; checkInput?: string; reusedFrom?: string }>()
+      .findLast((event) => event.check?.log === check.log);
     assert.match(observed?.checkInput ?? '', /^[a-f0-9]{64}$/);
     assert.deepEqual(observed?.check, check);
   }
