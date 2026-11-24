@@ -1,0 +1,22 @@
+id: host-app
+kind: app
+purpose: |
+  Compose trusted project execution once for native CLI and qualified Host deployments.
+objectives:
+  - measure: Application adapters reuse the same Workflow, Coordination and Execution composition.
+constraints:
+  - failure: External request data can choose the application's native capability bindings.
+owns:
+  - apps/host
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Mount the owner services directly. Preserve task admission, execution
+        confinement and the approved delivery path when adding a Host consumer.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

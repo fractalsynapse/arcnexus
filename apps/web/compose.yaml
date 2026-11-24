@@ -1,0 +1,37 @@
+name: arcnexus-web
+
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - target: 8080
+        published: '${ARC_WEB_PORT:-38646}'
+        host_ip: 127.0.0.1
+
+  postgres:
+    image: postgres:18.7-trixie@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20
+    environment:
+      POSTGRES_USER: arcnexus
+      POSTGRES_DB: arcnexus
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+
+secrets:
+  postgres_password:
+    file: ./.docker/postgres-password
+
+volumes:
+  postgres_data:
+
+networks:
+  data:
+    internal: true

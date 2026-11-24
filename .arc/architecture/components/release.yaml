@@ -139,6 +139,7 @@ constraints:
 owns:
   - packages/release
   - .github
+  - compose.yaml
   - .gitignore
   - CHANGELOG.md
   - docs/release

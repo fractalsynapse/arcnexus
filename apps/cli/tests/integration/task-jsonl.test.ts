@@ -46,7 +46,7 @@ class TerminalScenario {
         return { kind: 'blocked', reason: 'Pending exact approval', evidence: [] };
       },
     } as unknown as Context['commands'];
-    await runTask(commands, 'Exercise live terminal output', json, 'run');
+    await runTask(commands, { command: 'task_run', goal: 'Exercise live terminal output' }, json);
   }
 }
 

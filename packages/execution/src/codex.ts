@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { AgentInspection } from '../../architecture/src/index.js';
@@ -100,7 +101,7 @@ function settings(
   const config = [
     'approval_policy="never"',
     'default_permissions="arcnexus"',
-    `permissions.arcnexus.filesystem={":minimal"="read","/sys/fs/cgroup"="read",${JSON.stringify(executable)}="read",${JSON.stringify(cwd)}="read",${JSON.stringify(log.slice(0, log.lastIndexOf('/')))}="read"}`,
+    `permissions.arcnexus.filesystem={":minimal"="read","/sys/fs/cgroup"="read",${JSON.stringify(realpathSync(executable))}="read",${JSON.stringify(cwd)}="read",${JSON.stringify(log.slice(0, log.lastIndexOf('/')))}="read"}`,
     'permissions.arcnexus.network.enabled=false',
     ...unusedFeatures.map((feature) => `features.${feature}=false`),
     `mcp_servers={arcnexus={url=${JSON.stringify(url)},required=true,default_tools_approval_mode="approve"}}`,

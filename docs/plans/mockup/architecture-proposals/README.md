@@ -12,3 +12,4 @@ These drafts record architecture decisions surfaced while reviewing the [ArcNexu
 | [Release milestones and verify goal delivery on staging](milestone-and-goal-release.md) | Direction agreed, exact amendment pending | Run milestone checkpoints and goal release evidence |
 | [Promote one verified staging snapshot](promote-staging-snapshot.md) | Direction agreed, exact amendment pending | Project Release workspace with staging selection and Included PRs |
 | [Review, authorize, and verify a production release](production-release.md) | Direction agreed, exact amendment pending | Production review, approval, publication and incident follow-up |
+| [Manage component models through Data and Commands](data-sdk-and-gateways.md) | Contract amendment approved, isolated implementation in progress | Independent Plan displays, resumable event log and local platform services |

@@ -1,0 +1,22 @@
+id: mcp-app
+kind: app
+purpose: |
+  Adapt project-scoped Data resources to the trusted platform mcp transport.
+objectives:
+  - measure: Authorized callers read the same owner-defined resources and cursor through the gateway.
+constraints:
+  - failure: The gateway creates a task lane, reinterprets approvals, or queries another project's journal.
+owns:
+  - apps/mcp
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Reuse the Data SDK for declarations and handlers. Authenticate and bind
+        project context before any resource access.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

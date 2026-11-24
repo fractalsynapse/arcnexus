@@ -74,3 +74,17 @@
   padding: var(--pad);
   min-inline-size: 0;
 }
+
+@media (max-width: 900px) {
+  .arc-app[data-header-controls] .arc-nav {
+    margin-block: 0;
+  }
+}
+@media (max-width: 500px) {
+  .arc-app[data-header-controls] .arc-header-actions {
+    gap: 3px;
+  }
+  .arc-app[data-header-controls] .arc-brand img:last-child {
+    inline-size: clamp(42px, calc(100vw - 281px), 108px);
+  }
+}

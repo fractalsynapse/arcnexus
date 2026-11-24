@@ -29,6 +29,7 @@ export type {
   TaskEvent,
   TaskInput,
   TaskObserver,
+  TaskQuestion,
   TaskOutcome,
   TaskSession,
   WorkflowServices,
@@ -55,7 +56,7 @@ export class Workflow {
       input,
       reporting,
       signal,
-      (session) => new TaskRun(this.services!, session, reporting, signal, input).execute(),
+      (session, writer) => new TaskRun(this.services!, session, reporting, writer, input).execute(),
       parent,
     );
   }
@@ -80,9 +81,9 @@ export class Workflow {
       input,
       reporting,
       signal,
-      (session) =>
-        new ArchitectRun(this.services!, session, reporting, signal, (child) =>
-          this.run(child, reporting, signal, session),
+      (session, writer) =>
+        new ArchitectRun(this.services!, session, reporting, writer, (child) =>
+          this.run(child, reporting, writer, session),
         ).execute(feedback),
       parent,
     );
@@ -102,12 +103,12 @@ export class Workflow {
     if (!this.services)
       return stopped('invalid', 'Task execution services are unavailable in this build');
     const input = { directory, goal: 'Continuous refinement', scope: 'refine' };
-    return this.invoke(input, reporting, signal, (session) =>
+    return this.invoke(input, reporting, signal, (session, writer) =>
       new RefinementRun(
         this.services!,
         session,
         reporting,
-        signal,
+        writer,
         total,
         (child, parent) => this.run(child, reporting, signal, parent),
         (root, output, cancellation, parent, scope) =>
@@ -121,7 +122,7 @@ export class Workflow {
     input: TaskInput,
     observer: RunObserver,
     signal: AbortSignal,
-    execute: (session: TaskSession) => Promise<TaskOutcome>,
+    execute: (session: TaskSession, signal: AbortSignal) => Promise<TaskOutcome>,
     parent?: TaskSession,
   ): Promise<TaskOutcome> {
     if (!input.goal.trim()) return stopped('invalid', 'A task goal is required');
@@ -130,15 +131,18 @@ export class Workflow {
       return stopped('invalid', 'Task execution services are unavailable in this build');
     let session: TaskSession | undefined;
     let outcome: TaskOutcome;
+    let active = signal;
     try {
       const admitted = await this.services.execution.admit(input, signal, parent);
       if ('kind' in admitted) return admitted;
       session = admitted;
+      if (session.signal) active = AbortSignal.any([signal, session.signal]);
+      active.throwIfAborted();
       session.listen?.((event) => observer.event?.(event));
       observer.admittedSession(session);
-      outcome = await execute(session);
+      outcome = await execute(session, active);
     } catch (error) {
-      outcome = interruptedRun(error, signal, session?.evidence);
+      outcome = interruptedRun(error, active, session?.evidence);
     }
     return this.complete(session, outcome);
   }
@@ -146,6 +150,8 @@ export class Workflow {
   /** Release one admitted session only after its cleanup and terminal observation are recorded. */
   private complete(session: TaskSession | undefined, outcome: TaskOutcome) {
     try {
+      if (session?.signal?.aborted)
+        return interruptedRun(session.signal.reason, session.signal, session.evidence);
       outcome = this.finalize(session, outcome);
       session?.finish(outcome);
       return outcome;
@@ -177,8 +183,12 @@ export class Workflow {
     const completed =
       goals.length === round.goals.length &&
       goals.every(({ outcome }) => outcome.kind === 'merged' || outcome.kind === 'satisfied');
-    if (completed) round.finish();
-    return { kind: 'round', round: round.id, completed, goals };
+    const outcome = { kind: 'round', round: round.id, completed, goals } as const;
+    if (completed) {
+      await observer.completeRound?.(outcome);
+      round.finish();
+    }
+    return outcome;
   }
 
   /** Keep the terminal record accurate if the host cannot safely remove its worktree. */

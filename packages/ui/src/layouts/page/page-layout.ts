@@ -1,4 +1,5 @@
 import { createElement as h, useRef, useState, useLayoutEffect } from 'react';
+import type { ReactNode } from 'react';
 import type { Workspace } from '../../registry/workspace.js';
 import { PageSettings } from '../../settings/page/page-settings.js';
 import { PanelLayout } from '../panels/panel-layout.js';
@@ -6,14 +7,20 @@ import { PageHeading } from './page-heading.js';
 import { loadLayout, saveLayout } from './page-preferences.js';
 import type { PagePreferences } from './page-preferences.js';
 
+interface PageLayoutProps {
+  workspace: Workspace;
+  path: string;
+  context?: ReactNode;
+}
+
 /** Keep every workspace on the same heading, settings and display layout. */
-export function PageLayout({ workspace, path }: { workspace: Workspace; path: string }) {
+export function PageLayout({ workspace, path, context }: PageLayoutProps) {
   const page = usePageLayout(workspace, path);
   const { heading, gear, settings, toggle, title, panels, preferences, close, save } = page;
   return h(
     'main',
     { className: 'arc-main' },
-    h(PageHeading, { label: workspace.label, title, heading, gear, settings, toggle }),
+    h(PageHeading, { label: workspace.label, title, heading, gear, settings, toggle, context }),
     settings &&
       h(PageSettings, {
         title,

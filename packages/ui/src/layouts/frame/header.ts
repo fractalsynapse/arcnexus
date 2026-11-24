@@ -1,6 +1,6 @@
-import { createElement as h } from 'react';
+import { createElement as h, Fragment } from 'react';
 import type { ReactNode } from 'react';
-import { IconButton } from '../../controls/icon-button.js';
+import { DialogButton } from '../../controls/dialog-button.js';
 import { Brand } from './brand.js';
 import type { Navigate } from './use-workspace-path.js';
 
@@ -8,10 +8,11 @@ interface HeaderProps {
   home: string;
   navigate: Navigate;
   action?: ReactNode;
-  openSchemes: () => void;
+  schemes: ReactNode;
+  controls: ReadonlyArray<readonly [string, ReactNode]>;
 }
 
-export function Header({ home, navigate, action, openSchemes }: HeaderProps) {
+export function Header({ home, navigate, action, schemes, controls }: HeaderProps) {
   return h(
     'header',
     { className: 'arc-header' },
@@ -19,12 +20,8 @@ export function Header({ home, navigate, action, openSchemes }: HeaderProps) {
     h(
       'div',
       { className: 'arc-header-actions' },
-      h(IconButton, {
-        icon: 'palette',
-        label: 'Color schemes',
-        'aria-haspopup': 'dialog',
-        onClick: openSchemes,
-      }),
+      controls.map(([id, control]) => h(Fragment, { key: id }, control)),
+      h(DialogButton, { icon: 'palette', title: 'Color schemes', children: schemes }),
       action,
     ),
   );

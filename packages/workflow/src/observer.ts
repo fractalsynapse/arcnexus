@@ -1,5 +1,11 @@
 import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
-import type { Observation, TaskObserver, TaskSession } from './services.js';
+import type {
+  Observation,
+  RoundOutcome,
+  TaskObserver,
+  TaskQuestion,
+  TaskSession,
+} from './services.js';
 
 /** Project one invocation's existing event stream into transport-neutral live measurements. */
 export class RunObserver implements TaskObserver {
@@ -17,12 +23,12 @@ export class RunObserver implements TaskObserver {
 
   /** Bind each session's questions and retain the original foreground entry time. */
   admittedSession(session: TaskSession) {
-    session.ask = (question, signal) => {
+    session.ask = (question, signal, gate) => {
       const prompt = { phase: 'question' as const, message: question };
       session.record(prompt);
       if (!session.listen) this.progress(prompt);
       signal.throwIfAborted();
-      return this.answer(question, signal);
+      return this.answer(question, signal, gate);
     };
     if (this.admitted) return;
     this.admitted = true;
@@ -49,8 +55,13 @@ export class RunObserver implements TaskObserver {
     if (changed) this.caller.measurements?.(this.projection.snapshot());
   }
 
+  /** Let a durable adapter checkpoint the accepted round before the journal closes it. */
+  async completeRound(outcome: RoundOutcome) {
+    await this.caller.completeRound?.(outcome);
+  }
+
   /** Keep human interaction with the original foreground caller. */
-  answer(question: string, signal: AbortSignal) {
-    return this.caller.answer?.(question, signal) ?? Promise.resolve(undefined);
+  answer(question: string, signal: AbortSignal, gate?: TaskQuestion) {
+    return this.caller.answer?.(question, signal, gate) ?? Promise.resolve(undefined);
   }
 }

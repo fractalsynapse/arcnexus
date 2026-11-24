@@ -1,7 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { Context } from 'cordis';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
 import type { ActivitySelection, Capture, TaskContext } from '../../architecture/src/index.js';
 import type { Journal, JournalEvent } from '../../coordination/src/index.js';
@@ -15,7 +14,7 @@ import { formatterPreview } from './formatter.js';
 import { observePreparedPublication, recoverPrepared } from './prepared-recovery.js';
 import { applyEdits, type CheckedEdit } from './edits.js';
 import { git } from './git.js';
-import { applicationStorage, type HostConfig } from './host-config.js';
+import type { HostConfig } from './host-config.js';
 import { runCheck } from './run-check.js';
 import { pendingStewardCheck, type StewardScope } from './steward-check.js';
 import {
@@ -30,6 +29,7 @@ import { readToolFile } from './tool-files.js';
 import { approvedArchitecture } from './architecture-edits.js';
 
 export { Execution };
+export { verifyCheckSandbox } from './check-sandbox.js';
 export { type CheckedEdit, editFingerprint } from './edits.js';
 export { Clarifications };
 export { reconcileCheckpoint, saveCheckpoint } from './checkpoint.js';
@@ -72,6 +72,11 @@ export class HostTask implements TaskSession {
     this.evidence.push(
       ...new Set(closeEvidence.filter((path) => path.startsWith(prefix) && existsSync(path))),
     );
+  }
+
+  /** Propagate hosted writer loss to every active provider and tool. */
+  get signal() {
+    return this.journal.signal;
   }
 
   /** Resolve the exact approved guide from this child's actual architecture-phase ancestor. */
@@ -207,6 +212,7 @@ export class HostTask implements TaskSession {
   /** Materialize a read-only planning snapshot at the captured revision. */
   planningWorkspace(signal: AbortSignal) {
     signal.throwIfAborted();
+    this.journal.assertWriter();
     const { source } = this.capture;
     this.recoverMeasureWorkspace();
     const path = join(this.directory(), 'measure-worktree');
@@ -232,6 +238,7 @@ export class HostTask implements TaskSession {
   /** Recover the approved base and branch, then create the clean worktree for this attempt. */
   async setupWorkspace(issue: string, signal: AbortSignal) {
     if (this.branch && this.worktree) return;
+    this.journal.assertWriter();
     if (!/^\d+$/.test(issue)) throw new Error('Invalid workspace issue');
     const base = this.capture.source.revision;
     this.recoverMeasureWorkspace();
@@ -323,7 +330,8 @@ export class HostTask implements TaskSession {
 
   /** Select the captured GitHub provider for this task. */
   provider(signal: AbortSignal) {
-    return new GitHub(this.capture.source.remote, signal);
+    this.journal.assertWriter();
+    return new GitHub(this.capture.source.remote, signal, this.config.github);
   }
 
   /** Verify the local commit and retained worktree before any new push. */
@@ -368,6 +376,7 @@ export class HostTask implements TaskSession {
     signal: AbortSignal,
     refresh?: ContextRefresh,
   ) {
+    this.journal.assertWriter();
     return activateActor(this, agent, selection, data, signal, refresh);
   }
 
@@ -408,6 +417,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
+    this.journal.assertWriter();
     return runCheck(this, id, signal, scope);
   }
 
@@ -465,17 +475,7 @@ function decisionContext(proposal: string) {
   };
 }
 
-/** Mount the native host execution boundary with trusted storage. */
-export const executionPlugin = {
-  inject: ['architecture', 'coordination'],
-  /** Register the production implementation used by Workflow's host calls. */
-  apply(context: Context) {
-    context.provide(
-      'execution',
-      new Execution(context.architecture, context.coordination, applicationStorage()),
-    );
-  },
-};
+export { executionPlugin, executionPluginFor } from './execution-plugin.js';
 
 export { steward } from './steward.js';
 export { checkFailureSignature } from './steward-check.js';

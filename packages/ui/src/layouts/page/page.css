@@ -1,7 +1,14 @@
 .arc-page-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+.arc-page-context {
+  min-inline-size: 0;
+  margin-inline-start: auto;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }
 .arc-page-heading .arc-icon-button {
   color: var(--link);

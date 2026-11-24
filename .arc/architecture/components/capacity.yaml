@@ -1,0 +1,22 @@
+id: capacity
+kind: plugin
+purpose: |
+  Manage the registration, admission, and revocation of trusted platform launchers.
+objectives:
+  - measure: A single-use enrollment code identifies one pending launcher and an operator can revoke its credential.
+constraints:
+  - failure: A pending or revoked provider is authorized to start project work.
+owns:
+  - packages/capacity
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Retain only secret digests. Keep admission policy distinguishable
+        from runtime presence and coordinate authentication with API.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

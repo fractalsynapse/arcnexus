@@ -26,15 +26,15 @@ export class RoundConsumptionFixture {
   readonly architecture = new Architecture();
 
   /** Supply every catalog binding explicitly without using developer provider configuration. */
-  constructor(t: TestContext) {
+  constructor(t: TestContext, repository = remote) {
     t.after(() => rmSync(this.directory, { recursive: true, force: true }));
     mkdirSync(this.root);
     this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Fixture');
     this.git('config', 'user.email', 'fixture@example.invalid');
-    this.git('remote', 'add', 'origin', remote);
-    this.git('config', 'url.' + this.root + '.insteadOf', remote);
-    for (const [path, body] of Object.entries(definitions())) {
+    this.git('remote', 'add', 'origin', repository);
+    this.git('config', 'url.' + this.root + '.insteadOf', repository);
+    for (const [path, body] of Object.entries(definitions(repository))) {
       mkdirSync(dirname(join(this.root, path)), { recursive: true });
       writeFileSync(join(this.root, path), typeof body === 'string' ? body : stringify(body));
     }
@@ -100,9 +100,9 @@ export class RoundConsumptionFixture {
 }
 
 /** Declare real actor assignments and read/question tools with disjoint captured ownership. */
-function definitions(): Record<string, unknown> {
+function definitions(repository: string): Record<string, unknown> {
   return {
-    [catalog + '/project.yaml']: projectDefinition(),
+    [catalog + '/project.yaml']: projectDefinition(repository),
     'contracts.yaml': { contracts: [] },
     [catalog + '/plan-template.md']: 'Use the normal five ordered activities.\n',
     '.arc/goals/baseline.md':
@@ -141,10 +141,10 @@ function actorDefinitions() {
 }
 
 /** Bind foreground assessment roles and the existing staging lifecycle in the committed catalog. */
-function projectDefinition() {
+function projectDefinition(repository: string) {
   return {
     id: 'round-consumption',
-    remote,
+    remote: repository,
     knowledgeRoot: '.arc',
     contractRegistry: 'contracts.yaml',
     planTemplate: catalog + '/plan-template.md',

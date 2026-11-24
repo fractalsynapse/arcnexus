@@ -7,9 +7,10 @@ authority:
   hostMayApplyLocked: Only the exact human-approved proposal against its recorded baseline.
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
-  approvalRecord: 'Exact Verification file-read alignment for #659; human approval
-    in Codex chat and delegated application by Codex.'
-  approvedBase: a0e6bc7b207dbe1f1f94e5d5cd1b3b78e80b8b93
+  approvalRecord: 'Exact proposal intent
+    57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095; human
+    approval is required and recorded in Coordination before host application.'
+  approvedBase: 0fd3290678d3fc219a2ec0b60c54287066b94cad
 contracts:
   - id: arcnexus/project
     type: project
@@ -26,7 +27,8 @@ contracts:
         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
         file: docs/interface/arcnexus-project.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: 6f44b639d23211a4913c3b0a4ce20fa49d77efe9c98b58f5cce2976db8751349
         file: docs/interface/arcnexus-project.md
@@ -100,19 +102,20 @@ contracts:
     file: apps/cli/contract.md
     owner: cli-app
     stage: locked
-    digest: 902fd8b23ed11f556b62e4d4f89232a043774d90153a60cf22f09f2d802bcb02
+    digest: 0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845
     dependsOn:
       - arcnexus/project
       - arcnexus/commands
-    scenarios: 24
+    scenarios: 25
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-18'
+    acceptedAt: '2026-11-24'
     history:
       - stage: locked
         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
         file: apps/cli/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: 958a68a5c5cdbf11f95f87ee97eee07bdb4b253474e9741993704674f9462374
         file: apps/cli/contract.md
@@ -195,9 +198,33 @@ contracts:
           retired-command table no longer cover it
 
           '
-    approvalRecord: 'Architect approved Planner, task plan and owner-free rounds in
-      Codex chat for issue #587. Base:
-      ca131241b127e06561af94bae0844b786c3cdecd.'
+      - id: arcnexus/cli-gateway
+        type: gateway
+        file: apps/cli/contract.md
+        owner: cli-app
+        stage: locked
+        digest: 902fd8b23ed11f556b62e4d4f89232a043774d90153a60cf22f09f2d802bcb02
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/commands
+        scenarios: 24
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-18
+        approvalRecord: "Architect approved Planner, task plan and owner-free rounds in
+          Codex chat for issue #587. Base:
+          ca131241b127e06561af94bae0844b786c3cdecd."
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 0fd3290678d3fc219a2ec0b60c54287066b94cad
+        note: Replaced by human-reviewed proposal intent
+          57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095.
+    approvalRecord: 'Exact proposal intent
+      57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
+      foreground human approval recorded in Coordination.'
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
@@ -221,7 +248,8 @@ contracts:
         digest: bc3617a7dd8499fa1150d8a533b7667ed7904d0014817eb42afb4c1fb49acac3
         file: packages/architecture/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: 59ee8b756a850e0e1fa2640c348a1b08a4a366487671b496833ac8d3b40abf5c
         file: packages/architecture/contract.md
@@ -338,19 +366,20 @@ contracts:
     file: packages/coordination/contract.md
     owner: coordination
     stage: locked
-    digest: b13439aba47d9f91bb2ec11cf9e1a70719546ecc0c5cf4a6b769b9fd8f3dda8a
+    digest: 7031264e3f98e2e6267e82deb8a500c052d917b92cb58830e08d07cca7879755
     dependsOn:
       - arcnexus/project
       - arcnexus/architecture-model
-    scenarios: 23
+    scenarios: 25
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-19'
+    acceptedAt: '2026-11-24'
     history:
       - stage: locked
         digest: d7f8f7f0f543629e676344996410148ecefb1d4900bf7bc04a9a50b198e7b7e0
         file: packages/coordination/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: 916588d200ecdecf7753e281c117514d56712c16a2fac2e1a4b92bfd998f68d2
         file: packages/coordination/contract.md
@@ -394,11 +423,35 @@ contracts:
         revision: 2d740bc7e038a5d9fcb8fbded9dd5302b6fe54a7
         note: Replaced by human-reviewed proposal intent
           7b3d1542e807f96d00776aa339877c5e2ce1e002031342b0fdd48bb8fbacae0d.
+      - id: arcnexus/coordination
+        type: library
+        file: packages/coordination/contract.md
+        owner: coordination
+        stage: locked
+        digest: b13439aba47d9f91bb2ec11cf9e1a70719546ecc0c5cf4a6b769b9fd8f3dda8a
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/architecture-model
+        scenarios: 23
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-19
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        approvalRecord: "Exact limit-removal amendment for #659; human approval in Codex
+          chat and delegated application by Codex."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 0fd3290678d3fc219a2ec0b60c54287066b94cad
+        note: Replaced by human-reviewed proposal intent
+          57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
-    approvalRecord: "Exact limit-removal amendment for #659; human approval in Codex
-      chat and delegated application by Codex."
+    approvalRecord: "Exact proposal intent
+      57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
+      foreground human approval recorded in Coordination."
     efficiencyAmendmentRecord: >-
       Conditional on exact human approval in Codex chat for issue 615; approved
       host/editor delegation must be recorded before this proposal is applied.
@@ -407,20 +460,21 @@ contracts:
     file: packages/execution/contract.md
     owner: execution
     stage: locked
-    digest: 67ad4308c467011f1c20ed4365d2e3958901dbbc5c773e7ff56bf3b5a9dd8e67
+    digest: e2031bb86c09fe081e3dd64109fb42c7457c6ecf2fb066f73cc0a7ed23bbde7b
     dependsOn:
       - arcnexus/project
       - arcnexus/architecture-model
       - arcnexus/coordination
-    scenarios: 27
+    scenarios: 29
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-17'
+    acceptedAt: '2026-11-24'
     history:
       - stage: locked
         digest: 6a4d048c3c165da0ea9f15b8e93667ec8bf55a5c2be9c7ba95b67927e2f53f2a
         file: packages/execution/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: 94ece72d7a1f476462719db75feaa873c8d369dd27f9b1878f15ea611b9bce2f
         file: packages/execution/contract.md
@@ -465,12 +519,37 @@ contracts:
           bubblewrap required with the container kept as an opt-in deployment
           seam and concurrency preclusion forbidden, the lane in execution with
           ordering in direction, and harness state per activation\n"
+      - id: arcnexus/execution
+        type: library
+        file: packages/execution/contract.md
+        owner: execution
+        stage: locked
+        digest: 67ad4308c467011f1c20ed4365d2e3958901dbbc5c773e7ff56bf3b5a9dd8e67
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/architecture-model
+          - arcnexus/coordination
+        scenarios: 27
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-17
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 0fd3290678d3fc219a2ec0b60c54287066b94cad
+        note: Replaced by human-reviewed proposal intent
+          57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
     efficiencyAmendmentRecord: >-
       Conditional on exact human approval in Codex chat for issue 615; approved
       host/editor delegation must be recorded before this proposal is applied.
+    approvalRecord: Exact proposal intent
+      57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
+      foreground human approval recorded in Coordination.
   - id: arcnexus/direction
     type: library
     file: packages/direction/contract.md
@@ -490,7 +569,8 @@ contracts:
         digest: b065e5f7fb4c5701eb8a68ca5a41a5a2cd091373f0b8581a021f465a4418531e
         file: packages/direction/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: c3c2928a32eeee663ba78c6ad80a7c7edcd0aab9563374466b18943bf8dac877
         file: packages/direction/contract.md
@@ -570,7 +650,8 @@ contracts:
         digest: 26d487a102dc9b7b1b31f23ed89b77275b54ec8469051103c11517bd759073ee
         file: packages/verification/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: locked
         digest: ffd64281aa0fa9beac3585e527441daa4284b0b97b04e5e7f4574e651d9203b5
         file: packages/verification/contract.md
@@ -745,7 +826,8 @@ contracts:
         digest: f52eb30d665f485eef8daf64148d7ad974afe8c8281f7f09f0edce80a0480016
         file: packages/agent/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
     efficiencyAmendmentRecord: >-
       Conditional on exact human approval in Codex chat for issue 615; approved
       host/editor delegation must be recorded before this proposal is applied.
@@ -775,7 +857,8 @@ contracts:
         digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
         file: packages/commands/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: proposed
         digest: ca9ae2188a36be71339092ae8d9cf04fab7ca393a374f8959f6082a11a6a12f2
         file: packages/commands/contract.md
@@ -802,7 +885,8 @@ contracts:
         digest: 0172f228a3fcb4997eaf4fa8713ea61b04c4c479e01cab94a268a1104af10b02
         file: packages/manager/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
     efficiencyAmendmentRecord: >-
       Conditional on exact human approval in Codex chat for issue 615; approved
       host/editor delegation must be recorded before this proposal is applied.
@@ -863,7 +947,8 @@ contracts:
         digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
         file: packages/workflow/contract.md
         revision: 2522d2ec46a6759e007b8be389829143be0fafcf
-        note: Superseded only upon exact human approval of the efficiency foundation amendment for issue 615.
+        note: Superseded only upon exact human approval of the efficiency foundation
+          amendment for issue 615.
       - stage: proposed
         digest: 97a36f40bc739717bb5e73bdcd005ea19908332ca053d1b8c2f791a7ab3e309c
         file: packages/workflow/contract.md

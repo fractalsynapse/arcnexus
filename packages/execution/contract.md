@@ -4,7 +4,14 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 ## Obligations
 
-Run one host process and one activation at a time per project. Prepare one
+Run one host process and one activation at a time per project. A registered
+launcher may start the trusted Host composition inside a project-specific
+container under the approved gateway deployment. Resolve the assigned image
+from trusted deployment configuration. Record its exact identity and use it
+for recovery unless an approved runtime adoption replaces it. Preserve native
+confinement, isolated project worktrees and credentials, and the single writer.
+The caller, imported project files and installed toolchain cannot grant new
+operation permissions or select an unapproved runtime. Prepare one
 issue-linked task branch from its recorded staging base and one private worktree
 per attempt before any steward milestone runs, using the issue selected by
 Direction. Director-requested research before plan acceptance uses the same
@@ -101,6 +108,8 @@ checkpoints and failed observations; a candidate cannot authorize that transitio
 | EX-26 | A real activation exposes messages, tool calls/results, progress, timing and available usage before completion, with complete raw evidence. Interrupted output and unknown provider events remain readable and attributable. |
 | EX-27 | Required applicable activity checks use the resolved parameters and run before completion. A failed check returns its exact result to the accountable caller; missing suites do not skip other checks and disabled native tests cannot establish a native pass. |
 | EX-28 | Run and profile totals reconcile to underlying observations, distinguish missing usage and estimated cost, and avoid double-counting nested timing or token subsets. Agents can read authorized complete run evidence without gaining write or approval authority. |
+| EX-29 | A registered launcher starts the approved image for the verified project. The Host enforces the same captured activity and native confinement rules; an image mismatch or revoked provider prevents execution. |
+| EX-30 | Replacing an interrupted Host with the captured image recovers its retained position and reconciles uncertain effects before continuing. The journal retains the original image identity and complete evidence. |
 
 ## Deferred
 

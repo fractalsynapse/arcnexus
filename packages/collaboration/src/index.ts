@@ -5,9 +5,11 @@ import { retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 
 export { isTransientReadFailure } from './read.js';
+export { verifyBoundCommit } from './repository-read.js';
 export { GitHubCheckFailure } from './check-failure.js';
 
 const run = promisify(execFile);
+export type GitHubCredential = (remote: string) => Promise<string>;
 
 /** Use the trusted GitHub CLI for scoped tracking and publication operations. */
 export class GitHub {
@@ -17,6 +19,7 @@ export class GitHub {
   constructor(
     remote: string,
     private readonly signal: AbortSignal,
+    private readonly credential?: GitHubCredential,
   ) {
     const match = /^https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\.git$/.exec(remote);
     if (!match?.[1]) throw new Error('A canonical GitHub repository is required');
@@ -126,7 +129,7 @@ ${marker}`,
       {
         signal: this.signal,
         maxBuffer: Infinity,
-        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+        env: { ...(await this.environment()), GIT_TERMINAL_PROMPT: '0' },
       },
     );
     return stdout
@@ -182,7 +185,7 @@ ${marker}`,
         cwd: worktree,
         signal: this.signal,
         maxBuffer: Infinity,
-        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+        env: { ...(await this.environment()), GIT_TERMINAL_PROMPT: '0' },
       },
     );
   }
@@ -278,9 +281,16 @@ ${marker}`,
     const { stdout } = await run('/usr/bin/gh', scoped, {
       signal: this.signal,
       maxBuffer: Infinity,
-      env: { ...process.env, GH_PROMPT_DISABLED: '1' },
+      env: { ...(await this.environment()), GH_PROMPT_DISABLED: '1' },
     });
     return complete ? stdout : stdout.trim();
+  }
+
+  /** Give the scoped token only to the trusted GitHub or Git subprocess. */
+  private async environment() {
+    if (!this.credential) return process.env;
+    const token = await this.credential('https://github.com/' + this.repository + '.git');
+    return { ...process.env, GH_TOKEN: token };
   }
 }
 
@@ -314,3 +324,7 @@ interface Pull {
 function title(goal: string) {
   return goal.trim().split('\n')[0]!;
 }
+
+export { managedRepository, type CheckoutGit } from './managed-checkout.js';
+
+export { githubAppReadToken, githubAppPublication } from './github-app-read.js';

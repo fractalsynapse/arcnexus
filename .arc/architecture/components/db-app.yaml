@@ -1,0 +1,22 @@
+id: db-app
+kind: app
+purpose: |
+  Apply owner-authored PostgreSQL migrations and verify imported project stores.
+objectives:
+  - measure: A rehearsal preserves and verifies every retained Coordination row while leaving its source intact.
+constraints:
+  - failure: Database setup grants execution authority or redefines a component's domain schema.
+owns:
+  - apps/db
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Apply only trusted model migrations. Verify exact source and copied
+        evidence before returning readiness. Keep cutover separate from import.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

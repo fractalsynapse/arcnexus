@@ -14,9 +14,15 @@ export interface CommandRequest {
 }
 
 export interface CommandState {
-  status: 'Unavailable' | 'Idle' | 'Active' | 'Waiting' | 'Failed';
+  status: 'Unavailable' | 'Idle' | 'Active' | 'Waiting' | 'Failed' | 'Completed' | 'Cancelled';
+  scope?: string;
+  gate?: { id: string; key: string; question: string };
+  connectionError?: string;
+  canReconnect?: boolean;
+  canCancel?: boolean;
   supported: readonly Operation[];
   command?: string;
+  execution?: string;
   metrics?: ReadonlyArray<readonly [label: string, value: string]>;
 }
 
@@ -24,4 +30,8 @@ export interface CommandBinding {
   getSnapshot(): CommandState;
   subscribe(listener: () => void): () => void;
   submit?(request: CommandRequest): Promise<void>;
+  answer?(gate: string, answer: string): Promise<void>;
+  refine?(): Promise<void>;
+  cancel?(): Promise<void>;
+  reconnect?(): void;
 }

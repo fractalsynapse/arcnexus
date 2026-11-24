@@ -2,11 +2,35 @@
 
 ## [Unreleased]
 
+### Added
+
+- Provision pinned Host checkouts, check gateway reachability, and support explicit provider egress and repository-scoped GitHub App publication for isolated execution (#706).
+
+- Add the shared Data registry and isolated REST and MCP reads for captured Plan guides and execution timelines. Add resumable HTTP event streaming, verified PostgreSQL import rehearsal, operator-scoped project catalog records, and launcher enrollment and revocation (#706).
+
+- Run Web, API, MCP, and DB setup in one local review stack. Give the gateways separate PostgreSQL roles and verify migration digests before serving requests (#706).
+
+- Add isolated PostgreSQL cutover and writer fencing, committed timeline follow, conditional catalog updates, live launcher presence, and scoped inspection across the gateways. Use shared live and fixture views for platform management and independently loaded Plan displays (#706).
+
+- Run isolated hosted workflows through the native Host and PostgreSQL. Add shared command receipts, pinned launcher assignments, durable approval and cancellation, and on-demand tool evidence (#706).
+
+- Connect the browser command dock to retained hosted approvals. Add isolated launcher downloads, managed repository imports, and PostgreSQL archive and restore commands (#706).
+
+- Let isolated gateways obtain repository-scoped read tokens from a GitHub App and provision HTTPS checkouts with the system CA bundle (#706).
+
 ### Changed
 
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Clear a departed native writer during PostgreSQL cutover so hosted commands can resume the imported task and its retained evidence (#706).
+
+- Read optional owner research history in PostgreSQL so hosted Runs can proceed from the Director's plan to steward work (#706).
+
+- Start the Codex filesystem sandbox inside the confined Docker Host and support Codex installations with a symlinked executable (#706).
+
+- Equip the Docker Host with Bubblewrap overlay support and require the launcher's scoped runtime policy before it can claim work (#706).
 
 - Match the React frame to the approved layout settings and header action, and theme open selectors and tooltips across the app (#704).
 
@@ -72,6 +96,10 @@
 - Return failed hosted checks with their complete provider logs to independent assessment and accountable repair, retaining checkpoints and the existing staging PR across restarts (#687).
 
 ### Added
+
+- Add a local React preview for capacity provider setup and project selection using the shared frame and dialogs (#704).
+
+- Serve the React web frame with Docker Compose and provision a private PostgreSQL service for migration work (#704).
 
 - Add the local React web frame with a reusable Cordis UI plugin, named site schemes and a responsive command panel (#704).
 

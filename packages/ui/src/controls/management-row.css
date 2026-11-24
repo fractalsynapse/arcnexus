@@ -1,0 +1,46 @@
+.arc-management-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.arc-management-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--quiet);
+}
+.arc-management-record {
+  min-inline-size: 0;
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.arc-management-record small,
+.arc-management-status {
+  color: var(--muted);
+}
+.arc-management-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875em;
+}
+.arc-management-status::before {
+  content: '';
+  inline-size: 8px;
+  block-size: 8px;
+  background: #8893a2;
+  border-radius: 50%;
+}
+.arc-management-status[data-tone='positive']::before {
+  background: #32bf78;
+}
+.arc-management-status[data-tone='pending']::before {
+  background: #e1a84e;
+}

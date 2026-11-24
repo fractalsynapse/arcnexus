@@ -1,0 +1,22 @@
+id: catalog
+kind: plugin
+purpose: |
+  Retain verified project identities and manage operator project selection.
+objectives:
+  - measure: Only independently verified GitHub projects enter an operator's catalog.
+constraints:
+  - failure: Catalog discovery discloses a credential reference or authorizes execution directly.
+owns:
+  - packages/catalog
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Delegate repository verification and retain the stable project identity
+        when its selection is retired. Expose the resource through Data.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

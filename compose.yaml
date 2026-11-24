@@ -1,0 +1,104 @@
+name: arcnexus-platform-review
+
+x-platform-image: &platform-image
+  image: arcnexus-platform-review
+  build:
+    context: .
+    dockerfile: apps/api/Dockerfile
+
+x-gateway-env: &gateway-env
+  ARC_ISOLATED_REVIEW: '1'
+  ARC_GATEWAY_BIND: 0.0.0.0
+  ARC_PLATFORM_BINDINGS: /run/config/bindings.json
+  ARC_OPERATOR_TOKEN_FILE: /run/secrets/operator_token
+  PGHOST: postgres
+  PGDATABASE: arcnexus
+
+x-gateway: &gateway
+  <<: *platform-image
+  depends_on:
+    db-setup:
+      condition: service_completed_successfully
+  volumes:
+    - ${ARC_PLATFORM_BINDINGS_FILE:?Configure the isolated bindings file}:/run/config/bindings.json:ro
+    - ${ARC_PLATFORM_REPOSITORIES:?Configure the isolated repositories directory}:/repositories:ro
+  networks: [transport, data]
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      ARC_WEB_API_ORIGIN: http://api:8080
+    ports:
+      - '127.0.0.1:${ARC_WEB_PORT:-38648}:8080'
+    networks: [transport]
+
+  postgres:
+    image: postgres:18.7-trixie@sha256:f5cbc081c25690710f3fc6f4c61a7565382bae01ca0d0f2028a53d7926b85a20
+    environment:
+      POSTGRES_USER: arcnexus
+      POSTGRES_DB: arcnexus
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks: [data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+
+  db-setup:
+    <<: *platform-image
+    command: ['node', 'dist/apps/db/src/cli.js', 'migrate']
+    environment:
+      PGHOST: postgres
+      PGDATABASE: arcnexus
+      PGUSER: arcnexus
+      ARC_DB_PASSWORD_FILE: /run/secrets/postgres_password
+      ARC_API_DB_PASSWORD_FILE: /run/secrets/api_password
+      ARC_MCP_DB_PASSWORD_FILE: /run/secrets/mcp_password
+    secrets: [postgres_password, api_password, mcp_password]
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *gateway
+    environment:
+      <<: *gateway-env
+      PORT: '8080'
+      PGUSER: arc_api
+      ARC_DB_PASSWORD_FILE: /run/secrets/api_password
+    secrets: [api_password, operator_token]
+
+  mcp:
+    <<: *gateway
+    command: ['node', 'dist/apps/mcp/src/main.js']
+    environment:
+      <<: *gateway-env
+      PORT: '8080'
+      PGUSER: arc_mcp
+      ARC_DB_PASSWORD_FILE: /run/secrets/mcp_password
+    secrets: [mcp_password, operator_token]
+    ports:
+      - '127.0.0.1:${ARC_MCP_PORT:-38649}:8080'
+
+secrets:
+  postgres_password:
+    file: ${ARC_PLATFORM_SECRETS:?Configure the isolated secrets directory}/postgres
+  api_password:
+    file: ${ARC_PLATFORM_SECRETS}/api
+  mcp_password:
+    file: ${ARC_PLATFORM_SECRETS}/mcp
+  operator_token:
+    file: ${ARC_PLATFORM_SECRETS}/operator
+
+volumes:
+  postgres_data:
+
+networks:
+  transport:
+  data:
+    internal: true

@@ -3,10 +3,19 @@ import { readFileSync } from 'node:fs';
 
 const events = [
   { type: 'thread.started', thread_id: 'fixture-thread' },
+  {
+    type: 'item.completed',
+    item: { type: 'agent_message', text: 'Opening café 🛠\nChecking the project' },
+  },
   { type: 'vendor.future', value: 'café 🛠' },
   {
     type: 'item.completed',
-    item: { type: 'mcp_tool_call', id: 'tool-1', result: { answer: 'complete answer' } },
+    item: {
+      type: 'mcp_tool_call',
+      id: 'tool-1',
+      tool: 'list-files',
+      result: { answer: 'complete answer' },
+    },
   },
   {
     type: 'turn.completed',

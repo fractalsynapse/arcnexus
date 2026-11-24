@@ -84,7 +84,7 @@ export class Clarifications {
   private async ask(gate: Clarification, accepts?: (answer: string) => boolean) {
     const { scope, question } = gate;
     this.signal.throwIfAborted();
-    const answer = await this.requestAnswer(question, accepts);
+    const answer = await this.requestAnswer(gate, accepts);
     this.signal.throwIfAborted();
     if (!answer?.trim()) {
       const retained = gate.evidence ? gate : this.openQuestion(scope, question);
@@ -101,10 +101,11 @@ export class Clarifications {
   }
 
   /** Ask again on invalid input without recording it as a decision. */
-  private async requestAnswer(question: string, accepts?: (answer: string) => boolean) {
+  private async requestAnswer(gate: Clarification, accepts?: (answer: string) => boolean) {
+    const { question, scope } = gate;
     let prompt = question;
     while (true) {
-      const answer = await this.task.ask?.(prompt, this.signal);
+      const answer = await this.task.ask?.(prompt, this.signal, { question, scope });
       this.signal.throwIfAborted();
       if (!answer?.trim() || !accepts || accepts(answer)) return answer;
       prompt = `Unrecognized approval response. Enter approve or skip.\n\n${question}`;

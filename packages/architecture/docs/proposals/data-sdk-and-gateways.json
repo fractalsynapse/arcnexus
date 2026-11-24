@@ -1,0 +1,39 @@
+{
+  "status": "proposed; pending exact approval; not applied",
+  "baseline": "0fd3290678d3fc219a2ec0b60c54287066b94cad",
+  "purpose": "Authorize verified remote platform implementation while preserving the existing activation and qualification requirements",
+  "consequences": [
+    "Authorize engineering verification using isolated projects and stores. Operator-facing execution for real projects remains subject to existing live qualification.",
+    "Allow an explicitly verified PostgreSQL cutover with one authoritative store and one writer per project.",
+    "Admit registered launchers and exact approved Host images under the existing execution authority."
+  ],
+  "implementation": [
+    "Implement independently owned Data model registrations and project-scoped read and replay contracts.",
+    "Compose API, MCP, CLI, database setup, launcher, and Host behind the approved boundaries.",
+    "Demonstrate controlled import, concurrent admission, credential isolation, native confinement, and recovery before live activation."
+  ],
+  "proposalId": "04fa5af301acbd97f6ca9ea9f71e2d1a6308644b48efff11403d7e62ea04946d",
+  "patchSha256": "a565ee3c3d502f0909313f0f88223cca1b849bfc72d2bd2945ea5d73f494025f",
+  "files": [
+    {
+      "path": "apps/cli/contract.md",
+      "before": "902fd8b23ed11f556b62e4d4f89232a043774d90153a60cf22f09f2d802bcb02",
+      "after": "0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845"
+    },
+    {
+      "path": "docs/interface/registry.yaml",
+      "before": "cba7052d3cbc2c45619e887b35087603f25921062dc7444155de470a355e90a2",
+      "after": "38352eea976d34f759fe24d6f4eee187da5fb436f435f0fff50bac0e2b7e92d9"
+    },
+    {
+      "path": "packages/coordination/contract.md",
+      "before": "b13439aba47d9f91bb2ec11cf9e1a70719546ecc0c5cf4a6b769b9fd8f3dda8a",
+      "after": "7031264e3f98e2e6267e82deb8a500c052d917b92cb58830e08d07cca7879755"
+    },
+    {
+      "path": "packages/execution/contract.md",
+      "before": "67ad4308c467011f1c20ed4365d2e3958901dbbc5c773e7ff56bf3b5a9dd8e67",
+      "after": "e2031bb86c09fe081e3dd64109fb42c7457c6ecf2fb066f73cc0a7ed23bbde7b"
+    }
+  ]
+}

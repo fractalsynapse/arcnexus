@@ -16,12 +16,12 @@ const activity = (role: string, operations: string[] = []) => ({
 });
 
 /** Create a generic target project with committed guidance and distinct actors. */
-export function projectFixture(): string {
+export function projectFixture(repository = remote): string {
   const root = mkdtempSync(join(tmpdir(), 'arcnexus-inspect-'));
   const git = (...args: string[]) => execFileSync('git', args, { cwd: root, stdio: 'ignore' });
   git('init');
-  git('remote', 'add', 'origin', remote);
-  for (const [path, value] of Object.entries(definitions())) {
+  git('remote', 'add', 'origin', repository);
+  for (const [path, value] of Object.entries(definitions(repository))) {
     const file = join(root, path);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, typeof value === 'string' ? value : stringify(value));
@@ -38,16 +38,16 @@ export function projectFixture(): string {
   );
   git('branch', 'staging');
   git('update-ref', 'refs/remotes/origin/staging', 'HEAD');
-  git('config', `url.file://${root}/.insteadOf`, remote);
+  git('config', `url.file://${root}/.insteadOf`, repository);
   return root;
 }
 
 /** Describe a self-contained project whose bindings are independent of ArcNexus. */
-function definitions() {
+function definitions(repository: string) {
   return {
     [`${architecture}/project.yaml`]: {
       id: 'fixture',
-      remote,
+      remote: repository,
       knowledgeRoot: '.arc',
       contractRegistry: 'contracts.yaml',
       planTemplate: `${architecture}/plan-template.md`,

@@ -1,0 +1,85 @@
+# Adapted from the Moby container profile.
+# SPDX-FileCopyrightText: Copyright The Moby Authors
+# SPDX-License-Identifier: Apache-2.0
+
+abi <abi/5.0>,
+include <tunables/global>
+
+profile arcnexus-host flags=(attach_disconnected,mediate_deleted) {
+  priority=1 /usr/bin/bwrap px -> &arcnexus-host//&arcnexus-bwrap,
+  file,
+  userns,
+  network inet,
+  network inet6,
+  network unix,
+  network netlink raw,
+
+  # The container launches with an empty capability bounding set. These
+  # permissions apply to Bubblewrap's child user namespace.
+  capability net_admin,
+  capability dac_override,
+  capability dac_read_search,
+  capability setpcap,
+  capability sys_admin,
+  capability sys_ptrace,
+
+  mount options=(rw,silent,make-rslave) /,
+  mount options=(rw,silent,make-rprivate) /oldroot/,
+  mount options in (rw,rbind,silent) -> /tmp/newroot/,
+  mount options in (rw,rbind,silent) /oldroot/proc/ -> /proc/,
+  mount options in (rw,rbind,silent) -> /newroot/{,**},
+  remount options in (ro,rw,bind,silent,nosuid,nodev,noexec,relatime,noatime,nodiratime,strictatime,sync,dirsync) /newroot/{,**},
+  mount fstype=tmpfs options in (rw,nosuid,nodev) tmpfs -> /tmp/,
+  mount fstype=tmpfs options in (rw,nosuid,nodev) tmpfs -> /newroot/{,**},
+  mount fstype=proc options in (rw,nosuid,nodev,noexec) proc -> /newroot/proc/,
+  mount fstype=devpts options in (rw,nosuid,noexec) devpts -> /newroot/dev/pts/,
+  mount fstype=overlay options in (rw,nosuid,nodev) overlay -> /newroot/{,**},
+  pivot_root oldroot=/tmp/oldroot/ /tmp/,
+  pivot_root oldroot=/newroot/ /newroot/,
+  umount /oldroot/,
+  umount /,
+
+  deny @{PROC}/* w,
+  deny @{PROC}/{acpi,asound,interrupts,keys,latency_stats,sched_debug,scsi,timer_list,timer_stats}{,/**} rwklx,
+  deny @{PROC}/{bus,fs,irq}/** wklx,
+  deny @{PROC}/sys/** wklx,
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny @{PROC}/kcore rwklx,
+  deny /sys/** wklx,
+  deny /sys/firmware/** r,
+  deny /sys/devices/virtual/powercap/** r,
+  deny /sys/kernel/security/** r,
+
+  signal (receive) peer=unconfined,
+  signal (receive) peer=runc,
+  signal (receive) peer=crun,
+  signal (send,receive) peer=arcnexus-host,
+  signal (send,receive) peer="arcnexus-**",
+  ptrace (trace,tracedby,read,readby) peer=arcnexus-host,
+  ptrace (read,readby) peer="arcnexus-bwrap//&arcnexus-host{,//&bwrap}",
+  ptrace (read,readby) peer="arcnexus-bwrap//&arcnexus-check//&arcnexus-host{,//&bwrap,//&bwrap//&bwrap//unpriv_bwrap}",
+}
+
+# Stack restrictions on the executed check while preserving the Host policy.
+profile arcnexus-bwrap flags=(attach_disconnected,mediate_deleted) {
+  /{,**} mrwlk,
+  userns,
+  capability,
+  network,
+  mount,
+  remount,
+  umount,
+  pivot_root,
+  ptrace,
+  signal,
+  /** pix -> &arcnexus-host//&arcnexus-bwrap//&arcnexus-check,
+}
+
+profile arcnexus-check flags=(default_allow) {
+  deny capability,
+  deny change_profile,
+  deny userns,
+  deny mount,
+  deny umount,
+  deny pivot_root,
+}

@@ -1,0 +1,22 @@
+id: platform
+kind: plugin
+purpose: |
+  Bind isolated gateway applications to the same authenticated project scope.
+objectives:
+  - measure: API and MCP resolve the same verified project catalog identity and pinned revision.
+constraints:
+  - failure: A caller can supply an unbound path, credentials, or authority for real project execution.
+owns:
+  - packages/platform
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Use one scoped trust composition for both network adapters. Retain
+        task admission and operator-facing activation with their accountable owners.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

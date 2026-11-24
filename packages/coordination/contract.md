@@ -4,12 +4,22 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 
 ## Obligations
 
-Own one SQLite store per verified repository, one sequential active task and one
-project writer. Refinement retains that writer across sequential phase and task
+Own one authoritative store per verified repository, one sequential active task
+and one project writer. Standalone projects may use SQLite. A project assigned
+to the hosted platform uses PostgreSQL after an explicitly verified cutover.
+Refinement retains that writer across sequential phase and task
 sessions. Completing an inner task does not release a live outer invocation's
 writer. Standalone commands use the same admission and journal lifecycle. A
 second invocation is refused; there is no parallel child admission or second lock
-store. A dead writer is reconciled through the existing restart path.
+store. A dead writer is reconciled through the existing restart path. A hosted
+writer must prove ownership across processes and containers. Loss of ownership
+prevents further effects and requires reconciliation before replacement.
+Use the observed state of uncertain upstream effects before retrying them.
+
+Hosted cutover requires quiescing the SQLite writer, preserving the source
+store, and verifying the imported project identity, event sequences, approvals,
+artifacts and unfinished positions before enabling PostgreSQL writes.
+Read-only journal access creates no store or execution row.
 Persist the plan, position, gate answers, requests, escalation, attribution,
 outcomes and evidence references. A goal id is the digest of its full text.
 A round and inventory entry identify a fresh logical task; attempts share that
@@ -49,7 +59,7 @@ records the validated runtime identity and preserves original task evidence.
 
 | ID | Observation |
 | --- | --- |
-| CO-1 | A fresh project creates exactly one database file; no other store appears for the same project. |
+| CO-1 | A fresh project initializes one authoritative backend; no other store or writer is activated for the same project. |
 | CO-2 | A second writer opening the same project store is refused with the active goal id, and no queue row is created. |
 | CO-3 | `put` with a stale `expectedVersion` fails and leaves the entity unchanged. |
 | CO-4 | Re-`put` of identical content for the same id is idempotent: one row, one event. |
@@ -67,11 +77,13 @@ records the validated runtime identity and preserves original task evidence.
 | CO-17 | The same goal text always resolves to the same goal id, and a single-character change produces a different id; a 4,000-character goal still resolves to one digest and one plan file. |
 | CO-18 | A hand-edited committed plan is reproduced away by the next render, and a render that disagrees with store state is reported rather than trusted. |
 | CO-20 | An escalation is stored as an `escalation` entity carrying its reason, goal identity, plan revision, open steps and evidence references; it reads as one owner waiting on another, is replayable as a directive input, and resolving it closes the entity without rewriting the goal or its acceptance. |
-| CO-21 | Refinement, phase and task sessions use one SQLite store and one project writer. A second invocation is refused throughout phase transitions and approval pauses, and a finished child cannot release the live outer writer. |
+| CO-21 | Refinement, phase and task sessions use one authoritative store and one project writer. A second invocation is refused throughout phase transitions and approval pauses, and a finished child cannot release the live outer writer. |
 | CO-22 | Restart during a phase, approval pause or goal restores its exact logical identity, proposal and first unfinished position. Completed phases and goals are not repeated, and the next fresh round captures the new inventory. |
 | CO-23 | Approval names the exact baseline and content. Missing, unknown or mismatched approval cannot advance the cursor. A safe runtime change records its identity and reconciles uncertain effects before continuation. |
 | CO-24 | A subscriber receives persisted observations in order while work is running. Restart preserves the observed prefix, model transition, correlations and complete artifact references without a competing log store. |
 | CO-25 | Live and final time/token/profile summaries reconcile to retained records. Missing provider usage remains unknown, cost estimates retain their pricing basis, and later assessments receive the measured findings. |
+| CO-26 | Concurrent hosted callers for the same project can observe one journal. One obtains the writer, and a stale writer cannot continue when its ownership is lost. |
+| CO-27 | A verified import preserves event identities, pending approvals and unfinished positions. A mismatch leaves cutover unavailable and the original store available for recovery. |
 
 ## Deferred
 
