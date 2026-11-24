@@ -95,6 +95,19 @@ export class LocalMcp {
     }
   }
 
+  /** Retain the exact requested discovery response before returning it without dispatching a tool. */
+  private listTools() {
+    const result = {
+      tools: [...this.bindings.values()].map(({ tool: { handler: _handler, ...tool } }) => tool),
+    };
+    this.observe('tools/list', undefined, {
+      call: randomUUID(),
+      phase: 'completed',
+      result,
+    });
+    return result;
+  }
+
   /** Give the SDK complete parsed input instead of imposing its HTTP body-size default on valid tools. */
   private async requestBody(request: IncomingMessage) {
     const chunks: Buffer[] = [];
