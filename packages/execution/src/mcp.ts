@@ -79,9 +79,7 @@ export class LocalMcp {
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
-    server.setRequestHandler(ListToolsRequestSchema, () => ({
-      tools: [...this.bindings.values()].map(({ tool: { handler: _handler, ...tool } }) => tool),
-    }));
+    server.setRequestHandler(ListToolsRequestSchema, () => this.listTools());
     server.setRequestHandler(CallToolRequestSchema, ({ params }) => {
       const result = this.pending.then(() => this.call(params.name, params.arguments ?? {}));
       this.pending = result.catch(() => {});
