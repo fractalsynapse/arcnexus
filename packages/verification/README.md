@@ -112,8 +112,9 @@ correction lifecycle to proceed. Companion assertions must refuse acceptance ove
 that failed check and retain explicit holds for missing, skipped or unavailable
 required evidence. Keep stale-identity refusal and recovered-check applicability
 coverage intact. The current [failed-check rejection scenario](tests/integration/failed-check-rejection.test.ts)
-contains these assertions. Current execution remains to be characterized; this
-source inspection does not establish a passing runtime result.
+passes in the retained characterization below. Its controlled Reviewer receives
+the failed payload and returns a criterion-linked rejection; the companion cases
+refuse acceptance over failed or invalid-scope evidence and retain unavailable holds.
 
 ## Give the independent Reviewer complete inputs
 
@@ -207,7 +208,7 @@ failures. This implementation is conservative: a changed committed revision or
 authority invalidates that identity even if some source bytes match. The broader
 scoped-reuse rule above does not claim finer dependency analysis exists.
 
-### Public assertions awaiting current execution
+### Executed public characterization: run 145
 
 The [recovered acceptance scenarios](tests/integration/recovered-acceptance.test.ts)
 have SHA-256
@@ -215,13 +216,21 @@ have SHA-256
 the [failed-check rejection scenario](tests/integration/failed-check-rejection.test.ts)
 has SHA-256
 `c1d6b099544fbd683f738b87dce2ebb86ada790bac84286116908cbe7c0b78bc`.
-These identify inspected assertions, not a current passing observation.
+These source identities match the characterization retained by Testing. Complete
+host observation `145-680-mcp-observation.json` records `owner-tests`, status 0,
+with log `145-679-owner-tests.log` under invocation
+`ad4f08f02034c389b42ff853b024e7ca2c21db31cd8c725686755a8a0c517664`.
+The retained evidence index and `145-1-run-timeline.jsonl` locate the complete
+artifacts. The log SHA-256 is
+`1bf362c32b9f2bede3e24b54976a7911e0dd68fc7e08733f1af6ee2a61cc5c04`.
+All 18 cases pass, with no failures or skips, across recovered acceptance,
+failed-check rejection and quality-scope suites.
 
-| Accepted criterion | Current source assertion and remaining observation |
+| Accepted criterion | Observed characterization and scope |
 | --- | --- |
-| `recovered-identity-refusal` | Varies tree, base, capture and acceptance separately; equal-tree cases and changed requirement text under the same criterion ID reject replay of the earlier verdict. Historical observations are compared unchanged. A further case supplies distinct recovered base and active capture to the new assessment. Execute these assertions against the current candidate. |
-| `recovered-required-evidence` | Changed operation mapping and added required check reach the assessment with current argv and logs. An incomplete pending checklist cannot bypass the added check. Failed, unavailable, skipped and invalid-scope results cannot accept; unchanged interrupted inputs reuse exact observations, while changed dependency installation on the same tree/capture refreshes evidence. Execute these assertions and the separate valid numeric-failure rejection case. |
-| `recovered-review-inputs` | Assessment references retain the original goal/plan, exact multiline answer, distinguishable original and resumed findings and current acceptance. Complete artifacts are read and compared through the task boundary. Execute these comparisons; seeded history is not a live human conversation. |
+| `recovered-identity-refusal` | Varies tree, base, capture and acceptance separately; equal-tree cases and changed requirement text under the same criterion ID reject replay of the earlier verdict. Historical observations are compared unchanged. A further case supplies distinct recovered base and active capture to the new assessment. Cases 4–8 pass through the public gate with controlled assessment responses. |
+| `recovered-required-evidence` | Changed operation mapping and added required check reach the assessment with current argv and logs. An incomplete pending checklist cannot bypass the added check. Failed, unavailable, skipped and invalid-scope results cannot accept; unchanged interrupted inputs reuse exact observations, while changed dependency installation on the same tree/capture refreshes evidence. Cases 10–18 pass; case 1 returns the valid numeric-failure rejection, while cases 2–3 distinguish invalid and valid check scope. |
+| `recovered-review-inputs` | Assessment references retain the original goal/plan, exact multiline answer, distinguishable original and resumed findings and current acceptance. Complete artifacts are read and compared through the task boundary. The recovered assessment cases pass these complete-artifact comparisons; seeded history is not a live human conversation. |
 
 The [assessment fixture](tests/fixtures/recovered-assessment.ts), SHA-256
 `fefd52f0c59ab695a20f8e16b05862f927cf04a2dfb95fb1e09448cdc556a98d`,
@@ -262,9 +271,17 @@ identities rather than obtaining a verdict. They therefore supply continuity and
 authority evidence without discharging this milestone's recovered assessment
 observations. Skipped native cases remain gaps.
 
-Current Verification characterization and applicable quality observations are
-still needed after this documentation position. Preserve matching historical
-evidence without claiming it proves the current candidate. Delivery's accepted
+Testing also retained passing owner-format, owner-lint, repository-types and
+repository-build observations: `145-683`, `145-686`, `145-689` and `145-692`
+`mcp-observation.json` artifacts respectively, with complete logs `145-682`,
+`145-685`, `145-688` and `145-691`. The source and fixtures match those inspected
+here; this reconciliation changes prose only. No demonstrated runtime defect
+requires a product correction or a manufactured red. The existing gate and
+journal remain the sole implementation; no recovery abstraction, cache or limit
+was added. Applicable mapped checks remain subject to host input matching.
+
+Preserve matching historical evidence without treating these controlled results
+as live independent assessment. Delivery's accepted
 `retained-publication-current-evidence` milestone owns provider reconciliation,
 stale publication refusal and one retained PR; no new supplier milestone is needed
 for that already sequenced work. The later host assessment and delivery must
