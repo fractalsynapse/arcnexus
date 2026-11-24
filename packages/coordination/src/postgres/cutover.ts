@@ -5,12 +5,15 @@ import { journalPath } from '../journal-path.js';
 import { departed } from '../lease.js';
 import { verifyCutoverArtifacts } from './cutover-artifacts.js';
 import { importSqliteJournal } from './import.js';
+import { retireWriter } from './reconcile.js';
+import { lockHostedProject } from './session-schema.js';
 
 type Receipt = Awaited<ReturnType<typeof importSqliteJournal>> & {
   artifacts: Record<string, string>;
 };
 
 type NativeFence = { digest: string; target: string };
+type NativeWriter = { id: string; lease: string };
 
 function fenced(database: DatabaseSync) {
   const table = database
@@ -56,36 +59,60 @@ export async function cutoverSqliteJournal(database: Client, storage: string, pr
     const previous = fenced(native);
     if (previous && previous.target !== target)
       throw new Error('SQLite is fenced to another PostgreSQL deployment');
+    const writer = interruptedWriter(native);
     const completed = await activated(database, project);
     if (completed) {
       if (previous?.digest !== completed.digest)
         throw new Error('Native cutover fence is unavailable');
-      return completed;
+      return writer ? await activate(database, completed, writer) : completed;
     }
-    const active = native.prepare('SELECT lease FROM runs WHERE active = 1').all();
-    if (active.some(({ lease }) => !departed(lease)))
-      throw new Error('An active SQLite writer prevents cutover');
     const artifacts = await verifyCutoverArtifacts(native, storage);
     const receipt = { ...(await importSqliteJournal(database, storage, project)), artifacts };
     fence(native, receipt.digest, target);
     native.exec('COMMIT');
-    return await activate(database, receipt);
+    return await activate(database, receipt, writer);
   } finally {
     native.close();
   }
 }
 
-async function activate(database: Client, receipt: Receipt) {
-  await database.query(
-    `
-    INSERT INTO arcnexus_coordination.hosted_projects (project,digest,receipt)
-    SELECT project,digest,$3::jsonb FROM arcnexus_coordination.sqlite_imports
-    WHERE project=$1 AND digest=$2 ON CONFLICT DO NOTHING
-    `,
-    [receipt.project, receipt.digest, JSON.stringify(receipt)],
-  );
-  const completed = await activated(database, receipt.project);
-  if (completed?.digest !== receipt.digest)
-    throw new Error('Verified migration receipt is unavailable');
-  return completed;
+function interruptedWriter(native: DatabaseSync): NativeWriter | undefined {
+  const active = native
+    .prepare('SELECT CAST(id AS TEXT) AS id, lease, parent_id FROM runs WHERE active = 1')
+    .all();
+  if (active.some(({ lease }) => !departed(lease)))
+    throw new Error('An active SQLite writer prevents cutover');
+  const root = active.find(({ parent_id }) => parent_id === null);
+  if (root) return { id: String(root.id), lease: String(root.lease) };
+}
+
+async function activate(database: Client, receipt: Receipt, writer?: NativeWriter) {
+  await database.query('BEGIN');
+  try {
+    await database.query(lockHostedProject, [receipt.project]);
+    if (writer)
+      await retireWriter(
+        database,
+        receipt.project,
+        writer.id,
+        writer.lease,
+        'SQLite writer exited before cutover',
+      );
+    await database.query(
+      `
+      INSERT INTO arcnexus_coordination.hosted_projects (project,digest,receipt)
+      SELECT project,digest,$3::jsonb FROM arcnexus_coordination.sqlite_imports
+      WHERE project=$1 AND digest=$2 ON CONFLICT DO NOTHING
+      `,
+      [receipt.project, receipt.digest, JSON.stringify(receipt)],
+    );
+    const completed = await activated(database, receipt.project);
+    if (completed?.digest !== receipt.digest)
+      throw new Error('Verified migration receipt is unavailable');
+    await database.query('COMMIT');
+    return completed;
+  } catch (error) {
+    await database.query('ROLLBACK');
+    throw error;
+  }
 }

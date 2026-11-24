@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { Context } from 'cordis';
 import { Client } from 'pg';
 import {
   Coordination,
+  Journal,
+  WorkflowRequests,
   reconcileHosted,
   hostedProjectCoordination,
   readImportedTimeline,
@@ -155,6 +159,59 @@ test(
     assert.deepEqual(journal.researchReports('work', 'missing'), []);
   },
 );
+
+test(
+  'cutover retires a departed native writer and preserves its complete nested position',
+  { skip: !url },
+  async (t) => {
+    const { directory, database, project, setup } = await fixture(t);
+    crashNativeWriter(directory, project);
+    const imported = await setup.rehearseImport(directory, project);
+    const published = await setup.cutover(directory, project);
+    assert.equal(published.digest, imported.digest);
+
+    const operator = { remote: project, principal: 'fixture-operator' };
+    const receipt = await new WorkflowRequests(database).submit(
+      operator,
+      randomUUID(),
+      { command: 'refine', rounds: '3' },
+      'pinned',
+    );
+    assert.equal(receipt.state, 'queued');
+    const resumed = coordinated(project, 'replacement').admit(project, 'Foreground refinement');
+    assert(resumed instanceof Journal);
+    t.after(() => resumed.close());
+    assert.deepEqual(await setup.cutover(directory, project), published);
+    assert.equal(
+      'activeGoal' in coordinated(project, 'competing').admit(project, 'Competing'),
+      true,
+    );
+    finishImportedPosition(resumed);
+  },
+);
+
+function crashNativeWriter(directory: string, project: string) {
+  const crashed = fileURLToPath(
+    new URL('../../../../packages/coordination/tests/fixtures/crashed-writer.js', import.meta.url),
+  );
+  assert.throws(() => execFileSync(process.execPath, [crashed, directory, project]), {
+    signal: 'SIGKILL',
+  });
+}
+
+function finishImportedPosition(resumed: Journal) {
+  const phase = resumed.child('Architect', 'round:1:architect');
+  assert(phase instanceof Journal);
+  const task = phase.child('Prerequisite', 'implementation');
+  assert(task instanceof Journal);
+  assert.deepEqual(task.retained?.events, [
+    { answer: 'Complete retained answer', checkpoint: 'secured-head', issue: '10' },
+    { outcome: { kind: 'cancelled', reason: 'SQLite writer exited before cutover', evidence: [] } },
+  ]);
+  task.finish({ kind: 'merged' });
+  phase.finish({ kind: 'planned' });
+  resumed.finish({ kind: 'refined' });
+}
 
 test(
   'the native journal interface runs its nested workflow against PostgreSQL',

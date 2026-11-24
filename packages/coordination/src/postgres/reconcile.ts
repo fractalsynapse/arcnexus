@@ -49,21 +49,33 @@ export async function reconcileHosted(
 }
 
 async function retireConfirmed(database: Client, project: string, id: string, lease: string) {
-  const outcome = { kind: 'cancelled', reason: 'Hosted writer exited', evidence: [] };
   await database.query('BEGIN');
   try {
     await database.query(lockHostedProject, [project]);
-    const result = await database.query(retire, [
-      project,
-      id,
-      lease,
-      JSON.stringify({ outcome }),
-      new Date().toISOString(),
-    ]);
+    const retired = await retireWriter(database, project, id, lease, 'Hosted writer exited');
     await database.query('COMMIT');
-    return Boolean(result.rowCount);
+    return retired;
   } catch (error) {
     await database.query('ROLLBACK');
     throw error;
   }
+}
+
+/** Retire one proven-departed writer in the caller's hosted project transaction. */
+export async function retireWriter(
+  database: Client,
+  project: string,
+  id: string,
+  lease: string,
+  reason: string,
+) {
+  const outcome = { kind: 'cancelled', reason, evidence: [] };
+  const result = await database.query(retire, [
+    project,
+    id,
+    lease,
+    JSON.stringify({ outcome }),
+    new Date().toISOString(),
+  ]);
+  return Boolean(result.rowCount);
 }

@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Clear a departed native writer during PostgreSQL cutover so hosted commands can resume the imported task and its retained evidence (#706).
+
 - Read optional owner research history in PostgreSQL so hosted Runs can proceed from the Director's plan to steward work (#706).
 
 - Start the Codex filesystem sandbox inside the confined Docker Host and support Codex installations with a symlinked executable (#706).

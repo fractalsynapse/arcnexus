@@ -40,8 +40,10 @@ open a pull request and comment on both records in the private fixture.
 A scripted Plan paused for a question through the REST gateway. The matched
 PostgreSQL and Host state restore preserved the receipt and its operation
 evidence. A replacement Host accepted the answer and finished the same
-execution. The real Codex-backed steward delivery is still an acceptance
-item. Native ARM64 is deferred.
+execution. An isolated AMD64 REST Run used real Codex for Direction, steward
+work and independent review. The Host merged the checked candidate to private
+fixture staging and kept the merged receipt in PostgreSQL. Native ARM64 is
+deferred.
 Live qualification governs external launcher publication and operator-facing
 activation for real projects. In-progress bare Run receipts from before
 aggregate checkpointing require trusted reconciliation if they have a closed
