@@ -57,6 +57,17 @@ export class PublicationProvider {
     });
   }
 
+  /** Preserve an unavailable branch lookup as distinct from a successful PR observation. */
+  private observeBranch(branch: string) {
+    this.calls.push('observe branch ' + branch);
+    if (this.branchUnavailable && branch === '7-task')
+      throw Object.assign(new Error('Issue-branch facts unavailable: restore branch access'), {
+        stdout: 'Complete provider observation stdout\n  retained detail\n',
+        stderr: 'Complete provider observation stderr\n  restore credentials\n',
+      });
+    return branch === 'staging' ? this.fixture.git('rev-parse', 'staging') : this.head;
+  }
+
   /** Apply each effect before optionally losing its acknowledgment. */
   private effects() {
     const mock = this.t.mock;
