@@ -3,7 +3,12 @@ import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
 import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
-import { direct, type Milestone, type Plan, type RevisionRequest } from '../../../direction/src/index.js';
+import {
+  direct,
+  type Milestone,
+  type Plan,
+  type RevisionRequest,
+} from '../../../direction/src/index.js';
 import { HostTask, steward, type HoldContext } from '../../../execution/src/index.js';
 import { checkpoint } from '../../../execution/src/checkpoint.js';
 import { git } from '../../../execution/src/git.js';
@@ -94,9 +99,7 @@ export class RefusedWorkflow {
       steps: m.steps.slice(request.position.activities[m.id] ?? 0),
     }));
     const contribution =
-      request.finding.kind === 'rejection'
-        ? correction
-        : { ...correction, id: 'refusal-correction' };
+      request.finding.kind === 'rejection' ? correction : { ...correction, id: 'refusal-correction' };
     return { kind: 'plan', plan: { milestones: [contribution, ...pending] } };
   }
 
