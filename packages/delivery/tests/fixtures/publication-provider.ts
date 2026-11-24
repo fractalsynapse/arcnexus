@@ -41,10 +41,9 @@ export class PublicationProvider {
         });
       return this.pull && { ...this.pull };
     });
-    mock.method(this.fixture.provider, 'remoteHead', async (branch: string) => {
-      this.calls.push('observe branch ' + branch);
-      return branch === 'staging' ? this.fixture.git('rev-parse', 'staging') : this.head;
-    });
+    mock.method(this.fixture.provider, 'remoteHead', async (branch: string) =>
+      this.observeBranch(branch),
+    );
     mock.method(this.fixture.provider, 'verify', async (url: string, head: string) => {
       this.calls.push('verify ' + head);
       assert.equal(url, this.pull?.url);
