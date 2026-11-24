@@ -18,10 +18,7 @@ function timeline(task: HostTask): Array<any> {
 function receipt(task: HostTask) {
   const path = task.evidence.find((path) => path.endsWith('codex.jsonl'));
   assert.ok(path);
-  const frames = readFileSync(path, 'utf8')
-    .trim()
-    .split('\n')
-    .map((line) => JSON.parse(line));
+  const frames = readFileSync(path, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
   const probe = frames.find((frame) => frame.type === 'fixture.inspection');
   assert.ok(probe, 'the controlled executable must complete its actual MCP exchange');
   return probe;
