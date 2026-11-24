@@ -70,10 +70,8 @@ function environmentIdentity(
         .map((path) => join(path, executable))
         .find(existsSync);
   const local = file && (file === task.worktree || file.startsWith(task.worktree! + sep));
-  const lock = join(
-    dependencies ?? join(task.capture.source.root, 'node_modules'),
-    '.package-lock.json',
-  );
+  const modules = dependencies ?? join(task.capture.source.root, 'node_modules');
+  const lock = join(modules, '.package-lock.json');
   return {
     ...(task.config.runtime && { runtime: task.config.runtime }),
     node: process.versions,
@@ -82,6 +80,7 @@ function environmentIdentity(
     executable: local ? relative(task.worktree!, file!) : fileIdentity(file),
     nodeExecutable: fileIdentity(process.execPath),
     sandbox: fileIdentity('/usr/bin/bwrap'),
+    browserAssets: fileIdentity(checkEnvironment.PLAYWRIGHT_BROWSERS_PATH),
     preparation: preparedInput(dependencies),
     dependencies: existsSync(lock)
       ? createHash('sha256').update(readFileSync(lock)).digest('hex')

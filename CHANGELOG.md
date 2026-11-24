@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Expose the approved Host's pinned Playwright browsers to offline repository checks through the existing read-only toolchain mount (#709).
+
 - Clear a departed native writer during PostgreSQL cutover so hosted commands can resume the imported task and its retained evidence (#706).
 
 - Read optional owner research history in PostgreSQL so hosted Runs can proceed from the Director's plan to steward work (#706).
