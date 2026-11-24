@@ -108,6 +108,7 @@ class CheckpointRemote extends GitHub {
 /** Exercise Workflow, SQLite, checkout, checked edits and checkpoint commits over two attempts. */
 export class RecoveryScenario {
   readonly activations: string[] = [];
+  beforeActivation?: (task: HostTask) => void;
   readonly artifacts: string[] = [];
   readonly remote = new CheckpointRemote();
   readonly root: string;
