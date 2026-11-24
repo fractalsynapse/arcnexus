@@ -1,5 +1,79 @@
 # Inspection parity characterization
 
+## Implementation assessment at revision fe55cd8
+
+Implementation consumed the resumed Testing findings below, the complete retained
+index `187-151-retained-evidence-4ef94f911a85a155f32b0651e8f448eef8ddc6b0bcf8ab1e8a84991aef583f45.json`
+and the current timeline. The evaluated checkpoint is
+`61eed5a248d2f93e416c19233045304dcf89eeab`, secured at sequence 143297;
+the engineering base and active authority remain
+`fe55cd8ec28f25383f30822479c4b8ef8ecd32a7`.
+Issue 728 and branch `728-task` are unchanged. This section adds evidence
+documentation only; its checked-edit receipt identifies the resulting checkpoint.
+
+The public path still runs Agent.prepareRequest through Architecture's sole
+builder, then activation enrichment, captured-guidance validation,
+NativeObservation and the configured adapter. LocalMcp receives the prepared
+activity tool array and retains only actually requested listings through the
+existing observer. Complete current reads confirm the parity/listing, activation,
+LocalMcp, native adapter and guidance-validation source hashes recorded below.
+Testing demonstrated no new defect, so Implementation changes no product or test
+behavior and does not manufacture red. No foreign contribution is needed.
+
+### Applicable Implementation observations
+
+All five mapped operations returned actual status zero with expected pass.
+Artifacts resolve in the same registered task directory as the Testing records
+below. Complete logs were read; the timeline retains resolved commands,
+owner/activity scope, environment attribution and check-input identities.
+
+| Operation | Complete log | Timeline sequence | Check-input identity |
+| --- | --- | --- | --- |
+| owner-tests | `187-214-owner-tests.log` | 143508 | `95f86abe697d8d37f48b5710b5d3f46d24db060db86c91420e68a899ec5a754a` |
+| owner-format | `187-217-owner-format.log` | 143516 | `2f48d7f7f929334d605fcfebf6eb184b10975c8a331112b78c0a09722a75545f` |
+| owner-lint | `187-220-owner-lint.log` | 143524 | `a630772a72c4e33541ff35bb9b03ec2f7c8c7adf61f3ffaa8bad38edd9b7118e` |
+| repository-types | `187-223-repository-types.log` | 143532 | `73ea4398d82ddf801b858976c3b0d2579134a52411216caa48091f41abcf244e` |
+| repository-build | `187-226-repository-build.log` | 143540 | `cbe03f9e6cdda482b6acd6456a079a52ba1a73f29264bd0a01baffb543953e32` |
+
+The fresh owner-tests log has SHA-256
+`f7d961eed304565d72b153eacc7dae35d9d4557da318b01c7d2a8f3de3eb34aa`.
+Lines 2268–2273 report 269 tests, 253 passes, zero failures and 16 skips.
+The same assertion locations as Testing's log establish the current measures:
+
+- `inspection-request-parity`: lines 1041–1132 pass rendered/structured CLI
+  and actual controlled subprocess comparisons across all selected actors;
+  line 1164 passes independently asserted complete returning-caller enrichment.
+- `inspection-project-authority`: the actor matrix compares exact MCP names,
+  descriptions and schemas and checks refusal without foreign changes.
+  Lines 1173–1197 pass retained populated/disjoint/empty requested listings,
+  call identity and activity attribution, and prohibit fabricated listings.
+- `inspection-effects-provider-policy`: line 1145 passes repeatability,
+  placeholders and no-effects assertions; the matrix independently checks web
+  settings and approved guidance visibility/configuration; line 1151 passes
+  changed-guidance refusal before provider startup.
+- `inspection-evidence-quality`: the quality logs establish owner-scoped
+  TypeScript format/lint, strict repository types and build. Complete controlled
+  diagnostics retain subprocess input/options and MCP responses; 16 skipped
+  native cases remain skips and supply no additional confinement evidence.
+
+These observations refresh Testing's results against its final documentation
+checkpoint. This subsequent Markdown-only edit leaves the tested executable,
+fixture, dependencies, captured authority and operation parameters unchanged;
+that is the basis for reusing these observations, subject to the host's required
+applicability validation. This account was checked against the actual logs,
+tracked assertion anchors and existing local links. Bulk evidence stays outside
+source.
+
+Testing's configured-provider comparison below remains applicable as a historical
+artifact comparison: it identifies populated real-provider requested listings
+and exact prepared tool equality, with each activation's own authority.
+It establishes neither real-provider Reviewer/empty listings nor an independent
+complete model-received context or authoritative automatic guidance-discovery
+receipt. The retained provider research predates the listing repair and is not
+a current diagnosis. No new provider internals, version receipt, live web use
+or live qualification is inferred. Independent assembled assessment, hosted
+CI/review and staging delivery remain later host observations.
+
 ## Resumed Testing at revision fe55cd8
 
 Run 187 resumes issue 728, branch `728-task`, with engineering base and captured
