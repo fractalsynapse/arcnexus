@@ -12,7 +12,6 @@ export function assertExecutedChecks(task: HostTask, checks: readonly CheckResul
     const phase = check.id === 'fixture-check' ? 'original' : 'current';
     assert.equal(check.command, process.execPath);
     assert.deepEqual(check.args, ['recovery-check.mjs', phase]);
-    assert.equal(check.cwd, task.worktree);
     assert.equal(check.prerequisite, undefined);
     const status = phase === 'current' && baseline !== 'durable evidence\n' ? 1 : 0;
     assert.equal(check.status, status);
@@ -22,6 +21,7 @@ export function assertExecutedChecks(task: HostTask, checks: readonly CheckResul
     const observed = task
       .observations<{ check?: CheckResult; checkInput?: string; reusedFrom?: string }>()
       .findLast((event) => event.check?.log === check.log);
+    if (!observed?.reusedFrom) assert.equal(check.cwd, task.worktree);
     assert.match(observed?.checkInput ?? '', /^[a-f0-9]{64}$/);
     assert.deepEqual(observed?.check, check);
   }
