@@ -142,12 +142,13 @@ function recoveredMerge(
   reviews: number,
   commit: string,
   staging: string,
+  corrected = false,
 ) {
   assert.equal(provider.pull?.url, url);
   assert.equal(provider.opened, 1);
   assert.equal(provider.merged, 1);
   assert(fixture.reviews.length > reviews, 'Recovered candidate requires independent reassessment');
-  recoveredAcceptance(fixture, staging, commit);
+  recoveredAcceptance(fixture, staging, commit, corrected);
   assert.equal(fixture.git('rev-parse', commit + '^'), staging);
   assert.equal(
     fixture.git('rev-parse', commit + '^{tree}'),
@@ -156,7 +157,12 @@ function recoveredMerge(
 }
 
 /** Bind recovered checks and independent acceptance to the resulting tree and newly captured base. */
-function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, commit: string) {
+function recoveredAcceptance(
+  fixture: PreparedRecoveryFixture,
+  staging: string,
+  commit: string,
+  corrected = false,
+) {
   const history = fixture.observed.at(-1)! as Array<{
     verification?: {
       identity: import('../../../verification/src/index.js').VerificationIdentity;
@@ -171,7 +177,8 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
   assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
   assert.equal(assessment.identity.base, staging);
   assert.notEqual(assessment.identity.capture, prior?.identity.capture);
-  assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
+  if (corrected) assert.notEqual(assessment.identity.acceptance, prior?.identity.acceptance);
+  else assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
   assert.notEqual(assessment.identity.inputs, prior?.identity.inputs);
   assert.deepEqual(verdict.verification, assessment.identity);
   assert.deepEqual(verdict.criteria, ['continuity']);
@@ -265,7 +272,7 @@ test('staging moves again after outdated PR recovery obtains fresh acceptance', 
   preserved(fixture, original);
 });
 
-test('a real required command failure holds the recovered PR until checked correction', async (t) => {
+test('failed recovered command retains the PR through checked correction', async (t) => {
   const fixture = new PreparedRecoveryFixture(t);
   const provider = new PublicationProvider(fixture, t);
   const original = await prepared(fixture);
@@ -287,7 +294,7 @@ test('a real required command failure holds the recovered PR until checked corre
   const result = await fixture.run();
   assert.equal(result.kind, 'merged', JSON.stringify(result));
   assert(result.kind === 'merged');
-  recoveredMerge(fixture, provider, url, reviews, result.commit, staging);
+  recoveredMerge(fixture, provider, url, reviews, result.commit, staging, true);
   assert.equal(readFileSync(failure.log, 'utf8'), failure.text);
   preserved(fixture, original);
 });
@@ -297,10 +304,13 @@ function failedCommand(fixture: PreparedRecoveryFixture, evidence: readonly stri
   const review = fixture.reviews.at(-1) as {
     assignment: { checks: Array<{ id: string; status: number; log: string }> };
   };
-  assert.deepEqual(review.assignment.checks.map(({ id, status }) => ({ id, status })), [
-    { id: 'fixture-check', status: 0 },
-    { id: 'current-check', status: 1 },
-  ]);
+  assert.deepEqual(
+    review.assignment.checks.map(({ id, status }) => ({ id, status })),
+    [
+      { id: 'fixture-check', status: 0 },
+      { id: 'current-check', status: 1 },
+    ],
+  );
   const log = review.assignment.checks[1]!.log;
   assert(evidence.includes(log));
   const text = readFileSync(log, 'utf8');
