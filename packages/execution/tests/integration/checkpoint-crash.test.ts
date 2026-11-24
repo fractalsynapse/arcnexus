@@ -32,6 +32,7 @@ function crash(scenario: RecoveryScenario, t: TestContext): Acknowledgment {
     JSON.stringify({
       executable,
       args,
+      cwd: process.cwd(),
       node: process.version,
       status: result.status,
       signal: result.signal,
@@ -49,7 +50,7 @@ function crash(scenario: RecoveryScenario, t: TestContext): Acknowledgment {
 }
 
 /** Observe acknowledged bytes and the abandoned real checkout before ordinary admission. */
-function abandoned(scenario: RecoveryScenario, ack: Acknowledgment) {
+function abandoned(scenario: RecoveryScenario, ack: Acknowledgment, t: TestContext) {
   assert.equal(ack.node, process.version);
   assert.equal(ack.issue, '7');
   assert.equal(ack.branch, '7-task');
@@ -61,7 +62,16 @@ function abandoned(scenario: RecoveryScenario, ack: Acknowledgment) {
   assert.equal(readFileSync(join(ack.worktree, 'first.txt'), 'utf8'), 'first');
   assert.equal(scenario.observe('show', '7-task:first.txt'), 'first');
   assert.equal(scenario.observe('status', '--porcelain'), '');
-  assert(scenario.observe('worktree', 'list', '--porcelain').includes(ack.worktree));
+  const worktrees = scenario.observe('worktree', 'list', '--porcelain');
+  t.diagnostic(
+    JSON.stringify({
+      beforeRestart: ack,
+      bytes: readFileSync(join(ack.worktree, 'first.txt'), 'utf8'),
+      committedBytes: scenario.observe('show', '7-task:first.txt'),
+      worktrees,
+    }),
+  );
+  assert(worktrees.includes(ack.worktree));
 }
 
 /** Reject activation before reconciliation, duplicate receipt effects or lost original artifacts. */
@@ -93,7 +103,7 @@ test('abrupt acknowledged edit recovers its original receipt before activation a
   const unrelated = join(dirname(scenario.root), 'unrelated');
   scenario.observe('worktree', 'add', '--detach', unrelated, 'HEAD');
   const ack = crash(scenario, t);
-  abandoned(scenario, ack);
+  abandoned(scenario, ack, t);
   scenario.beforeActivation = (task) => recovered(task, scenario, ack);
   const outcome = await scenario.run();
   assert.equal(outcome.kind, 'merged', JSON.stringify(outcome));
