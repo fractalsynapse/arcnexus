@@ -70,6 +70,14 @@ Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
 and exit 130 cancellation. Refuse a second active task in the same project. Other
 verbs, option modes and launch surfaces are reserved for later qualification.
 
+The Data SDK, a platform-bound CLI mode, OpenAPI and MCP gateways, and registered
+Host launchers may be implemented and verified against isolated test projects
+and stores. Operator-facing activation for real projects remains subject to
+the existing live qualification requirement. An enabled network adapter
+forwards its authenticated project scope to the same Data and Commands services.
+It preserves argument meaning, admission, durable human approvals, cancellation,
+and outcomes. Terminal output and exit codes remain the responsibility of CLI.
+
 `arcnexus architecture update [<feedback>]` assesses the approved guides, captured
 architecture, implementation and relevant prior observations. Feedback focuses the
 assessment. A no-change assessment can complete without a merge. Proposed changes
@@ -115,6 +123,7 @@ No answer, an unknown response or elapsed time supplies approval.
 | GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |
 | GW-31 | Human and JSONL task modes display observations before completion from the same structured observer. JSONL stdout contains only typed event/result records in order; inspect --json remains one result and exit semantics remain unchanged. |
 | GW-32 | A running task exposes actor/activity, operations, elapsed time and available profile-level usage/cost with evidence links. Cancellation and restart preserve the recorded timeline and unknown measurements are not reported as zero. |
+| GW-33 | An authorized CLI or MCP command and the matching API operation use the same scoped application service. A gateway disconnect preserves the active command, and reconnect resumes its retained ordered observations. |
 
 ## Deferred
 
