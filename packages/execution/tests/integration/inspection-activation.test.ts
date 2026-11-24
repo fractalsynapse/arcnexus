@@ -89,7 +89,10 @@ function context(task: HostTask, review = false) {
 /** Author registered round inputs independently of the request builder and retain the live timeline. */
 function enrichment(task: HostTask) {
   task.listen(() => undefined);
-  const report = task.store('prior-round.md', 'Distinct prior round finding\nFinal authored line.\n');
+  const report = task.store(
+    'prior-round.md',
+    'Distinct prior round finding\nFinal authored line.\n',
+  );
   const round = { invocation: 'prior-invocation', round: '1' as const, report };
   task.record({ completedRound: { ...round, findings: [], measurements: [], evidence: [report] } });
   task.record({
@@ -201,11 +204,8 @@ for (const [component, activity, actor, names, web] of [
     const task = await fixture.open(t);
     const selection = { component, activity };
     const enriched = enrichment(task);
-    const initial = fixture.agent.prepareRequest(
-      task.capture,
-      selection,
-      liveContext(task, enriched),
-    );
+    const supplied = liveContext(task, enriched);
+    const initial = fixture.agent.prepareRequest(task.capture, selection, supplied);
     assertSelected(initial, actor, names, web);
     await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
     const view = fixture.agent.prepareRequest(
@@ -391,7 +391,10 @@ async function returningScenario(t: TestContext) {
   questionBinding(fixture);
   const task = await fixture.open(t);
   const enriched = enrichment(task);
-  const explicit = task.store('explicit.log', 'Original supplied observation\nFinal original line.\n');
+  const explicit = task.store(
+    'explicit.log',
+    'Original supplied observation\nFinal original line.\n',
+  );
   const data = context(task);
   data.assignment.instructions += '\nFixture mode: clarification';
   data.evidence.push(explicit);
@@ -425,6 +428,8 @@ test('EX-6: returning caller inspection matches enriched native input and comple
   assert.equal(probe.input, view.request.input);
   assertInvocation(view, probe);
   t.diagnostic(
-    JSON.stringify({ returningNativeObservation: { revision: task.capture.source.revision, probe } }),
+    JSON.stringify({
+      returningNativeObservation: { revision: task.capture.source.revision, probe },
+    }),
   );
 });
