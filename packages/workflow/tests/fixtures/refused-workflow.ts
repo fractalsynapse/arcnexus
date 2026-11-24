@@ -101,7 +101,7 @@ export class RefusedWorkflow {
         plan: async () => ({
           kind: 'plan',
           plan: {
-            focus: { purpose: 'Recover refused correction', objectives: [], constraints: [] },
+            focus: { purpose: 'Recover refused correction', objectives: ['Preserve acceptance'], constraints: ['Keep captured authority'] },
             milestones: [{ ...correction, id: 'original' }],
           },
         }),
