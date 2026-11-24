@@ -160,7 +160,9 @@ records continuity after staging moves: preserve checked bytes, verbatim answers
 and historical acceptance, capture current authority before continuation, and
 retain conflicts before overwrite. It distinguishes existing recovery mechanisms
 from the public regression and fresh independent acceptance still required for
-the recovered candidate.
+the recovered candidate. Its [abrupt-interruption intent](docs/prepared-checkpoint-recovery.md#abrupt-interruption-and-activity-checkpoints)
+also defines the receipt-before-cleanup subprocess boundary, observation before
+retry, pending check evidence and successor resumption required for #708.
 
 An acknowledged MCP edit is secured before its receipt is returned. Cancellation
 and ordinary termination retain checked work and remove the task-owned worktree.
