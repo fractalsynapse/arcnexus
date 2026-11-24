@@ -116,3 +116,13 @@ export {
   providerIdentitySchema,
   providerSchema,
 } from './registration.js';
+
+/** Check a trusted project's assigned provider without reading its credential. */
+export async function admittedProvider(database: Client, operator: string, id: string) {
+  const result = await database.query(
+    `SELECT id FROM arcnexus_capacity.providers
+     WHERE operator=$1 AND id=$2 AND state='admitted'`,
+    [operator, id],
+  );
+  return Boolean(result.rowCount);
+}

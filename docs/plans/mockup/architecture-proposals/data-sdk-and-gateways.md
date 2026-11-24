@@ -1,6 +1,6 @@
 # Manage component models through Data and Commands
 
-**Approved direction. Isolated implementation in progress.** Each enabled display requests the resources
+**Approved direction. Isolated implementation.** Each enabled display requests the resources
 it needs. API, MCP and CLI share a Data SDK for managing domain models and a
 Commands SDK for running workflows. Model definitions and their implementations
 stay with their component stewards.
@@ -17,17 +17,21 @@ for real projects follows the existing live qualification requirement.
 | Journal replay and follow | The API follows committed SQLite or PostgreSQL observations and replays after the same scoped cursor used by MCP. Newly captured native agent messages retain complete text in the journal. Raw tool data remains in its registered artifacts. |
 | PostgreSQL setup, rehearsal and cutover | DB setup checks migration digests. An isolated cutover verifies the copied observations and registered artifact paths and digests, binds the native write fence to a PostgreSQL deployment, and enables one hosted journal writer. A disconnected writer retains its lane until the trusted caller confirms its prior owner stopped. |
 | Enrollment and catalog | An admitted launcher can maintain an authenticated connection. Revocation closes that connection. REST and MCP share catalog CRUD and compare-and-set revision refresh. The web app and mockup reuse the same manager components. |
-| Commands and Host composition | Local CLI, platform CLI, REST and MCP share the pinned inspection result. The native CLI uses the common workflow command selector and the shared Host plugin. |
+| Commands and Host composition | The native CLI and the hosted worker dispatch the same Commands requests. REST, MCP and the platform CLI share durable admission, read, answer, and cancel operations. Hosted execution uses the existing Host over PostgreSQL. |
+| Launcher assignment | An admitted launcher receives a project ID and the revision pinned by the command. The executable matches them against a local manifest and starts or reuses the approved Docker container. |
+| Operation evidence | Plan opens retained tool inputs and outputs on demand. REST and MCP resolve them from the selected journal event and the project's trusted evidence mount. |
+| GitHub bindings | An optional repository-scoped credential verifies the exact commit of a bound checkout. The provider credential file lives in the gateway's trusted deployment. |
 
 The [local review stack](../../../../apps/api/README.md) runs Web, API, MCP,
-PostgreSQL, and DB setup with distinct runtime grants. Its per-project journal
-may be imported and cut over for isolated verification.
+PostgreSQL, and DB setup with distinct runtime grants. Use the
+[Host and launcher setup](../../../../apps/host/README.md) to run workflows
+with isolated checkouts, provider fixtures and a dedicated PostgreSQL role.
 
-Full hosted workflow execution still needs the native Host integration with the
-PostgreSQL writer, remote workflow Commands admission, approvals and recovery,
-and launcher assignment and container lifecycle. Private GitHub provider bindings,
-launcher binary publishing, and lazy raw tool artifact inspection also remain open.
-Real-project activation requires the approved live qualification.
+Remaining delivery includes launcher binary publishing, cloning private projects
+without a pre-provisioned checkout, browser command and approval controls, and
+deployment backup and restore. Recovery of a stopped bare Run with an ambiguous
+aggregate result requires trusted reconciliation. Real-project activation
+requires the approved live qualification.
 
 ## Unified data management
 
@@ -389,16 +393,15 @@ migrate a store. [Refinement Plan admission](../../../../packages/workflow/src/r
 
 ## MCP and CLI parity
 
-The hosted MCP server exposes the authorized CLI operations as structured
-tools over the network. For example, `inspect`, `task_plan`, `task_run`,
-`architecture_update` and `refine` use the same Commands calls as their CLI
-counterparts. `task_run` with a goal uses `runTask`. With no goal, it uses
-`runRound`, as the CLI does. Match command inputs, lifecycle outcomes,
-approval gates and cancellation under the caller's authority. The CLI owns
-terminal rendering and exit codes. MCP owns tool discovery, structured
-responses and how clients observe a running command by its retained identity.
-The operator's MCP surface is separate from the activity-scoped tools
-provided to an agent.
+The operator MCP server exposes `submit_workflow`, `read_workflow`,
+`answer_workflow`, and `cancel_workflow`. An explicit platform CLI mode and
+REST expose the same operations. Submission accepts the Commands SDK variants
+`task_plan`, `task_run`, `architecture_update` and `refine`. A `task_run`
+with a goal uses `runTask`. With no goal, it uses `runRound`. The first
+durable event associates a workflow receipt with its execution timeline. The
+receipt retains the exact open approval, and a matching reply resumes the
+original request. The operator MCP surface is separate from the
+activity-scoped tools provided to an agent.
 
 MCP also exposes typed data operations such as `list_goals`, `read_goal`
 and `read_plan_timeline`. Expose create, update and delete tools for models
@@ -406,9 +409,7 @@ that support those operations and are authorized for the caller. An update
 tool accepts the same expected revision as its REST counterpart. Tool
 contracts come from the Data registrations used by REST and by future CLI
 data commands. Command tools delegate to Commands, while resource tools
-delegate to Data. A future `POST /plan-executions` can represent starting
-Plan through Commands.
-Read-only Plan integration can be reviewed first. [Commands SDK](../../../../packages/commands/contract.md) · [MCP structured tool results](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#structured-content)
+delegate to Data. Plan starts through `POST /commands` with the `task_plan` variant. [Commands SDK](../../../../packages/commands/contract.md) · [MCP structured tool results](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#structured-content)
 
 ## Resumable event log
 

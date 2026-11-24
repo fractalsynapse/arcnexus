@@ -1,3 +1,4 @@
+import { OperationDetail } from './operation-detail.js';
 import { createElement as h } from 'react';
 import { Button } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
@@ -32,12 +33,12 @@ export function EventDisplay() {
     h(
       'div',
       { role: 'log', 'aria-label': 'Planning events' },
-      entries(timeline.frames).map((entry) => h(EventEntry, { key: entry.key, entry })),
+      entries(timeline.frames).map((entry) => h(EventEntry, { key: entry.key, entry, execution })),
     ),
   );
 }
 
-function EventEntry({ entry }: { entry: Entry }) {
+function EventEntry({ entry, execution }: { entry: Entry; execution?: string }) {
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -51,14 +52,28 @@ function EventEntry({ entry }: { entry: Entry }) {
           'ul',
           null,
           entry.operations.map((operation) =>
-            h(
-              'li',
-              { key: operation.sequence },
-              h('code', null, eventLabel(operation.observation)),
-            ),
+            h(OperationEntry, { key: operation.sequence, operation, execution }),
           ),
         ),
       ),
+  );
+}
+
+function OperationEntry({
+  operation,
+  execution,
+}: {
+  operation: TimelineFrame;
+  execution?: string;
+}) {
+  const name = toolName(operation.observation);
+  return h(
+    'li',
+    null,
+    h('code', null, eventLabel(operation.observation)),
+    execution &&
+      name &&
+      h(OperationDetail, { sequence: operation.sequence, execution, operation: name }),
   );
 }
 
@@ -77,6 +92,7 @@ function entries(frames: TimelineFrame[]) {
 
 type Observation = {
   message?: string;
+  operation?: { name?: string };
   nativeEvent?: {
     kind?: string;
     event?: { type?: string; item?: { type?: string; text?: string; tool?: string } };
@@ -97,10 +113,15 @@ function modelMessage(value: unknown) {
   );
 }
 
+function toolName(value: unknown) {
+  return (value as Observation | null)?.operation?.name;
+}
+
 function eventLabel(value: unknown) {
   const observation = value as Observation | null;
   const native = observation?.nativeEvent;
   return (
+    toolName(value) ??
     native?.event?.item?.tool ??
     native?.event?.item?.type ??
     native?.event?.type ??

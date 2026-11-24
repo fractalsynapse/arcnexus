@@ -1,10 +1,11 @@
 # Local gateway review
 
 The root [Compose definition](../../compose.yaml) runs Web, API, MCP,
-PostgreSQL and the one-shot DB setup job. The native CLI continues to own
-workflow execution during this review. The adapters accept an explicit
-operator bearer credential and use distinct PostgreSQL roles. API and MCP have journal read and catalog CRUD grants. API additionally has
-enrollment grants. Only DB setup applies migrations.
+PostgreSQL and the one-shot DB setup job. The adapters accept an explicit
+operator bearer credential and use distinct PostgreSQL roles with journal
+read, catalog CRUD, and workflow receipt permissions. API also has
+enrollment grants. DB setup applies migrations. The
+[isolated Host](../host/README.md) owns execution and journal writes.
 
 Use separate directories and credentials for this isolated review. Set
 these variables in the Compose environment.
@@ -47,17 +48,21 @@ and replay and live follow of retained PostgreSQL observations. The browser uses
 an operator credential held in memory for the review session. A registered
 launcher can use `connect` to keep its authorized presence active.
 
-The explicit read-only CLI mode is `arcnexus platform inspect <component> <activity>`.
-Set `ARC_API_URL` to the API base, including the Web proxy's `/api` prefix if
-applicable, and supply `ARC_PROJECT_ID` and `ARC_OPERATOR_TOKEN_FILE`.
+The platform CLI uses `ARC_API_URL`, `ARC_PROJECT_ID` and
+`ARC_OPERATOR_TOKEN_FILE`. Include the Web proxy's `/api` prefix in the URL
+when using that proxy. Use `arcnexus platform inspect <component> <activity>`
+for captured Agent inspection. Use `arcnexus platform submit <request.json>`
+to submit a JSON object with an operator-generated UUID in `id` and the
+structured Commands arguments in `request`. For example, Plan takes
+`{"command":"task_plan"}` as the request value. Use
+`arcnexus platform receipt <id>` to inspect the result and
+`arcnexus platform answer <id> <gate>` to submit an answer via stdin.
+`arcnexus platform cancel <id>` requests cancellation.
 
 The DB app supports `rehearse-import <project-directory> <journal-storage>`.
 With `ARC_ISOLATED_REVIEW=1`, it also accepts
-`cutover <project-directory> <journal-storage>`. Cutover fences that fixture's
-SQLite store to the verified PostgreSQL deployment. The hosted coordination
-primitive can admit one writer and requires a trusted stop confirmation to
-release an unfinished lane. The deployed review scope currently exposes read-only
-Commands inspection. Workflow submission, container launch and private GitHub
-bindings remain pending. Follow the
-[architecture proposal](../../docs/plans/mockup/architecture-proposals/data-sdk-and-gateways.md)
-for the current implementation and activation gate.
+`cutover <project-directory> <journal-storage>`. Cutover fences that
+checkout's SQLite store to the verified PostgreSQL deployment. A trusted
+isolated project binding can enable hosted commands and select the admitted
+provider UUID. See the [Host setup](../host/README.md) and
+[architecture proposal](../../docs/plans/mockup/architecture-proposals/data-sdk-and-gateways.md).

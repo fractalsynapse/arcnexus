@@ -74,6 +74,11 @@ export class HostTask implements TaskSession {
     );
   }
 
+  /** Propagate hosted writer loss to every active provider and tool. */
+  get signal() {
+    return this.journal.signal;
+  }
+
   /** Resolve the exact approved guide from this child's actual architecture-phase ancestor. */
   get guide() {
     const id = this.parent
@@ -207,6 +212,7 @@ export class HostTask implements TaskSession {
   /** Materialize a read-only planning snapshot at the captured revision. */
   planningWorkspace(signal: AbortSignal) {
     signal.throwIfAborted();
+    this.journal.assertWriter();
     const { source } = this.capture;
     this.recoverMeasureWorkspace();
     const path = join(this.directory(), 'measure-worktree');
@@ -232,6 +238,7 @@ export class HostTask implements TaskSession {
   /** Recover the approved base and branch, then create the clean worktree for this attempt. */
   async setupWorkspace(issue: string, signal: AbortSignal) {
     if (this.branch && this.worktree) return;
+    this.journal.assertWriter();
     if (!/^\d+$/.test(issue)) throw new Error('Invalid workspace issue');
     const base = this.capture.source.revision;
     this.recoverMeasureWorkspace();
@@ -323,6 +330,7 @@ export class HostTask implements TaskSession {
 
   /** Select the captured GitHub provider for this task. */
   provider(signal: AbortSignal) {
+    this.journal.assertWriter();
     return new GitHub(this.capture.source.remote, signal);
   }
 
@@ -368,6 +376,7 @@ export class HostTask implements TaskSession {
     signal: AbortSignal,
     refresh?: ContextRefresh,
   ) {
+    this.journal.assertWriter();
     return activateActor(this, agent, selection, data, signal, refresh);
   }
 
@@ -408,6 +417,7 @@ export class HostTask implements TaskSession {
 
   /** Run a declared check and record its real exit, duration and transcript. */
   async check(id: string, signal: AbortSignal, scope?: StewardScope) {
+    this.journal.assertWriter();
     return runCheck(this, id, signal, scope);
   }
 
@@ -465,17 +475,21 @@ function decisionContext(proposal: string) {
   };
 }
 
-/** Mount the native host execution boundary with trusted storage. */
-export const executionPlugin = {
-  inject: ['architecture', 'coordination'],
-  /** Register the production implementation used by Workflow's host calls. */
-  apply(context: Context) {
-    context.provide(
-      'execution',
-      new Execution(context.architecture, context.coordination, applicationStorage()),
-    );
-  },
-};
+/** Give every Host service the same trusted storage root. */
+export function executionPluginFor(storage?: string) {
+  return {
+    inject: ['architecture', 'coordination'],
+    /** Register the production implementation used by Workflow's host calls. */
+    apply(context: Context) {
+      context.provide(
+        'execution',
+        new Execution(context.architecture, context.coordination, storage ?? applicationStorage()),
+      );
+    },
+  };
+}
+
+export const executionPlugin = executionPluginFor();
 
 export { steward } from './steward.js';
 export { checkFailureSignature } from './steward-check.js';

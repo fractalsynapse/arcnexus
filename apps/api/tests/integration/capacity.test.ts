@@ -12,7 +12,7 @@ export const suite = { owner: 'api-app', level: 'integration', tags: ['postgresq
 
 const databaseUrl = process.env.ARC_TEST_DATABASE_URL;
 
-async function platform(t: TestContext) {
+async function platform(t: TestContext, assignments?: Parameters<typeof capacityApiPlugin>[1]) {
   const database = new Client({ connectionString: databaseUrl });
   await database.connect();
   t.after(() => database.end());
@@ -22,7 +22,7 @@ async function platform(t: TestContext) {
   await context.databaseSetup.migrate();
   await context.use(capacityPlugin(database));
   await context.use(
-    capacityApiPlugin((request) => request.headers.get('authorization') ?? undefined),
+    capacityApiPlugin((request) => request.headers.get('authorization') ?? undefined, assignments),
   );
   await context.use(launcherPlugin);
   const { url, server } = await serveApi(context.capacityApi);
@@ -81,5 +81,30 @@ test(
     assert.equal((await request(path, 'PATCH', { state: 'revoked' })).status, 200);
     assert.equal((await stream.read()).done, true);
     assert.equal((await (await request(root, 'GET')).json())[0].online, false);
+  },
+);
+
+test(
+  'the admitted connection receives only its configured launch scope',
+  { skip: !databaseUrl },
+  async (t) => {
+    const project = randomUUID();
+    const revision = 'a'.repeat(40);
+    const assignment = { provider: undefined as string | undefined };
+    const { url, request, launcher } = await platform(t, async function* (provider) {
+      if (provider === assignment.provider) yield { project, revision };
+    });
+    const root = '/capacity-providers';
+    const { code } = await (await request(root + '/codes', 'POST')).json();
+    const identity = await launcher.enroll(url, code, 'Assigned launcher', 'Linux');
+    assignment.provider = identity.id;
+    const path = root + '/' + identity.id;
+    await request(path, 'PATCH', { state: 'admitted' });
+    const body = await launcher.connect(url, identity);
+    const text = await new Response(body).text();
+    assert.match(text, /event: ready/);
+    assert.match(text, /event: assignment/);
+    assert.match(text, new RegExp(project));
+    assert.match(text, new RegExp(revision));
   },
 );

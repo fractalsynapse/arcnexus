@@ -1,3 +1,4 @@
+import { readServerEvents } from '../../../../packages/foundation/src/server-events.js';
 import { gatewayRequest } from './resource.js';
 
 export interface TimelineFrame {
@@ -24,28 +25,10 @@ export async function followTimeline(
   const response = await gatewayRequest(path, token, { headers, signal });
   if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
     throw new Error('The live event stream is unavailable.');
-  await readFrames(response.body.pipeThrough(new TextDecoderStream()), receive);
-}
-
-async function readFrames(stream: ReadableStream<string>, receive: (event: TimelineEvent) => void) {
-  const reader = stream.getReader();
-  let pending = '';
-  try {
-    for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) return;
-      pending += chunk.value;
-      let boundary = pending.indexOf('\n\n');
-      while (boundary !== -1) {
-        const event = decode(pending.slice(0, boundary));
-        if (event) receive(event);
-        pending = pending.slice(boundary + 2);
-        boundary = pending.indexOf('\n\n');
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
+  await readServerEvents(response.body, (frame) => {
+    const event = decode(frame);
+    if (event) receive(event);
+  });
 }
 
 function decode(block: string): TimelineEvent | undefined {

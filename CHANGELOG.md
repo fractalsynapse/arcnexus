@@ -10,6 +10,8 @@
 
 - Add isolated PostgreSQL cutover and writer fencing, committed timeline follow, conditional catalog updates, live launcher presence, and scoped inspection across the gateways. Use shared live and fixture views for platform management and independently loaded Plan displays (#706).
 
+- Run isolated hosted workflows through the native Host and PostgreSQL. Add shared command receipts, pinned launcher assignments, durable approval and cancellation, and on-demand tool evidence (#706).
+
 ### Changed
 
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).

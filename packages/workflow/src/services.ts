@@ -33,11 +33,16 @@ export interface Observation {
   evidence?: readonly string[];
 }
 
+export interface TaskQuestion {
+  scope: string;
+  question: string;
+}
+
 export interface TaskObserver {
   progress(observation: Observation): void;
   event?(event: JournalEvent): void;
   measurements?(measurements: ReturnType<RunMeasurements['snapshot']>): void;
-  answer?(question: string, signal: AbortSignal): Promise<string | undefined>;
+  answer?(question: string, signal: AbortSignal, gate?: TaskQuestion): Promise<string | undefined>;
 }
 
 export type TaskOutcome =
@@ -86,6 +91,7 @@ export type TaskEvent =
   | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
+  readonly signal?: AbortSignal;
   readonly capture: Capture;
   readonly goal: string;
   readonly evidence?: readonly string[];

@@ -7,6 +7,8 @@ import {
   importSqliteJournal,
   cutoverSqliteJournal,
   hostedCoordinationMigration,
+  hostSessionMigration,
+  workflowRequestsMigration,
   journalNotificationMigration,
 } from '../../../packages/coordination/src/index.js';
 import { migrate, verifyMigrations } from './migrations.js';
@@ -15,6 +17,8 @@ const modelMigrations = [
   coordinationMigration,
   journalNotificationMigration,
   hostedCoordinationMigration,
+  hostSessionMigration,
+  workflowRequestsMigration,
   capacityMigration,
   catalogMigration,
 ];

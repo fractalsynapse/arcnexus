@@ -13,6 +13,7 @@ const glyphs = {
   refine: 'M20 10a8 8 0 1 0-2 8M20 5v5h-5',
   computer: 'M4 4h16v12H4zM12 16v4m-4 0h8',
   folder: 'M3 7V5h6l2 3h10v11H3z',
+  info: 'M12 11v6m0-10h.01M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
 };
 
 export type IconName = keyof typeof glyphs;

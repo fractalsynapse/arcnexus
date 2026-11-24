@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-type Resource<T> = { path?: string; value?: T; error?: string };
+type Resource<T> = { path?: string; token?: string; value?: T; error?: string };
 
 type Fetch = (path: string, request: RequestInit) => Promise<Response>;
 let transport: Fetch = (path, request) => fetch('/api' + path, request);
@@ -59,10 +59,10 @@ export function useResource<T>(path: string | undefined, token: string | undefin
     const read = sharedRead(path, token);
     void read.value.then(
       (value) => {
-        if (mounted) setState({ path, value: value as T });
+        if (mounted) setState({ path, token, value: value as T });
       },
       (error: Error) => {
-        if (mounted) setState({ path, error: error.message });
+        if (mounted) setState({ path, token, error: error.message });
       },
     );
     return () => {
@@ -70,5 +70,5 @@ export function useResource<T>(path: string | undefined, token: string | undefin
       read.release();
     };
   }, [path, token, refresh]);
-  return state.path === path ? state : {};
+  return state.path === path && state.token === token ? state : {};
 }

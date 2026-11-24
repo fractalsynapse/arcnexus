@@ -8,6 +8,27 @@ import {
 import type { Data, DataScope } from '../../../packages/data/src/index.js';
 
 const tools = {
+  submit_workflow: {
+    resource: 'workflow-requests',
+    operation: 'create',
+    description: 'Submit an authorized Plan, Run, Architect, or Refine request.',
+  },
+  read_workflow: {
+    resource: 'workflow-requests',
+    operation: 'read',
+    description: 'Read the current state and execution identity of your submitted request.',
+  },
+  cancel_workflow: {
+    resource: 'workflow-requests',
+    operation: 'cancel',
+    description: 'Cancel your submitted workflow.',
+  },
+  answer_workflow: {
+    resource: 'workflow-requests',
+    operation: 'answer',
+    description: 'Answer the exact open question for your workflow request.',
+  },
+
   list_projects: {
     resource: 'projects',
     operation: 'list',
@@ -78,6 +99,11 @@ const tools = {
     resource: 'plan-executions',
     operation: 'tool-counts',
     description: 'Read observed tool frequency for a pinned Plan execution.',
+  },
+  read_operation_evidence: {
+    resource: 'operation-evidence',
+    operation: 'read',
+    description: 'Read recorded complete tool inputs and outputs for a selected timeline event.',
   },
   read_execution_timeline: {
     resource: 'execution-events',

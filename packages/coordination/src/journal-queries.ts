@@ -1,5 +1,6 @@
 import { statSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
+import type { JournalReader } from './journal-store.js';
 import type { JournalEvent } from './journal-types.js';
 
 const retained = `
@@ -31,7 +32,7 @@ export interface TimelineSlice {
 
 /** Read all attempts of one logical task and its nested logical descendants in event order. */
 export function descendantEvents(
-  database: DatabaseSync,
+  database: JournalReader,
   task: string,
   { after, through }: TimelineWindow = {},
 ): JournalEvent[] {
@@ -80,7 +81,11 @@ export function readTimelineFile(
 }
 
 /** Pin one consistent read view when resolving and replaying a cursor window. */
-function readTimeline(database: DatabaseSync, task: string, window: TimelineWindow): TimelineSlice {
+export function readTimeline(
+  database: JournalReader & { exec(sql: string): void },
+  task: string,
+  window: TimelineWindow,
+): TimelineSlice {
   database.exec('BEGIN');
   try {
     for (const cursor of [window.after, window.through]) {
@@ -100,7 +105,7 @@ function readTimeline(database: DatabaseSync, task: string, window: TimelineWind
 }
 
 /** Resolve a cursor only within the selected logical task and its retained descendants. */
-function verifyCursor(database: DatabaseSync, task: string, cursor: string) {
+function verifyCursor(database: JournalReader, task: string, cursor: string) {
   if (
     !/^[1-9][0-9]*$/.test(cursor) ||
     !database.prepare(`${retained} SELECT 1 FROM retained WHERE id = ?`).get(task, cursor)
@@ -108,7 +113,7 @@ function verifyCursor(database: DatabaseSync, task: string, cursor: string) {
     throw new Error('Timeline cursor is unavailable in this execution');
 }
 
-function newestSequence(database: DatabaseSync, task: string) {
+function newestSequence(database: JournalReader, task: string) {
   const row = database
     .prepare(`${retained} SELECT CAST(MAX(id) AS TEXT) AS sequence FROM retained`)
     .get(task);
@@ -123,7 +128,7 @@ export const verifiedTerminal = `
       json_extract(content, '$.outcome.kind') = 'merged'
       OR (json_extract(content, '$.outcome.kind') = 'satisfied' AND EXISTS (
         SELECT 1 FROM events reviewed WHERE reviewed.run = events.run
-          AND json_extract(reviewed.content, '$.candidate.unchanged') = 1
+          AND json_type(reviewed.content, '$.candidate.unchanged') = 'true'
           AND json_extract(reviewed.content, '$.verdict.kind') = 'accepted'
       ))
     )
@@ -147,7 +152,11 @@ export const recentFindings = `
   ORDER BY incident.id DESC
 `;
 
-export function researchReports(database: DatabaseSync, component: string, id?: string): unknown[] {
+export function researchReports(
+  database: JournalReader,
+  component: string,
+  id?: string,
+): unknown[] {
   return database
     .prepare(
       `
@@ -163,7 +172,7 @@ export function researchReports(database: DatabaseSync, component: string, id?: 
     .map(({ report }) => JSON.parse(String(report)));
 }
 
-export function completedRefinementRounds(database: DatabaseSync): JournalEvent[] {
+export function completedRefinementRounds(database: JournalReader): JournalEvent[] {
   return database
     .prepare(
       `

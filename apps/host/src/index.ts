@@ -1,22 +1,39 @@
 import type { Context } from 'cordis';
-import { coordinationPlugin } from '../../../packages/coordination/src/index.js';
+export { runHostedRequest } from './request-worker.js';
+export { serveHostedRequests } from './request-loop.js';
+import {
+  coordinationPlugin,
+  hostedProjectCoordination,
+  type HostedProject,
+} from '../../../packages/coordination/src/index.js';
 import { direct, track } from '../../../packages/direction/src/index.js';
 import { integrate, resume } from '../../../packages/delivery/src/index.js';
 import {
   applicationStorage,
   hostTask,
-  executionPlugin,
+  executionPluginFor,
   steward,
 } from '../../../packages/execution/src/index.js';
 import { plannerPlugin } from '../../../packages/planner/src/index.js';
 import { verify } from '../../../packages/verification/src/index.js';
 import { workflowPlugin, type WorkflowServices } from '../../../packages/workflow/src/index.js';
 
-/** Compose the production services only for an admitted task command. */
+/** Compose the native Host using the selected application storage. */
 export function hostPlugin(storage = applicationStorage()) {
+  return mountHost(storage, coordinationPlugin(storage));
+}
+
+/** Use a PostgreSQL writer with the same Execution and Workflow plugins. */
+export function hostedHostPlugin(storage: string, assignment: HostedProject) {
+  return mountHost(storage, (context) =>
+    context.provide('coordination', hostedProjectCoordination(assignment)),
+  );
+}
+
+function mountHost(storage: string, coordination: (context: Context) => unknown) {
   return async (context: Context) => {
-    await context.use(coordinationPlugin(storage));
-    await context.use(executionPlugin);
+    await context.use(coordination);
+    await context.use(executionPluginFor(storage));
     await context.use(plannerPlugin);
     await context.use(nativeWorkflow);
   };

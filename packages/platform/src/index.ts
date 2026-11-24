@@ -1,21 +1,29 @@
 import { agentPlugin } from '../../agent/src/index.js';
 import { architecturePlugin } from '../../architecture/src/index.js';
-import { commandInspectionPlugin, commandsPlugin } from '../../commands/src/index.js';
+import {
+  commandInspectionPlugin,
+  commandsPlugin,
+  hostedCommandsDataPlugin,
+} from '../../commands/src/index.js';
 import { teamPlugin } from '../../team/src/index.js';
 import { workflowPlugin } from '../../workflow/src/index.js';
 import { timingSafeEqual } from 'node:crypto';
 import { Context } from 'cordis';
 import type { Client } from 'pg';
+import { admittedProvider } from '../../capacity/src/index.js';
 import { catalogDataPlugin, catalogPlugin } from '../../catalog/src/index.js';
 import {
+  WorkflowRequests,
   hasPlanRevision,
   importedCoordinationDataPlugin,
   planExecutionDataPlugin,
+  operationEvidenceDataPlugin,
   postgresTimelineChanges,
 } from '../../coordination/src/index.js';
-import { dataPlugin } from '../../data/src/index.js';
+import { dataPlugin, type DataAccess, type DataScope } from '../../data/src/index.js';
 import { textDigest } from '../../foundation/src/index.js';
 import { plannerDataPlugin } from '../../planner/src/index.js';
+import { hostAssignments } from './host-assignments.js';
 import { bindings } from './bindings.js';
 import { connectDatabase, readSecret } from './database.js';
 
@@ -40,22 +48,29 @@ function platformPlugin(database: Client, configuration: ReturnType<typeof bindi
   return async (context: Context) => {
     await context.use(
       catalogPlugin(database, async ({ remote, credential }) => {
-        if (credential !== undefined) throw new Error('Repository provider binding unavailable');
         const capture = configuration.capture(remote);
         if (!capture) throw new Error('Repository is not bound for isolated review');
-        return capture.source.revision;
+        return configuration.verify(remote, capture.source.revision, credential);
       }),
     );
-    await context.use(
-      dataPlugin(
-        ({ scope, resource }) =>
-          scope.principal === configuration.operator &&
-          (scope.project === 'platform' ? resource === 'projects' : resource !== 'projects'),
-      ),
-    );
-    await context.use(catalogDataPlugin);
-    await context.use(readOnlyCommands);
-    await context.use(projectReads(database, configuration));
+    await context.use(scopedResources(database, configuration));
+  };
+}
+
+function scopedResources(database: Client, configuration: Configuration) {
+  return {
+    inject: ['catalog'],
+    /** Register resource owners against the trusted catalog service. */
+    async apply(context: Context) {
+      const catalog = context.catalog;
+      const project = (scope: DataScope) => catalog.resolve(scope.principal, scope.project);
+      await context.use(
+        dataPlugin((access) => authorized(access, configuration, project, database)),
+      );
+      await context.use(catalogDataPlugin);
+      await context.use(readOnlyCommands);
+      await projectResources(context, database, configuration, project);
+    },
   };
 }
 
@@ -71,34 +86,76 @@ async function readOnlyCommands(context: Context) {
   }
 }
 
-function projectReads(database: Client, configuration: ReturnType<typeof bindings>) {
-  return {
-    inject: ['catalog'],
-    /** Resolve project data only through the mounted catalog. */
-    async apply(context: Context) {
-      const resolve = ({ project, principal }: { project: string; principal: string }) =>
-        context.catalog.resolve(principal, project);
-      await context.use(
-        plannerDataPlugin(async (scope, expected) => {
-          const project = await resolve(scope);
-          if (!project || !(await allowsRevision(database, project, expected))) return;
-          return configuration.capture(project.remote, expected ?? project.revision);
-        }),
-      );
-      await context.use(
-        commandInspectionPlugin(async (scope) => {
-          const project = await resolve(scope);
-          if (!project) return;
-          const capture = configuration.capture(project.remote, project.revision);
-          return capture && { directory: capture.source.root, revision: capture.source.revision };
-        }),
-      );
-      const journalProject = async (scope: Parameters<typeof resolve>[0]) =>
-        (await resolve(scope))?.remote;
-      await context.use(importedCoordinationDataPlugin(database, journalProject));
-      await context.use(planExecutionDataPlugin(database, journalProject));
-    },
-  };
+type Configuration = ReturnType<typeof bindings>;
+type Project = (scope: DataScope) => ReturnType<Context['catalog']['resolve']>;
+
+async function authorized(
+  { scope, resource, operation }: DataAccess,
+  configuration: Configuration,
+  project: Project,
+  database: Client,
+) {
+  if (scope.principal !== configuration.operator) return false;
+  if (scope.project === 'platform') return resource === 'projects';
+  if (resource === 'projects') return false;
+  if (resource !== 'workflow-requests' && resource !== 'operation-evidence') return true;
+  const resolved = await project(scope);
+  if (!resolved) return false;
+  if (resource === 'workflow-requests') {
+    if (!configuration.hosted(resolved.remote)) return false;
+    if (operation !== 'create') return true;
+    const provider = configuration.provider(resolved.remote);
+    return provider ? admittedProvider(database, scope.principal, provider) : false;
+  }
+  return Boolean(configuration.evidence(resolved.remote));
+}
+
+async function projectResources(
+  context: Context,
+  database: Client,
+  configuration: Configuration,
+  project: Project,
+) {
+  const journal = async (scope: DataScope) => (await project(scope))?.remote;
+  await mountProjectReads(context, database, configuration, project);
+  await context.use(importedCoordinationDataPlugin(database, journal));
+  await context.use(planExecutionDataPlugin(database, journal));
+  await context.use(
+    operationEvidenceDataPlugin(database, async (scope) => {
+      const remote = await journal(scope);
+      const root = remote && configuration.evidence(remote);
+      return root && remote ? { remote, root } : undefined;
+    }),
+  );
+  await context.use(
+    hostedCommandsDataPlugin(new WorkflowRequests(database), async (scope) => {
+      const target = await project(scope);
+      return target && configuration.hosted(target.remote) ? target : undefined;
+    }),
+  );
+}
+
+async function mountProjectReads(
+  context: Context,
+  database: Client,
+  configuration: Configuration,
+  project: Project,
+) {
+  await context.use(
+    plannerDataPlugin(async (scope, expected) => {
+      const resolved = await project(scope);
+      if (!resolved || !(await allowsRevision(database, resolved, expected))) return;
+      return configuration.capture(resolved.remote, expected ?? resolved.revision);
+    }),
+  );
+  await context.use(
+    commandInspectionPlugin(async (scope) => {
+      const resolved = await project(scope);
+      if (!resolved) return;
+      const capture = configuration.capture(resolved.remote, resolved.revision);
+      return capture && { directory: capture.source.root, revision: capture.source.revision };
+    }),
+  );
 }
 
 async function allowsRevision(
@@ -121,6 +178,11 @@ export async function openPlatform(options: PlatformOptions) {
   await context.use(platformPlugin(options.database, configuration));
   return {
     context,
+    hostAssignments: hostAssignments(
+      context.catalog,
+      new WorkflowRequests(options.database),
+      configuration,
+    ),
     followTimeline: postgresTimelineChanges(
       options.database,
       async (scope) => (await context.catalog.resolve(scope.principal, scope.project))?.remote,

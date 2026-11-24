@@ -2,12 +2,52 @@ type Route = {
   path: string;
   resource: string;
   operation: string;
+  method?: 'POST';
   parameter?: string;
   cursor?: boolean;
   query?: readonly string[];
 };
 
 export const routes: readonly Route[] = [
+  {
+    path: '/operation-evidence/{sequence}',
+    resource: 'operation-evidence',
+    operation: 'read',
+    parameter: 'sequence',
+    query: ['execution'],
+  },
+
+  {
+    method: 'POST',
+    path: '/commands',
+    resource: 'workflow-requests',
+    operation: 'create',
+    query: [],
+  },
+  {
+    path: '/commands/{id}',
+    resource: 'workflow-requests',
+    operation: 'read',
+    parameter: 'id',
+    query: [],
+  },
+  {
+    method: 'POST',
+    path: '/commands/{id}/cancel',
+    resource: 'workflow-requests',
+    operation: 'cancel',
+    parameter: 'id',
+    query: [],
+  },
+  {
+    method: 'POST',
+    path: '/commands/{id}/answer',
+    resource: 'workflow-requests',
+    operation: 'answer',
+    parameter: 'id',
+    query: [],
+  },
+
   {
     path: '/plan-executions/current',
     resource: 'plan-executions',
@@ -48,8 +88,9 @@ export const routes: readonly Route[] = [
   },
 ];
 
-export function matchRoute(path: string) {
+export function matchRoute(path: string, method?: string) {
   for (const route of routes) {
+    if (method && (route.method ?? 'GET') !== method) continue;
     const pattern = new RegExp('^' + route.path.replace(/\{\w+\}/, '([^/]+)') + '$');
     const match = pattern.exec(path);
     if (match) return { route, binding: match[1] };

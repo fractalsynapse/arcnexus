@@ -3,6 +3,13 @@ import type { InspectionInput } from '../../agent/src/index.js';
 import type { TaskInput, TaskObserver } from '../../workflow/src/index.js';
 export { dispatchWorkflow, workflowRequest, type WorkflowRequest } from './request.js';
 export { commandInspectionPlugin } from './inspection-data.js';
+export {
+  hostedCommandsDataPlugin,
+  workflowAnswer,
+  workflowReceipt,
+  workflowSelection,
+  workflowSubmission,
+} from './hosted-data.js';
 
 declare module 'cordis' {
   interface Context {

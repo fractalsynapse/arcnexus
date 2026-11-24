@@ -11,7 +11,9 @@ const roles = {
       GRANT SELECT, INSERT, UPDATE ON arcnexus_catalog.projects TO arc_api;
       GRANT SELECT, INSERT, DELETE ON arcnexus_capacity.registration_codes TO arc_api;
       GRANT SELECT, INSERT, UPDATE ON arcnexus_capacity.providers TO arc_api;
-      GRANT SELECT ON arcnexus_coordination.runs, arcnexus_coordination.events TO arc_api;
+      GRANT SELECT ON arcnexus_coordination.runs, arcnexus_coordination.events,
+        arcnexus_coordination.hosted_projects TO arc_api;
+      GRANT SELECT, INSERT, UPDATE ON arcnexus_coordination.workflow_requests TO arc_api;
     `,
   },
   arc_mcp: {
@@ -19,9 +21,22 @@ const roles = {
     grants: `
       GRANT USAGE ON SCHEMA arcnexus_platform TO arc_mcp;
       GRANT SELECT ON arcnexus_platform.migrations TO arc_mcp;
-      GRANT USAGE ON SCHEMA arcnexus_catalog, arcnexus_coordination TO arc_mcp;
+      GRANT USAGE ON SCHEMA arcnexus_catalog, arcnexus_coordination, arcnexus_capacity TO arc_mcp;
+      GRANT SELECT (id, operator, state) ON arcnexus_capacity.providers TO arc_mcp;
       GRANT SELECT, INSERT, UPDATE ON arcnexus_catalog.projects TO arc_mcp;
-      GRANT SELECT ON arcnexus_coordination.runs, arcnexus_coordination.events TO arc_mcp;
+      GRANT SELECT ON arcnexus_coordination.runs, arcnexus_coordination.events,
+        arcnexus_coordination.hosted_projects TO arc_mcp;
+      GRANT SELECT, INSERT, UPDATE ON arcnexus_coordination.workflow_requests TO arc_mcp;
+    `,
+  },
+  arc_host: {
+    secret: 'ARC_HOST_DB_PASSWORD_FILE',
+    grants: `
+      GRANT USAGE ON SCHEMA arcnexus_platform, arcnexus_coordination TO arc_host;
+      GRANT SELECT ON arcnexus_platform.migrations, arcnexus_coordination.hosted_projects TO arc_host;
+      GRANT SELECT, INSERT, UPDATE
+        ON arcnexus_coordination.runs, arcnexus_coordination.rounds, arcnexus_coordination.events,
+           arcnexus_coordination.workflow_requests TO arc_host;
     `,
   },
 } as const;

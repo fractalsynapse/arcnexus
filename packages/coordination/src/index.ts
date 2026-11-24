@@ -1,10 +1,7 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 import type { Context } from 'cordis';
-import { departed, identity } from './lease.js';
-import { initializeSqlite, requireNative } from './sqlite-schema.js';
+import { sqliteBackend } from './sqlite-store.js';
+import type { JournalBackend, JournalStore } from './journal-store.js';
 import { journalPath } from './journal-path.js';
 import {
   completedRefinementRounds,
@@ -12,6 +9,7 @@ import {
   researchReports,
   verifiedTerminal,
   recentFindings,
+  readTimeline,
   readTimelineFile,
   type TimelineWindow,
 } from './journal-queries.js';
@@ -30,8 +28,16 @@ export { importSqliteJournal } from './postgres/import.js';
 export { readImportedTimeline } from './postgres/read-timeline.js';
 export { hasPlanRevision } from './postgres/plan-records.js';
 export { planExecutionDataPlugin } from './postgres/plan-data.js';
-export { HostedCoordination, hostedCoordinationPlugin } from './postgres/hosted.js';
+export { reconcileHosted } from './postgres/reconcile.js';
 export { hostedCoordinationMigration } from './postgres/hosted-schema.js';
+export { hostSessionMigration } from './postgres/session-schema.js';
+export { workflowRequestsMigration } from './postgres/workflow-requests-schema.js';
+export {
+  operationEvidenceDataPlugin,
+  readOperationEvidence,
+} from './postgres/operation-evidence.js';
+export { WorkflowRequests, type WorkflowGate } from './postgres/workflow-requests.js';
+export { hostedProjectCoordination, type HostedProject } from './postgres/session-store.js';
 export { cutoverSqliteJournal } from './postgres/cutover.js';
 export { timelineChanges, type TimelineChanges } from './timeline-feed.js';
 
@@ -45,7 +51,7 @@ declare module 'cordis' {
 export class Journal {
   /** Bind this writer to the database row claimed at admission. */
   constructor(
-    private readonly database: DatabaseSync,
+    private readonly database: JournalStore,
     readonly run: number,
     readonly goal: string,
     readonly retained?: RetainedRun,
@@ -53,13 +59,19 @@ export class Journal {
     readonly parent?: number,
   ) {}
 
-  /** Check the actual SQLite backing path without registering mutable process-global ownership. */
-  belongsTo(path: string) {
-    const main = this.database
-      .prepare('PRAGMA database_list')
-      .all()
-      .find(({ name }) => name === 'main');
-    return typeof main?.file === 'string' && resolve(main.file) === resolve(path);
+  /** Compare the writer against the selected backend's exact project binding. */
+  belongsTo(key: string) {
+    return this.database.key === key;
+  }
+
+  /** Signal the hosted execution when its dedicated writer connection is lost. */
+  get signal() {
+    return this.database.signal;
+  }
+
+  /** Confirm the live writer before beginning protected Host effects. */
+  assertWriter() {
+    this.database.guard(this.run);
   }
 
   /** Expose the content identity independently of the logical task identity. */
@@ -71,7 +83,7 @@ export class Journal {
   record(event: unknown) {
     this.database.exec('BEGIN IMMEDIATE');
     try {
-      requireNative(this.database);
+      this.database.guard(this.run);
       const frame = append(this.database, this, event);
       this.database.exec('COMMIT');
       return frame;
@@ -85,11 +97,11 @@ export class Journal {
   child(goal: string, scope: string, fresh = true): Admission | undefined {
     this.database.exec('BEGIN IMMEDIATE');
     try {
-      requireNative(this.database);
+      this.database.guard(this.run);
       const parent = this.database
         .prepare('SELECT active, lease FROM runs WHERE id = ?')
         .get(this.run);
-      if (!parent?.active || parent.lease !== identity(process.pid))
+      if (!parent?.active || parent.lease !== this.database.holder())
         throw new Error('Cannot admit a child from an inactive parent or foreign writer');
       const result = claim(this.database, goal, fresh, JSON.stringify([this.taskID, scope]), {
         parent: this.run,
@@ -118,6 +130,7 @@ export class Journal {
   finish(outcome: unknown) {
     this.database.exec('BEGIN IMMEDIATE');
     try {
+      this.database.guard(this.run);
       if (
         this.database
           .prepare('SELECT id FROM runs WHERE parent_id = ? AND active = 1')
@@ -128,7 +141,6 @@ export class Journal {
         .prepare('UPDATE runs SET active = 0 WHERE id = ? AND active = 1')
         .run(this.run);
       if (!updated.changes) throw new Error('This task already has a terminal outcome');
-      requireNative(this.database);
       const event = append(this.database, this, { outcome });
       this.database.exec('COMMIT');
       return event;
@@ -225,17 +237,28 @@ export class Journal {
 
 /** Manage the native SQLite lane for a verified project. */
 export class Coordination {
-  /** Use trusted application storage outside the maintained project tree. */
-  constructor(private readonly storage: string) {}
+  private readonly backend: JournalBackend;
+
+  /** Bind the native or hosted backend selected by the trusted composition. */
+  constructor(private readonly storage: string | JournalBackend) {
+    this.backend = typeof storage === 'string' ? sqliteBackend(storage) : storage;
+  }
 
   /** Verify a supplied parent against this project's actual canonical journal file. */
   owns(remote: string, journal: Journal) {
-    return journal.belongsTo(journalPath(this.storage, remote));
+    return journal.belongsTo(this.backend.key(remote));
   }
 
   /** Replay the project journal without creating, migrating or acquiring a writer. */
   readTaskTimeline(remote: string, task: string, window: TimelineWindow = {}) {
-    return readTimelineFile(journalPath(this.storage, remote), task, window);
+    if (typeof this.storage === 'string')
+      return readTimelineFile(journalPath(this.storage, remote), task, window);
+    const database = this.backend.open(remote);
+    try {
+      return readTimeline(database, task, window);
+    } finally {
+      database.close();
+    }
   }
 
   /** Claim the lane for a goal when the current staging base permits fresh admission. */
@@ -258,10 +281,10 @@ export class Coordination {
     scope?: string,
     cycle = false,
   ): Admission | undefined {
-    const database = this.open(remote);
+    const database = this.backend.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
-      requireNative(database);
+      database.guard();
       const result = claim(database, goal, fresh, scope, { cycle });
       database.exec('COMMIT');
       if (!(result instanceof Journal)) database.close();
@@ -274,10 +297,10 @@ export class Coordination {
 
   /** Reuse the oldest unfinished round in its namespace or capture a new inventory. */
   round(remote: string, captureInventory: () => string, namespace = 'task') {
-    const database = this.open(remote);
+    const database = this.backend.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
-      requireNative(database);
+      database.guard();
       const previous = database
         .prepare(
           'SELECT id, inventory FROM rounds WHERE finished = 0 AND namespace = ? ORDER BY id LIMIT 1',
@@ -298,10 +321,10 @@ export class Coordination {
 
   /** Close a round only after each goal has a completed outcome. */
   completeRound(remote: string, id: number) {
-    const database = this.open(remote);
+    const database = this.backend.open(remote);
     try {
       database.exec('BEGIN IMMEDIATE');
-      requireNative(database);
+      database.guard();
       database.prepare('UPDATE rounds SET finished = 1 WHERE id = ?').run(id);
       database.exec('COMMIT');
     } finally {
@@ -311,7 +334,7 @@ export class Coordination {
 
   /** Read a completed logical task outcome without taking the project writer lane. */
   completedTask(remote: string, goal: string, scope: string) {
-    const database = this.open(remote);
+    const database = this.backend.open(remote);
     try {
       const row = database
         .prepare(
@@ -329,23 +352,9 @@ export class Coordination {
       database.close();
     }
   }
-
-  /** Open the one repository store and apply additive migrations before use. */
-  private open(remote: string) {
-    const path = journalPath(this.storage, remote);
-    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-    const database = new DatabaseSync(path);
-    try {
-      initializeSqlite(database);
-      return database;
-    } catch (error) {
-      database.close();
-      throw error;
-    }
-  }
 }
 
-function append(database: DatabaseSync, journal: Journal, event: unknown) {
+function append(database: JournalStore, journal: Journal, event: unknown) {
   const timestamp = new Date().toISOString();
   const content = JSON.stringify(event);
   const result = database
@@ -364,10 +373,12 @@ function append(database: DatabaseSync, journal: Journal, event: unknown) {
 
 type Admission = Journal | { activeGoal: string; run: number };
 type ClaimOptions = { parent?: number; cycle?: boolean };
+const activeRun =
+  'SELECT id, task_id, goal, lease FROM runs WHERE active = 1 AND parent_id IS NOT DISTINCT FROM ?';
 
 /** Inspect prior evidence and the relevant writer in the same admission transaction. */
 function claim(
-  database: DatabaseSync,
+  database: JournalStore,
   goal: string,
   fresh: boolean,
   scope?: string,
@@ -376,16 +387,13 @@ function claim(
   const goalID = digest(goal);
   const key = taskIdentity(goalID, scope);
   const task = cycle ? cycleIdentity(database, key) : key;
-  const active = database
-    .prepare('SELECT id, task_id, goal, lease FROM runs WHERE active = 1 AND parent_id IS ?')
-    .get(parent ?? null);
-  if (active && (active.task_id !== task || !departed(active.lease)))
+  const active = database.prepare(activeRun).get(parent ?? null);
+  if (active && (active.task_id !== task || !database.canReclaim(active.lease)))
     return { activeGoal: String(active.goal), run: Number(active.id) };
   if (!fresh && !retained(database, task)) return undefined;
   if (active) retire(database, Number(active.id));
   const prior = retained(database, task);
-  const lease = identity(process.pid);
-  if (!lease) throw new Error('Cannot identify the project lane writer');
+  const lease = database.holder();
   const { lastInsertRowid } = database
     .prepare(
       'INSERT INTO runs (goal_id, task_id, goal, active, lease, parent_id) VALUES (?, ?, ?, 1, ?, ?)',
@@ -398,7 +406,7 @@ function claim(
 }
 
 /** Resume an unfinished foreground cycle, or give the next completed assessment a fresh identity. */
-function cycleIdentity(database: DatabaseSync, key: string) {
+function cycleIdentity(database: JournalStore, key: string) {
   const row = database
     .prepare(
       `
@@ -422,7 +430,7 @@ function cycleIdentity(database: DatabaseSync, key: string) {
 }
 
 /** Preserve honest terminal observations for a departed writer and its unfinished descendants. */
-function retire(database: DatabaseSync, run: number) {
+function retire(database: JournalStore, run: number) {
   const rows = database
     .prepare(
       `
@@ -442,7 +450,7 @@ function retire(database: DatabaseSync, run: number) {
 }
 
 /** Restore ordered events from all attempts at the same logical task. */
-function retained(database: DatabaseSync, task: string): RetainedRun | undefined {
+function retained(database: JournalStore, task: string): RetainedRun | undefined {
   const attempt = database
     .prepare(
       `

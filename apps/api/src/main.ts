@@ -3,12 +3,15 @@ import { capacityPlugin } from '../../../packages/capacity/src/index.js';
 import { reviewPlatform } from '../../../packages/platform/src/index.js';
 import { apiPlugin, capacityApiPlugin, serveApi } from './index.js';
 
-const { context, database, authenticate, followTimeline } = await reviewPlatform();
+const { context, database, authenticate, followTimeline, hostAssignments } = await reviewPlatform();
 await verifyPlatformDatabase(database);
 await context.use(apiPlugin(authenticate, followTimeline));
 await context.use(capacityPlugin(database));
 await context.use(
-  capacityApiPlugin(async (request) => (await authenticate(request, 'platform'))?.principal),
+  capacityApiPlugin(
+    async (request) => (await authenticate(request, 'platform'))?.principal,
+    hostAssignments,
+  ),
 );
 const { url } = await serveApi(
   (request) =>

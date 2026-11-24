@@ -5,6 +5,7 @@ import { retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 
 export { isTransientReadFailure } from './read.js';
+export { verifyBoundCommit } from './repository-read.js';
 export { GitHubCheckFailure } from './check-failure.js';
 
 const run = promisify(execFile);

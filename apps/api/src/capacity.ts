@@ -1,3 +1,4 @@
+import { assignmentStream, type LauncherAssignments } from './assignment-stream.js';
 import type { Context } from 'cordis';
 import type { Capacity } from '../../../packages/capacity/src/index.js';
 import {
@@ -31,28 +32,16 @@ async function providerStatus(capacity: Capacity, request: Request, id: string) 
   return provider ? Response.json(provider, { headers: privateHeaders }) : error(401);
 }
 
-async function providerConnection(capacity: Capacity, request: Request, id: string) {
+async function providerConnection(
+  capacity: Capacity,
+  request: Request,
+  id: string,
+  assignments?: LauncherAssignments,
+) {
   const token = credential(request, id);
   const presence = token && (await capacity.connect(id, token));
   if (!presence) return error(403);
-  const signal = AbortSignal.any([presence.signal, request.signal]);
-  const ready = new TextEncoder().encode('event: ready\ndata: {}\n\n');
-  let cancelled = false;
-  const body = new ReadableStream({
-    start(stream) {
-      const close = () => {
-        if (!cancelled) stream.close();
-        presence.close();
-      };
-      if (signal.aborted) return close();
-      stream.enqueue(ready);
-      signal.addEventListener('abort', close, { once: true });
-    },
-    cancel() {
-      cancelled = true;
-      presence.close();
-    },
-  });
+  const body = assignmentStream(id, presence, request.signal, assignments);
   return new Response(body, {
     headers: { ...privateHeaders, 'Content-Type': 'text/event-stream' },
   });
@@ -75,7 +64,11 @@ async function operate(capacity: Capacity, operator: string, request: Request, p
 }
 
 /** Mount enrollment and exact operator actions in an isolated platform composition. */
-export function capacityHttp(capacity: Capacity, authenticate: AuthenticateOperator) {
+export function capacityHttp(
+  capacity: Capacity,
+  authenticate: AuthenticateOperator,
+  assignments?: LauncherAssignments,
+) {
   return async (request: Request) => {
     const path = new URL(request.url).pathname;
     try {
@@ -86,7 +79,7 @@ export function capacityHttp(capacity: Capacity, authenticate: AuthenticateOpera
         return await providerStatus(capacity, request, status[1]);
       const connection = /^\/capacity-providers\/([^/]+)\/connection$/.exec(path);
       if (connection?.[1] && request.method === 'GET')
-        return await providerConnection(capacity, request, connection[1]);
+        return await providerConnection(capacity, request, connection[1], assignments);
       const operator = await authenticate(request);
       if (!operator) return error(401);
       return await operate(capacity, operator, request, path);
@@ -102,12 +95,15 @@ declare module 'cordis' {
   }
 }
 
-export function capacityApiPlugin(authenticate: AuthenticateOperator) {
+export function capacityApiPlugin(
+  authenticate: AuthenticateOperator,
+  assignments?: LauncherAssignments,
+) {
   return {
     inject: ['capacity'],
     /** Supply authenticated provider management alongside project resources. */
     apply(context: Context) {
-      context.provide('capacityApi', capacityHttp(context.capacity, authenticate));
+      context.provide('capacityApi', capacityHttp(context.capacity, authenticate, assignments));
     },
   };
 }

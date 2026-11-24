@@ -52,6 +52,10 @@ async function runPlatform(
   rest: string[],
   json: boolean,
 ) {
+  if (verb && verb !== 'inspect') {
+    const { runPlatformWorkflow } = await import('./platform-workflow.js');
+    return runPlatformWorkflow(verb, component ? [component, ...rest] : rest, json);
+  }
   const [activity, extra] = rest;
   if (
     verb !== 'inspect' ||

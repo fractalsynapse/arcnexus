@@ -1,5 +1,7 @@
 import type { Client } from 'pg';
 
+import { lockHostedProject } from './session-schema.js';
+
 const store = 'arcnexus_coordination';
 const retire = `
   WITH RECURSIVE previous(id) AS (
@@ -43,13 +45,25 @@ export async function reconcileHosted(
   );
   const run = current.rows[0];
   if (!run?.lease || !(await confirmStopped(worker(run.lease)))) return false;
+  return retireConfirmed(database, project, run.id, run.lease);
+}
+
+async function retireConfirmed(database: Client, project: string, id: string, lease: string) {
   const outcome = { kind: 'cancelled', reason: 'Hosted writer exited', evidence: [] };
-  const result = await database.query(retire, [
-    project,
-    run.id,
-    run.lease,
-    JSON.stringify({ outcome }),
-    new Date().toISOString(),
-  ]);
-  return Boolean(result.rowCount);
+  await database.query('BEGIN');
+  try {
+    await database.query(lockHostedProject, [project]);
+    const result = await database.query(retire, [
+      project,
+      id,
+      lease,
+      JSON.stringify({ outcome }),
+      new Date().toISOString(),
+    ]);
+    await database.query('COMMIT');
+    return Boolean(result.rowCount);
+  } catch (error) {
+    await database.query('ROLLBACK');
+    throw error;
+  }
 }
