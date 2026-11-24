@@ -23,14 +23,15 @@ That report cites run 147's repository checks at the evaluated revision, tree
 publication criteria. This is reported broad verification, not a newly inspected
 criterion-linked parity log or independent parity verdict.
 
-| Current measure | Exact tracked assertion anchors | Observation still needed or applicability decision |
+| Measure at Documentation handoff | Exact tracked assertion anchors | Observation requested at handoff |
 | --- | --- | --- |
 | `inspection-request-parity` | [inspection-activation.test.ts](../tests/integration/inspection-activation.test.ts): native activity matrix, `context`, `assertSelected`, `assertInvocation`, `readProbe` and complete CLI inspection cases. | Current complete subprocess input/options and rendered/structured observations for every actor. Assess completed-round, registered timeline and returning-caller evidence coverage against `invocationContext`; the current helper explicitly supplies assignment and Reviewer diff, without explicit completed-round/returning-caller cases. |
 | `inspection-activity-authority` | Same suite: `assertTools`, refusal assertions and unchanged foreign file. [inspection-listing.test.ts](../tests/integration/inspection-listing.test.ts): `assertRetained`, populated/disjoint/empty matrix and no-request cases. | Applicable actual MCP response comparisons and complete registered response artifacts with call identity, component/activity and native-span ordering. Current source already contains the listing retention repair; no new retention red is presumed. |
 | `inspection-effects-and-policy` | Same parity suite: no-effects/repeatability case, web-policy activity matrix, `assertInvocation` and changed-guidance refusal. | Current controlled observations for these assertions. Preserve the distinction between approved file visibility/configuration and authoritative harness discovery. Examine available current configured-provider artifacts without inferring unexposed context. |
 | `inspection-evidence-accuracy` | This account and [intent](inspection-parity.md), linked source anchors and host journal receipts. | Add actual current status/logs, candidate and check-input identities, quality results and any justified reuse. Record unavailable real-context/discovery receipts and skipped native cases explicitly. Independent verification, CI and delivery remain host observations. |
 
-Reviewed source identities provide comparison anchors, not passing checks:
+The Testing observations below supersede this handoff's pending observations.
+Reviewed source identities at Documentation provide comparison anchors, not passing checks:
 
 - `inspection-activation.test.ts`: SHA-256 `345b3a22b04e23cdfebee6f7bdc2be717f5d8a86e6fc1c11fc4e9c7a47cb5e90`.
 - `inspection-listing.test.ts`: SHA-256 `c62a0c1e87dd7f4afe3365e014f5c1b4f699fdb9f829a32145126ab91649e99b`.
@@ -98,7 +99,7 @@ ordered evidence; `retainedIndex` checks the complete index against those origin
 artifacts and reads every reference. Assertions compare the exact assignment,
 acceptance, milestone, evidence order and complete subprocess stdin with shared
 Agent preparation. Dropped answers, missing rounds, reordered references,
-current-attempt-only evidence, duplicate returns and unregistered reports cannot
+lost pre-return observations, duplicate returns and unregistered reports cannot
 satisfy these comparisons. No transcript is recursively copied into a later prompt.
 
 The final complete observation is `173-408-owner-tests.log`, SHA-256
