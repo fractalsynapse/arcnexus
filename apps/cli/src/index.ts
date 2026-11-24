@@ -68,7 +68,7 @@ async function mountCommands(task = false) {
   for (const plugin of [teamPlugin, architecturePlugin, agentPlugin]) {
     await context.use(plugin);
   }
-  if (task) await (await import('./host.js')).mountTaskHost(context);
+  if (task) await context.use((await import('../../host/src/index.js')).hostPlugin());
   else await context.use(workflowPlugin());
   await context.use(commandsPlugin);
   return context.commands;

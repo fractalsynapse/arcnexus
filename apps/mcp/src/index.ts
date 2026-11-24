@@ -1,0 +1,104 @@
+import type { Context } from 'cordis';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  type CallToolRequest,
+} from '@modelcontextprotocol/sdk/types.js';
+import type { Data, DataScope } from '../../../packages/data/src/index.js';
+
+const tools = {
+  list_goals: {
+    resource: 'goals',
+    operation: 'list',
+    description: 'List standing goals at an approved project revision.',
+  },
+  read_goal: {
+    resource: 'goals',
+    operation: 'read',
+    description: 'Read a standing goal at an approved project revision.',
+  },
+  list_objectives: {
+    resource: 'objectives',
+    operation: 'list',
+    description: 'List objective records at an approved project revision.',
+  },
+  read_objective: {
+    resource: 'objectives',
+    operation: 'read',
+    description: 'Read an objective record at an approved project revision.',
+  },
+  read_execution_timeline: {
+    resource: 'execution-events',
+    operation: 'read',
+    description: 'Replay retained execution events after a scoped cursor.',
+  },
+} as const;
+
+declare module 'cordis' {
+  interface Context {
+    operatorMcp: (scope: DataScope) => Server;
+  }
+}
+
+/** Publish only the Data operations available to the authenticated session. */
+async function list(data: Data, scope: DataScope) {
+  const descriptions = await data.describe(scope);
+  return Object.entries(tools).flatMap(([name, tool]) => {
+    const definition = descriptions.find(
+      ({ resource, operation }) => tool.resource === resource && tool.operation === operation,
+    );
+    if (!definition) return [];
+    return [
+      {
+        name,
+        description: tool.description,
+        inputSchema: { ...definition.input, type: 'object' as const },
+        outputSchema: { ...definition.output, type: 'object' as const },
+      },
+    ];
+  });
+}
+
+async function call(data: Data, scope: DataScope, params: CallToolRequest['params']) {
+  const tool = Object.hasOwn(tools, params.name)
+    ? tools[params.name as keyof typeof tools]
+    : undefined;
+  if (!tool)
+    return { isError: true, content: [{ type: 'text' as const, text: 'Tool unavailable.' }] };
+  try {
+    const result = await data.invoke(scope, tool.resource, tool.operation, params.arguments ?? {});
+    return {
+      content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+      structuredContent: result as Record<string, unknown>,
+    };
+  } catch {
+    return {
+      isError: true,
+      content: [{ type: 'text' as const, text: 'Requested project data is unavailable.' }],
+    };
+  }
+}
+
+/** Compose an operator MCP protocol endpoint for one verified project. */
+function server(data: Data, scope: DataScope) {
+  const endpoint = new Server(
+    { name: 'arcnexus-operator', version: '0.3.0' },
+    { capabilities: { tools: {} } },
+  );
+  endpoint.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: await list(data, scope),
+  }));
+  endpoint.setRequestHandler(CallToolRequestSchema, ({ params }) => call(data, scope, params));
+  return endpoint;
+}
+
+export const operatorMcpPlugin = {
+  inject: ['data'],
+  /** Bind sessions to the same Data service as the REST adapter. */
+  apply(context: Context) {
+    context.provide('operatorMcp', (scope: DataScope) => server(context.data, scope));
+  },
+};
+
+export { operatorMcpHttp } from './http.js';

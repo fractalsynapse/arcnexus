@@ -13,12 +13,22 @@ import { verify } from '../../../packages/verification/src/index.js';
 import { workflowPlugin, type WorkflowServices } from '../../../packages/workflow/src/index.js';
 
 /** Compose the production services only for an admitted task command. */
-export async function mountTaskHost(context: Context) {
-  await context.use(coordinationPlugin(applicationStorage()));
-  await context.use(executionPlugin);
-  await context.use(plannerPlugin);
-  await context.use(workflowPlugin(services(context)));
+export function hostPlugin(storage = applicationStorage()) {
+  return async (context: Context) => {
+    await context.use(coordinationPlugin(storage));
+    await context.use(executionPlugin);
+    await context.use(plannerPlugin);
+    await context.use(nativeWorkflow);
+  };
 }
+
+const nativeWorkflow = {
+  inject: ['agent', 'architecture', 'execution', 'planner'],
+  /** Bind the workflow after Cordis has activated its native dependencies. */
+  async apply(context: Context) {
+    await context.use(workflowPlugin(services(context)));
+  },
+};
 
 /** Map the workflow ports directly to their native owning services. */
 function services(context: Context): WorkflowServices {

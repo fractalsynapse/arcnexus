@@ -1,38 +1,37 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { Context } from 'cordis';
 import { departed, identity } from './lease.js';
+import { journalPath } from './journal-path.js';
 import {
   completedRefinementRounds,
   descendantEvents,
   researchReports,
   verifiedTerminal,
   recentFindings,
+  readTimelineFile,
+  type TimelineWindow,
 } from './journal-queries.js';
+import type { JournalEvent, RetainedRun } from './journal-types.js';
 export { RunMeasurements } from './measurements.js';
+export type { TimelineSlice, TimelineWindow } from './journal-queries.js';
+export type { JournalEvent, RetainedRun } from './journal-types.js';
+export {
+  coordinationDataPlugin,
+  importedCoordinationDataPlugin,
+  type ResolveJournalProject,
+} from './data.js';
+export { coordinationMigration } from './postgres/schema.js';
+export { importSqliteJournal } from './postgres/import.js';
+export { readImportedTimeline } from './postgres/read-timeline.js';
+export { timelineChanges, type TimelineChanges } from './timeline-feed.js';
 
 declare module 'cordis' {
   interface Context {
     coordination: Coordination;
   }
-}
-
-export interface JournalEvent {
-  sequence: string;
-  run: number;
-  taskID: string;
-  goalID: string;
-  parent?: number;
-  timestamp: string | null;
-  observation: unknown;
-  detail?: unknown;
-}
-
-export interface RetainedRun {
-  run: number;
-  events: readonly unknown[];
 }
 
 /** Store the ordered observations for a single admitted task. */
@@ -226,7 +225,12 @@ export class Coordination {
 
   /** Verify a supplied parent against this project's actual canonical journal file. */
   owns(remote: string, journal: Journal) {
-    return journal.belongsTo(join(this.storage, digest(remote), 'tasks.sqlite'));
+    return journal.belongsTo(journalPath(this.storage, remote));
+  }
+
+  /** Replay the project journal without creating, migrating or acquiring a writer. */
+  readTaskTimeline(remote: string, task: string, window: TimelineWindow = {}) {
+    return readTimelineFile(journalPath(this.storage, remote), task, window);
   }
 
   /** Claim the lane for a goal when the current staging base permits fresh admission. */
@@ -318,9 +322,9 @@ export class Coordination {
 
   /** Open the one repository store and apply additive migrations before use. */
   private open(remote: string) {
-    const folder = join(this.storage, digest(remote));
-    mkdirSync(folder, { recursive: true, mode: 0o700 });
-    const database = new DatabaseSync(join(folder, 'tasks.sqlite'));
+    const path = journalPath(this.storage, remote);
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    const database = new DatabaseSync(path);
     try {
       this.initialize(database);
       return database;
@@ -481,17 +485,14 @@ function retained(database: DatabaseSync, task: string): RetainedRun | undefined
   return { run: Number(attempt.id), events };
 }
 
-/** Compute the stable identity of a verified project or full goal text. */
 function digest(text: string) {
   return createHash('sha256').update(text).digest('hex');
 }
 
-/** Bind attempts to the same full goal and optional inventory scope. */
 function taskIdentity(goalID: string, scope?: string) {
   return scope === undefined ? goalID : digest(JSON.stringify([scope, goalID]));
 }
 
-/** Mount the single store service using the trusted storage directory. */
 export function coordinationPlugin(storage: string) {
   return (context: Context) => {
     context.provide('coordination', new Coordination(storage));

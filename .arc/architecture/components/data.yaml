@@ -1,0 +1,24 @@
+id: data
+kind: plugin
+purpose: |
+  Expose typed data operations contributed by ArcNexus model owners.
+  Apply caller scope and publish the same operation schemas to each gateway.
+objectives:
+  - measure: An authorized caller can discover and execute each supported owner operation through the Cordis Data service.
+constraints:
+  - failure: Data creates a competing store, changes domain ownership, or grants authority to imported source.
+owns:
+  - packages/data
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Keep registration, scope and transport-neutral validation in Data.
+        Delegate storage and domain mutations to the accountable owner.
+        Verify that discovery and invocation expose the same authorized operations.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

@@ -25,6 +25,8 @@ import {
   type HumanReply,
 } from './records.js';
 
+export { plannerDataPlugin, type ResolvePlanCapture } from './data.js';
+
 declare module 'cordis' {
   interface Context {
     planner: Planner;

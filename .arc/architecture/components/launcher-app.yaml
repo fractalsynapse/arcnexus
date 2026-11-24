@@ -1,0 +1,22 @@
+id: launcher-app
+kind: app
+purpose: |
+  Run the local launcher executable and establish the platform provider identity.
+objectives:
+  - measure: A launcher can be configured and enrolled without exposing its token to the user interface or project source.
+constraints:
+  - failure: Remote input can choose an unchecked local path, image, or raw command.
+owns:
+  - apps/launcher
+activities:
+  implementation:
+    role: systems-engineer
+    profile: gpt-sol
+    instructions:
+      - |
+        Reuse the platform enrollment lifecycle and keep local settings
+        and credentials outside the project checkout.
+    operations:
+      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, owner-tests]

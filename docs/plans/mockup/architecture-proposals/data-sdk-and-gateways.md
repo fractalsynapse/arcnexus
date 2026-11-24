@@ -1,9 +1,30 @@
 # Manage component models through Data and Commands
 
-**Draft for architecture review.** Each enabled display requests the resources
+**Approved direction. Isolated implementation in progress.** Each enabled display requests the resources
 it needs. API, MCP and CLI share a Data SDK for managing domain models and a
 Commands SDK for running workflows. Model definitions and their implementations
 stay with their component stewards.
+
+The [approved contract amendment](../../../../packages/architecture/docs/proposals/data-sdk-and-gateways.md)
+permits implementation and isolated verification. Operator-facing activation
+for real projects follows the existing live qualification requirement.
+
+## Implementation status
+
+| Available for isolated review | Evidence |
+| --- | --- |
+| Data and Plan reads | Owner-registered, validated goal and objective reads at a captured Git revision. REST publishes the registered schemas through OpenAPI. The operator MCP transport uses the same Data operations and authorization hook. |
+| Journal replay and follow | REST returns finite JSON or follows the SQLite journal through server-sent events. The scoped Last-Event-ID is the same cursor used for MCP replay. Read-only replay can also use a verified PostgreSQL import. |
+| PostgreSQL setup and rehearsal | DB setup applies owner migrations through an advisory lock and records their digests. Rehearsal copies an isolated SQLite snapshot and verifies the PostgreSQL rows, event identities and cursor behavior before reporting success. |
+| Enrollment and catalog | The launcher can configure endpoints, exchange a one-use code and check its admission state. The API can admit and revoke providers. The catalog can list, verify imports through an injected repository verifier, and retire entries by operator. |
+| Trusted Host composition | The existing CLI workflow delegates to the shared Host plugin. The built CLI still exercises the same Workflow, Coordination and Execution services. |
+
+The deployment work still includes the PostgreSQL writer and cutover,
+runtime database roles and the assembled Compose services, remote Commands
+admission and recovery, native launcher assignment and image lifecycle,
+private GitHub provider bindings, and the live web connection/project managers
+and Plan displays. The current web setup preview uses fixture data. The native
+SQLite workflow remains the execution authority.
 
 ## Unified data management
 
@@ -317,7 +338,7 @@ uses the local kernel's process identity. Test loss of a writer connection,
 cessation of host effects, and reconciliation of retained work before
 readmission. For projects assigned to the stack, the platform CLI reaches
 that hosted authority through the API. Standalone CLI execution is for
-projects assigned to local mode. [Current writer identity](../../../../packages/coordination/src/lease.ts) · [Existing host composition](../../../../apps/cli/src/host.ts)
+projects assigned to local mode. [Current writer identity](../../../../packages/coordination/src/lease.ts) · [Existing host composition](../../../../apps/host/src/index.ts)
 
 ## REST resources for independent Plan displays
 
