@@ -108,6 +108,16 @@ function enrichment(task: HostTask) {
   };
 }
 
+/** Compose identical enriched task inputs while preserving the independent reviewer diff. */
+function liveContext(task: HostTask, enriched: ReturnType<typeof enrichment>, review = false) {
+  const supplied = context(task, review);
+  return {
+    ...supplied,
+    assignment: enriched.assignment,
+    evidence: [...supplied.evidence, ...enriched.evidence],
+  };
+}
+
 /** Assert selected source content independently of the comparison between the two request paths. */
 function assertSelected(
   view: AgentInspection,
@@ -191,20 +201,17 @@ for (const [component, activity, actor, names, web] of [
     const task = await fixture.open(t);
     const selection = { component, activity };
     const enriched = enrichment(task);
-    const initial = fixture.agent.prepareRequest(task.capture, selection, {
-      ...context(task),
-      ...enriched,
-    });
+    const initial = fixture.agent.prepareRequest(
+      task.capture,
+      selection,
+      liveContext(task, enriched),
+    );
     assertSelected(initial, actor, names, web);
     await task.activate(fixture.agent, selection, context(task), new AbortController().signal);
     const view = fixture.agent.prepareRequest(
       task.capture,
       selection,
-      {
-        ...context(task, actor === 'reviewer'),
-        assignment: enriched.assignment,
-        evidence: [...context(task, actor === 'reviewer').evidence, ...enriched.evidence],
-      },
+      liveContext(task, enriched, actor === 'reviewer'),
     );
     const probe = readProbe(task);
     t.diagnostic(
@@ -362,13 +369,19 @@ function returningContext(
   return {
     ...data,
     assignment: {
-      ...enriched.assignment,
       ...data.assignment,
       clarifications: [{ question: 'Which exact context survives?', answer }],
+      completedRounds: enriched.assignment.completedRounds,
     },
-    evidence: [...new Set([
-      ...data.evidence, clarification, ...enriched.evidence, index, ...before.slice(start),
-    ])],
+    evidence: [
+      ...new Set([
+        ...data.evidence,
+        clarification,
+        ...enriched.evidence,
+        index,
+        ...before.slice(start),
+      ]),
+    ],
   };
 }
 
@@ -411,5 +424,7 @@ test('EX-6: returning caller inspection matches enriched native input and comple
   assert.deepEqual(actual.acceptance, data.acceptance);
   assert.equal(probe.input, view.request.input);
   assertInvocation(view, probe);
-  t.diagnostic(JSON.stringify({ returningNativeObservation: { revision: task.capture.source.revision, probe } }));
+  t.diagnostic(
+    JSON.stringify({ returningNativeObservation: { revision: task.capture.source.revision, probe } }),
+  );
 });
