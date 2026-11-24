@@ -20,6 +20,7 @@ export class RefusedWorkflow {
   readonly revisions: RevisionRequest[] = [];
   readonly holds: HoldContext[] = [];
   readonly services: WorkflowServices;
+  onHoldRevision?: () => void;
   private readonly agent = new Agent(new Architecture());
   private head?: string;
 
@@ -74,6 +75,7 @@ export class RefusedWorkflow {
   /** Retain the original criterion while placing runnable correction before its held requester. */
   private proposal(request: RevisionRequest) {
     this.revisions.push(request);
+    if (request.finding.kind === 'supplier') this.onHoldRevision?.();
     this.calls.push(request.finding.kind === 'rejection' ? 'Direction:rejection' : 'Direction:hold');
     const accepted = JSON.parse(this.fixture.task.readFile(request.acceptedPlan).text);
     const pending = accepted.milestones.slice(request.position.completed).map((m: Milestone) => ({
