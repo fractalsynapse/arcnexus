@@ -3,7 +3,7 @@ import type { TestContext } from 'node:test';
 import { Agent } from '../../../agent/src/index.js';
 import { Architecture, type TaskContext } from '../../../architecture/src/index.js';
 import { Coordination, Journal } from '../../../coordination/src/index.js';
-import { direct, type Milestone, type RevisionRequest } from '../../../direction/src/index.js';
+import { direct, type Milestone, type Plan, type RevisionRequest } from '../../../direction/src/index.js';
 import { HostTask, steward, type HoldContext } from '../../../execution/src/index.js';
 import { checkpoint } from '../../../execution/src/checkpoint.js';
 import { git } from '../../../execution/src/git.js';
@@ -12,6 +12,14 @@ import { Workflow, type TaskObserver, type WorkflowServices } from '../../src/in
 import { ReviewedTask } from './reviewed-task.js';
 
 const signal = new AbortController().signal;
+const initialPlan: Plan = {
+  focus: {
+    purpose: 'Recover refused correction',
+    objectives: ['Preserve acceptance'],
+    constraints: ['Keep captured authority'],
+  },
+  milestones: [{ ...correction, id: 'original' }],
+};
 
 /** Exercise actual rejection-to-refusal progression with real journal, Git and checked edits. */
 export class RefusedWorkflow {
@@ -47,8 +55,10 @@ export class RefusedWorkflow {
     });
     this.t.mock.method(provider, 'publication', async () => undefined);
     this.t.mock.method(task, 'provider', () => provider);
-    this.t.mock.method(task, 'activate', async (_agent: Agent, _selection: unknown, data: TaskContext) =>
-      this.reply(data),
+    this.t.mock.method(
+      task,
+      'activate',
+      async (_agent: Agent, _selection: unknown, data: TaskContext) => this.reply(data),
     );
     const close = task.close.bind(task);
     let closed = false;
@@ -65,9 +75,10 @@ export class RefusedWorkflow {
     if (request) return this.proposal(request);
     return {
       kind: 'completed',
-      edits: this.revisions.length === 1
-        ? [{ path: 'schema.txt', expected: null, content: 'unauthorized' }]
-        : [],
+      edits:
+        this.revisions.length === 1
+          ? [{ path: 'schema.txt', expected: null, content: 'unauthorized' }]
+          : [],
       checks: [],
     };
   }
@@ -82,9 +93,10 @@ export class RefusedWorkflow {
       id: m.id,
       steps: m.steps.slice(request.position.activities[m.id] ?? 0),
     }));
-    const contribution = request.finding.kind === 'rejection'
-      ? correction
-      : { ...correction, id: 'refusal-correction' };
+    const contribution =
+      request.finding.kind === 'rejection'
+        ? correction
+        : { ...correction, id: 'refusal-correction' };
     return { kind: 'plan', plan: { milestones: [contribution, ...pending] } };
   }
 
@@ -94,19 +106,10 @@ export class RefusedWorkflow {
       execution: {
         admit: async () => this.fixture.task,
         checkpoint: async (_session, record, abort) => checkpoint(this.fixture.task, record, abort),
-        assemble: async () => ({
-          digest: git(this.fixture.task.worktree!, 'rev-parse', 'HEAD^{tree}'),
-          evidence: [],
-        }),
+        assemble: async () => this.assemble(),
       },
       direction: {
-        plan: async () => ({
-          kind: 'plan',
-          plan: {
-            focus: { purpose: 'Recover refused correction', objectives: ['Preserve acceptance'], constraints: ['Keep captured authority'] },
-            milestones: [{ ...correction, id: 'original' }],
-          },
-        }),
+        plan: async () => ({ kind: 'plan', plan: initialPlan }),
         revise: async (session, plan, feedback, abort) =>
           direct(this.agent, session, abort, { plan, feedback }),
       },
@@ -121,15 +124,32 @@ export class RefusedWorkflow {
     };
   }
 
+  /** Refresh real command evidence before the corrected candidate reaches fresh independent review. */
+  private async assemble() {
+    const task = this.fixture.task;
+    const evidence: string[] = [];
+    if (this.revisions.length) {
+      const check = await task.check('owner-tests', signal, {
+        owner: 'owner',
+        activity: 'implementation',
+        expected: 'pass',
+      });
+      assert.equal(check.status, 0, task.readFile(check.log).text);
+      evidence.push(check.log);
+    }
+    return { digest: git(task.worktree!, 'rev-parse', 'HEAD^{tree}'), evidence };
+  }
+
   /** Reject the initial public assessment and accept only corrected bytes under original acceptance. */
-  private assess(plan: import('../../../direction/src/index.js').Plan, digest: string) {
+  private assess(plan: Plan, digest: string) {
     this.calls.push('Review');
     for (const milestone of plan.milestones) assert.deepEqual(milestone.criteria, correction.criteria);
-    if (!this.revisions.length) return {
-      kind: 'rejected' as const,
-      candidate: digest,
-      findings: [this.fixture.rejection.findings[0]!],
-    };
+    if (!this.revisions.length)
+      return {
+        kind: 'rejected' as const,
+        candidate: digest,
+        findings: [this.fixture.rejection.findings[0]!],
+      };
     assert.equal(this.fixture.task.readFile('fixture.txt').text, 'corrected');
     return {
       kind: 'accepted' as const,
@@ -155,7 +175,9 @@ export class RefusedWorkflow {
   /** Invoke Workflow with an optional interruption at its actual committed observation boundary. */
   run(observer: TaskObserver = { progress() {} }) {
     return new Workflow(this.services).run(
-      { directory: this.fixture.root, goal: this.fixture.task.goal }, observer, signal,
+      { directory: this.fixture.root, goal: this.fixture.task.goal },
+      observer,
+      signal,
     );
   }
 
