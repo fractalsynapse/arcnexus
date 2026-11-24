@@ -73,6 +73,7 @@ export const checkEnvironment = Object.freeze({
   HOME: '/tmp',
   GIT_CONFIG_NOSYSTEM: '1',
   GIT_OPTIONAL_LOCKS: '0',
+  PLAYWRIGHT_BROWSERS_PATH: '/usr/local/share/arcnexus/playwright',
 });
 
 const environment = [

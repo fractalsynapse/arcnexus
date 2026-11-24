@@ -203,6 +203,15 @@ source edits, answers and check observations remain in the journal. The existing
 npm cache supplies packages offline; an unavailable package is an observed failure,
 never permission to use ambient dependencies or enable network access.
 
+For projects with Playwright checks, install the browsers selected by the
+project's lockfile while preparing the approved Host runtime. Set
+`PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/arcnexus/playwright` when running the
+locked Playwright installer and include its system dependencies in the runtime.
+Checks read the prepared directory through the existing read-only toolchain
+mount. The sandbox supplies that path alongside its private home and network.
+Prepare a replacement directory with the updated runtime when upgrading the
+browser assets so check observations keep their preparation identity.
+
 A local rewind does not erase earlier genuine red evidence or completed
 Implementation. The current cursor describes remaining work; prior completion
 and its observed checks remain readable separately (#651). Behavior-preserving
