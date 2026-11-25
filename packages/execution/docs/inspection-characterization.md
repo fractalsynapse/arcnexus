@@ -1,5 +1,106 @@
 # Inspection parity characterization
 
+## Implementation assessment for run 204
+
+Implementation consumes the completed Testing characterization below without
+recreating historical red. The evaluated candidate is checkpoint
+`9159e66eb529345e5ec68a0ba44a53a1f278162d`, secured at sequence 156356.
+The engineering base and active captured authority remain
+`ce690126388cd30f8b601b91498e91b586008ff3`; issue 738 and
+branch `738-task` are unchanged. NativeStarted sequence 156392 records this
+Implementation activation under that authority, profile gpt-sol, gpt-6.1-sol,
+medium reasoning and host Node v22.23.5.
+
+Artifact names in this section resolve in the same registered task evidence
+directory as Testing's account below. The complete supplied index is
+`204-300-retained-evidence-b3bf5deb20ceb0659ede2821472122d4e8b56c31336f89e8d3f6647db84d7abe.json`;
+subsequent observations are registered in `204-1-run-timeline.jsonl`.
+Complete mapped reads supplied the relevant source, logs and provider artifacts.
+
+### Correction and reuse decision
+
+Current characterization demonstrates no product or fixture defect.
+Implementation preserves all executable and assertion bytes and updates this
+evidence account only. It reuses Architecture's sole request builder, Agent
+preparation, activation enrichment, NativeObservation and LocalMcp's retained
+listing path. No responsibility, alternate prompt, provider adapter or recovery
+path is added; no code removal is necessary. EX-6/EX-16/EX-24 and
+ARC-9/ARC-13/ARC-18/ARC-24 remain unchanged.
+
+The reviewed parity, listing, provider, activation, MCP, adapter and guidance
+hashes match the Documentation assessment below. Fresh mapped observations
+establish applicability for this activity instead of inferring it from those
+matching source hashes or substituting historical runs. No authority, operation
+parameter, dependency or executable change was made during these observations.
+
+### Applicable engineering observations
+
+All five captured operations used expected pass, Execution/implementation scope
+and the run-204 task worktree, and returned actual status zero. Complete logs
+were read; the timeline retains exact commands, arguments, scope and selections.
+
+| Operation | Complete log | Sequence | Duration ms | Check-input identity |
+| --- | --- | --- | --- | --- |
+| owner-format | `204-367-owner-format.log` | 156585 | 3364 | `21f719da5b52741211a32479b685c9d0ca588a44ea22296c17106ffd0a5290a5` |
+| owner-lint | `204-370-owner-lint.log` | 156593 | 3887 | `b3e28d37a451400aff92fef5433c988482a3d20593f42d1f9ff3f9fcc3f416fe` |
+| repository-types | `204-373-repository-types.log` | 156601 | 11392 | `75735af9a38174c66e9e0a87f7aa6bfc9cb908310a5258d2b30796fff7b009b8` |
+| repository-build | `204-376-repository-build.log` | 156609 | 13646 | `320cd57e63768b67c768381fe24a167cde9287e64e6bf94859526a34df44fe70` |
+| owner-tests | `204-379-owner-tests.log` | 156618 | 49547 | `09af8ab488dd6a5152ccd23cc1e28a7ca4f77f72471b2d1f5176b67d8e4434f8` |
+
+Format and lint select the same 127 maintained Execution TypeScript files;
+their complete path selections are retained in both logs and check observations.
+Types executes `npm run check` with strict `tsc --noEmit`; build executes
+`npm run build`, compiling the repository and building the web app.
+Tests executes `npm test -- execution`, with the captured default
+`selectors: []`, builds first and selects 61 Execution suites. No additional
+selector or native-enablement parameter was supplied.
+
+The complete test log SHA-256 is
+`9ba4ea7651f0cbb0cb009ffd505a1613fea37d25cdb7856360fc05ee546b483f`.
+Lines 2277–2282 report 270 tests, 253 passes, zero failures and 17 skips.
+The complete diagnostics identify each controlled fixture's own captured revision,
+actual executable, stdin, argv, cwd, Node version, guidance bytes and MCP responses;
+fixture captures are distinct from this repository's authority.
+
+| Criterion | Current passing observation and scope |
+| --- | --- |
+| `inspection-request-parity` | Log lines 1042–1133 pass complete rendered/structured CLI and actual subprocess comparisons for Director, disjoint steward activities, both empty bindings and Reviewer. `assertSelected` independently checks full authored purpose, selected procedure and source labels. At 1165, `returningContext`, `retainedIndex` and `taskSection` preserve complete assignment, multiline answer, milestone, acceptance and ordered evidence before whole-input equality. Registered completed rounds/timelines are independently authored and unregistered reports excluded. |
+| `inspection-project-authority` | `assertTools` compares exact actual MCP identities, descriptions and schemas with inspection, including disjoint and empty activities, refusal diagnostics and unchanged foreign bytes. Lines 1174–1198 pass exact requested-listing retention, call identity, selected activity attribution and ordering, and prohibit fabricated unrequested listings or project-handler effects. |
+| `inspection-effects-provider-policy` | At 1146, repeatability and all six placeholders pass with unchanged Git/worktrees, absent storage and throwing activation/admission/upstream sentinels. The matrix compares actual independent cached/disabled/live web options for populated and empty tools. `assertInvocation` checks approved guidance visibility and unchanged discovery configuration without pasted guidance. Changed guidance is refused before provider startup at 1152. The assembled CLI case at 1158 retains seven nested passes, no failures or skips. |
+| `inspection-evidence-quality` | These logs and timeline identities establish separate format, lint, types, build and behavioral observations for this candidate and activity. Complementary activity-tool cases at lines 75–105 establish transport and caller repair with their partial fixture; they do not replace production-captured parity. The 17 skipped native cases remain skips and establish no additional confinement result. |
+
+### Configured-provider comparison and limits
+
+Complete reads of `204-301-native-request.json`,
+`204-304-native-invocation.json` and `204-305-mcp-observation.json`
+add the current Implementation comparison. The full requested response equals
+all 12 prepared tools after removing only internal `handler`; identities,
+descriptions, schemas and order match exactly. Call
+`04b9407c-1ad3-4871-abbe-88549d9ccc2d` has completed phase and is attributed
+to Execution/implementation at sequence 156396 inside the activation begun at
+156392. This is a populated configured-provider listing.
+
+The invocation identifies `/usr/local/bin/codex`; cwd, model, reasoning and
+live web setting match the prepared options. Shell and unified-exec are disabled,
+and discovery-disabling settings are absent. `204-303-codex.stderr.log` is
+empty at its read point. These observations describe actual host configuration
+and requested project metadata, not live web use or provider interpretation.
+
+Testing's configured-provider classification below remains separately attributed.
+No current real-provider empty or Reviewer listing, complete independent
+model-received context receipt, authoritative automatic guidance-discovery record,
+installed Codex version or runtime-image receipt is inferred here. The controlled
+executable establishes byte-exact received stdin and approved-file visibility;
+it does not establish automatic Codex selection. The archived research predates
+the repaired listing path and does not create a new prerequisite.
+
+This subsequent Markdown-only edit leaves tested executable, fixture, dependency,
+authority and parameter inputs unchanged, supporting reuse subject to host
+applicability validation. The checked-edit receipt identifies its resulting
+checkpoint. This account was reviewed against the actual logs, source assertions,
+timeline and local references. Independent assembled acceptance, hosted CI/review,
+staging delivery and live qualification remain separate host observations.
+
 ## Testing characterization for run 204
 
 Testing completed both assigned checklist items for
