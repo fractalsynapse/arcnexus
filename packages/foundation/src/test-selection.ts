@@ -106,6 +106,7 @@ export class SuiteMetadataReader {
         return this.metadata(declaration.initializer);
       }
     }
+    assert.fail(`Missing required suite metadata declaration: ${this.path}`);
   }
 
   /** Require literal scalar and tag fields rather than silently guessing computed metadata. */
