@@ -10,6 +10,7 @@ export interface ProviderCISnapshot {
 export interface CIProgress {
   suites: Set<number>;
   intermediate: ProviderCISnapshot[];
+  failure?: ProviderCheck;
 }
 
 export interface ProviderCIRead extends ProviderCISnapshot {
@@ -38,6 +39,10 @@ function hasCIObservations(scope: ProviderCISnapshot) {
 
 export function suitePending({ status }: ProviderCheckSuite) {
   return pendingCheckStatuses.some((pending) => pending === status);
+}
+
+export function pendingSuiteIds(suites: readonly ProviderCheckSuite[]) {
+  return suites.filter(suitePending).map(({ id }) => id);
 }
 
 /** Reread when a completed suite restarts or an active suite advances. */
@@ -219,7 +224,7 @@ export function successfulChecks(
 }
 
 /** Keep unresolved run associations from turning incomplete reruns into terminal failures. */
-export function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly number[]) {
+function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly number[]) {
   const { state, status, conclusion, suiteId } = check;
   if (state) return ['ERROR', 'FAILURE'].includes(state);
   const suiteKnown =
@@ -228,10 +233,36 @@ export function terminalCheckFailure(check: ProviderCheck, pendingSuites: readon
 }
 
 /** Translate a provider suite failure into a check diagnostic without inventing a job. */
-export function terminalSuiteFailure(
-  suites: readonly ProviderCheckSuite[],
-): ProviderCheck | undefined {
+function terminalSuiteFailure(suites: readonly ProviderCheckSuite[]): ProviderCheck | undefined {
   const suite = suites.find(suiteFailure);
   if (!suite) return;
   return { suiteId: suite.id, status: 'COMPLETED', conclusion: suite.conclusion.toUpperCase() };
+}
+
+/** Distinguish a terminal observation from a previous job in a suite that is still running. */
+export function observedCIFailure(snapshot: ProviderCISnapshot) {
+  const pending = pendingSuiteIds(snapshot.suites);
+  return (
+    snapshot.checks.find((check) => terminalCheckFailure(check, pending)) ??
+    terminalSuiteFailure(snapshot.suites)
+  );
+}
+
+/** Return the provider's actual suite at the time it failed, including across CI rereads. */
+export function failedSuiteDiagnostic(evidence: GitHubPullObservation, check: ProviderCheck) {
+  if (check.runId !== undefined || check.suiteId == null) return;
+  const suites = [
+    evidence.confirmedSuites,
+    evidence.suites,
+    ...(evidence.earlierChecks ?? []).map(({ suites }) => suites),
+  ];
+  return suites
+    .flat()
+    .find(
+      (suite) =>
+        suite &&
+        suite.id === check.suiteId &&
+        suiteFailure(suite) &&
+        suite.conclusion.toUpperCase() === check.conclusion,
+    );
 }

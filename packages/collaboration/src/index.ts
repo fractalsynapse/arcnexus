@@ -6,12 +6,11 @@ import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import { readGitHubChecks } from './github-checks.js';
 import {
   confirmationChanged,
+  failedSuiteDiagnostic,
   recordEarlierChecks,
   recordPolledChecks,
   requireRetainedSuites,
   successfulChecks,
-  terminalCheckFailure,
-  terminalSuiteFailure,
   type ProviderCISnapshot,
 } from './github-ci-coverage.js';
 import {
@@ -243,11 +242,8 @@ ${marker}`,
   ) {
     try {
       const facts = await this.verificationFacts(evidence, target, previous);
-      const { checks, pendingSuites, review, suites } = facts;
+      const { failed, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
-      const failed =
-        checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
-        terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
       if (facts.confirmationChanged)
         throw new GitHubPullReadFailure(
@@ -278,6 +274,7 @@ ${marker}`,
     if (
       review === 'CHANGES_REQUESTED' ||
       review === 'REVIEW_REQUIRED' ||
+      initial.failed ||
       !successfulChecks(initial)
     )
       return { ...initial, review, reviewCurrent: false, confirmationChanged: false };
@@ -298,7 +295,8 @@ ${marker}`,
     });
     const ready = successfulChecks(confirmed);
     const changed = confirmationChanged(initial, confirmed, ready);
-    const reviewCurrent = ready && !changed && confirmed.progress.suites.size === 0;
+    const reviewCurrent =
+      ready && !confirmed.failed && !changed && confirmed.progress.suites.size === 0;
     if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
     return { ...confirmed, reviewCurrent, confirmationChanged: changed };
   }
@@ -358,9 +356,7 @@ ${marker}`,
   /** Preserve complete check diagnostics from the authorized repository's provider job. */
   private async failedCheck(check: ProviderCheck, evidence: GitHubPullObservation) {
     const job = /\/job\/(\d+)/.exec(check.detailsUrl ?? '')?.[1];
-    const suites = evidence.confirmedSuites ?? evidence.suites;
-    const suite =
-      check.runId === undefined ? suites?.find(({ id }) => id === check.suiteId) : undefined;
+    const suite = failedSuiteDiagnostic(evidence, check);
     const log = job
       ? await this.pullRead('CI job log', evidence, () =>
           this.query(['api', `repos/${this.repository}/actions/jobs/${job}/logs`], true),

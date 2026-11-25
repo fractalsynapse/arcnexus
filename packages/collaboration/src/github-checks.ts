@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
 import {
+  observedCIFailure,
   pendingCheckStatuses,
+  pendingSuiteIds,
   requireRetainedChecks,
   requireRunSuites,
   suiteFailure,
@@ -85,7 +87,7 @@ export async function readGitHubChecks(
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
-    if (!stable) retainIntermediate(progress, observe, snapshot.observedChecks, inventory);
+    if (!stable) retainIntermediate(progress, observe, snapshot, inventory);
     observe.suites(current, 'subsequent');
     if (stable) return stableCheckRead(snapshot, current, progress);
     const progressed = suiteProgress(inventory, current, snapshot.observedChecks);
@@ -99,11 +101,12 @@ export async function readGitHubChecks(
 function retainIntermediate(
   progress: CIProgress,
   observe: CIObserver,
-  checks: readonly ProviderCheck[],
+  { checks, observedChecks }: Awaited<ReturnType<typeof readChecks>>,
   suites: readonly ProviderCheckSuite[],
 ) {
-  progress.intermediate.push({ checks, suites });
-  observe.earlier(checks, suites);
+  progress.failure ??= observedCIFailure({ checks, suites });
+  progress.intermediate.push({ checks: observedChecks, suites });
+  observe.earlier(observedChecks, suites);
 }
 
 function stableCheckRead(
@@ -116,11 +119,8 @@ function stableCheckRead(
     suites,
     pendingSuites: pendingSuiteIds(suites),
     progress,
+    failed: progress.failure ?? observedCIFailure({ ...snapshot, suites }),
   };
-}
-
-function pendingSuiteIds(suites: readonly ProviderCheckSuite[]) {
-  return suites.filter(suitePending).map(({ id }) => id);
 }
 
 /** Record both sources before comparing them against the previously observed coverage. */

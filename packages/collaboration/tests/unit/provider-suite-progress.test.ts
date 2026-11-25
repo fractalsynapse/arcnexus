@@ -305,7 +305,7 @@ function confirmedLegacyStatus(coverage: string, inventory: number) {
     (coverage === 'transient status change' && inventory === 4);
   const status = {
     context: 'CI',
-    state: 'success',
+    state: coverage === 'transient status failure' && inventory === 3 ? 'failure' : 'success',
     target_url: changed ? 'https://example.com/replaced' : null,
   };
   return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
@@ -318,6 +318,7 @@ for (const { coverage, completesAt } of [
   { coverage: 'transient status change', completesAt: 5 },
   { coverage: 'persistent status change', completesAt: 7 },
   { coverage: 'transient status change', completesAt: 7 },
+  { coverage: 'transient status failure', completesAt: 7 },
 ]) {
   test(`a suite restarts during confirmation and coverage ${coverage}, finishing on read ${completesAt}`, async (t) => {
     let inventories = 0;
@@ -334,10 +335,10 @@ for (const { coverage, completesAt } of [
       }
       return completedSuiteGrowth(args, inventories < completesAt || coverage === 'matches');
     });
-    if (coverage.endsWith('status change')) {
+    if (coverage.includes('status')) {
       await assert.rejects(
         scenario.provider.verify(pr, head, 'staging'),
-        /CI changed during review/,
+        coverage.endsWith('failure') ? GitHubCheckFailure : /CI changed during review/,
       );
       assert.equal(reviews, 1);
       return;
