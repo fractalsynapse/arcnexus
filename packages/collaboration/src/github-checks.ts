@@ -8,6 +8,7 @@ const suite = z.object({ id: z.int().positive(), head_sha: z.string() });
 const run = z.object({
   id: z.int().positive(),
   app: z.object({ id: z.int().positive(), slug: z.string().optional() }).nullable(),
+  check_suite: z.object({ id: z.int().positive() }).nullish(),
   head_sha: z.string(),
   name: z.string().min(1),
   status: z.enum(['completed', 'in_progress', 'queued', 'requested', 'waiting', 'pending']),
@@ -158,28 +159,63 @@ async function suiteInventory(read: Read, ref: string, head: string, count: numb
   return suites;
 }
 
-/** Use provider job attempts for Actions reruns and preserve other check identities. */
-async function latestRuns(read: Read, repo: string, head: string, runs: CheckRun[]) {
-  const contexts = new Map<string, { workflow?: string; runs: CheckRun[] }>();
+interface CheckContext {
+  workflow?: string;
+  suite?: number;
+  runs: CheckRun[];
+}
+
+/** Prefer the provider's selection without joining independent check identities. */
+async function latestRuns(read: Read, repo: string, head: string, checks: CheckRun[]) {
+  const workflows = new Map<string, Map<number, number>>();
+  const suites = new Map<number, Set<number>>();
+  const selected: CheckRun[] = [];
+  for (const { workflow, suite, runs } of checkContexts(repo, checks)) {
+    if (runs.length === 1) {
+      selected.push(...runs);
+    } else if (workflow) {
+      const attempts =
+        workflows.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow));
+      workflows.set(workflow, attempts);
+      selected.push(...latestInContext(runs, attempts));
+    } else if (suite !== undefined) {
+      const ids = suites.get(suite) ?? (await latestSuiteIds(read, repo, head, suite));
+      suites.set(suite, ids);
+      const latest = runs.filter((run) => ids.has(run.id));
+      if (latest.length === 0)
+        throw new Error(`GitHub did not identify the current checks for suite ${suite}`);
+      selected.push(...latest);
+    }
+  }
+  return selected;
+}
+
+/** Group independently identified checks by workflow or third-party suite and name. */
+function checkContexts(repo: string, runs: CheckRun[]) {
+  const contexts = new Map<string, CheckContext>();
   for (const run of runs) {
     const workflow = workflowRun(run, repo);
-    const key = workflow ? JSON.stringify([workflow, run.name]) : String(run.id);
-    const context = contexts.get(key) ?? { workflow, runs: [] };
+    const suite = run.app && run.app.slug !== 'github-actions' ? run.check_suite?.id : undefined;
+    const key = workflow
+      ? JSON.stringify(['workflow', workflow, run.name])
+      : suite === undefined
+        ? String(run.id)
+        : JSON.stringify(['suite', run.app?.id, suite, run.name]);
+    const context = contexts.get(key) ?? { workflow, suite, runs: [] };
     context.runs.push(run);
     contexts.set(key, context);
   }
-  const known = new Map<string, Map<number, number>>();
-  const selected: CheckRun[] = [];
-  for (const { workflow, runs } of contexts.values()) {
-    if (!workflow || runs.length === 1) {
-      selected.push(...runs);
-      continue;
-    }
-    const attempts = known.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow));
-    known.set(workflow, attempts);
-    selected.push(...latestInContext(runs, attempts));
-  }
-  return selected;
+  return contexts.values();
+}
+
+/** Read the third-party provider's latest check-run selection for its suite. */
+async function latestSuiteIds(read: Read, repo: string, head: string, suite: number) {
+  const latest = await runsFrom(
+    read,
+    `${repo}/check-suites/${suite}/check-runs?filter=latest`,
+    head,
+  );
+  return new Set(latest.map((run) => run.id));
 }
 
 /** Recognize Actions' own scoped job URL before using it to group attempts. */
@@ -218,12 +254,18 @@ async function workflowAttempts(read: Read, repo: string, head: string, workflow
   return new Map(jobs.map((job) => [job.id, job.run_attempt]));
 }
 
-/** Keep distinct jobs in the latest attempt, even when their display names collide. */
+/** Require unambiguous replacement when a workflow has several attempts. */
 function latestInContext(runs: CheckRun[], attempts: Map<number, number>) {
-  const numbers = runs.map((item) => attempts.get(item.id));
-  if (numbers.some((number) => number === undefined))
-    throw new Error('GitHub did not identify every check run attempt');
-  const latest = numbers.reduce<number>((latest, number) => Math.max(latest, number ?? 0), 0);
+  const counts = new Map<number, number>();
+  let latest = 0;
+  for (const run of runs) {
+    const attempt = attempts.get(run.id);
+    if (attempt === undefined) throw new Error('GitHub did not identify every check run attempt');
+    counts.set(attempt, (counts.get(attempt) ?? 0) + 1);
+    latest = Math.max(latest, attempt);
+  }
+  if (counts.size > 1 && [...counts.values()].some((count) => count > 1))
+    throw new Error(`GitHub returned ambiguous same-name jobs across attempts: ${runs[0]?.name}`);
   return runs.filter((item) => attempts.get(item.id) === latest);
 }
 

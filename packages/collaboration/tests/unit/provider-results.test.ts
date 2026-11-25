@@ -349,6 +349,57 @@ test('a completed cancellation without a start is superseded by a later attempt'
   await scenario.provider.verify(pr, head, 'staging');
 });
 
+test('third-party reruns use the latest checks reported by their own suite', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+    if (args[1]?.includes('/check-suites/5/check-runs'))
+      return JSON.stringify({ total_count: 1, check_runs: [current] });
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [{ ...current, id: 99, conclusion: 'failure' }, current],
+    });
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+});
+
+function ambiguousJobChecks() {
+  return JSON.stringify({
+    total_count: 3,
+    check_runs: [
+      {
+        ...successfulRun,
+        id: 99,
+        conclusion: 'failure',
+        details_url: 'https://github.com/example/project/actions/runs/7/job/99',
+      },
+      {
+        ...successfulRun,
+        id: 1,
+        conclusion: 'failure',
+        details_url: 'https://github.com/example/project/actions/runs/7/job/1',
+      },
+      successfulRun,
+    ],
+  });
+}
+
+test('ambiguous same-name jobs remain ineligible after a partial rerun', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/actions/runs/7/jobs?'))
+      return workflowJobs([
+        [99, 1],
+        [1, 1],
+        [42, 2],
+      ]);
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return ambiguousJobChecks();
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), {
+    message: /ambiguous same-name jobs/,
+  });
+});
+
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
   const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
   const scenario = new ProviderResults(t, (args) =>
