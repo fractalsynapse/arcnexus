@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
 import type { ProviderCheckSuite } from './github-checks.js';
+import type { ProviderCISnapshot } from './github-ci-coverage.js';
 
 const commit = z.string().regex(/^[a-f0-9]{40}$/);
 const repositoryName = z.object({ full_name: z.string() });
@@ -104,11 +105,7 @@ export interface GitHubPullObservation {
   confirmedChecks?: readonly ProviderCheck[];
   suites?: readonly ProviderCheckSuite[];
   confirmedSuites?: readonly ProviderCheckSuite[];
-  earlierChecks?: {
-    phase: 'CI checks' | 'CI confirmation';
-    checks: readonly ProviderCheck[];
-    suites: readonly ProviderCheckSuite[];
-  }[];
+  earlierChecks?: (ProviderCISnapshot & { phase: 'CI checks' | 'CI confirmation' })[];
   reviewDecision?: ReturnType<typeof reviewDecision>;
 }
 

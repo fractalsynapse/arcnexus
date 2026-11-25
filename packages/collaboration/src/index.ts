@@ -3,13 +3,12 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
+import { readGitHubChecks, suiteFailure, type ProviderCheckSuite } from './github-checks.js';
 import {
-  readGitHubChecks,
   requireRetainedSuites,
-  suiteFailure,
   suiteSnapshot,
-  type ProviderCheckSuite,
-} from './github-checks.js';
+  type ProviderCISnapshot,
+} from './github-ci-coverage.js';
 import {
   GitHubPullReadFailure,
   GitHubReviewRejection,
@@ -236,7 +235,7 @@ ${marker}`,
     branch?: string,
   ) {
     const current = await this.verificationPull(evidence, base, state, branch, 'pull');
-    const initial = await this.checks(evidence, 'checks', evidence.earlierChecks?.at(-1)?.suites);
+    const initial = await this.checks(evidence, 'checks', evidence.earlierChecks?.at(-1));
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
     if (
@@ -246,7 +245,7 @@ ${marker}`,
     )
       return { ...initial, review };
 
-    const confirmed = await this.checks(evidence, 'confirmedChecks', initial.suites);
+    const confirmed = await this.checks(evidence, 'confirmedChecks', initial);
     const ready = successfulChecks(confirmed);
     if (ready && checkSnapshot(initial) !== checkSnapshot(confirmed))
       throw new GitHubPullReadFailure(
@@ -284,21 +283,27 @@ ${marker}`,
   private checks(
     evidence: GitHubPullObservation,
     slot: 'checks' | 'confirmedChecks',
-    priorSuites?: readonly ProviderCheckSuite[],
+    prior?: ProviderCISnapshot,
   ) {
     const read = slot === 'checks' ? 'CI checks' : 'CI confirmation';
     const suites = slot === 'checks' ? 'suites' : 'confirmedSuites';
     return this.pullRead(read, evidence, () =>
-      readGitHubChecks((args) => this.query(args), this.repository, evidence.head, {
-        checks: (observed) => {
-          evidence[slot] = observed;
+      readGitHubChecks(
+        (args) => this.query(args),
+        this.repository,
+        evidence.head,
+        {
+          checks: (observed) => {
+            evidence[slot] = observed;
+          },
+          suites: (observed) => {
+            evidence[suites] = observed;
+            requireRetainedSuites(observed, prior?.suites);
+          },
+          earlier: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
         },
-        suites: (observed) => {
-          evidence[suites] = observed;
-          requireRetainedSuites(observed, priorSuites);
-        },
-        earlier: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
-      }),
+        prior?.checks,
+      ),
     );
   }
 
@@ -470,10 +475,7 @@ function recordEarlierChecks(
     earlier.push({ phase, checks, suites });
 }
 
-function checkSnapshot(snapshot: {
-  checks: readonly ProviderCheck[];
-  suites: readonly ProviderCheckSuite[];
-}) {
+function checkSnapshot(snapshot: ProviderCISnapshot) {
   const checks = snapshot.checks.map((check) => JSON.stringify(check)).sort();
   return JSON.stringify([checks, suiteSnapshot(snapshot.suites)]);
 }

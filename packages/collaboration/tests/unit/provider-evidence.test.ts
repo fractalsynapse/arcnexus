@@ -292,6 +292,39 @@ test('a later poll cannot authorize a completed suite if its expected run count 
   );
 });
 
+for (const reportedRuns of [undefined, 1]) {
+  test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {
+    let pulls = 0;
+    const good = { ...successfulRun, check_suite: { id: 5 } };
+    const bad = { ...good, id: 43, name: 'Lint', conclusion: 'failure' };
+    const scenario = new ProviderResults(t, (args) => {
+      if (args[1]?.endsWith('/pulls/99')) pulls++;
+      if (args[1]?.includes('/check-runs?')) {
+        const runs = pulls === 1 ? [good, bad] : [good];
+        return JSON.stringify({ total_count: runs.length, check_runs: runs });
+      }
+      if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+      return JSON.stringify({
+        total_count: 1,
+        check_suites: [
+          {
+            id: 5,
+            head_sha: head,
+            status: pulls === 1 ? 'in_progress' : 'completed',
+            latest_check_runs_count: pulls === 1 ? reportedRuns : 1,
+          },
+        ],
+      });
+    });
+    await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+      assert(failure instanceof GitHubPullReadFailure);
+      assert.match(failure.message, /omitted previously observed check run 43/);
+      assert.equal(failure.observation.earlierChecks?.at(-1)?.checks[1]?.conclusion, 'FAILURE');
+      return true;
+    });
+  });
+}
+
 test('a failed suite blocks delivery even when the provider supplies no job', async (t) => {
   let inventories = 0;
   const scenario = new ProviderResults(t, (args) => {

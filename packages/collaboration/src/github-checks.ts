@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
+import { requireRetainedChecks, suiteSnapshot } from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
@@ -69,17 +70,16 @@ export async function readGitHubChecks(
   repository: string,
   head: string,
   observe: CheckObserver,
+  prior: readonly ProviderCheck[] = [],
 ) {
   const repo = `repos/${repository}`;
-  const ref = `${repo}/commits/${head}`;
-  let inventory = await suiteInventory(read, ref, head);
+  const scope = { repo, ref: `${repo}/commits/${head}`, head };
+  let inventory = await suiteInventory(read, scope.ref, head);
   observe.suites(inventory);
+  let previous = prior;
   for (;;) {
-    const checks = await checkRuns(read, repo, ref, head, inventory, observe.checks);
-    const statuses = await readGitHubStatuses(read, repository, head);
-    const combined: ProviderCheck[] = [...checks, ...statuses];
-    observe.checks(combined);
-    const current = await suiteInventory(read, ref, head);
+    const combined = await readChecks(read, scope, inventory, observe.checks, previous);
+    const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
     if (!stable) observe.earlier(combined, inventory);
     observe.suites(current);
@@ -92,25 +92,24 @@ export async function readGitHubChecks(
     if (!suiteProgress(inventory, current))
       throw new Error('GitHub check suite inventory changed during CI observation');
     inventory = current;
+    previous = combined;
   }
 }
 
-export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
-  return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
-}
-
-/** Keep every observed suite and its expected run coverage across separate reads. */
-export function requireRetainedSuites(
-  observed: readonly ProviderCheckSuite[],
-  previous: readonly ProviderCheckSuite[] = [],
+/** Record both sources before comparing them against the previously observed coverage. */
+async function readChecks(
+  read: Read,
+  { repo, ref, head }: { repo: string; ref: string; head: string },
+  inventory: ProviderCheckSuite[],
+  observe: CheckObserver['checks'],
+  previous: readonly ProviderCheck[],
 ) {
-  const current = new Map(observed.map((suite) => [suite.id, suite]));
-  for (const suite of previous) {
-    const retained = current.get(suite.id);
-    if (!retained) throw new Error('GitHub omitted a previously observed check suite');
-    if ((retained.latest_check_runs_count ?? 0) < (suite.latest_check_runs_count ?? 0))
-      throw new Error(`GitHub suite ${suite.id} lost previously observed check run coverage`);
-  }
+  const { checks, runs } = await checkRuns(read, repo, ref, head, inventory, observe);
+  const statuses = await readGitHubStatuses(read, ref, head);
+  const combined: ProviderCheck[] = [...checks, ...statuses];
+  observe(combined);
+  requireRetainedChecks(runs, statuses, previous);
+  return combined;
 }
 
 function suitePending({ status }: ProviderCheckSuite) {
@@ -170,12 +169,7 @@ function normalizeRun({
 }
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
-async function readGitHubStatuses(
-  read: Read,
-  repository: string,
-  head: string,
-): Promise<ProviderCheck[]> {
-  const ref = `repos/${repository}/commits/${head}`;
+async function readGitHubStatuses(read: Read, ref: string, head: string): Promise<ProviderCheck[]> {
   const page = statusPage.refine(
     (value) => value.sha === head,
     'GitHub returned commit statuses for a different head',
@@ -216,7 +210,7 @@ async function checkRuns(
   const checks = latest.map(normalizeRun);
   observe(checks);
   requireSuiteCoverage(inventory, latest);
-  return checks;
+  return { checks, runs };
 }
 
 /** Compare each suite's reported run count with the head-pinned check inventory. */
