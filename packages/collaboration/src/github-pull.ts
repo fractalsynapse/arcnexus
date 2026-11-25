@@ -107,9 +107,14 @@ export interface GitHubPullObservation {
   confirmedObservedChecks?: readonly ProviderCheck[];
   suites?: readonly ProviderCheckSuite[];
   confirmedSuites?: readonly ProviderCheckSuite[];
-  earlierChecks?: (ProviderCISnapshot & { phase: 'CI checks' | 'CI confirmation' })[];
+  earlierChecks?: readonly (ProviderCISnapshot & { phase: 'CI checks' | 'CI confirmation' })[];
   reviewDecision?: ReturnType<typeof reviewDecision>;
 }
+
+export type GitHubVerificationObserver = (
+  evidence: GitHubPullObservation,
+  result: 'pending' | 'verified',
+) => void;
 
 /** Preserve completed provider facts with the exact unavailable read. */
 export class GitHubPullReadFailure extends Error {

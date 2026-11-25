@@ -4,6 +4,7 @@ import {
   GitHubCheckFailure,
   GitHubPullReadFailure,
   GitHubReviewRejection,
+  type GitHubPullObservation,
 } from '../../src/index.js';
 import {
   ProviderResults,
@@ -216,6 +217,33 @@ test('a pending confirmation preserves the initial green observation before a la
     assert(history.some(({ phase }) => phase === 'CI confirmation'));
     return true;
   });
+});
+
+test('cancellation during polling still exposes the original and pending confirmation reads', async (t) => {
+  let reviewed = false;
+  let observation: GitHubPullObservation | undefined;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviewed = true;
+    if (!args[1]?.endsWith('/status')) return readyResponse(args);
+    if (reviewed) setImmediate(() => scenario.cancellation.abort());
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'CI', state: reviewed ? 'pending' : 'success', target_url: null }],
+    });
+  });
+  const ready = scenario.provider.verify(pr, head, 'staging', 'OPEN', undefined, (evidence) => {
+    observation = evidence;
+  });
+  await assert.rejects(ready, { name: 'AbortError' });
+  assert.equal(
+    observation?.observedChecks?.find(({ context }) => context === 'CI')?.state,
+    'SUCCESS',
+  );
+  assert.equal(
+    observation?.confirmedObservedChecks?.find(({ context }) => context === 'CI')?.state,
+    'PENDING',
+  );
 });
 
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {

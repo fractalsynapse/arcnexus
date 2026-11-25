@@ -3,6 +3,8 @@ import type { ProviderCheck } from './check-failure.js';
 import {
   pendingCheckStatuses,
   requireRetainedChecks,
+  requireRunSuites,
+  suiteFailure,
   suitePending,
   suiteProgress,
   suiteSnapshot,
@@ -123,14 +125,6 @@ async function readChecks(
   return { checks: current, observedChecks };
 }
 
-/** Identify an explicit provider suite failure even when no job was created. */
-export function suiteFailure(
-  observation: ProviderCheckSuite,
-): observation is ProviderCheckSuite & { conclusion: string } {
-  const { status, conclusion } = observation;
-  return status === 'completed' && Boolean(conclusion && conclusion !== 'success');
-}
-
 function normalizeRun({
   id,
   app,
@@ -191,6 +185,7 @@ async function checkRuns(
       : current;
   const observedRuns = runs.map(normalizeRun);
   observe(observedRuns);
+  requireRunSuites(runs, inventory);
   const latest = await latestRuns(read, repo, head, runs, observe);
   const checks = latest.map(normalizeRun);
   requireSuiteCoverage(inventory, latest);

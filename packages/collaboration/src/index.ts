@@ -3,12 +3,13 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
-import { readGitHubChecks, suiteFailure, type ProviderCheckSuite } from './github-checks.js';
+import { readGitHubChecks, type ProviderCheckSuite } from './github-checks.js';
 import {
   checkSnapshot,
   recordEarlierChecks,
   recordPolledChecks,
   requireRetainedSuites,
+  suiteFailure,
   type ProviderCISnapshot,
 } from './github-ci-coverage.js';
 import {
@@ -19,6 +20,7 @@ import {
   pullReviewQuery,
   reviewDecision,
   type GitHubPullObservation,
+  type GitHubVerificationObserver,
   type PublishedPull,
 } from './github-pull.js';
 
@@ -207,7 +209,7 @@ ${marker}`,
     base: string,
     state = 'OPEN',
     branch?: string,
-    observe?: (evidence: GitHubPullObservation) => void,
+    observe?: GitHubVerificationObserver,
   ) {
     const pinned = { repository: this.repository, pr, head };
     let earlierChecks: GitHubPullObservation['earlierChecks'];
@@ -220,8 +222,9 @@ ${marker}`,
         checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
-      if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return observe?.(evidence);
-      recordPolledChecks(evidence);
+      if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts))
+        return observe?.(evidence, 'verified');
+      if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
       earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }

@@ -58,6 +58,14 @@ export function suiteProgress(
   });
 }
 
+/** Identify an explicit provider suite failure even when no job was created. */
+export function suiteFailure(
+  observation: ProviderCheckSuite,
+): observation is ProviderCheckSuite & { conclusion: string } {
+  const { status, conclusion } = observation;
+  return status === 'completed' && Boolean(conclusion && conclusion !== 'success');
+}
+
 export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
@@ -73,14 +81,15 @@ export function recordEarlierChecks(
   phase: 'CI checks' | 'CI confirmation',
   snapshot: ProviderCISnapshot,
 ) {
-  const earlier = (evidence.earlierChecks ??= []);
+  const earlier = evidence.earlierChecks ?? [];
   const previous = earlier.findLast((item) => item.phase === phase);
   if (!previous || checkSnapshot(previous) !== checkSnapshot(snapshot))
-    earlier.push({ phase, ...snapshot });
+    evidence.earlierChecks = [...earlier, { phase, ...snapshot }];
 }
 
 /** Preserve both sides of a completed CI read when verification must poll again. */
 export function recordPolledChecks(evidence: GitHubPullObservation) {
+  const count = evidence.earlierChecks?.length ?? 0;
   const { observedChecks, suites, confirmedObservedChecks, confirmedSuites } = evidence;
   if (observedChecks && suites)
     recordEarlierChecks(evidence, 'CI checks', { checks: observedChecks, suites });
@@ -89,6 +98,7 @@ export function recordPolledChecks(evidence: GitHubPullObservation) {
       checks: confirmedObservedChecks,
       suites: confirmedSuites,
     });
+  return count !== (evidence.earlierChecks?.length ?? 0);
 }
 
 /** Retain each observed suite and its expected run coverage across separate reads. */
@@ -122,4 +132,15 @@ export function requireRetainedChecks(
     if (check.context !== undefined && !contexts.has(check.context))
       throw new Error(`GitHub omitted previously observed commit status ${check.context}`);
   }
+}
+
+/** Refuse runs that name a suite absent from the pinned provider inventory. */
+export function requireRunSuites(
+  runs: readonly { id: number; check_suite?: { id: number } | null }[],
+  suites: readonly ProviderCheckSuite[],
+) {
+  const known = new Set(suites.map(({ id }) => id));
+  for (const { id, check_suite } of runs)
+    if (check_suite && !known.has(check_suite.id))
+      throw new Error(`GitHub check run ${id} belongs to unlisted check suite ${check_suite.id}`);
 }

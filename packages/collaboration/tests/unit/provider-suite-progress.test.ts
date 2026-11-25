@@ -89,6 +89,18 @@ test('suite metadata omissions cannot make an unseen suite eligible', async (t) 
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /missing check runs/);
 });
 
+test('a check run with a suite missing from the pinned inventory cannot authorize integration', async (t) => {
+  const scenario = new ProviderResults(t, (args) =>
+    args[1]?.includes('/check-runs?')
+      ? JSON.stringify({
+          total_count: 1,
+          check_runs: [{ ...successfulRun, check_suite: { id: 6 } }],
+        })
+      : readyResponse(args),
+  );
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /unlisted check suite/);
+});
+
 test('a pending suite must not disappear on the next verification poll', async (t) => {
   let pulls = 0;
   const scenario = new ProviderResults(t, (args) => {
