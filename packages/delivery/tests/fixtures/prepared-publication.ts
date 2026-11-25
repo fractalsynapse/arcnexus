@@ -12,11 +12,10 @@ import { activities, track, type Plan } from '../../../direction/src/index.js';
 import { Workflow, type WorkflowServices } from '../../../workflow/src/index.js';
 import { Execution, hostTask, type HostTask } from '../../../execution/src/index.js';
 import { RoundConsumptionFixture } from '../../../execution/tests/fixtures/round-consumption.js';
-
-import { resolveOperation } from '../../../architecture/src/index.js';
-import { checkInput } from '../../../execution/src/check-cache.js';
 import { verify } from '../../../verification/src/index.js';
 import { integrate, resume } from '../../src/index.js';
+import { assertExecutedChecks } from './recovery-evidence.js';
+import type { CheckResult } from '../../../execution/src/check.js';
 
 export const answer = '  Preserve the original requirement.\n\nKeep café and trailing spaces.  \n';
 export const continuationQuestion = 'Which newly captured requirement governs this continuation?';
@@ -46,6 +45,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   private head?: string;
   private interrupted = false;
   interruptNext = false;
+  repairFailedCheck = false;
   recoveryContinuation?: 'replay' | 'question';
 
   /** Commit explicit tools and ownership and bind an executable deterministic provider. */
@@ -76,16 +76,14 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     const agent = new Agent(this.architecture);
     return new Workflow({
       execution: this.execution(execution),
-      direction: {
-        track,
-        plan: async () => {
-          this.plans += 1;
-          return { kind: 'plan', plan: recoveryPlan() };
+      direction: this.direction(),
+      agent: {
+        execute: async (session, milestone) => {
+          const task = hostTask(session);
+          if (milestone.id === 'correct-required-check') this.correctBaseline(task);
+          return this.activate(task, agent);
         },
-        revise: async (_session, _plan, feedback) =>
-          assert.fail('Recovery must retain the accepted plan: ' + JSON.stringify(feedback)),
       },
-      agent: { execute: async (session) => this.activate(hostTask(session), agent) },
       ...this.gates(),
     })
       .run({ directory: this.root, goal }, this.observer(), signal)
@@ -93,6 +91,23 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         this.retainArtifacts();
         return outcome;
       });
+  }
+
+  /** Preserve the accepted plan and append only accountable correction after rejection. */
+  private direction(): WorkflowServices['direction'] {
+    return {
+      track,
+      plan: async () => {
+        this.plans += 1;
+        return { kind: 'plan', plan: recoveryPlan() };
+      },
+      revise: async (_session, plan, feedback) => {
+        assert(this.repairFailedCheck && feedback.kind === 'rejection');
+        assert(plan);
+        const correction = { ...plan.milestones[0]!, id: 'correct-required-check' };
+        return { kind: 'plan', plan: { ...plan, milestones: [...plan.milestones, correction] } };
+      },
+    };
   }
 
   /** Retain each native source artifact once in the enclosing check log before temporary cleanup. */
@@ -143,7 +158,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       category: 'check',
       tool: 'check',
       command: process.execPath,
-      args: ['--version'],
+      args: ['recovery-check.mjs', 'current'],
       network: false,
     });
     this.git('add', '.');
@@ -166,7 +181,6 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
         });
         this.context.mock.method(admitted, 'provider', () => this.provider);
         this.controlReviewer(admitted);
-        this.controlChecks(admitted);
         return admitted;
       },
       prepare: (task, issue, cancellation) => execution.prepare(task, issue, cancellation),
@@ -176,28 +190,12 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
     };
   }
 
-  /** Control process responses while retaining resolved operations and exact candidate input evidence. */
-  private controlChecks(task: HostTask) {
-    this.context.mock.method(task, 'check', async (id: string) => {
-      const operation = resolveOperation(task.capture, id);
-      const input = checkInput(task, id);
-      assert(input, 'Checks require the actual clean recovered candidate');
-      const log = task.store(
-        id + '.log',
-        'Controlled process result: ' + JSON.stringify({ operation, input, status: 0 }) + '\n',
-      );
-      const result = {
-        id,
-        command: operation.command!,
-        args: operation.args,
-        cwd: task.worktree!,
-        durationMs: 1,
-        log,
-        status: 0,
-      };
-      task.note({ check: result, checkInput: input });
-      return result;
-    });
+  /** Repair the accountable input through checked editing before Workflow checkpoints it. */
+  private correctBaseline(task: HostTask) {
+    const baseline = readFileSync(join(task.worktree!, 'baseline'), 'utf8');
+    task.edits('work', 'implementation', [
+      { path: 'baseline', expected: textDigest(baseline), content: 'durable evidence\n' },
+    ]);
   }
 
   /** Replace only the external review response, retaining the real identity and citation validators. */
@@ -209,16 +207,39 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       async (...[agent, selection, data, cancellation]: Parameters<HostTask['activate']>) => {
         if (selection.component !== 'reviewer')
           return activate(agent, selection, data, cancellation);
-        const assignment = data.assignment as { accepted: Record<string, unknown> };
         this.reviews.push(structuredClone(data));
-        return {
-          ...assignment.accepted,
-          kind: 'accepted',
-          criteria: [criterion.id],
-          evidence: task.evidence,
-        };
+        return this.reviewReply(task, data);
       },
     );
+  }
+
+  /** Model a favorable verdict or an evidence-linked rejection of the actual failed command. */
+  private reviewReply(task: HostTask, data: Parameters<HostTask['activate']>[2]) {
+    const assignment = data.assignment as {
+      accepted: Record<string, unknown>;
+      checks: CheckResult[];
+    };
+    assertExecutedChecks(task, assignment.checks);
+    const failed = assignment.checks.find(({ status }) => status !== 0);
+    if (this.repairFailedCheck && failed)
+      return {
+        ...assignment.accepted,
+        kind: 'rejected',
+        findings: [
+          {
+            criterion: criterion.id,
+            owner: 'work',
+            reason: 'Correct the baseline rejected by the required command',
+            evidence: [failed.log],
+          },
+        ],
+      };
+    return {
+      ...assignment.accepted,
+      kind: 'accepted',
+      criteria: [criterion.id],
+      evidence: task.evidence,
+    };
   }
 
   /** Interrupt after the answer is durable but before activity completion is acknowledged. */
@@ -281,7 +302,7 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
   /** Commit a complete steward activity with actual mapped edit and question handlers. */
   private configure() {
     const work = this.definition('components/work');
-    work.owns = ['baseline', 'checked.txt', 'staging.txt'];
+    work.owns = ['baseline', 'checked.txt', 'staging.txt', 'recovery-check.mjs'];
     work.activities = {
       implementation: {
         role: 'assessor',
@@ -297,8 +318,23 @@ export class PreparedRecoveryFixture extends RoundConsumptionFixture {
       category: 'read',
       tool: 'edit',
     });
+    this.installChecks();
     this.git('add', '.');
     this.git('commit', '-m', 'Explicit prepared recovery activity');
+  }
+
+  /** Commit compiler output from the maintained TypeScript fixture and the original command. */
+  private installChecks() {
+    const script = readFileSync(new URL('./recovery-check.js', import.meta.url), 'utf8');
+    this.write('recovery-check.mjs', script);
+    this.write(catalog + '/operations/fixture-check.yaml', {
+      id: 'fixture-check',
+      category: 'check',
+      tool: 'check',
+      command: process.execPath,
+      args: ['recovery-check.mjs', 'original'],
+      network: false,
+    });
   }
 
   /** Read the complete authored definition before changing the next captured revision. */

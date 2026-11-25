@@ -20,6 +20,10 @@ select the container's security profile.
   mount or unmount filesystems, change its profile, or gain capabilities.
   Its network namespace is separate and retains loopback for local tests.
 
+The [production check runtime prerequisite](production-check-runtime.md) records
+why a confined integration check cannot currently construct another production
+check sandbox, the retained observations and the required operator/architect action.
+
 Load the profile with `apparmor_parser` as described in the
 [Host setup](../../host/README.md). The verified configuration uses
 AppArmor ABI 5.0 and Docker Engine with seccomp on Linux. The Host refuses to

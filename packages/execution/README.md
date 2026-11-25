@@ -189,6 +189,14 @@ A candidate-side approval claim cannot change the activation goal. Ordinary task
 continue to pass their supplied goal unchanged. This handoff is the bootstrap
 correction tracked in #639; a real retained phase must demonstrate it after checks.
 
+## Production check prerequisite
+
+The [confined recovery-check investigation](docs/confined-check-prerequisite.md)
+records run 194’s namespace setup failure before the declared command starts,
+the production nesting boundary and the evidence required before Delivery resumes.
+The capability and runtime diagnosis remain pending; confinement and captured
+acceptance must remain enforced.
+
 ## Candidate dependencies
 
 Confined checks must use the candidate's dependency manifest and lockfile, rather

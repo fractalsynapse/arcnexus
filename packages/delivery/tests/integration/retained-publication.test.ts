@@ -1,10 +1,26 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import test from 'node:test';
+import nativeTest from 'node:test';
 import { PreparedRecoveryFixture, answer, checked } from '../fixtures/prepared-publication.js';
 import { PublicationProvider } from '../fixtures/publication-provider.js';
 
-export const suite = { owner: 'delivery', level: 'integration', tags: ['regression'] } as const;
+export const suite = {
+  owner: 'delivery',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
+
+// These callers launch real HostTask.check sandboxes from the trusted Host boundary.
+// The ordinary confined suite cannot launch nested namespaces; its skips provide no native proof.
+const test = process.env.ARCNEXUS_NATIVE_TESTS === '1' ? nativeTest : nativeTest.skip;
+
+type AcceptanceEvent = {
+  verification?: {
+    identity: import('../../../verification/src/index.js').VerificationIdentity;
+    checks: Array<{ id: string; status: number }>;
+  };
+  verdict?: import('../../../verification/src/index.js').Verdict;
+};
 
 /** Secure actual checked bytes and a human answer before starting final publication. */
 async function prepared(fixture: PreparedRecoveryFixture) {
@@ -142,12 +158,13 @@ function recoveredMerge(
   reviews: number,
   commit: string,
   staging: string,
+  corrected = false,
 ) {
   assert.equal(provider.pull?.url, url);
   assert.equal(provider.opened, 1);
   assert.equal(provider.merged, 1);
   assert(fixture.reviews.length > reviews, 'Recovered candidate requires independent reassessment');
-  recoveredAcceptance(fixture, staging, commit);
+  recoveredAcceptance(fixture, staging, commit, corrected);
   assert.equal(fixture.git('rev-parse', commit + '^'), staging);
   assert.equal(
     fixture.git('rev-parse', commit + '^{tree}'),
@@ -156,14 +173,13 @@ function recoveredMerge(
 }
 
 /** Bind recovered checks and independent acceptance to the resulting tree and newly captured base. */
-function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, commit: string) {
-  const history = fixture.observed.at(-1)! as Array<{
-    verification?: {
-      identity: import('../../../verification/src/index.js').VerificationIdentity;
-      checks: Array<{ id: string; status: number }>;
-    };
-    verdict?: import('../../../verification/src/index.js').Verdict;
-  }>;
+function recoveredAcceptance(
+  fixture: PreparedRecoveryFixture,
+  staging: string,
+  commit: string,
+  corrected = false,
+) {
+  const history = fixture.observed.at(-1)! as AcceptanceEvent[];
   const prior = history.find((event) => event.verification)?.verification;
   const assessment = history.findLast((event) => event.verification)?.verification;
   const verdict = history.findLast((event) => event.verdict)?.verdict;
@@ -171,7 +187,8 @@ function recoveredAcceptance(fixture: PreparedRecoveryFixture, staging: string, 
   assert.equal(assessment.identity.tree, fixture.git('rev-parse', commit + '^{tree}'));
   assert.equal(assessment.identity.base, staging);
   assert.notEqual(assessment.identity.capture, prior?.identity.capture);
-  assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
+  if (corrected) assert.notEqual(assessment.identity.acceptance, prior?.identity.acceptance);
+  else assert.equal(assessment.identity.acceptance, prior?.identity.acceptance);
   assert.notEqual(assessment.identity.inputs, prior?.identity.inputs);
   assert.deepEqual(verdict.verification, assessment.identity);
   assert.deepEqual(verdict.criteria, ['continuity']);
@@ -264,3 +281,55 @@ test('staging moves again after outdated PR recovery obtains fresh acceptance', 
   assert(!calls.some((call) => call.startsWith('merge ') || call.startsWith('open ')));
   preserved(fixture, original);
 });
+
+test('failed recovered command retains the PR through checked correction', async (t) => {
+  const fixture = new PreparedRecoveryFixture(t);
+  const provider = new PublicationProvider(fixture, t);
+  const original = await prepared(fixture);
+  provider.lose = 'open';
+  assert.equal((await fixture.run()).kind, 'failed');
+  const url = provider.pull!.url;
+  const { staging } = fixture.advance('baseline', 'invalid recovered baseline\n  café detail\n');
+  const offset = provider.calls.length;
+  const failed = await fixture.run();
+  assert.equal(failed.kind, 'blocked', JSON.stringify(failed));
+  assert(failed.kind === 'blocked');
+  assert.equal(failed.reason, 'Required candidate checks failed');
+  const failure = failedCommand(fixture, failed.evidence);
+  assert.equal(provider.merged, 0);
+  assert.equal(provider.pull!.url, url);
+  assert(!provider.calls.slice(offset).some((call) => /^(open|merge) /.test(call)));
+  const reviews = fixture.reviews.length;
+  fixture.repairFailedCheck = true;
+  const result = await fixture.run();
+  assert.equal(result.kind, 'merged', JSON.stringify(result));
+  assert(result.kind === 'merged');
+  recoveredMerge(fixture, provider, url, reviews, result.commit, staging, true);
+  assert.equal(readFileSync(failure.log, 'utf8'), failure.text);
+  preserved(fixture, original);
+});
+
+/** Require the exact failing current command, retained diagnostic and a favorable-but-refused review. */
+function failedCommand(fixture: PreparedRecoveryFixture, evidence: readonly string[]) {
+  const review = fixture.reviews.at(-1) as {
+    assignment: { checks: Array<{ id: string; status: number; log: string }> };
+  };
+  assert.deepEqual(
+    review.assignment.checks.map(({ id, status }) => ({ id, status })),
+    [
+      { id: 'fixture-check', status: 0 },
+      { id: 'current-check', status: 1 },
+    ],
+  );
+  const log = review.assignment.checks[1]!.log;
+  assert(evidence.includes(log));
+  const text = readFileSync(log, 'utf8');
+  assert(
+    text.endsWith(
+      'Recovered required command rejected baseline:\ninvalid recovered baseline\n  café detail\n',
+    ),
+  );
+  const history = fixture.observed.at(-1)! as Array<{ verdict?: { kind: string } }>;
+  assert.equal(history.findLast((event) => event.verdict)?.verdict?.kind, 'blocked');
+  return { log, text };
+}
