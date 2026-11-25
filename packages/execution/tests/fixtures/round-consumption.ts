@@ -27,7 +27,7 @@ export class RoundConsumptionFixture {
 
   /** Supply every catalog binding explicitly without using developer provider configuration. */
   constructor(t: TestContext, repository = remote) {
-    t.after(() => rmSync(this.directory, { recursive: true, force: true }));
+    t.after(() => this.cleanup());
     mkdirSync(this.root);
     this.git('init', '-b', 'staging');
     this.git('config', 'user.name', 'Fixture');
