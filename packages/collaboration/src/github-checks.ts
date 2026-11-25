@@ -221,11 +221,12 @@ function requireSuiteCoverage(inventory: ProviderCheckSuite[], runs: CheckRun[])
     const count = counts.get(suite.id) ?? 0;
     const expected = suite.latest_check_runs_count;
     if (
-      (count === 0 &&
-        (expected === undefined || suite.status !== 'completed' || !suite.conclusion)) ||
-      (expected !== undefined && count < expected)
+      suite.status !== 'completed' ||
+      expected === undefined ||
+      count < expected ||
+      (count === 0 && !suite.conclusion)
     )
-      throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
+      throw new Error(`GitHub suite ${suite.id} is missing check runs or completion status`);
   }
 }
 

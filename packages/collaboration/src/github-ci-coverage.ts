@@ -48,6 +48,8 @@ export function requireRetainedSuites(
     if ((retained.latest_check_runs_count ?? 0) < (suite.latest_check_runs_count ?? 0))
       throw new Error(`GitHub suite ${suite.id} lost previously observed check run coverage`);
   }
+  if (previous.length && current.size !== previous.length)
+    throw new Error('GitHub check suite inventory changed between observations');
 }
 
 /** Validate run identities against provider history before choosing the current attempt. */
