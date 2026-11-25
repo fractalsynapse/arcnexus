@@ -6,14 +6,23 @@ governs publication identity, reconciliation, gates and recorded results.
 The scenarios below state intended behavior and required regression evidence;
 they do not establish that a real delivery has occurred.
 
-[Publication recovery](docs/check-recovery.md) records the accepted continuation,
-current production-service assertions and retained Execution/Verification outcomes
-for issue #720 at captured revision
-`fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8`. Its executed characterization section
-records 49 passing Delivery scenarios, applicable owner quality observations and
-remaining live-provider limitations.
+[Publication recovery](docs/check-recovery.md#current-evidence-assessment-issue-744-run-213)
+assesses issue #744's `retained-publication-evidence` milestone at capture
+`945d4546ace2a55670020d8dd37de3b0d1500eed`. It maps current production services
+and public assertions to the accepted criteria, consumes completed Execution
+recovery evidence and identifies the observations still needed for Delivery.
 Preserve the task and its history, require acceptance for the recovered identity,
 inspect provider facts before effects, and reconcile the existing PR.
+
+[Run 194](docs/check-recovery.md#executed-recovered-commands-issue-730-run-194)
+records real confined command processes through production services with controlled
+reviewer and provider responses and real local Git merges. Its scenario/fixture
+hashes still match inspected sources; that alone does not validate reuse for the
+current implementation, capture, bindings and runtime. Ordinary native skips prove
+no execution. Historical fixture results establish neither live independent
+inference nor hosted CI, configured GitHub review or upstream staging integration.
+The host must obtain applicable evidence and independent acceptance for the final
+candidate before its single staging delivery.
 
 ## Retained publication identity
 
@@ -72,15 +81,11 @@ named external action does.
 
 ## Historical owner evidence
 
-The current source reconciliation and executed owner results are in
-[Publication recovery](docs/check-recovery.md#executed-production-service-characterization).
-That run covers all five Delivery suites, including reopened production-service
-recovery after lost push, PR and merge responses, an outdated PR with fresh
-acceptance, a further staging move after that recovery, and unavailable branch
-facts after successful PR observation. It preserves one issue and PR, exact
-answers, checked bytes and history. No demonstrated production defect required
-a behavioral change. This current result supersedes the earlier implementation-gap
-description and pending-characterization instructions.
+[Run 145](docs/check-recovery.md#executed-production-service-characterization)
+records the earlier 49-pass owner characterization with controlled check results.
+The subsequent run 194 account distinguishes actual command execution from those
+controlled results. Both retain their original source and environment scope;
+neither automatically accepts the current recovered candidate.
 The result below is historical owner evidence; it does not establish execution of
 the current integration scenarios or apply automatically to the recovered candidate.
 
