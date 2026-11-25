@@ -123,6 +123,101 @@ Delivery execution, hosted gate or staging result is claimed by this prose.
 Further staging movement requires renewed reconciliation and applicable
 assessment through the same retained task.
 
+## Executed characterization: issue #744, run 213
+
+This Implementation reconciliation supersedes the pending execution statements in
+the assessment above. It consumes completed Testing without changing executable
+sources, assertions, authority or acceptance. The four production source hashes
+above and the five scenario/fixture hashes recorded for run 194 still match the
+complete current sources. No demonstrated behavioral defect calls for a correction.
+
+### Current checkpoint and native provenance
+
+Implementation read the complete retained Host answer
+`213-643-clarification.json`, SHA-256
+`236792e8cfac7612895d89ffd83072243b97c8df29587eddc494d90573a1ea70`,
+under run 213's evidence invocation identified above. It records two successful
+native invocations at secured checkpoint
+`564073b5ab25960d0b5c32f1cf97351026dee210`, tree
+`9906cb0a50529ef6bab54301e0beb5f417d712d0`, on `744-task`.
+Engineering base and capture remain
+`945d4546ace2a55670020d8dd37de3b0d1500eed`.
+
+The recorded invocation is `/usr/bin/npm test -- --path packages/delivery/tests/integration/retained-publication.test.ts --native true`
+at `/verify/checkout`; each invocation returned exit 0, 12 passes and no skips.
+The second retained all twelve fixture SQLite journals through a read-only
+file-descriptor observer outside the runner without patching test operations.
+The recorded Linux AMD64 image is
+`sha256:9f85e28364eb9846d84913ca918f510a3e14af379d23ee77070dcf0d7f52c518`,
+with Node v22.23.5, npm 10.9.9, Bubblewrap 0.13.1 and Git 2.39.5.
+The answer retains executable hashes, offline dependency installation and lockfile
+identity, seccomp identity, dropped capabilities, no-new-privileges and the
+existing Host AppArmor profile. It reports real confined `HostTask.check`
+execution with no upstream operations or mounted GitHub/Codex credentials.
+
+The answer identifies these external artifacts under
+`/home/adrian/.local/state/arcnexus/706-gateway-completion.THGXCP7w/vm/`:
+
+| Artifact | Recorded SHA-256 |
+| --- | --- |
+| `744-retained-native.log` | `b1f43607b087b100631f0741d805bd71e66469e41abbbc2bd84dd8bd48c9d92c` |
+| `744-journals-native.log` | `f765271d050534ed9ccf2a2962c8966ec29eb79fe5752de27b6ab8a820ae61f6` |
+| `744-delivery-fixture-journals.tar` | `5dbdb15721b474e2cf4bc19e79251db28c992af01b1e668dae4e7490d69bc9c3` |
+| `744-delivery-evidence.json` | `ecdbfad84e7241cc8d1b885ff4b63382830b6327bea31b5637cb3e21e16478e5` |
+
+Testing's direct mapped reads of those external paths were refused as inadmissible.
+This reconciliation relies on the complete recorded Host answer and inspected
+public assertions, not a claim of directly inspecting those external archives.
+The answer reproduces every native verdict and complete deciding process records
+for the outdated-PR and failed-command journeys.
+
+### Criterion reconciliation
+
+| Criterion | Current observation and scope |
+| --- | --- |
+| `recovered-check-execution` | Recorded case 4 executes the original command before recovery and both original/current commands in the recovered worktree with distinct input fingerprints and exits 0. Case 12 records current-command exit 1 and the exact multiline café diagnostic; production Verification refuses favorable acceptance. Checked correction obtains new passing original/current executions and assessment. Reused failed observations are explicitly marked `reusedFrom`, not counted as executions. |
+| `recovered-acceptance-refusal` | The ordinary owner log executes all nine public identity refusals, including equal-tree base, capture, requirement and required-check changes, before commit/provider access. Native assertions bind recovered checks and verdict to the final tree, new parent, capture and evidence inputs. |
+| `publication-reconciliation` | The Host answer reports all lost push/open/merge, outdated-open-PR and further-staging-movement cases passed. Inspected assertions require provider observation before effects, one issue/PR, no replay of a completed lost effect, historical merge confirmation after staging advances and refusal to merge when staging moves again. |
+| `publication-holds` | All five conflicting/unavailable cases passed according to the recorded native TAP. Assertions require observation-only continuation, no merge, retained exact checked work/history and readable evidence. Branch-unavailable coverage preserves the successful PR observation, complete stdout/stderr and the explicit action to resolve the diagnostic and observe facts before retry. |
+
+Case 4's recorded recovered tree is
+`1da50cb33ee912b187b84054f123615adc5f9a0b`, reviewed parent
+`60afd51e81049280d89543401abfcf4d44392c85`, with local confirmed merge
+`2326fb850295325a0f64a8f7499702b418181f57`.
+Case 12's corrected tree is
+`0a6abaff5e880999c0937cb245662df0f128e11f`, reviewed parent
+`c633af3cfc5ef2b34504e5a4dc33c26c5f30f038`, with local confirmed merge
+`eec5c6eb35674c7f68bb0e895cf8dc83e9f85254`.
+Both use the fixture's same PR 17. These are controlled-provider fixture identities,
+not issue #744's upstream delivery. The complete answer retains each verification
+identity, actual argv/cwd/status/log and original human answer with whitespace.
+
+### Applicable owner evidence and remaining delivery
+
+Implementation inspected complete logs `213-603-owner-format.log`,
+`213-597-owner-lint.log`, `213-600-repository-types.log`,
+`213-606-repository-build.log` and `213-594-owner-tests.log`.
+Their trusted timeline records report exit 0. The ordinary owner suite records
+40 passes and 12 native skips; its SHA-256 is
+`62f8b4e53926859d466152fe89bb58f835aa182d95c1d694c5ac8842fb6060c3`.
+The native evidence above supplies the separate recorded execution observation;
+ordinary skips are never native passes. Mapped Implementation checks resolve
+current applicability through their captured input identities.
+
+Only this evidence record and its README pointer change in Implementation.
+Real confined commands, Git/SQLite persistence and local squash commits remain
+distinct from controlled reviewer/provider responses. No live independent
+inference, hosted CI, configured GitHub review or upstream staging integration is
+established by these fixture observations. Run 194 remains historical evidence;
+current characterization uses run 213's recorded checkpoint and runtime.
+
+The host must independently assess the final candidate including these prose
+changes, then observe required hosted gates and confirm the single staging merge
+for issue #744. Retain the original task, answers, receipts, failed observations
+and publication identity. Further staging movement requires reconciliation and
+applicable refreshed acceptance. This contribution introduces no alternate
+publication path, store, permission or quantitative limit.
+
 ## Bind the production candidate
 
 Use the actual candidate returned by
