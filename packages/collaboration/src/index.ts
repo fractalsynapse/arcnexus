@@ -5,6 +5,7 @@ import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import {
   readGitHubChecks,
+  requireRetainedSuites,
   suiteFailure,
   suiteSnapshot,
   type ProviderCheckSuite,
@@ -294,11 +295,9 @@ ${marker}`,
         },
         suites: (observed) => {
           evidence[suites] = observed;
-          const ids = new Set(observed.map(({ id }) => id));
-          if (priorSuites?.some(({ id }) => !ids.has(id)))
-            throw new Error('GitHub omitted a previously observed check suite');
+          requireRetainedSuites(observed, priorSuites);
         },
-        beforeReread: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
+        earlier: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
       }),
     );
   }

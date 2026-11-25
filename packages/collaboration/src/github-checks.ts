@@ -60,7 +60,7 @@ export type ProviderCheckSuite = z.output<typeof suite>;
 interface CheckObserver {
   checks(checks: readonly ProviderCheck[]): void;
   suites(suites: readonly ProviderCheckSuite[]): void;
-  beforeReread(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
+  earlier(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
 }
 
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
@@ -80,8 +80,10 @@ export async function readGitHubChecks(
     const combined: ProviderCheck[] = [...checks, ...statuses];
     observe.checks(combined);
     const current = await suiteInventory(read, ref, head);
+    const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
+    if (!stable) observe.earlier(combined, inventory);
     observe.suites(current);
-    if (suiteSnapshot(inventory) === suiteSnapshot(current))
+    if (stable)
       return {
         checks: combined,
         suites: current,
@@ -89,13 +91,26 @@ export async function readGitHubChecks(
       };
     if (!suiteProgress(inventory, current))
       throw new Error('GitHub check suite inventory changed during CI observation');
-    observe.beforeReread(combined, inventory);
     inventory = current;
   }
 }
 
 export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
+}
+
+/** Keep every observed suite and its expected run coverage across separate reads. */
+export function requireRetainedSuites(
+  observed: readonly ProviderCheckSuite[],
+  previous: readonly ProviderCheckSuite[] = [],
+) {
+  const current = new Map(observed.map((suite) => [suite.id, suite]));
+  for (const suite of previous) {
+    const retained = current.get(suite.id);
+    if (!retained) throw new Error('GitHub omitted a previously observed check suite');
+    if ((retained.latest_check_runs_count ?? 0) < (suite.latest_check_runs_count ?? 0))
+      throw new Error(`GitHub suite ${suite.id} lost previously observed check run coverage`);
+  }
 }
 
 function suitePending({ status }: ProviderCheckSuite) {

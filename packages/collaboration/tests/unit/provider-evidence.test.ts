@@ -263,6 +263,35 @@ test('a pending suite must not disappear on the next verification poll', async (
   });
 });
 
+test('a later poll cannot authorize a completed suite if its expected run count decreased', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99')) pulls++;
+    if (args[1]?.includes('/check-runs?'))
+      return JSON.stringify({
+        total_count: 1,
+        check_runs: [{ ...successfulRun, check_suite: { id: 5 } }],
+      });
+    if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 1,
+      check_suites: [
+        {
+          id: 5,
+          head_sha: head,
+          status: pulls === 1 ? 'queued' : 'completed',
+          conclusion: pulls === 1 ? null : 'success',
+          latest_check_runs_count: pulls === 1 ? 2 : 1,
+        },
+      ],
+    });
+  });
+  await assert.rejects(
+    scenario.provider.verify(pr, head, 'staging'),
+    /lost previously observed check run coverage/,
+  );
+});
+
 test('a failed suite blocks delivery even when the provider supplies no job', async (t) => {
   let inventories = 0;
   const scenario = new ProviderResults(t, (args) => {
@@ -282,6 +311,27 @@ test('a failed suite blocks delivery even when the provider supplies no job', as
     assert(error instanceof GitHubCheckFailure);
     assert.equal(error.check.suiteId, 6);
     assert.equal(error.check.conclusion, 'STARTUP_FAILURE');
+    return true;
+  });
+});
+
+test('an inconsistent inventory preserves the failed suite seen before the disagreement', async (t) => {
+  let inventories = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/check-suites') || ++inventories !== 1) return readyResponse(args);
+    const result = JSON.parse(readyResponse(args));
+    result.check_suites.push({
+      id: 6,
+      head_sha: head,
+      status: 'completed',
+      conclusion: 'startup_failure',
+      latest_check_runs_count: 0,
+    });
+    return JSON.stringify({ total_count: 2, check_suites: result.check_suites });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.earlierChecks?.[0]?.suites[1]?.conclusion, 'startup_failure');
     return true;
   });
 });
