@@ -215,6 +215,42 @@ test('a later poll cannot authorize a completed suite if its expected run count 
   );
 });
 
+test('a completed suite cannot acquire expected runs silently between polls', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99')) pulls++;
+    return completedSuiteGrowth(args, pulls === 1);
+  });
+  await assert.rejects(
+    scenario.provider.verify(pr, head, 'staging'),
+    /completed GitHub suite.*changed/,
+  );
+});
+
+/** Expose extra green coverage only after an explicitly completed suite was observed. */
+function completedSuiteGrowth(args: string[], initial: boolean) {
+  if (args[1]?.endsWith('/status')) {
+    const status = { context: 'CI', state: initial ? 'pending' : 'success', target_url: null };
+    return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
+  }
+  if (args[1]?.endsWith('/check-suites')) {
+    const suite = {
+      id: 5,
+      head_sha: head,
+      status: 'completed',
+      conclusion: 'success',
+      latest_check_runs_count: initial ? 1 : 2,
+    };
+    return JSON.stringify({ total_count: 1, check_suites: [suite] });
+  }
+  if (args[1]?.includes('/check-runs?')) {
+    const run = { ...successfulRun, check_suite: { id: 5 } };
+    const runs = initial ? [run] : [run, { ...run, id: 43, name: 'Lint' }];
+    return JSON.stringify({ total_count: runs.length, check_runs: runs });
+  }
+  return readyResponse(args);
+}
+
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {
     let pulls = 0;

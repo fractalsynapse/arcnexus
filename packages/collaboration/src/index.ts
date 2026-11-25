@@ -215,6 +215,23 @@ ${marker}`,
     let earlierChecks: GitHubPullObservation['earlierChecks'];
     for (;;) {
       const evidence: GitHubPullObservation = { ...pinned, earlierChecks };
+      if (await this.verificationReady(evidence, base, state, branch, observe))
+        return observe?.(evidence, 'verified');
+      if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
+      earlierChecks = evidence.earlierChecks;
+      await setTimeout(5_000, undefined, { signal: this.signal });
+    }
+  }
+
+  /** Decide from fresh provider facts and retain partial facts when an in-flight read is cancelled. */
+  private async verificationReady(
+    evidence: GitHubPullObservation,
+    base: string,
+    state: string,
+    branch: string | undefined,
+    observe?: GitHubVerificationObserver,
+  ) {
+    try {
       const facts = await this.verificationFacts(evidence, base, state, branch);
       const { checks, pendingSuites, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
@@ -222,11 +239,10 @@ ${marker}`,
         checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
-      if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts))
-        return observe?.(evidence, 'verified');
-      if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
-      earlierChecks = evidence.earlierChecks;
-      await setTimeout(5_000, undefined, { signal: this.signal });
+      return review !== 'REVIEW_REQUIRED' && successfulChecks(facts);
+    } catch (error) {
+      if (this.signal.aborted && evidence.pull) observe?.(evidence, 'pending');
+      throw error;
     }
   }
 

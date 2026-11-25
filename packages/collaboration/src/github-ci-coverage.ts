@@ -111,8 +111,18 @@ export function requireRetainedSuites(
   for (const suite of previous.suites) {
     const retained = current.get(suite.id);
     if (!retained) throw new Error('GitHub omitted a previously observed check suite');
-    if ((retained.latest_check_runs_count ?? 0) < (suite.latest_check_runs_count ?? 0))
+    const priorCount = suite.latest_check_runs_count ?? 0;
+    const currentCount = retained.latest_check_runs_count ?? 0;
+    if (currentCount < priorCount)
       throw new Error(`GitHub suite ${suite.id} lost previously observed check run coverage`);
+    if (
+      currentCount > priorCount &&
+      suite.status === 'completed' &&
+      retained.status === 'completed'
+    )
+      throw new Error(
+        `A completed GitHub suite ${suite.id} changed its reported check run coverage`,
+      );
   }
   if (current.size !== previous.suites.length)
     throw new Error('GitHub check suite inventory changed between observations');

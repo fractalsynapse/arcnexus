@@ -246,6 +246,22 @@ test('cancellation during polling still exposes the original and pending confirm
   );
 });
 
+test('cancellation while reading the review retains already observed CI facts', async (t) => {
+  let observation: GitHubPullObservation | undefined;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') {
+      scenario.cancellation.abort();
+      throw new DOMException('Stopped during review lookup', 'AbortError');
+    }
+    return readyResponse(args);
+  });
+  const ready = scenario.provider.verify(pr, head, 'staging', 'OPEN', undefined, (evidence) => {
+    observation = evidence;
+  });
+  await assert.rejects(ready, { name: 'AbortError' });
+  assert.equal(observation?.observedChecks?.[0]?.runId, successfulRun.id);
+});
+
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
   const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
   const scenario = new ProviderResults(t, (args) =>
