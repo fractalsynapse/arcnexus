@@ -299,6 +299,22 @@ for (const activeAt of [1, 2]) {
   });
 }
 
+test('a suite that starts and finishes during confirmation requires a fresh review', async (t) => {
+  let inventories = 0;
+  let reviews = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviews++;
+    if (args[1]?.endsWith('/status')) return readyResponse(args);
+    if (args[1]?.endsWith('/check-suites') && ++inventories === 4)
+      return completedSuiteGrowth(args, true)
+        .replace('"status":"completed"', '"status":"in_progress"')
+        .replace('"conclusion":"success"', '"conclusion":null');
+    return completedSuiteGrowth(args, inventories < 5);
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+  assert.equal(reviews, 2);
+});
+
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {
     let pulls = 0;

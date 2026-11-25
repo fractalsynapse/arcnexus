@@ -79,23 +79,33 @@ export async function readGitHubChecks(
   let inventory = await suiteInventory(read, scope.ref, head);
   observe.suites(inventory, 'initial');
   let previous = prior;
+  let reread = false;
   for (;;) {
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
     if (!stable) observe.earlier(snapshot.observedChecks, inventory);
     observe.suites(current, 'subsequent');
-    if (stable)
-      return {
-        ...snapshot,
-        suites: current,
-        pendingSuites: current.filter(suitePending).map(({ id }) => id),
-      };
+    if (stable) return stableCheckRead(snapshot, current, reread);
     if (!suiteProgress(inventory, current, snapshot.observedChecks))
       throw new Error('GitHub check suite inventory changed during CI observation');
     inventory = current;
     previous = snapshot.observedChecks;
+    reread = true;
   }
+}
+
+function stableCheckRead(
+  snapshot: Awaited<ReturnType<typeof readChecks>>,
+  suites: ProviderCheckSuite[],
+  reread: boolean,
+) {
+  return {
+    ...snapshot,
+    suites,
+    pendingSuites: suites.filter(suitePending).map(({ id }) => id),
+    reread,
+  };
 }
 
 /** Record both sources before comparing them against the previously observed coverage. */

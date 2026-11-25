@@ -39,6 +39,12 @@ export {
 const run = promisify(execFile);
 export type GitHubCredential = (remote: string) => Promise<string>;
 
+interface VerificationTarget {
+  base: string;
+  state: string;
+  branch?: string;
+}
+
 /** Use the trusted GitHub CLI for scoped tracking and publication operations. */
 export class GitHub {
   readonly repository: string;
@@ -214,18 +220,12 @@ ${marker}`,
     observe?: GitHubVerificationObserver,
   ) {
     const pinned = { repository: this.repository, pr, head };
+    const target = { base, state, branch };
     let earlierChecks: GitHubPullObservation['earlierChecks'];
     let previous: ProviderCISnapshot | undefined;
     for (;;) {
       const evidence: GitHubPullObservation = { ...pinned, earlierChecks };
-      const attempt = await this.verificationAttempt(
-        evidence,
-        base,
-        state,
-        branch,
-        previous,
-        observe,
-      );
+      const attempt = await this.verificationAttempt(evidence, target, previous, observe);
       if (attempt.ready) return observe?.(evidence, 'verified');
       previous = attempt.snapshot;
       if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
@@ -237,14 +237,12 @@ ${marker}`,
   /** Decide from fresh provider facts and retain partial facts when an in-flight read is cancelled. */
   private async verificationAttempt(
     evidence: GitHubPullObservation,
-    base: string,
-    state: string,
-    branch: string | undefined,
+    target: VerificationTarget,
     previous: ProviderCISnapshot | undefined,
     observe?: GitHubVerificationObserver,
   ) {
     try {
-      const facts = await this.verificationFacts(evidence, base, state, branch, previous);
+      const facts = await this.verificationFacts(evidence, target, previous);
       const { checks, pendingSuites, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
       const failed =
@@ -252,7 +250,7 @@ ${marker}`,
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
       return {
-        ready: review !== 'REVIEW_REQUIRED' && successfulChecks(facts),
+        ready: facts.reviewCurrent,
         snapshot: { checks: facts.observedChecks, suites },
       };
     } catch (error) {
@@ -264,12 +262,10 @@ ${marker}`,
   /** Join head-pinned facts while retaining completed reads for an unavailable provider response. */
   private async verificationFacts(
     evidence: GitHubPullObservation,
-    base: string,
-    state: string,
-    branch?: string,
+    target: VerificationTarget,
     previous?: ProviderCISnapshot,
   ) {
-    const current = await this.verificationPull(evidence, base, state, branch, 'pull');
+    const current = await this.verificationPull(evidence, target, 'pull');
     const initial = await this.checks(evidence, 'checks', previous);
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
@@ -278,27 +274,39 @@ ${marker}`,
       review === 'REVIEW_REQUIRED' ||
       !successfulChecks(initial)
     )
-      return { ...initial, review };
+      return { ...initial, review, reviewCurrent: false };
 
-    const { observedChecks: checks, suites } = initial;
-    const confirmed = await this.checks(evidence, 'confirmedChecks', { checks, suites });
+    const confirmed = await this.confirmCI(evidence, target, initial);
+    return { ...confirmed, review };
+  }
+
+  /** Confirm the same CI scope after review or require fresh review after observed CI progress. */
+  private async confirmCI(
+    evidence: GitHubPullObservation,
+    target: VerificationTarget,
+    initial: Awaited<ReturnType<typeof readGitHubChecks>>,
+  ) {
+    const confirmed = await this.checks(evidence, 'confirmedChecks', {
+      checks: initial.observedChecks,
+      suites: initial.suites,
+    });
     const ready = successfulChecks(confirmed);
-    if (ready && checkSnapshot(initial) !== checkSnapshot(confirmed))
+    const changed = ready && checkSnapshot(initial) !== checkSnapshot(confirmed);
+    if (changed && !confirmed.reread)
       throw new GitHubPullReadFailure(
         'CI confirmation',
         evidence,
         new Error('GitHub CI changed during review'),
       );
-    if (ready) await this.verificationPull(evidence, base, state, branch, 'confirmedPull');
-    return { ...confirmed, review };
+    const reviewCurrent = ready && !changed;
+    if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
+    return { ...confirmed, reviewCurrent };
   }
 
   /** Retain the observed PR even when it conflicts with captured publication identity. */
   private verificationPull(
     evidence: GitHubPullObservation,
-    base: string,
-    state: string,
-    branch: string | undefined,
+    { base, state, branch }: VerificationTarget,
     slot: 'pull' | 'confirmedPull',
   ) {
     const read = slot === 'pull' ? 'PR identity' : 'PR confirmation';
