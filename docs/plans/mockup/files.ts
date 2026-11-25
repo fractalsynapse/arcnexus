@@ -225,7 +225,7 @@ export function fileDiff(item: DesignFile, index: number, action = '') {
   const label = 'Compared with ' + previous.id;
   const lines = revisionDiff(current, previous);
   return lines.length
-    ? diffView(label, [{ path: item.path, lines }], { action })
+    ? diffView(label, { file: { path: item.path, lines } }, { action })
     : panel(
         'Changes',
         noData('Contents match the selected comparison.'),

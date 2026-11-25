@@ -14,9 +14,9 @@ export function FileChanges() {
   if (editing && detail.value) {
     const { content, entry } = detail.value;
     const after = draft ?? content;
-    return h(DiffView, { files: [{ path: entry.path, before: content, after }] });
+    return h(DiffView, { file: { path: entry.path, before: content, after } });
   }
   if (changes.error) return h('p', { role: 'alert' }, changes.error);
   if (!changes.value) return h('p', { role: 'status' }, 'Loading file changes…');
-  return h(DiffView, { files: [changes.value] });
+  return h(DiffView, { file: changes.value });
 }

@@ -24,6 +24,8 @@
 
 ### Changed
 
+- Use the full Changes panel for single-file diffs and keep file tabs for release and other multi-file comparisons (#746).
+
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed

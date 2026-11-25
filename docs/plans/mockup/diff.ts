@@ -1,4 +1,5 @@
 import { lineChanges as draftDiff, type DiffLine } from '../../../packages/ui/src/content/line-changes.js';
+import type { DiffSelection } from '../../../packages/ui/src/content/diff-selection.js';
 import { commitReferences, escape, noData, panel } from './view.ts';
 
 export type FileDelta = {
@@ -43,15 +44,16 @@ function patchLines(source: string): DiffLine[] {
 
 export function diffView(
   label: string,
-  files: FileDelta[],
+  comparison: DiffSelection<FileDelta>,
   { localPatch = false, heading = 'Changes', action = '' } = {},
 ) {
   const caption = `<div class="arc-row"><small>${commitReferences(label)}</small>${action}</div>`;
-  if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);
-  return panel(heading, diffBody(files, localPatch), caption);
+  return panel(heading, diffBody(comparison, localPatch), caption);
 }
 
-export function diffBody(files: FileDelta[], localPatch = false) {
+export function diffBody({ file, files }: DiffSelection<FileDelta>, localPatch = false) {
+  if (file) return `<div class="arc-file-diff">${diffContent(file)}</div>`;
+  if (!files.length) return noData('No changed files recorded.');
   const id = 'arc-diff-' + ++viewerId;
   const selected = Math.max(
     0,

@@ -121,6 +121,6 @@ export function questionView() {
   return prompt + standalonePane({
     id: 'arc-proposed-changes',
     label: 'Changes',
-    content: (action) => diffView(label, patches, { action }),
+    content: (action) => diffView(label, { files: patches }, { action }),
   }, { after: answer });
 }

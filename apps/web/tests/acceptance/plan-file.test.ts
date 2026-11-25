@@ -30,6 +30,7 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   await page.reload();
   await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
   await verifyFileHeading(page);
+  await verifyFullWidthDiff(page);
   await verifySinglePanelToggle(page);
   assert.ok(
     requests.includes(
@@ -37,6 +38,15 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
     ),
   );
 });
+
+async function verifyFullWidthDiff(page: Page) {
+  const diff = page.locator('pre[aria-label="Changes for .arc/goals/fixture-goal.md"]');
+  await diff.waitFor();
+  const panel = page.locator('.arc-display-body').filter({ has: diff });
+  assert.equal(await panel.getByRole('list', { name: 'Changed files' }).count(), 0);
+  const [content, body] = await Promise.all([diff.boundingBox(), panel.boundingBox()]);
+  assert.ok(content && body && Math.abs(content.width - body.width) < 1);
+}
 
 test('a pinned Plan File can switch between its historical and latest approved revisions', async (t) => {
   const { application, page } = await browserPage(t);

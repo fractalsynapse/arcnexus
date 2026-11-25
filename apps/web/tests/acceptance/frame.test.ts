@@ -103,6 +103,23 @@ async function assertReloadedWorkspace(page: Page, name: string) {
   }
 }
 
+test('a multi-file comparison keeps its file selector and switches the displayed diff', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  await view(page, 'Release');
+  const files = page.getByRole('list', { name: 'Changed files' });
+  const first = files.getByRole('button', { name: 'src/first.ts' });
+  const second = files.getByRole('button', { name: 'src/second.ts' });
+  assert.equal(await first.getAttribute('aria-pressed'), 'true');
+  await second.click();
+  assert.equal(await second.getAttribute('aria-pressed'), 'true');
+  const diff = page.locator('pre[aria-label="Changes for src/second.ts"]');
+  await diff.getByText('+ new second', { exact: true }).waitFor();
+  const [sidebar, content] = await Promise.all([files.boundingBox(), diff.boundingBox()]);
+  assert.ok(sidebar && content && sidebar.x + sidebar.width <= content.x);
+});
+
 async function assertUnavailableMetrics(page: Page) {
   await button(page, 'Round metrics').click();
   const metrics = page.getByRole('dialog', { name: 'End-to-end refinement metrics' });

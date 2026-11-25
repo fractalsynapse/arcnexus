@@ -1,5 +1,6 @@
 import { createElement as h } from 'react';
 import type { Context } from 'cordis';
+import { DiffView } from '../../../../packages/ui/src/index.js';
 import type {
   CommandBinding,
   CommandRequest,
@@ -84,6 +85,18 @@ const context = await mountWeb(root, binding, {
         label: 'Planner outcome',
         defaultColumn: 1,
         content: 'Fixture outcome',
+      }),
+    );
+    context.effect(() =>
+      context.ui.registerDisplay('/release/', {
+        id: 'changes',
+        label: 'Changes',
+        content: h(DiffView, {
+          files: [
+            { path: 'src/first.ts', before: 'old first', after: 'new first' },
+            { path: 'src/second.ts', before: 'old second', after: 'new second' },
+          ],
+        }),
       }),
     );
   },

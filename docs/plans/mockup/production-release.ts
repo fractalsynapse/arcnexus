@@ -118,7 +118,7 @@ function specialistStage(phase: Preview['phase']) {
   const body = reviewed
     ? specialistResults(rejected)
     : noData('Specialist verdicts and required checks will appear here.');
-  const diff = `<details><summary>Candidate changes</summary>${diffBody(changes)}</details>`;
+  const diff = `<details><summary>Candidate changes</summary>${diffBody({ files: changes })}</details>`;
   return releaseEvidenceRow(
     'Specialist reviews and pre-release checks',
     rejected ? 'Changes requested' : reviewed ? 'Passed' : 'Pending',
@@ -239,7 +239,7 @@ function approvalCandidate() {
 }
 
 function candidateDiff() {
-  return diffView('Illustrative production PR', changes, { heading: 'Candidate changes' });
+  return diffView('Illustrative production PR', { files: changes }, { heading: 'Candidate changes' });
 }
 
 export function productionIncidentPage() {

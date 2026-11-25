@@ -1,6 +1,7 @@
 import { textChanges } from './line-changes.js';
 import { createElement as h, useState } from 'react';
 import { Button } from '../controls/button.js';
+import type { DiffSelection } from './diff-selection.js';
 
 export interface FileDelta {
   path: string;
@@ -8,8 +9,12 @@ export interface FileDelta {
   after: string;
 }
 
-/** Present a vertical file selector and color-coded, line-level changes. */
-export function DiffView({ files }: { files: readonly FileDelta[] }) {
+/** Show the same color-coded diff with a file selector only for a collection. */
+export function DiffView({ file, files }: DiffSelection<FileDelta>) {
+  return file ? h(DiffContent, { file }) : h(FileComparison, { files });
+}
+
+function FileComparison({ files }: { files: readonly FileDelta[] }) {
   const [selected, select] = useState('');
   const current = files.find((file) => file.path === selected) ?? files[0];
   if (!current) return h('p', null, 'No changes recorded.');
