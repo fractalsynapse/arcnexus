@@ -127,6 +127,10 @@ test('DE-5: conflicting publication identities and unavailable reads stop before
   assert.deepEqual(unavailable.calls, []);
 });
 
+function expectedVerification(pr: string, merged = false) {
+  return [pr, accepted.head, accepted.target, merged ? 'MERGED' : 'OPEN', accepted.branch];
+}
+
 /** Control staging observations and assert that provider gates receive retained identities. */
 function scenario(pull?: PublishedPull, remote?: string, bases = [accepted.parent]) {
   const actions = fixture(pull, remote);
@@ -137,9 +141,7 @@ function scenario(pull?: PublishedPull, remote?: string, bases = [accepted.paren
       return branch === accepted.target ? (bases.length > 1 ? bases.shift() : bases[0]) : head;
     },
     async verify(...args) {
-      const expected = [url, accepted.head, accepted.target];
-      if (pull?.state === 'merged') expected.push('MERGED');
-      assert.deepEqual(args, expected);
+      assert.deepEqual(args, expectedVerification(url, pull?.state === 'merged'));
       await actions.provider.verify();
     },
     async merge(...args) {
@@ -243,7 +245,7 @@ test('DE-GATES: resumed publication uses the observed PR identity at every gate'
   const provider: Parameters<typeof publish>[1]['provider'] = {
     ...actions.provider,
     async verify(...args) {
-      assert.deepEqual(args, [observedUrl, accepted.head, accepted.target]);
+      assert.deepEqual(args, expectedVerification(observedUrl));
       await actions.provider.verify();
     },
     async merge(...args) {

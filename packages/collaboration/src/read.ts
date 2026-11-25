@@ -21,3 +21,13 @@ export async function retryRead<T>(read: () => Promise<T>, signal: AbortSignal):
 export function isTransientReadFailure(error: unknown) {
   return error instanceof Error && transientReadFailure.test(error.message);
 }
+
+/** Preserve a complete provider response when its decoded facts are unavailable. */
+export function decodeGitHubResponse<T>(stdout: string, source: string, decode: () => T): T {
+  try {
+    return decode();
+  } catch (cause) {
+    const diagnostic = cause instanceof Error ? cause.message : String(cause);
+    throw Object.assign(new Error(`GitHub read ${source}: ${diagnostic}`, { cause }), { stdout });
+  }
+}

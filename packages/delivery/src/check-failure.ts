@@ -1,4 +1,5 @@
 import type { HostTask } from '../../execution/src/index.js';
+import { GitHubPullReadFailure } from '../../collaboration/src/index.js';
 import type { Publication } from './publication.js';
 
 /** Return new provider evidence to Workflow without editing an accepted candidate. */
@@ -16,12 +17,20 @@ export class PublicationCheckFailure extends Error {
 
 /** Preserve full provider diagnostics and the reconciliation action without asserting absence. */
 export function retainProviderFailure(task: HostTask, publication: Publication, error: unknown) {
-  const failure = error as { stdout?: string | Buffer; stderr?: string | Buffer } | undefined;
+  const source = error instanceof GitHubPullReadFailure ? error.cause : error;
+  const failure = source as { stdout?: string | Buffer; stderr?: string | Buffer } | undefined;
   const diagnostic = error instanceof Error ? (error.stack ?? error.message) : String(error);
   const log = [diagnostic, failure?.stdout?.toString(), failure?.stderr?.toString()]
     .filter((text) => text !== undefined)
     .join('\n');
   const evidence = [task.store('publication-provider-failure.log', log)];
+  if (error instanceof GitHubPullReadFailure)
+    evidence.push(
+      task.store(
+        'publication-provider-observation.json',
+        JSON.stringify({ read: error.read, ...error.observation }, null, 2),
+      ),
+    );
   task.note({
     publicationHold: {
       branch: publication.branch,
@@ -30,7 +39,9 @@ export function retainProviderFailure(task: HostTask, publication: Publication, 
       diagnostic,
       evidence,
       requiredAction:
-        'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
+        error instanceof GitHubPullReadFailure
+          ? `Obtain the ${error.read} for ${error.observation.pr} and reverify the retained publication before retrying effects`
+          : 'Resolve the provider diagnostic and observe PR and issue-branch facts before retrying effects',
     },
   });
   return error;
