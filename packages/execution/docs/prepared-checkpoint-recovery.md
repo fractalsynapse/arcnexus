@@ -399,7 +399,7 @@ For the current checkpoint goal, the criterion-linked observations are:
 | `checkpoint-observe-before-retry` | Lose a checkpoint push response after the controlled remote accepts the head. Record ordered remote observations and mutations across restart. Observe that head before any repeated mutation, reuse task/issue/branch, and do not push the already secured effect again. A total push count alone does not establish ordering. |
 | `checkpoint-abrupt-preservation` | Retain the actual child acknowledgment, child exit and pre-restart abandoned-worktree observation. After ordinary reopening, assert exact restored bytes, original receipt identity, reconciliation before activation, one active task worktree and eventual removal of task-owned worktrees after preservation. |
 | `checkpoint-pending-successor` | Interrupt after recording a check but before feedback. Recover its original expectation, exact numeric exit and readable original log while the activity remains pending. An omitted recheck cannot clear it. Correct the relevant inputs and satisfy the original expectation; then interrupt after completed checkpoint and observe only the successor on restart, with verification preceding delivery. |
-| `checkpoint-current-quality` | Retain applicable formatting, lint, strict types, build and recovery observations for the current candidate, including resolved commands, arguments, directories, exits and complete logs. |
+| `checkpoint-evidence-applicable` | Tie each scenario to the assessed candidate, captured authority, operation parameters, environment, exact exits and external logs; retain applicable formatting, lint, strict types, build and owner-test results or validated matching-input reuse. |
 
 An unresolved check retains its failed observation and acknowledged edits even if
 a later attempt fails differently. Neither cleanup nor a completed model response
@@ -409,22 +409,30 @@ Workflow owns the durable position and repair routing. Final independent
 Verification and Delivery retain their gates; a checkpoint push cannot discharge
 them.
 
-### Current checkpoint assessment scope: run 183
+### Current checkpoint assessment scope: run 202
 
-This section is for Execution maintainers selecting characterization and reviewers
-assessing its applicability. It records expected-pass characterization and evidence reconciliation for
-`checkpoint-current-evidence`, issue #726, branch `726-task`, at engineering
-base and captured revision `7beffb8f5dcd1e6f971d341101e35e6ef80ddf97`.
-Run 183's `183-1-run-timeline.jsonl` records that base, accepted plan and
-host-prepared issue branch under invocation
-`087b55f1fba63518c4dced8ba8c4f9d83c82670e0f57bfc92344c909672f14df`.
-Its complete retained index is
-`183-63-retained-evidence-986cb2e8c33711f3f83ae2a8ba9fe9a2e5ddafa54a5e5d73fc2ad376576132d9.json`.
-These initial references establish identity and planning. The executed run-183
-observations below now establish current checkpoint characterization and quality;
-run 136 remains historical.
+This section helps Execution maintainers select characterization and reviewers
+decide whether evidence applies to `checkpoint-current-evidence`. The engineering
+base and captured authority are
+`7cf33e6a71f33c4d12e35bbfa23b1e0be4d499ad`; the host prepared issue #736,
+branch `736-task`, for task
+`45d1a8b511da03bc8518c303bc151074b6a2cdfe912ae58762f9758ac12423d1`.
+The same invocation's `202-1-run-timeline.jsonl` records the base at sequence
+153398, accepted plan at 153609 and issue/branch at 153611–153612.
+The initial complete index is
+`202-71-retained-evidence-c6927ab1775494921cb5f1bdbbe54a071298e5dc967fb986a74943132f291db2.json`.
+Retrieve these artifacts through mapped read-file under the external evidence
+directory for that invocation.
 
-The inspected source identities are:
+Documentation inspected the complete scenarios and fixtures below. Their hashes
+still match run 183's exercised sources, including the crash diagnostics corrected
+in run 136. At that initial documentation position, only source continuity was
+established; no current execution or environment equivalence to run 183 had been
+observed. Testing subsequently executed the unchanged scenarios and applicable
+quality operations in run 202. The executed characterization below resolves that
+initial evidence gap without treating run 183's historical results as current.
+
+The inspected source identities at the current capture are:
 
 | Source | SHA-256 |
 | --- | --- |
@@ -434,12 +442,12 @@ The inspected source identities are:
 | [Shared checkpoint fixture](../tests/fixtures/checkpoint.ts) | `8886c07d85e64230e84dfb50cb8a2d75c6ed4df16b4c5e5d12184c453070b0a0` |
 | [Crash child entry](../tests/fixtures/checkpoint-crash-child.ts) | `883a6a4d2035eef3bb26b6377a0ec92f53803e20a9459699e316ca6b5211c3f9` |
 
-The three scenario hashes match the run-136 account below. That match alone
-does not establish unchanged production dependencies, resolved operation inputs,
-authority or environment. Preserve run 136 as historical characterization;
-reuse an observation only after establishing all relevant identities match.
-Run 175's inspection-parity acceptance does not itself assess these checkpoint
-criteria. No new behavioral defect is established by this source reconciliation.
+The named cases in the run-183 mapping below identify the same assertions now
+present in these files; case numbers identify that historical log only.
+`checkpoint-evidence-applicable` is the current evidence criterion; the historical
+`checkpoint-current-quality` label is not an additional accepted criterion.
+No new behavioral defect or changed recovery intent is established by this
+source reconciliation.
 
 ### Existing checkpoint coverage
 
@@ -508,9 +516,11 @@ and passing execution. Do not recreate that correction or describe it as missing
 The remaining gap is current applicability: obtain current executed observations
 through the declared owner checks, or establish valid reuse against matching
 source dependencies, operation parameters, captured authority and environment.
-The initial documentation index supplied no completed checkpoint or quality
-observation. Testing subsequently executed the unchanged scenarios and required
-quality operations; the run-183 account below supersedes that initial gap.
+Run 183 resolved its own initial execution gap. Testing has now resolved run 202's
+execution gap through the declared owner-tests and quality operations recorded
+below. Implementation reconciles those passing observations without changing
+product behavior or fixtures. Preserve actual setup failures as prerequisite
+observations, never as behavioral red.
 
 For `checkpoint-observe-before-retry`, assess the ordered issue-branch
 observation before any repeated mutation and rejection of duplicate push of the
@@ -548,21 +558,95 @@ unavailable prerequisites and missing observations remain explicit gaps.
 
 - Reuse existing checkpoint scenarios, the real child boundary, checked receipts,
   Coordination journal and Workflow cursor; introduce no recovery path or state.
-- Retain the diagnostic correction already present and the historical run-136
-  observations. Refresh only affected evidence; add behavioral red only for a
-  demonstrated new regression before correcting it.
+- Retain the existing diagnostic correction and historical run-183/run-136
+  observations. Refresh affected evidence or validate matching reuse; add red only
+  for a demonstrated new regression before correcting it.
 - Keep complete logs outside source and link actual operation provenance here.
   Final independent assessment and staging publication remain host-owned.
 
-### Executed checkpoint characterization: run 183
+### Executed checkpoint characterization: run 202
+
+Testing changed no source or fixture. It exercised documentation checkpoint
+`e1a618f0619f509d7cc5f70d0c1f015286774587`, whose parent is the engineering
+base and captured authority named above. The source hashes in this assessment
+identify the exercised scenarios and fixtures; Implementation changes only this
+evidence account. The complete retained index supplied to Implementation is
+`202-239-retained-evidence-647df99f67ad4e4be3e15c7e55cd038551696c42f7d5d8b7c8c80f1fe2c4ee67.json`.
+All following artifact names resolve under the external evidence directory:
+
+`/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/45d1a8b511da03bc8518c303bc151074b6a2cdfe912ae58762f9758ac12423d1/`
+
+| Observation | Resolved command and argv | Actual exit | Complete log | Completed MCP observation |
+| --- | --- | --- | --- | --- |
+| Owner scenarios | `npm test -- execution` | 0 | `202-205-owner-tests.log` | `202-206-mcp-observation.json` |
+| Owner formatting | `npm run format:check -- execution` | 0 | `202-214-owner-format.log` | `202-215-mcp-observation.json` |
+| Owner lint | `npm run lint -- execution` | 0 | `202-217-owner-lint.log` | `202-218-mcp-observation.json` |
+| Strict repository types | `npm run check` | 0 | `202-220-repository-types.log` | `202-221-mcp-observation.json` |
+| Repository build | `npm run build` | 0 | `202-223-repository-build.log` | `202-224-mcp-observation.json` |
+
+Each operation ran from the captured `runs/202/worktree` directory under the
+project state directory above. The operation bindings have no caller overrides;
+owner-tests uses the declared empty selectors default. The owner-test log records
+its actual build and shared owner-runner commands. The format and lint logs retain
+their complete selected TypeScript paths. Their scope does not include this
+Markdown account. These are current observed exits, not inferred success from
+source assertions. Host validation determines reuse after this prose-only change.
+
+The owner-test log SHA-256 is
+`7f7cfa781b0fef43ea4ce235e9acf234661e37cbd414e1cf6d7738aaff083df6`.
+It records 270 tests, 253 passed, zero failed or cancelled, and 17 skipped.
+The checkpoint cases below passed without skips. Skipped native cases remain
+unavailable evidence for their respective boundaries.
+
+| Criterion | Executed scenario identities in this log | Observed assertion coverage |
+| --- | --- | --- |
+| `checkpoint-observe-before-retry` | 70, “retry confirms a lost checkpoint push, reconstructs the worktree and resumes the next steward”; 71, “single-file tool checkpoints survive a refused write and interrupted push” | Retry's first issue-branch event observes the accepted head; that secured head is not pushed again. The retained task, issue, branch, acknowledged bytes and original receipt survive refusal, lost response and worktree cleanup. |
+| `checkpoint-abrupt-preservation` | 69, “abrupt acknowledged edit recovers its original receipt before activation and cleans only task worktrees” | Actual child exit and abandoned-state diagnostics precede reopening. Restored bytes, original receipt and artifact, one edit intent, pre-activation reconciliation, one active task worktree and preservation of the unrelated checkout are asserted; committed bytes survive task-worktree removal. |
+| `checkpoint-pending-successor` | 135, “interrupted pass check recovers its expectation, exact exit, evidence and edits”; 136, “omitted pass recheck blocks on repeat failure and resumes after corrected checkpoint”; 137–138, corresponding fail-expectation cases | Original expectations and readable logs survive restart. Required-pass exits 37 and 43 remain distinct retained observations; omitted checks cannot advance the activity or gates. Corrected bytes produce exit 0, recorded completion survives interruption, and only review resumes before verification then delivery. The fail-expectation variant separately preserves its expected negative result. |
+| `checkpoint-evidence-applicable` | The five operation observations above, captured source hashes and retained child diagnostics | Current operations identify the assessed checkpoint, authority, argv, cwd, actual exits, environment and complete external logs. Historical runs retain their original scope. |
+
+Case 69's diagnostic records executable `/usr/local/bin/node`, Node
+`v22.23.5`, the built `checkpoint-crash-child.js` argument and isolated
+temporary project directory, inherited run-202 cwd, actual exit 73, null signal,
+and empty stdout and stderr. Its acknowledgment and `beforeRestart` diagnostic
+retain task `26df8ea67bd8e6f07ce99d75ca181097991442f7a2dc1c4f2757d6796008e7e6`,
+issue `7`, branch `7-task`, original receipt
+`915d91fca120eb7b082e976929bbf9871df0ff6db328dc9ec455f381a6440918`,
+the receipt artifact's original path, abandoned worktree registration and exact
+working and committed bytes `first`. The checked content digest is
+`a7937b64b8caa58f03721bb6bacf5c78cb235febe0e70b1b84cd99541461a08e`.
+These temporary fixture identities differ from issue #736 and its task above.
+The enclosing log preserves the diagnostics after fixture cleanup; temporary
+receipt and checkout paths are provenance, not claims of continued availability.
+
+The interrupted-check cases execute real Git, reopened Coordination SQLite state,
+the steward loop and Workflow position. Their `fixture-check` exits and log text
+are explicitly controlled outcomes, not real command-process exits. Passing
+assertions establish exact retained numeric statuses 37 and 43, both readable
+logs while the fixture runs, original pending expectations, secured checked bytes
+and successor-only resumption. The enclosing log retains scenario results; it
+does not embed the complete temporary check-log artifacts after fixture cleanup.
+The actual crash-child exit 73 is a separate process observation. Neither the
+controlled negative exits nor the deliberate crash is an owner-operation failure.
+
+No new failing regression, recovery mechanism, product correction or fixture edit
+was needed. The scenarios exercise the existing checked checkpoint, journal and
+cursor. They directly construct HostTask with explicit captures, control actors
+and Collaboration, and use controlled final verification/delivery ports. They
+do not establish full production admission, provider MCP transport, native check
+confinement, live model behavior, independent acceptance, hosted CI or an actual
+staging merge. Those boundaries and host verification/delivery gates remain
+unchanged; historical native gaps are not converted into passes.
+
+### Historical executed checkpoint characterization: run 183
 
 Testing changed no scenario, fixture or production source. It characterized the
 five source identities above at documentation checkpoint
 `3aed3cd967b93c1717e8ec70e3482f7d7747489d` on `726-task`, retaining
 engineering base and captured authority
 `7beffb8f5dcd1e6f971d341101e35e6ef80ddf97`.
-Implementation reconciles the evidence without a production behavior change.
-The initial intent and historical run-136 correction remain retained.
+Run 183 reconciled the evidence without a production behavior change.
+Its initial intent and the historical run-136 correction remain retained.
 
 Complete artifacts live outside source under this run's invocation
 `087b55f1fba63518c4dced8ba8c4f9d83c82670e0f57bfc92344c909672f14df`.
@@ -621,12 +705,16 @@ recovery for expected failure; they establish no new behavioral red.
 The deliberate child exit and controlled failing check statuses are distinct from
 the enclosing owner operation's actual exit 0.
 
-The five scenario/fixture hashes above still identify the exercised sources.
-Evidence-only edits change the candidate documentation, so Implementation must
-obtain current applicable mapped observations, or host-validated reuse, after this
-reconciliation. The host retains those receipts in the same timeline with their
-actual source inputs; this account does not predeclare the final candidate verdict.
-No unchanged broad check needs replay merely because the activity resumed.
+The five scenario/fixture hashes above still identify run 183's exercised sources.
+For the current candidate, retain the complete operation receipt and external log
+for each applicable owner-format, owner-lint, repository-types, repository-build
+and owner-tests observation, including expected result, resolved parameters,
+command/argv/cwd, actual status, assessed input identity and environment.
+A validated reuse observation must connect those relevant inputs to this capture;
+matching scenario hashes or a shared Node version alone are insufficient.
+Documentation edits do not automatically invalidate unrelated scoped checks, but
+a changed candidate requires an applicable independent verdict. Append current
+results to this account when observed rather than relabeling run 183's results.
 
 These are controlled actors and Collaboration/check/final-gate ports over real
 Git, SQLite, subprocess interruption, checked edits and Workflow recovery.
