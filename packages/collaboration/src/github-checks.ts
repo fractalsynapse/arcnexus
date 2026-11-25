@@ -5,7 +5,13 @@ import { decodeGitHubResponse } from './read.js';
 type Read = (args: string[]) => Promise<string>;
 
 const total = z.object({ total_count: z.int().nonnegative() });
-const suite = z.object({ id: z.int().positive(), head_sha: z.string() });
+const suite = z.object({
+  id: z.int().positive(),
+  head_sha: z.string(),
+  status: z.string().optional(),
+  updated_at: z.string().optional(),
+  latest_check_runs_count: z.int().nonnegative().optional(),
+});
 const run = z.object({
   id: z.int().positive(),
   app: z.object({ id: z.int().positive(), slug: z.string().optional() }).nullable(),
@@ -56,8 +62,20 @@ export async function readGitHubChecks(
 ): Promise<ProviderCheck[]> {
   const repo = `repos/${repository}`;
   const ref = `${repo}/commits/${head}`;
-  const checks = await checkRuns(read, repo, ref, head, observe);
-  return [...checks, ...(await legacyStatuses(read, ref, head))];
+  const inventory = await suiteInventory(read, ref, head);
+  const checks = await checkRuns(read, repo, ref, head, inventory, observe);
+  const statuses = await legacyStatuses(read, ref, head);
+  observe([...checks, ...statuses]);
+  const current = await suiteInventory(read, ref, head);
+  if (suiteSnapshot(inventory) !== suiteSnapshot(current))
+    throw new Error('GitHub check suite inventory changed during CI observation');
+  return [...checks, ...statuses];
+}
+
+type CheckSuite = z.output<typeof suite>;
+
+function suiteSnapshot(suites: CheckSuite[]) {
+  return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
 function normalizeRun({ id, app, name, status, conclusion, details_url }: z.output<typeof run>) {
@@ -99,19 +117,14 @@ async function checkRuns(
   repo: string,
   ref: string,
   head: string,
+  inventory: CheckSuite[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {
   const current = await runsFrom(read, `${ref}/check-runs?filter=all`, head);
   observe(current.map(normalizeRun));
-  const coverage = await read(['api', `${ref}/check-suites`]);
-  const count = decodeGitHubResponse(
-    coverage,
-    'check suite coverage',
-    () => total.parse(JSON.parse(coverage)).total_count,
-  );
   const runs =
-    count > gitHubRefCheckSuiteCoverage
-      ? await suiteRuns(read, repo, ref, head, count, current, observe)
+    inventory.length > gitHubRefCheckSuiteCoverage
+      ? await suiteRuns(read, repo, head, inventory, current, observe)
       : current;
   observe(runs.map(normalizeRun));
   const checks = (await latestRuns(read, repo, head, runs)).map(normalizeRun);
@@ -123,13 +136,11 @@ async function checkRuns(
 async function suiteRuns(
   read: Read,
   repo: string,
-  ref: string,
   head: string,
-  count: number,
+  suites: CheckSuite[],
   current: CheckRun[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {
-  const suites = await suiteInventory(read, ref, head, count);
   const runs = new Map<number, CheckRun>();
   try {
     for (const suite of suites) {
@@ -151,24 +162,18 @@ async function suiteRuns(
 }
 
 /** Require every collected suite to belong to the same head and coverage snapshot. */
-async function suiteInventory(read: Read, ref: string, head: string, count: number) {
-  const page = suitePage
-    .refine(
-      (value) => value.check_suites.every((item) => item.head_sha === head),
-      'GitHub returned a check suite for a different head',
-    )
-    .refine(
-      (value) => value.total_count >= count,
-      'GitHub returned an incomplete check suite inventory',
-    );
-  const suites = await readCollection(
+async function suiteInventory(read: Read, ref: string, head: string) {
+  const page = suitePage.refine(
+    (value) => value.check_suites.every((item) => item.head_sha === head),
+    'GitHub returned a check suite for a different head',
+  );
+  return readCollection(
     read,
     `${ref}/check-suites`,
     page,
     (page) => page.check_suites,
     (item) => item.id,
   );
-  return suites;
 }
 
 interface CheckContext {

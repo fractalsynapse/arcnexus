@@ -61,9 +61,10 @@ ${marker}`,
     if (![taskID, goalID].every((id) => /^[a-f0-9]{64}$/.test(id)))
       throw new Error('Invalid goal or task identity');
     const search = encodeURIComponent(`repo:${this.repository} ${goalID} in:body`);
-    const issues = await this.pages<{ number: number; body: string }>(
+    const issues = await this.pages(
       `search/issues?q=${search}`,
       '.items[]|{number,body}',
+      (items) => items as { number: number; body: string }[],
     );
     const actual = issues.filter(({ body }) => body.endsWith(`<!-- arcnexus-task:${taskID} -->`));
     if (actual.length > 1) throw new Error(`Ambiguous GitHub issues for task ${taskID}`);
@@ -100,13 +101,11 @@ ${marker}`,
   async publication(branch: string): Promise<PublishedPull | undefined> {
     const owner = this.repository.split('/')[0];
     const head = encodeURIComponent(`${owner}:${branch}`);
-    const matches = await this.pages<unknown>(
-      `repos/${this.repository}/pulls?head=${head}&state=all`,
-      '.[]',
-    );
-    if (matches.length > 1) throw new Error(`Ambiguous GitHub publication for ${branch}`);
-    if (matches.length === 0) return undefined;
-    return publishedPull(matches[0], this.repository, { branch });
+    return this.pages(`repos/${this.repository}/pulls?head=${head}&state=all`, '.[]', (matches) => {
+      if (matches.length > 1) throw new Error(`Ambiguous GitHub publication for ${branch}`);
+      if (matches.length === 0) return undefined;
+      return publishedPull(matches[0], this.repository, { branch });
+    });
   }
 
   /** Observe the exact remote ref. An absent ref and an unavailable query are distinct. */
@@ -321,7 +320,7 @@ ${marker}`,
   }
 
   /** Read every provider page, retaining complete JSON values without a local result-count ceiling. */
-  private async pages<T>(endpoint: string, selection: string): Promise<T[]> {
+  private async pages<T>(endpoint: string, selection: string, decode: (items: unknown[]) => T) {
     const output = await this.query([
       'api',
       endpoint,
@@ -329,10 +328,17 @@ ${marker}`,
       '--jq',
       `[${selection}]|tojson`,
     ]);
-    return output
-      .split('\n')
-      .filter(Boolean)
-      .flatMap((page) => JSON.parse(page) as T[]);
+    return decodeGitHubResponse(output, endpoint, () => {
+      const values = output
+        .split('\n')
+        .filter(Boolean)
+        .flatMap((line) => {
+          const page: unknown = JSON.parse(line);
+          if (!Array.isArray(page)) throw new Error('GitHub returned an invalid page');
+          return page as unknown[];
+        });
+      return decode(values);
+    });
   }
 
   /** Run a scoped provider action without interpolating model content into a shell. */

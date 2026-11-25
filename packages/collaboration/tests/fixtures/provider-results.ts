@@ -61,7 +61,7 @@ export function readyResponse(args: string[]) {
     case repository + '/pulls/99':
       return JSON.stringify(restPull);
     case repository + '/commits/' + head + '/check-suites':
-      return JSON.stringify({ total_count: 1 });
+      return JSON.stringify({ total_count: 1, check_suites: [{ id: 5, head_sha: head }] });
     case repository + '/commits/' + head + '/check-runs?filter=latest':
     case repository + '/commits/' + head + '/check-runs?filter=all':
       return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
