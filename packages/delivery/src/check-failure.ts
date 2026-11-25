@@ -1,5 +1,8 @@
 import type { HostTask } from '../../execution/src/index.js';
-import { GitHubPullReadFailure } from '../../collaboration/src/index.js';
+import {
+  GitHubPullReadFailure,
+  type GitHubPullObservation,
+} from '../../collaboration/src/index.js';
 import type { Publication } from './publication.js';
 
 /** Return new provider evidence to Workflow without editing an accepted candidate. */
@@ -25,12 +28,7 @@ export function retainProviderFailure(task: HostTask, publication: Publication, 
     .join('\n');
   const evidence = [task.store('publication-provider-failure.log', log)];
   if (error instanceof GitHubPullReadFailure)
-    evidence.push(
-      task.store(
-        'publication-provider-observation.json',
-        JSON.stringify({ read: error.read, ...error.observation }, null, 2),
-      ),
-    );
+    evidence.push(retainProviderObservation(task, error.observation, error.read));
   task.note({
     publicationHold: {
       branch: publication.branch,
@@ -45,4 +43,16 @@ export function retainProviderFailure(task: HostTask, publication: Publication, 
     },
   });
   return error;
+}
+
+/** Store source-separated provider observations alongside the complete diagnostic. */
+export function retainProviderObservation(
+  task: HostTask,
+  observation: GitHubPullObservation,
+  read?: string,
+) {
+  return task.store(
+    'publication-provider-observation.json',
+    JSON.stringify({ read, ...observation }, null, 2),
+  );
 }
