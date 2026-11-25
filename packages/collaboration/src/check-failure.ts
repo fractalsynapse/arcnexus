@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 export interface ProviderCheck {
   runId?: number;
   appId?: number;
+  appSlug?: string;
+  suiteId?: number | null;
   name?: string;
   context?: string;
   status?: string;

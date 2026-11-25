@@ -443,34 +443,3 @@ test('an incomplete check or required review stays pending until cancellation', 
     await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
   }
 });
-
-test('a failed pinned check carries the complete provider job log without trimming', async (t) => {
-  const log = '\nComplete provider log\n  actual assertion failure\nfinal conclusion\n\n';
-  const check = {
-    runId: 42,
-    appId: 8,
-    name: 'Repository checks',
-    status: 'COMPLETED',
-    conclusion: 'FAILURE',
-    detailsUrl: 'https://github.com/example/project/actions/runs/7/job/42',
-  };
-  const scenario = new ProviderResults(t, (args) => {
-    if (args[1]?.endsWith('/jobs/42/logs')) return log;
-    if (args[1]?.includes('/check-runs?')) {
-      return JSON.stringify({
-        total_count: 1,
-        check_runs: [{ ...successfulRun, conclusion: 'failure' }],
-      });
-    }
-    return readyResponse(args);
-  });
-  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
-    assert.ok(error instanceof GitHubCheckFailure);
-    assert.equal(error.pr, pr);
-    assert.equal(error.head, head);
-    assert.deepEqual(error.check, check);
-    assert.equal(error.log, log);
-    return true;
-  });
-  assert.deepEqual(scenario.calls.at(-1), ['api', 'repos/example/project/actions/jobs/42/logs']);
-});

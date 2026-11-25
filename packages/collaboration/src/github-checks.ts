@@ -78,10 +78,20 @@ function suiteSnapshot(suites: CheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
-function normalizeRun({ id, app, name, status, conclusion, details_url }: z.output<typeof run>) {
+function normalizeRun({
+  id,
+  app,
+  check_suite,
+  name,
+  status,
+  conclusion,
+  details_url,
+}: z.output<typeof run>) {
   return {
     runId: id,
     appId: app?.id,
+    appSlug: app?.slug,
+    suiteId: check_suite === null ? null : check_suite?.id,
     name,
     status: status.toUpperCase(),
     conclusion: conclusion?.toUpperCase(),

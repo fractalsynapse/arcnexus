@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { GitHubPullReadFailure } from '../../src/index.js';
+import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
 import {
   ProviderResults,
   pr,
@@ -73,4 +73,62 @@ test('third-party latest results cannot contradict the same ref check', async (t
     assert.ok(error.observation.checks?.some((check) => check.status === 'QUEUED'));
     return true;
   });
+});
+
+test('conflicting CI evidence preserves the exact suite and app identity', async (t) => {
+  const current = { ...successfulRun, app: { id: 9, slug: 'ci' }, check_suite: { id: 5 } };
+  const conflicting = { ...current, app: { id: 9, slug: 'other-ci' }, check_suite: { id: 6 } };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/check-suites/5/check-runs'))
+      return JSON.stringify({ total_count: 1, check_runs: [conflicting] });
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [current, { ...current, id: 99, conclusion: 'failure' }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    const observed = error.observation.checks?.filter((check) => check.runId === current.id);
+    const identities = observed?.map(({ appSlug, suiteId }) => [appSlug, suiteId]);
+    assert.deepEqual(identities, [
+      ['ci', 5],
+      ['other-ci', 6],
+    ]);
+    return true;
+  });
+});
+
+const failedCheck = {
+  runId: 42,
+  appId: 8,
+  appSlug: 'github-actions',
+  suiteId: undefined,
+  name: 'Repository checks',
+  status: 'COMPLETED',
+  conclusion: 'FAILURE',
+  detailsUrl: 'https://github.com/example/project/actions/runs/7/job/42',
+};
+
+test('a failed pinned check carries the complete provider job log without trimming', async (t) => {
+  const log = '\nComplete provider log\n  actual assertion failure\nfinal conclusion\n\n';
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/jobs/42/logs')) return log;
+    if (args[1]?.includes('/check-runs?')) {
+      return JSON.stringify({
+        total_count: 1,
+        check_runs: [{ ...successfulRun, conclusion: 'failure' }],
+      });
+    }
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.pr, pr);
+    assert.equal(error.head, head);
+    assert.deepEqual(error.check, failedCheck);
+    assert.equal(error.log, log);
+    return true;
+  });
+  assert.deepEqual(scenario.calls.at(-1), ['api', 'repos/example/project/actions/jobs/42/logs']);
 });
