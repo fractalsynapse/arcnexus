@@ -69,8 +69,8 @@ for confinement, independent applicability and conservative evidence reuse.
 This reference guides stewards choosing checks and maintainers correcting shared
 suite discovery. The accepted correction preserves Foundation FND-5 and FND-6:
 owner selection runs exactly the catalog owner's suites, and invalid registration
-fails before execution. The public inventory and selection scenarios establish the diagnostic
-distinctions and source/built parity described below.
+fails before execution. The public inventory and selection scenarios establish
+the diagnostic distinctions and source/built parity described below.
 
 Source applicability and built registration use the same ownership and metadata
 rules. `hasOwnerTestSuites(directory, owner, components)` inspects source suites
@@ -100,12 +100,14 @@ without importing suite code; observable module effects occur only during actual
 execution.
 
 The missing-declaration correction preserves the requirement that every discovered
-suite export literal `suite` metadata with owner, level and tags. Public source applicability and built
-inventory reject a discovered suite without that export, naming the affected
+suite export literal `suite` metadata with owner, level and tags. Public source
+applicability and built inventory reject a discovered suite without that export,
+naming the affected
 file and the missing required suite metadata as the registration cause.
 Path-derived ownership and level do not replace the declaration, and missing
-metadata must not become an empty tag list or an omitted suite. The shared literal metadata reader rejects a missing declaration before owner
-filtering and without importing the module.
+metadata must not become an empty tag list or an omitted suite. The shared
+literal metadata reader rejects a missing declaration before owner filtering
+and without importing the module.
 
 The existing public
 [inventory scenarios](../../packages/foundation/tests/unit/test-inventory.test.ts)
