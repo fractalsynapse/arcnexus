@@ -71,13 +71,12 @@ export function checkSnapshot(snapshot: ProviderCISnapshot) {
 export function recordEarlierChecks(
   evidence: GitHubPullObservation,
   phase: 'CI checks' | 'CI confirmation',
-  checks: readonly ProviderCheck[],
-  suites: readonly ProviderCheckSuite[],
+  snapshot: ProviderCISnapshot,
 ) {
   const earlier = (evidence.earlierChecks ??= []);
   const previous = earlier.findLast((item) => item.phase === phase);
-  if (!previous || checkSnapshot(previous) !== checkSnapshot({ checks, suites }))
-    earlier.push({ phase, checks, suites });
+  if (!previous || checkSnapshot(previous) !== checkSnapshot(snapshot))
+    earlier.push({ phase, ...snapshot });
 }
 
 /** Retain each observed suite and its expected run coverage across separate reads. */

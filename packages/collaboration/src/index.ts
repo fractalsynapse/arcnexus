@@ -199,16 +199,19 @@ ${marker}`,
     );
   }
 
-  /** Observe checks and the configured GitHub review decision on the pinned candidate. */
-  async verify(pr: string, head: string, base: string, state = 'OPEN', branch?: string) {
+  /** Verify the pinned candidate and report the complete observation before delivery proceeds. */
+  async verify(
+    pr: string,
+    head: string,
+    base: string,
+    state = 'OPEN',
+    branch?: string,
+    observe?: (evidence: GitHubPullObservation) => void,
+  ) {
+    const pinned = { repository: this.repository, pr, head };
     let earlierChecks: GitHubPullObservation['earlierChecks'];
     for (;;) {
-      const evidence: GitHubPullObservation = {
-        repository: this.repository,
-        pr,
-        head,
-        earlierChecks,
-      };
+      const evidence: GitHubPullObservation = { ...pinned, earlierChecks };
       const facts = await this.verificationFacts(evidence, base, state, branch);
       const { checks, pendingSuites, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
@@ -216,13 +219,9 @@ ${marker}`,
         checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
-      if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return;
-      recordEarlierChecks(
-        evidence,
-        evidence.confirmedChecks ? 'CI confirmation' : 'CI checks',
-        facts.observedChecks,
-        suites,
-      );
+      if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return observe?.(evidence);
+      const phase = evidence.confirmedChecks ? 'CI confirmation' : 'CI checks';
+      recordEarlierChecks(evidence, phase, { checks: facts.observedChecks, suites });
       earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
@@ -306,7 +305,7 @@ ${marker}`,
             evidence[suites] = observed;
             requireRetainedSuites(observed, prior);
           },
-          earlier: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
+          earlier: (checks, suites) => recordEarlierChecks(evidence, read, { checks, suites }),
         },
         prior?.checks,
       ),
