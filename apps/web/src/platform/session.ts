@@ -33,9 +33,11 @@ export function activeSession() {
 
 export function projectName(project: Project) {
   return (
+    project.name ??
     project.remote
       .split('/')
       .at(-1)
-      ?.replace(/\.git$/, '') ?? project.id
+      ?.replace(/\.git$/, '') ??
+    project.id
   );
 }

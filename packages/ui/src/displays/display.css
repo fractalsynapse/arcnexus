@@ -31,11 +31,8 @@
 }
 .arc-panel-layout[data-focus] .arc-column-divider,
 .arc-panel-layout[data-focus] .arc-layout-column:not(:has([data-focused])),
-.arc-panel-layout[data-focus] .arc-display:not([data-focused], [data-full-width]) {
+.arc-panel-layout[data-focus] .arc-display:not([data-focused]) {
   display: none;
-}
-.arc-display[data-focused] {
-  min-block-size: 55dvh;
 }
 @media (max-width: 560px) {
   .arc-page-heading > .arc-surface-heading-actions {

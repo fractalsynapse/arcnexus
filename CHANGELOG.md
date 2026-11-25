@@ -26,6 +26,8 @@
 
 ### Fixed
 
+- Restore compact Project and Connection managers and the single expand/collapse control for Plan workspace panels (#746).
+
 - Continue observing the same GitHub pull request when an existing check suite finishes during verification (#734).
 
 - Observe GitHub PR identity, head-pinned CI checks, and the repository's review decision through separate reads before staging publication (#731).

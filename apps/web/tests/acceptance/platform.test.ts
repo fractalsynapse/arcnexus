@@ -24,16 +24,35 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   );
   await goal.click();
   await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
-  await page.getByRole('button', { name: 'Expand Content' }).click();
-  assert.equal(await page.getByRole('heading', { name: 'Changes' }).isVisible(), false);
-  await page.getByRole('button', { name: 'Restore Content' }).click();
-  await page.getByRole('heading', { name: 'Changes' }).waitFor();
+  await verifySinglePanelToggle(page);
   assert.ok(
     requests.includes(
       '/api/projects/' + project.id + '/goals/fixture-goal?revision=' + project.revision,
     ),
   );
 });
+
+async function verifySinglePanelToggle(page: Page) {
+  const expand = page.getByRole('button', { name: 'Expand Content', exact: true });
+  const collapse = page.getByRole('button', { name: 'Collapse Content', exact: true });
+  const information = page.getByRole('heading', { name: 'File information', exact: true });
+  const changes = page.getByRole('heading', { name: 'Changes', exact: true });
+  assert.equal(
+    await page.getByRole('button', { name: 'Minimize Content', exact: true }).count(),
+    0,
+  );
+  for (const width of [1180, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    assert.equal(await expand.getAttribute('aria-expanded'), 'false');
+    await expand.click();
+    assert.equal(await collapse.getAttribute('aria-expanded'), 'true');
+    assert.equal(await information.isVisible(), false);
+    assert.equal(await changes.isVisible(), false);
+    await collapse.click();
+    await information.waitFor();
+    await changes.waitFor();
+  }
+}
 
 async function browserPage(t: TestContext, api?: URL) {
   const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api);
@@ -294,12 +313,48 @@ test('the Connection manager downloads only an available launcher build', async 
   await page.route('**/api/launcher-builds', (route) =>
     route.fulfill({ json: { entries: [{ target: 'linux-x64', sha256: 'a'.repeat(64) }] } }),
   );
+  await page.route('**/api/capacity-providers/codes', (route) =>
+    route.fulfill({ json: { code: 'REVIEW-FIXTURE' } }),
+  );
   await page.goto(application.url);
   await selectProject(page);
   await page.getByRole('button', { name: 'Connection manager' }).click();
+  await page
+    .getByText('No capacity providers connected.', { exact: true })
+    .waitFor({ state: 'visible' });
   await page.getByLabel('Launcher build').selectOption('linux-x64');
   const link = page.getByRole('link', { name: 'Download launcher' });
   assert.equal(await link.getAttribute('href'), '/api/launcher-builds/linux-x64');
   await page.getByLabel('Launcher build').selectOption('linux-arm64');
   assert.equal(await link.count(), 0);
+  await verifyRegistrationCode(page);
+});
+
+async function verifyRegistrationCode(page: Page) {
+  const manager = page.getByRole('button', { name: 'Connection manager', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Connection manager', exact: true });
+  const code = dialog.getByText('REVIEW-FIXTURE', { exact: true });
+  await dialog.getByRole('button', { name: 'Create registration code', exact: true }).click();
+  await code.waitFor();
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await manager.click();
+  await code.waitFor();
+}
+
+test('the Project manager keeps reachability with status and uses a compact import action', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.getByRole('button', { name: 'Project manager' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Project manager' });
+  await dialog.getByLabel('Active project').waitFor();
+  assert.equal(await dialog.getByPlaceholder('https://github.com/owner/repository').count(), 1);
+  const reach = dialog.getByRole('button', { name: 'Check reachability', exact: true });
+  assert.equal(
+    await reach.evaluate((control) => !!control.closest('.arc-management-record')),
+    true,
+  );
+  assert.equal(await dialog.getByRole('button', { name: 'Remove plan', exact: true }).count(), 1);
 });

@@ -1,3 +1,4 @@
+import { isLauncherTarget, launcherTargets } from '../../../launcher/src/targets.js';
 import { LauncherSetup } from './launcher-setup.js';
 import { createElement as h, useState } from 'react';
 import { Button, DialogButton, ManagementRow } from '../../../../packages/ui/src/index.js';
@@ -14,34 +15,57 @@ interface Provider {
 }
 
 export function ConnectionManager() {
+  const { token } = usePlatformSession();
+  const [registration, setRegistration] = useState<{ token: string; value: string }>();
   return h(DialogButton, {
     icon: 'computer',
     title: 'Connection manager',
-    children: h(OperatorGate, { children: h(Connections) }),
+    children: h(OperatorGate, {
+      children: h(Connections, {
+        code: registration?.token === token ? registration?.value : undefined,
+        onCode: (value) => {
+          if (token) setRegistration({ token, value });
+        },
+      }),
+    }),
   });
 }
 
-function Connections() {
-  const { result, error, code, change } = useProviders();
+interface ConnectionsProps {
+  code?: string;
+  onCode(value: string): void;
+}
+
+function Connections({ code, onCode }: ConnectionsProps) {
+  const { result, error, change } = useProviders(onCode);
+  const providers = result.value?.filter(({ state }) => state !== 'revoked');
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    h(
-      'ul',
-      { className: 'arc-management-list', 'aria-label': 'Capacity providers' },
-      result.value
-        ?.filter(({ state }) => state !== 'revoked')
-        .map((provider) => providerRow(provider, () => void change(provider))),
-    ),
+    providers && h(ProviderList, { providers, act: (provider) => void change(provider) }),
     h(LauncherSetup, { code, issue: () => void change() }),
     (error || result.error) && h('p', { role: 'alert' }, error || result.error),
   );
 }
 
-function useProviders() {
+function ProviderList({
+  providers,
+  act,
+}: {
+  providers: Provider[];
+  act(provider: Provider): void;
+}) {
+  if (!providers.length) return h('p', null, 'No capacity providers connected.');
+  return h(
+    'ul',
+    { className: 'arc-management-list', 'aria-label': 'Capacity providers' },
+    providers.map((provider) => providerRow(provider, () => act(provider))),
+  );
+}
+
+function useProviders(onCode: ConnectionsProps['onCode']) {
   const { token } = usePlatformSession();
   const [refresh, reload] = useState(0);
-  const [code, setCode] = useState('');
   const [error, showError] = useState('');
   const root = '/capacity-providers';
   const result = useResource<Provider[]>(root, token, refresh);
@@ -53,27 +77,30 @@ function useProviders() {
           body: JSON.stringify({ state: provider.state === 'pending' ? 'admitted' : 'revoked' }),
         });
       } else
-        setCode((await api<{ code: string }>(root + '/codes', token!, { method: 'POST' })).code);
+        onCode((await api<{ code: string }>(root + '/codes', token!, { method: 'POST' })).code);
       showError('');
       reload((index) => index + 1);
     } catch (error) {
       showError((error as Error).message);
     }
   };
-  return { result, error, code, change };
+  return { result, error, change };
 }
 
 function providerRow(provider: Provider, act: () => void) {
   const pending = provider.state === 'pending';
+  const action = pending ? 'Admit' : 'Revoke';
   return h(ManagementRow, {
     key: provider.id,
     title: provider.name,
-    detail: provider.platform,
+    detail: isLauncherTarget(provider.platform)
+      ? launcherTargets[provider.platform]
+      : provider.platform,
     status: pending
       ? { label: 'Pending admission', tone: 'pending' }
       : provider.online
         ? { label: 'Online', tone: 'positive' }
         : { label: 'Offline', tone: 'neutral' },
-    action: h(Button, { onClick: act }, pending ? 'Admit' : 'Revoke'),
+    action: h(Button, { 'aria-label': action + ' ' + provider.name, onClick: act }, action),
   });
 }

@@ -20,7 +20,7 @@ export function ProjectManager() {
 }
 
 function Projects() {
-  const { session, projects, change, error } = useProjects();
+  const { session, projects, change, error, loaded } = useProjects();
   return h(ProjectRows, {
     projects,
     select: (project) => setSession({ ...session, project }),
@@ -28,6 +28,7 @@ function Projects() {
     token: session.token,
     error,
     change,
+    loaded,
   });
 }
 
@@ -52,11 +53,13 @@ function useProjects() {
       }
       showError('');
       reload((index) => index + 1);
+      return true;
     } catch (reason) {
       showError((reason as Error).message);
+      return false;
     }
   };
-  return { session, projects, change, error: error || result.error };
+  return { session, projects, change, error: error || result.error, loaded: !!result.value };
 }
 
 interface ProjectRowsProps {
@@ -64,11 +67,20 @@ interface ProjectRowsProps {
   selected?: string;
   token?: string;
   select(project?: Project): void;
-  change(project?: Project, remote?: string): Promise<void>;
+  change(project?: Project, remote?: string): Promise<boolean>;
   error?: string;
+  loaded: boolean;
 }
 
-function ProjectRows({ projects, selected, token, select, change, error }: ProjectRowsProps) {
+function ProjectRows({
+  projects,
+  selected,
+  token,
+  select,
+  change,
+  error,
+  loaded,
+}: ProjectRowsProps) {
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -81,15 +93,24 @@ function ProjectRows({ projects, selected, token, select, change, error }: Proje
       ],
       onChange: (id) => select(projects.find((project) => project.id === id)),
     }),
-    h(
-      'ul',
-      { className: 'arc-management-list', 'aria-label': 'Projects' },
-      projects.map((project) =>
-        h(ProjectRow, { key: project.id, project, token, remove: () => void change(project) }),
-      ),
-    ),
+    h(ProjectList, { projects, token, loaded, remove: (project) => void change(project) }),
     h(ImportProject, { submit: (remote) => change(undefined, remote) }),
     error && h('p', { role: 'alert' }, error),
+  );
+}
+
+interface ProjectListProps extends Pick<ProjectRowsProps, 'projects' | 'token' | 'loaded'> {
+  remove(project: Project): void;
+}
+
+function ProjectList({ projects, token, loaded, remove }: ProjectListProps) {
+  if (!projects.length) return loaded ? h('p', null, 'No projects registered.') : null;
+  return h(
+    'ul',
+    { className: 'arc-management-list', 'aria-label': 'Projects' },
+    projects.map((project) =>
+      h(ProjectRow, { key: project.id, project, token, remove: () => remove(project) }),
+    ),
   );
 }
 
@@ -112,16 +133,16 @@ function ProjectRow({ project, token, remove }: ProjectRowProps) {
       label: probe ? (probe.reachable ? 'Reachable' : 'Unavailable') : 'Revision verified',
       tone: probe?.reachable === false ? 'neutral' : 'positive',
     },
-    action: h(
-      'div',
-      { className: 'arc-platform-stack' },
-      h(
-        Button,
-        { disabled: checking || !token, onClick: () => void check() },
-        checking ? 'Checking…' : 'Check reachability',
-      ),
-      h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
+    statusAction: h(
+      Button,
+      {
+        className: 'arc-management-status-action',
+        disabled: checking || !token,
+        onClick: () => void check(),
+      },
+      checking ? 'Checking…' : 'Check reachability',
     ),
+    action: h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
   });
 }
 

@@ -61,8 +61,7 @@ export function LauncherSetup({ code, issue }: { code?: string; issue(): void })
       options: targets,
       onChange: select,
     }),
-    h(LauncherDownload, { build: published }),
-    h(Button, { onClick: issue }, 'Create registration code'),
+    h(LauncherActions, { published, issue, unavailable: !!target && !!builds.value && !published }),
     code &&
       h(
         'div',
@@ -70,5 +69,23 @@ export function LauncherSetup({ code, issue }: { code?: string; issue(): void })
         h('span', null, 'Registration code'),
         h('code', null, code),
       ),
+  );
+}
+
+function LauncherActions({
+  published,
+  issue,
+  unavailable,
+}: {
+  published?: LauncherBuild;
+  issue(): void;
+  unavailable: boolean;
+}) {
+  return h(
+    'div',
+    { className: 'arc-platform-inline' },
+    h(LauncherDownload, { build: published }),
+    h(Button, { onClick: issue }, 'Create registration code'),
+    unavailable && h('small', null, 'No launcher build for this target.'),
   );
 }
