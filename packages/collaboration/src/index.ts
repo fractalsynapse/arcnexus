@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
-import { retryRead } from './read.js';
+import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import { readGitHubChecks } from './github-checks.js';
 import {
@@ -275,7 +275,9 @@ ${marker}`,
   private async observe(pr: string, branch?: string) {
     const number = pullNumber(pr, this.repository);
     const value = await this.query(['api', `repos/${this.repository}/pulls/${number}`]);
-    return publishedPull(JSON.parse(value), this.repository, { branch, number });
+    return decodeGitHubResponse(value, `PR ${number}`, () =>
+      publishedPull(JSON.parse(value), this.repository, { branch, number }),
+    );
   }
 
   /** Read the authoritative aggregate review decision without expanding CI contexts. */
@@ -294,7 +296,9 @@ ${marker}`,
       '-F',
       `number=${number}`,
     ]);
-    return reviewDecision(JSON.parse(value), pr);
+    return decodeGitHubResponse(value, `PR ${number} review`, () =>
+      reviewDecision(JSON.parse(value), pr),
+    );
   }
 
   /** Attach the completed observations to a failed read for Delivery to retain. */

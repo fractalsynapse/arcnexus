@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
+import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
 
@@ -102,7 +103,12 @@ async function checkRuns(
 ) {
   const current = await runsFrom(read, `${ref}/check-runs?filter=all`, head);
   observe(current.map(normalizeRun));
-  const count = total.parse(JSON.parse(await read(['api', `${ref}/check-suites`]))).total_count;
+  const coverage = await read(['api', `${ref}/check-suites`]);
+  const count = decodeGitHubResponse(
+    coverage,
+    'check suite coverage',
+    () => total.parse(JSON.parse(coverage)).total_count,
+  );
   const runs =
     count > gitHubRefCheckSuiteCoverage
       ? await suiteRuns(read, repo, ref, head, count, current, observe)
@@ -134,6 +140,8 @@ async function suiteRuns(
       );
       for (const run of observed) runs.set(run.id, run);
     }
+    if (current.some((run) => !runs.has(run.id)))
+      throw new Error('GitHub suite inventory omitted an observed check');
   } catch (error) {
     for (const run of current) if (!runs.has(run.id)) runs.set(run.id, run);
     observe([...runs.values()].map(normalizeRun));
@@ -144,10 +152,15 @@ async function suiteRuns(
 
 /** Require every collected suite to belong to the same head and coverage snapshot. */
 async function suiteInventory(read: Read, ref: string, head: string, count: number) {
-  const page = suitePage.refine(
-    (value) => value.check_suites.every((item) => item.head_sha === head),
-    'GitHub returned a check suite for a different head',
-  );
+  const page = suitePage
+    .refine(
+      (value) => value.check_suites.every((item) => item.head_sha === head),
+      'GitHub returned a check suite for a different head',
+    )
+    .refine(
+      (value) => value.total_count >= count,
+      'GitHub returned an incomplete check suite inventory',
+    );
   const suites = await readCollection(
     read,
     `${ref}/check-suites`,
@@ -155,7 +168,6 @@ async function suiteInventory(read: Read, ref: string, head: string, count: numb
     (page) => page.check_suites,
     (item) => item.id,
   );
-  if (suites.length < count) throw new Error('GitHub returned an incomplete check suite inventory');
   return suites;
 }
 
@@ -170,16 +182,17 @@ async function latestRuns(read: Read, repo: string, head: string, checks: CheckR
   const workflows = new Map<string, Map<number, number>>();
   const suites = new Map<number, Set<number>>();
   const selected: CheckRun[] = [];
+  const checkIds = new Set(checks.map((check) => check.id));
   for (const { workflow, suite, runs } of checkContexts(repo, checks)) {
     if (runs.length === 1) {
       selected.push(...runs);
     } else if (workflow) {
       const attempts =
-        workflows.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow));
+        workflows.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow, checkIds));
       workflows.set(workflow, attempts);
       selected.push(...latestInContext(runs, attempts));
     } else if (suite !== undefined) {
-      const ids = suites.get(suite) ?? (await latestSuiteIds(read, repo, head, suite));
+      const ids = suites.get(suite) ?? (await latestSuiteIds(read, repo, head, suite, checkIds));
       suites.set(suite, ids);
       const latest = runs.filter((run) => ids.has(run.id));
       if (latest.length === 0)
@@ -209,12 +222,20 @@ function checkContexts(repo: string, runs: CheckRun[]) {
 }
 
 /** Read the third-party provider's latest check-run selection for its suite. */
-async function latestSuiteIds(read: Read, repo: string, head: string, suite: number) {
+async function latestSuiteIds(
+  read: Read,
+  repo: string,
+  head: string,
+  suite: number,
+  checkIds: ReadonlySet<number>,
+) {
   const latest = await runsFrom(
     read,
     `${repo}/check-suites/${suite}/check-runs?filter=latest`,
     head,
   );
+  if (latest.some(({ id }) => !checkIds.has(id)))
+    throw new Error('GitHub suite checks changed during CI observation');
   return new Set(latest.map((run) => run.id));
 }
 
@@ -233,25 +254,39 @@ function workflowRun(run: CheckRun, repo: string) {
 }
 
 /** Bind each workflow job to the same head and the provider's exact check-run identity. */
-async function workflowAttempts(read: Read, repo: string, head: string, workflow: string) {
-  const page = jobPage.refine(
-    (value) =>
-      value.jobs.every(
-        (job) =>
-          job.head_sha === head &&
-          job.check_run_url.toLowerCase() ===
-            `https://api.github.com/${repo}/check-runs/${job.id}`.toLowerCase(),
-      ),
-    'GitHub returned a workflow job outside the pinned check scope',
-  );
+async function workflowAttempts(
+  read: Read,
+  repo: string,
+  head: string,
+  workflow: string,
+  checkIds: ReadonlySet<number>,
+) {
   const jobs = await readCollection(
     read,
     `${repo}/actions/runs/${workflow}/jobs?filter=all`,
-    page,
+    workflowJobScope(repo, head, checkIds),
     (result) => result.jobs,
     (job) => job.id,
   );
   return new Map(jobs.map((job) => [job.id, job.run_attempt]));
+}
+
+function workflowJobScope(repo: string, head: string, checkIds: ReadonlySet<number>) {
+  return jobPage
+    .refine(
+      (value) =>
+        value.jobs.every(
+          (job) =>
+            job.head_sha === head &&
+            job.check_run_url.toLowerCase() ===
+              `https://api.github.com/${repo}/check-runs/${job.id}`.toLowerCase(),
+        ),
+      'GitHub returned a workflow job outside the pinned check scope',
+    )
+    .refine(
+      (value) => value.jobs.every(({ id }) => checkIds.has(id)),
+      'GitHub workflow jobs changed during CI observation',
+    );
 }
 
 /** Require unambiguous replacement when a workflow has several attempts. */
@@ -269,11 +304,21 @@ function latestInContext(runs: CheckRun[], attempts: Map<number, number>) {
   return runs.filter((item) => attempts.get(item.id) === latest);
 }
 
-async function runsFrom(read: Read, endpoint: string, head: string) {
-  const page = runPage.refine(
-    (value) => value.check_runs.every((item) => item.head_sha === head),
-    'GitHub returned check runs for a different head',
-  );
+async function runsFrom(
+  read: Read,
+  endpoint: string,
+  head: string,
+  checkIds?: ReadonlySet<number>,
+) {
+  const page = runPage
+    .refine(
+      (value) => value.check_runs.every((item) => item.head_sha === head),
+      'GitHub returned check runs for a different head',
+    )
+    .refine(
+      (value) => !checkIds || value.check_runs.every(({ id }) => checkIds.has(id)),
+      'GitHub suite checks changed during CI observation',
+    );
   return readCollection(
     read,
     endpoint,
@@ -292,16 +337,13 @@ async function readCollection<P extends { total_count: number }, T>(
   identity: (item: T) => number | string,
 ) {
   const stdout = await read(['api', endpoint, '--paginate', '--jq', 'tojson']);
-  try {
+  return decodeGitHubResponse(stdout, endpoint, () => {
     const pages = stdout
       .split('\n')
       .filter(Boolean)
       .map((line) => schema.parse(JSON.parse(line)));
     return complete(pages, items, identity);
-  } catch (cause) {
-    const diagnostic = cause instanceof Error ? cause.message : String(cause);
-    throw Object.assign(new Error(`GitHub read ${endpoint}: ${diagnostic}`, { cause }), { stdout });
-  }
+  });
 }
 
 function complete<P extends { total_count: number }, T>(

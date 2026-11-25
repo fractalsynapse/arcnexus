@@ -1,32 +1,18 @@
 import assert from 'node:assert/strict';
-import test, { type TestContext } from 'node:test';
-import { GitHub, GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
+import test from 'node:test';
+import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
+import {
+  ProviderResults,
+  repository,
+  pr,
+  head,
+  review,
+  successfulRun,
+  readyResponse,
+  workflowJobs,
+} from '../fixtures/provider-results.js';
 
 export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery'] } as const;
-
-/** Exercise public provider operations while replacing only external command transport. */
-class ProviderResults {
-  readonly calls: string[][] = [];
-  readonly cancellation = new AbortController();
-  readonly provider: GitHub;
-
-  /** Retain actual command inputs and supply explicit provider-page fixtures. */
-  constructor(
-    t: TestContext,
-    result: (args: string[]) => string,
-    remote = 'https://github.com/example/project.git',
-  ) {
-    this.provider = new GitHub(remote, this.cancellation.signal);
-    const transport = this.provider as unknown as {
-      command(args: string[], complete?: boolean): Promise<string>;
-    };
-    t.mock.method(transport, 'command', async (args: string[], complete = false) => {
-      this.calls.push(args);
-      const output = result(args);
-      return complete ? output : output.trim();
-    });
-  }
-}
 
 test('provider titles preserve the supplied text without an application character cap', async (t) => {
   const scenario = new ProviderResults(t, () => 'https://github.com/example/project/pull/99');
@@ -47,57 +33,6 @@ test('issue recovery examines every provider page before deciding an issue is ab
   );
   assert.equal(await scenario.provider.findIssue(task, 'b'.repeat(64)), '207');
 });
-
-const repository = 'repos/example/project';
-const pr = 'https://github.com/example/project/pull/99';
-const head = 'a'.repeat(40);
-const restPull = {
-  html_url: pr,
-  number: 99,
-  head: { sha: head, ref: '1-task', repo: { full_name: 'example/project' } },
-  base: { ref: 'staging', repo: { full_name: 'example/project' } },
-  state: 'open',
-  merged_at: null,
-  merge_commit_sha: 'b'.repeat(40),
-};
-const review = { state: 'OPEN', headRefOid: head, baseRefName: 'staging', reviewDecision: null };
-const successfulRun = {
-  id: 42,
-  app: { id: 8, slug: 'github-actions' },
-  name: 'Repository checks',
-  status: 'completed',
-  conclusion: 'success',
-  head_sha: head,
-  started_at: '2026-11-24T00:00:00Z',
-  completed_at: '2026-11-24T00:01:00Z',
-  details_url: 'https://github.com/example/project/actions/runs/7/job/42',
-};
-
-function readyResponse(args: string[]) {
-  switch (args[1]) {
-    case repository + '/pulls/99':
-      return JSON.stringify(restPull);
-    case repository + '/commits/' + head + '/check-suites':
-      return JSON.stringify({ total_count: 1 });
-    case repository + '/commits/' + head + '/check-runs?filter=latest':
-    case repository + '/commits/' + head + '/check-runs?filter=all':
-      return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
-    case repository + '/commits/' + head + '/status':
-      return JSON.stringify({ sha: head, status: 'pending', total_count: 0, statuses: [] });
-    case repository + '/actions/jobs/1/logs':
-    case repository + '/actions/jobs/99/logs':
-      return 'Retained exact CI failure';
-    case repository + '/actions/runs/7/jobs?filter=all':
-      return workflowJobs([
-        [99, 1],
-        [1, 2],
-      ]);
-    case 'graphql':
-      return JSON.stringify({ data: { repository: { pullRequest: review } } });
-    default:
-      assert.fail(`Unexpected provider command ${args.join(' ')}`);
-  }
-}
 
 test('staging verifies REST PR and CI facts with a separate authoritative review read', async (t) => {
   const scenario = new ProviderResults(t, readyResponse);
@@ -214,22 +149,12 @@ function suiteResponse(args: string[], resolve: (id: string) => unknown) {
       ? JSON.stringify({ total_count, check_suites: suites })
       : JSON.stringify({ total_count });
   }
+  if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
+    return JSON.stringify({ total_count: 0, check_runs: [] });
   const match = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '');
   if (!match?.[1]) return readyResponse(args);
   const check = resolve(match[1]);
   return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
-}
-
-function workflowJobs(attempts: [id: number, attempt: number][]) {
-  return JSON.stringify({
-    total_count: attempts.length,
-    jobs: attempts.map(([id, run_attempt]) => ({
-      id,
-      run_attempt,
-      head_sha: head,
-      check_run_url: `https://api.github.com/${repository}/check-runs/${id}`,
-    })),
-  });
 }
 
 function latestFailure(error: unknown) {
@@ -398,6 +323,50 @@ test('ambiguous same-name jobs remain ineligible after a partial rerun', async (
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), {
     message: /ambiguous same-name jobs/,
   });
+});
+
+test('workflow jobs added after the check snapshot stop integration', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/actions/runs/7/jobs?'))
+      return workflowJobs([
+        [99, 1],
+        [42, 2],
+        [81, 3],
+      ]);
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [overlappingSuiteRun('1'), successfulRun],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), {
+    message: /workflow jobs changed/,
+  });
+});
+
+test('a suite traversal cannot discard a check already observed by the ref endpoint', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
+      return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
+    return suiteResponse(args, (id) => (id === '1' ? overlappingSuiteRun('1') : undefined));
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), {
+    message: /omitted an observed check/,
+  });
+});
+
+test('invalid PR and review payloads retain the raw provider response', async (t) => {
+  const output = '{"expected_provider_fact_missing":true}';
+  for (const endpoint of [repository + '/pulls/99', 'graphql']) {
+    const scenario = new ProviderResults(t, (args) =>
+      args[1] === endpoint ? output : readyResponse(args),
+    );
+    await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+      assert.ok(error instanceof GitHubPullReadFailure);
+      assert.equal((error.cause as { stdout?: string }).stdout, output);
+      return true;
+    });
+  }
 });
 
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
