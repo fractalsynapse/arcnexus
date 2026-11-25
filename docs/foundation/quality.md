@@ -116,13 +116,20 @@ of directory names. Compare source applicability with corresponding built
 registrations, and compare every represented owner's selection with the complete
 built subset, including unchanged emitted paths. Negative cases must identify the
 missing-owner or collision cause and path, all collision IDs, invalid placement
-and metadata. Include an invalid suite outside the selected owner and an
-observable import effect to distinguish validation from execution.
+and metadata. Include a suite without an exported `suite` declaration outside
+the selected owner. Both public source applicability and built inventory must
+refuse it with its file and missing-registration cause, while an observable
+module effect remains dormant. This distinguishes the missing-declaration
+correction from invalid-field validation and proves that owner filtering cannot
+conceal the defect or execute the module.
 
 Retain characterization evidence for behavior already correct and an intended
-failing public regression for the diagnostic correction before implementation.
-The corrected candidate needs passing inventory and selection scenarios and
-applicable owner formatting, lint, repository types and build observations.
+failing public regression for the missing-declaration correction before
+implementation. The corrected candidate needs passing inventory and selection
+scenarios and applicable owner formatting, lint, repository types and build
+observations. Retain each actual command, selected scope, directory, exit and
+evidence reference against the candidate observed; intended behavior and scenario
+source alone do not establish a passing result.
 Assembled verification and independent review remain separate host obligations.
 The measurable benefit is actionable ownership failures and exact suite coverage
 for every represented owner through the existing shared path. Human callers,
