@@ -6,6 +6,7 @@ import {
   pendingSuiteIds,
   requireRetainedChecks,
   requireRunSuites,
+  retainIntermediateCIRead,
   suiteFailure,
   suitePending,
   suiteProgress,
@@ -87,26 +88,15 @@ export async function readGitHubChecks(
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
-    if (!stable) retainIntermediate(progress, observe, snapshot, inventory);
+    if (!stable) observe.earlier(snapshot.observedChecks, inventory);
     observe.suites(current, 'subsequent');
     if (stable) return stableCheckRead(snapshot, current, progress);
     const progressed = suiteProgress(inventory, current, snapshot.observedChecks);
     if (!progressed) throw new Error('GitHub check suite inventory changed during CI observation');
-    for (const id of progressed) progress.suites.add(id);
+    retainIntermediateCIRead(progress, progressed, { ...snapshot, suites: inventory });
     inventory = current;
     previous = snapshot.observedChecks;
   }
-}
-
-function retainIntermediate(
-  progress: CIProgress,
-  observe: CIObserver,
-  { checks, observedChecks }: Awaited<ReturnType<typeof readChecks>>,
-  suites: readonly ProviderCheckSuite[],
-) {
-  progress.failure ??= observedCIFailure({ checks, suites });
-  progress.intermediate.push({ checks: observedChecks, suites });
-  observe.earlier(observedChecks, suites);
 }
 
 function stableCheckRead(

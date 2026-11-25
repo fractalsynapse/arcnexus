@@ -348,6 +348,36 @@ for (const { coverage, completesAt } of [
   });
 }
 
+test('later suite activity cannot explain an earlier change to its check', async (t) => {
+  let inventory = 0;
+  let reviews = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviews++;
+    if (args[1]?.endsWith('/check-suites')) {
+      inventory++;
+      const check_suites = [5, 6].map((id) => ({
+        id,
+        head_sha: head,
+        status: inventory === id - 1 ? 'in_progress' : 'completed',
+        latest_check_runs_count: 1,
+      }));
+      return JSON.stringify({ total_count: 2, check_suites });
+    }
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    const independentRun = {
+      ...successfulRun,
+      id: 43,
+      name: 'Independent suite',
+      check_suite: { id: 6 },
+      details_url: inventory === 3 ? 'https://example.com/replaced' : successfulRun.details_url,
+    };
+    const check_runs = [{ ...successfulRun, check_suite: { id: 5 } }, independentRun];
+    return JSON.stringify({ total_count: 2, check_runs });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /CI changed during review/);
+  assert.equal(reviews, 1);
+});
+
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {
     let pulls = 0;

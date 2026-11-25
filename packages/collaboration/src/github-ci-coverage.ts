@@ -7,9 +7,13 @@ export interface ProviderCISnapshot {
   suites: readonly ProviderCheckSuite[];
 }
 
+interface IntermediateCIRead extends ProviderCISnapshot {
+  progressedSuites: ReadonlySet<number>;
+}
+
 export interface CIProgress {
   suites: Set<number>;
-  intermediate: ProviderCISnapshot[];
+  intermediate: IntermediateCIRead[];
   failure?: ProviderCheck;
 }
 
@@ -120,11 +124,15 @@ export function confirmationChanged(
   const view = (snapshot: ProviderCISnapshot) =>
     checkSnapshot(snapshot, progressed, includeResults);
   const raw = ({ observedChecks: checks, suites }: ProviderCIRead) => ({ checks, suites });
-  const prior = view(raw(initial));
+  const prior = raw(initial);
   return (
     view(initial) !== view(confirmed) ||
-    view(raw(confirmed)) !== prior ||
-    intermediate.some((read) => view(read) !== prior)
+    view(raw(confirmed)) !== view(prior) ||
+    intermediate.some(
+      ({ progressedSuites, ...snapshot }) =>
+        checkSnapshot(snapshot, progressedSuites, includeResults) !==
+        checkSnapshot(prior, progressedSuites, includeResults),
+    )
   );
 }
 
@@ -246,6 +254,21 @@ export function observedCIFailure(snapshot: ProviderCISnapshot) {
     snapshot.checks.find((check) => terminalCheckFailure(check, pending)) ??
     terminalSuiteFailure(snapshot.suites)
   );
+}
+
+/** Preserve the scope justified at this read before later suites can start or progress. */
+export function retainIntermediateCIRead(
+  progress: CIProgress,
+  progressed: readonly number[],
+  snapshot: Omit<ProviderCIRead, 'progress'>,
+) {
+  for (const id of progressed) progress.suites.add(id);
+  progress.failure ??= observedCIFailure(snapshot);
+  progress.intermediate.push({
+    checks: snapshot.observedChecks,
+    suites: snapshot.suites,
+    progressedSuites: new Set(progress.suites),
+  });
 }
 
 /** Return the provider's actual suite at the time it failed, including across CI rereads. */
