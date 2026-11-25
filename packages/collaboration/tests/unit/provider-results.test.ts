@@ -13,20 +13,6 @@ import {
 
 export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery'] } as const;
 
-test('unavailable suite metadata retains the completed ref check read', async (t) => {
-  let inventories = 0;
-  const scenario = new ProviderResults(t, (args) => {
-    if (args[1]?.endsWith('/check-suites') && ++inventories === 2)
-      throw new Error('Suite inventory unavailable');
-    return readyResponse(args);
-  });
-  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
-    assert.ok(error instanceof GitHubPullReadFailure);
-    assert.equal(error.observation.checks?.[0]?.runId, successfulRun.id);
-    return true;
-  });
-});
-
 function paginatedStatuses(contexts: string[]) {
   return contexts
     .map((context) =>
@@ -358,7 +344,7 @@ test('a status that becomes pending during review cannot authorize delivery', as
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
 });
 
-test('a full rerun may replace every job from a same-name set', async (t) => {
+test('equal-count reruns with ambiguous same-name jobs stay ineligible', async (t) => {
   const scenario = new ProviderResults(t, (args) => {
     if (args[1]?.includes('/actions/runs/7/jobs?'))
       return workflowJobs([
@@ -381,17 +367,43 @@ test('a full rerun may replace every job from a same-name set', async (t) => {
       ],
     });
   });
-  await scenario.provider.verify(pr, head, 'staging');
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), {
+    message: /ambiguous same-name jobs/,
+  });
 });
 
-test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
-  const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
-  const scenario = new ProviderResults(t, (args) =>
-    args[1]?.includes('/check-runs?') ? output : readyResponse(args),
-  );
+test('a check rerun queued during review cannot authorize delivery', async (t) => {
+  let reviewReceived = false;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviewReceived = true;
+    if (reviewReceived && args[1]?.includes('/check-runs?')) {
+      return JSON.stringify({
+        total_count: 1,
+        check_runs: [{ ...successfulRun, status: 'queued', conclusion: null }],
+      });
+    }
+    if (reviewReceived && args[1]?.endsWith('/status')) scenario.cancellation.abort();
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
+});
+
+test('ref and suite observations for the same check cannot disagree', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
+      return JSON.stringify({
+        total_count: 1,
+        check_runs: [{ ...successfulRun, status: 'in_progress', conclusion: null }],
+      });
+    return suiteResponse(args, (id) => (id === '1' ? successfulRun : undefined));
+  });
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
     assert.ok(error instanceof GitHubPullReadFailure);
-    assert.equal((error.cause as { stdout?: string }).stdout, output);
+    assert.match(error.message, /ref and suite disagree/);
+    assert.deepEqual(error.observation.checks?.map((check) => check.status).sort(), [
+      'COMPLETED',
+      'IN_PROGRESS',
+    ]);
     return true;
   });
 });

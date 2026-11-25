@@ -99,6 +99,8 @@ export interface GitHubPullObservation {
   head: string;
   pull?: PublishedPull;
   checks?: readonly ProviderCheck[];
+  confirmedChecks?: readonly ProviderCheck[];
+  reviewDecision?: ReturnType<typeof reviewDecision>;
 }
 
 /** Preserve completed provider facts with the exact unavailable read. */

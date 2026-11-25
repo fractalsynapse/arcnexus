@@ -90,7 +90,7 @@ function normalizeRun({ id, app, name, status, conclusion, details_url }: z.outp
 }
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
-export async function readGitHubStatuses(
+async function readGitHubStatuses(
   read: Read,
   repository: string,
   head: string,
@@ -170,14 +170,22 @@ async function suiteRuns(
       );
       for (const run of observed) runs.set(run.id, run);
     }
-    if (current.some((run) => !runs.has(run.id)))
-      throw new Error('GitHub suite inventory omitted an observed check');
+    reconcileRefChecks(current, runs);
   } catch (error) {
-    for (const run of current) if (!runs.has(run.id)) runs.set(run.id, run);
-    observe([...runs.values()].map(normalizeRun));
+    observe([...current, ...runs.values()].map(normalizeRun));
     throw error;
   }
   return [...runs.values()];
+}
+
+/** Check that overlapping provider snapshots describe the same checks and states. */
+function reconcileRefChecks(ref: CheckRun[], suites: Map<number, CheckRun>) {
+  for (const run of ref) {
+    const suite = suites.get(run.id);
+    if (!suite) throw new Error('GitHub suite inventory omitted an observed check');
+    if (JSON.stringify(run) !== JSON.stringify(suite))
+      throw new Error(`GitHub ref and suite disagree for check run ${run.id}`);
+  }
 }
 
 /** Require every collected suite to belong to the same head and coverage snapshot. */
@@ -323,10 +331,9 @@ function latestInContext(runs: CheckRun[], attempts: Map<number, number>) {
     counts.set(attempt, (counts.get(attempt) ?? 0) + 1);
     latest = Math.max(latest, attempt);
   }
-  const current = runs.filter((item) => attempts.get(item.id) === latest);
-  if ([...counts.values()].some((count) => count > current.length))
+  if (counts.size > 1 && [...counts.values()].some((count) => count > 1))
     throw new Error(`GitHub returned ambiguous same-name jobs across attempts: ${runs[0]?.name}`);
-  return current;
+  return runs.filter((item) => attempts.get(item.id) === latest);
 }
 
 async function runsFrom(

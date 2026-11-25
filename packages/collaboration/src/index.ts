@@ -3,7 +3,7 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
-import { readGitHubChecks, readGitHubStatuses } from './github-checks.js';
+import { readGitHubChecks } from './github-checks.js';
 import {
   GitHubPullReadFailure,
   publishedPull,
@@ -198,15 +198,7 @@ ${marker}`,
           ['ERROR', 'FAILURE'].includes(state ?? ''),
       );
       if (failed) throw await this.failedCheck(pr, head, failed);
-      if (
-        checks.length &&
-        review !== 'REVIEW_REQUIRED' &&
-        checks.every(
-          ({ status, conclusion, state }) =>
-            (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
-        )
-      )
-        return;
+      if (review !== 'REVIEW_REQUIRED' && successfulChecks(checks)) return;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
   }
@@ -220,35 +212,57 @@ ${marker}`,
     branch?: string,
   ) {
     const evidence: GitHubPullObservation = { repository: this.repository, pr, head };
-    const current = await this.pullRead('PR identity', evidence, () => this.observe(pr, branch));
-    evidence.pull = current;
-    if (current.head !== head || current.target !== base || current.state !== state.toLowerCase())
-      throw new Error(`GitHub PR changed before integration: ${pr}`);
-    const checks = await this.checks(evidence);
+    const current = await this.verificationPull(evidence, base, state, branch);
+    const checks = await this.checks(evidence, 'checks');
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
-    if (review === 'CHANGES_REQUESTED' || review === 'REVIEW_REQUIRED') return { checks, review };
-    const statuses = await this.pullRead('legacy CI statuses', evidence, () =>
-      readGitHubStatuses((args) => this.query(args), this.repository, head),
-    );
-    return {
-      checks: [...checks.filter((check) => check.runId !== undefined), ...statuses],
-      review,
-    };
+    evidence.reviewDecision = review;
+    if (review === 'CHANGES_REQUESTED' || review === 'REVIEW_REQUIRED' || !successfulChecks(checks))
+      return { checks, review };
+
+    const confirmed = await this.checks(evidence, 'confirmedChecks');
+    if (successfulChecks(confirmed) && checkSnapshot(checks) !== checkSnapshot(confirmed))
+      throw new GitHubPullReadFailure(
+        'CI confirmation',
+        evidence,
+        new Error('GitHub CI changed during review'),
+      );
+    return { checks: confirmed, review };
   }
 
-  /** Retain each successful CI read when a later provider fact is unavailable. */
-  private async checks(evidence: GitHubPullObservation) {
-    const checks = await this.pullRead('CI checks', evidence, () =>
+  /** Retain the observed PR even when it conflicts with captured publication identity. */
+  private verificationPull(
+    evidence: GitHubPullObservation,
+    base: string,
+    state: string,
+    branch?: string,
+  ) {
+    return this.pullRead('PR identity', evidence, async () => {
+      const current = await this.observe(evidence.pr, branch);
+      evidence.pull = current;
+      if (
+        current.head !== evidence.head ||
+        current.target !== base ||
+        current.state !== state.toLowerCase()
+      )
+        throw new Error(`GitHub PR changed before integration: ${evidence.pr}`);
+      return current;
+    });
+  }
+
+  /** Keep both CI snapshots and their partial results when verification cannot proceed. */
+  private async checks(evidence: GitHubPullObservation, slot: 'checks' | 'confirmedChecks') {
+    const read = slot === 'checks' ? 'CI checks' : 'CI confirmation';
+    const checks = await this.pullRead(read, evidence, () =>
       readGitHubChecks(
         (args) => this.query(args),
         this.repository,
         evidence.head,
         (partial) => {
-          evidence.checks = partial;
+          evidence[slot] = partial;
         },
       ),
     );
-    evidence.checks = checks;
+    evidence[slot] = checks;
     return checks;
   }
 
@@ -371,6 +385,23 @@ ${marker}`,
     const token = await this.credential('https://github.com/' + this.repository + '.git');
     return { ...process.env, GH_TOKEN: token };
   }
+}
+
+function successfulChecks(checks: readonly ProviderCheck[]) {
+  return (
+    checks.length > 0 &&
+    checks.every(
+      ({ status, conclusion, state }) =>
+        (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
+    )
+  );
+}
+
+function checkSnapshot(checks: readonly ProviderCheck[]) {
+  return checks
+    .map((check) => JSON.stringify(check))
+    .sort()
+    .join('\n');
 }
 
 /** Use only the first line of the goal as the provider title. */

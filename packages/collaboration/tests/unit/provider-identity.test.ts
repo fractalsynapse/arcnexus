@@ -80,3 +80,12 @@ test('invalid PR and review payloads retain the raw provider response', async (t
     });
   }
 });
+
+test('a conflicting PR head is retained with the unavailable identity', async (t) => {
+  const scenario = new ProviderResults(t, readyResponse);
+  await assert.rejects(scenario.provider.verify(pr, 'f'.repeat(40), 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.pull?.head, head);
+    return true;
+  });
+});
