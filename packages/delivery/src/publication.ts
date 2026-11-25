@@ -58,8 +58,12 @@ function verifyPublication(
   pr: string,
   state: 'OPEN' | 'MERGED',
 ) {
-  return provider.verify(pr, head, target, state, branch, (observation) =>
-    record({ publicationVerification: observation }),
+  return provider.verify(pr, head, target, state, branch, (observation, result) =>
+    record(
+      result === 'pending'
+        ? { publicationVerificationPending: observation }
+        : { publicationVerification: observation },
+    ),
   );
 }
 

@@ -132,8 +132,8 @@ test('successful verification retains the provider’s earlier attempt before re
     _base: string,
     _state?: string,
     _branch?: string,
-    observe?: (value: GitHubPullObservation) => void,
-  ) => observe?.(evidence);
+    observe?: (value: GitHubPullObservation, result: 'pending' | 'verified') => void,
+  ) => observe?.(evidence, 'verified');
   const events: Record<string, unknown>[] = [];
   await publish(accepted, {
     ...actions,
@@ -144,6 +144,36 @@ test('successful verification retains the provider’s earlier attempt before re
   const merge = events.findIndex((event) => event.publicationAction === 'merge');
   assert(verified >= 0 && verified < merge);
   assert.deepEqual(events[verified]?.publicationVerification, evidence);
+});
+
+test('cancelling pending verification retains the evidence without recording acceptance', async () => {
+  const actions = fixture(undefined, accepted.head);
+  const evidence = { repository: 'example/target', pr: url, head: accepted.head };
+  const verify = async (
+    _pr: string,
+    _head: string,
+    _base: string,
+    _state?: string,
+    _branch?: string,
+    observe?: (value: GitHubPullObservation, result: 'pending' | 'verified') => void,
+  ) => {
+    observe?.(evidence, 'pending');
+    throw new DOMException('Held during polling', 'AbortError');
+  };
+  const events: Record<string, unknown>[] = [];
+  await assert.rejects(
+    publish(accepted, {
+      ...actions,
+      provider: { ...actions.provider, verify },
+      record: (event) => events.push(event),
+    }),
+    { name: 'AbortError' },
+  );
+  const pending = events.find((event) => event.publicationVerificationPending);
+  assert.equal(pending?.publicationVerificationPending, evidence);
+  assert(
+    !events.some((event) => event.publicationVerification || event.publicationAction === 'merge'),
+  );
 });
 
 test('DE-5: conflicting publication identities and unavailable reads stop before mutation', async () => {
