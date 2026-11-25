@@ -48,6 +48,11 @@ export class RoundConsumptionFixture {
     this.install('original');
   }
 
+  /** Remove fixture state after subclasses release resources that still need the repository. */
+  protected cleanup() {
+    rmSync(this.directory, { recursive: true, force: true });
+  }
+
   /** Resolve the same public plugin services afresh over the existing SQLite/Git state. */
   reopen() {
     const agent = new Agent(this.architecture);
