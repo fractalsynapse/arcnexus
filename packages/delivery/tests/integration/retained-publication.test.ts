@@ -1,10 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import test from 'node:test';
+import nativeTest from 'node:test';
 import { PreparedRecoveryFixture, answer, checked } from '../fixtures/prepared-publication.js';
 import { PublicationProvider } from '../fixtures/publication-provider.js';
 
-export const suite = { owner: 'delivery', level: 'integration', tags: ['regression'] } as const;
+export const suite = {
+  owner: 'delivery',
+  level: 'integration',
+  tags: ['native', 'regression'],
+} as const;
+
+// These callers launch real HostTask.check sandboxes from the trusted Host boundary.
+// The ordinary confined suite cannot launch nested namespaces; its skips provide no native proof.
+const test = process.env.ARCNEXUS_NATIVE_TESTS === '1' ? nativeTest : nativeTest.skip;
 
 type AcceptanceEvent = {
   verification?: {
