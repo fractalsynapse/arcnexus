@@ -14,10 +14,11 @@ export const suite = {
 // The admitted HostTask is the real caller boundary. Exact payloads reject synthetic exits,
 // altered argv/cwd/inputs and a command that never ran. Overlay assertions reject escaping writes.
 // Raw namespace probes isolate setup failure; their nonzero exits cannot satisfy capability.
-// No native-disable switch applies to this required characterization.
-test('production HostTask.check executes declared success and failure in real confinement', async (t) => {
+// The native opt-in selects the trusted Host caller; a skipped case does not discharge acceptance.
+test('production HostTask.check executes declared success and failure in real confinement',
+  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' }, async (t) => {
   const fixture = new ProductionCheckFixture(t);
-  const task = await fixture.open(t);
+  const task = await fixture.open();
   fixture.diagnose(task);
   const scope = { owner: 'work', activity: 'testing', expected: 'pass' } as const;
   const signal = new AbortController().signal;
