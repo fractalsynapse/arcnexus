@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { GitHubPullObservation } from './github-pull.js';
 
 export interface ProviderCheck {
   runId?: number;
@@ -23,6 +24,7 @@ export class GitHubCheckFailure extends Error {
     readonly head: string,
     readonly check: ProviderCheck,
     readonly log: string,
+    readonly observation?: GitHubPullObservation,
   ) {
     super(`Required GitHub checks failed: ${pr}`);
     this.identity = createHash('sha256')

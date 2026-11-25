@@ -66,6 +66,27 @@ test('a failed completion reread retains the earlier legacy status alongside the
   });
 });
 
+test('a terminal check failure retains the preceding snapshot from the same observation', async (t) => {
+  const completing = completingSuite('failure');
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [
+        { context: 'lint', state: ++statuses === 1 ? 'failure' : 'success', target_url: null },
+      ],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.log, 'Retained actual failure');
+    assert.equal(error.observation?.earlierChecks?.[0]?.checks[1]?.state, 'FAILURE');
+    return true;
+  });
+});
+
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
   const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
   const scenario = new ProviderResults(t, (args) =>

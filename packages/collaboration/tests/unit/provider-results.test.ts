@@ -329,6 +329,21 @@ for (const conclusion of ['success', 'failure'] as const) {
   });
 }
 
+test('one suite can start while another completes during the same observation', async (t) => {
+  const completing = completingSuite('success');
+  let inventories = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    const output = completing(args);
+    if (!args[1]?.endsWith('/check-suites')) return output;
+    const suites = JSON.parse(output).check_suites;
+    const status = ['queued', 'in_progress'][inventories++] ?? 'completed';
+    suites.push({ id: 6, head_sha: head, status, latest_check_runs_count: 0 });
+    return JSON.stringify({ total_count: suites.length, check_suites: suites });
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+  assert(inventories > 3);
+});
+
 test('stable suite metadata cannot hide runs missing from the ref snapshot', async (t) => {
   const scenario = new ProviderResults(t, (args) => {
     if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
