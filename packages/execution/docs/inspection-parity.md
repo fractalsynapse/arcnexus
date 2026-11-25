@@ -143,13 +143,16 @@ listing-retention red nor the resolved enrichment coverage needs recreation.
 | `inspection-effects-provider-policy` | Repeatability/no-effects, `assertInvocation`, the activity matrix and changed-guidance refusal cover no model/admission/upstream/storage/worktree effects, independent cached/disabled/live web policy, approved guidance visibility and unchanged discovery configuration. Establish current applicability. Controlled receipts do not establish automatic real-harness discovery. |
 | `inspection-evidence-quality` | Record actual status/log, source, candidate, authority, parameters and environment for applicable format, lint, strict types, build and behavioral observations. Distinguish controlled receipts, configured-provider artifacts, skipped native cases and unavailable provider internals. Host verification, CI and delivery remain separate. |
 
-The characterization account identifies the run-173 criterion-linked logs and
-current matching source hashes. Matching those files alone does not establish
-unchanged dependencies, environment, captured authority or check parameters.
-Run 185's accepted plan also distinguishes the supplied run-183 checkpoint
-verification from parity acceptance: broad repository checks against checkpoint
-criteria cannot discharge these parity measures. Reuse requires matching relevant
-inputs and environment, or a fresh applicable observation.
+The characterization account preserves run-173 and run-187 criterion-linked logs
+and identifies source hashes reviewed for run 204. Matching those files alone
+does not establish unchanged dependencies, environment, captured authority or
+check parameters. Run 204's accepted plan distinguishes the supplied run-202
+checkpoint verification from parity acceptance: broad repository checks against
+checkpoint criteria cannot discharge these parity measures. Testing must establish
+applicable owner-test results; Implementation must establish applicable owner
+format/lint/tests and repository types/build results. Reuse requires matching
+relevant inputs and environment, or a fresh applicable observation. This
+Documentation activity makes no software-result reuse decision.
 
 ## Provider observations and remaining limitations
 
