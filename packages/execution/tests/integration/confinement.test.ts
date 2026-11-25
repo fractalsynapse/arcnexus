@@ -132,13 +132,21 @@ function ownerCheckCapture(workspace: string, required = false) {
   };
 }
 
+/** Register a synthetic suite for the owner whose inventory the fixture represents. */
+function writeOwnerSuite(workspace: string, owner: 'one' | 'two', name: string) {
+  const directory = join(workspace, 'packages', owner, 'tests', 'unit');
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    join(directory, name),
+    `export const suite = { owner: '${owner}', level: 'unit', tags: ['fixture'] } as const;\n`,
+  );
+}
+
 test('an optional owner check without a suite records inapplicability before execution', async (t) => {
   const { root, workspace } = fixture(t);
   const common = join(root, 'common');
   mkdirSync(common);
-  const otherSuite = join(workspace, 'packages/two/tests/unit');
-  mkdirSync(otherSuite, { recursive: true });
-  writeFileSync(join(otherSuite, 'other.test.ts'), '');
+  writeOwnerSuite(workspace, 'two', 'other.test.ts');
   const result = await check(
     ownerCheckCapture(workspace),
     workspace,
@@ -163,11 +171,7 @@ test(
     const common = join(root, 'common');
     mkdirSync(common);
     for (const required of [true, false]) {
-      const suite = join(workspace, 'packages/one/tests/unit');
-      if (!required) {
-        mkdirSync(suite, { recursive: true });
-        writeFileSync(join(suite, 'new.test.ts'), '');
-      }
+      if (!required) writeOwnerSuite(workspace, 'one', 'new.test.ts');
       const result = await check(
         ownerCheckCapture(workspace, required),
         workspace,
