@@ -1,5 +1,112 @@
 # Inspection parity characterization
 
+## Documentation assessment at revision ce690126
+
+Run 204 evaluates `ce690126388cd30f8b601b91498e91b586008ff3` for
+`inspection-current-assessment`, issue 738, branch `738-task`.
+The engineering base is recorded at sequence 155469, the accepted plan at
+155716 and branch preparation at 155719 in `204-1-run-timeline.jsonl`.
+The Documentation activation retains that same authority at nativeStarted
+sequence 155725. Its prepared candidate worktree is distinct from the captured
+architecture source and from a later independent verification checkout. Checked
+edits identify the resulting documentation checkpoints; they do not establish
+behavioral acceptance.
+
+Artifacts in this section resolve in the registered evidence directory for task
+`4aa3c2ddcba96940e3e3bde7c86774be87e0b1c1ae44fcbe92e766bdf5f43a5c`.
+The supplied complete index is
+`204-83-retained-evidence-cf625b1c852be3b5b7e66e41272ef971ced49e2bf2fbfb08d82debe2b4d39298.json`.
+Mapped complete reads of that index and the current timeline establish the
+assignment and provenance above. Bulk observations remain outside source.
+
+This assessment updates the [intent](inspection-parity.md) before behavioral
+corrections. It reviewed the complete shared Agent/Architecture request path,
+activation enrichment, native observation, adapter, guidance validation, LocalMcp,
+production fixture and parity/listing assertions, together with the assembled CLI
+inspection and request-parity sources. EX-6/EX-16/EX-24 and
+ARC-9/ARC-13/ARC-18/ARC-24 support the requested behavior without a lock change.
+No authority, project-tool grant or provider policy changes are proposed.
+
+### Existing assertions at the evaluated revision
+
+| Criterion | Current source anchors and discriminating comparison |
+| --- | --- |
+| `inspection-request-parity` | [Parity suite](../tests/integration/inspection-activation.test.ts): complete CLI cases compare rendered input and invocation header with structured inspection. The native actor matrix compares actual subprocess stdin with Agent preparation using `enrichment` and `liveContext`, plus independently retained Reviewer diff. `assertSelected` requires authored purpose, selected procedure and source labels; the no-effects case names all six placeholders. `returningContext`, `retainedIndex` and `taskSection` independently compare complete assignment, multiline whitespace-preserving answer, milestone, acceptance and ordered evidence before whole-input equality. Registered completed-round/timeline inputs are authored separately; an unregistered round is excluded. |
+| `inspection-project-authority` | `assertTools` compares actual HTTP MCP names, exact descriptions and schemas with prepared tools and rendered Operations. The matrix includes disjoint steward activities and explicit empty bindings; foreign edits and another activity's operation or shell are refused, preserving foreign bytes. [Listing suite](../tests/integration/inspection-listing.test.ts): `assertRetained` reads the complete registered requested response and checks call identity, component/activity attribution and ordering inside the activation. Populated/disjoint/empty and no-request cases reject missing or fabricated listings, with throwing project-dispatch sentinels. |
+| `inspection-effects-provider-policy` | The repeatability/no-effects case guards model, admission and upstream calls with throwing sentinels and compares Git status, worktrees and absent storage. `assertInvocation` checks effective argv/cwd/model/reasoning, independent cached/disabled/live web settings across populated and empty tools, exact approved guidance bytes, no pasted guidance and no discovery-disabling settings. Changed guidance is refused before provider startup. The assembled CLI case executes the existing CLI suites and requires no failures or skips. |
+| `inspection-evidence-quality` | Tracked assertions identify the boundary to observe, not a new pass. Controlled diagnostics retain actual stdin, argv, cwd, executable, Node version, tools, refusals and guidance bytes. Current applicable statuses, logs, candidate, authority, resolved operation parameters and environment still need the observations or justified reuse described below. |
+
+The [generic fixture](../tests/fixtures/inspection.ts) uses production capture,
+Agent, Execution admission, task preparation, Git and SQLite with an explicitly
+configured [controlled executable](../tests/fixtures/inspection-provider.ts).
+Its isolated Collaboration observations do not establish hosted delivery.
+The complementary [activity-tool suite](../tests/integration/activity-tools.test.ts)
+uses handwritten bindings and a partial host fixture; it does not replace the
+captured production comparison. Explicit journal rounds establish consumption of
+round records, not production of a live refinement round.
+
+Reviewed source identities provide applicability anchors:
+
+| Source | SHA-256 |
+| --- | --- |
+| `tests/integration/inspection-activation.test.ts` | `a556a23d714e68ed9222c36b9472dec2838537dd9b5e4502654a26de6849cb14` |
+| `tests/integration/inspection-listing.test.ts` | `c62a0c1e87dd7f4afe3365e014f5c1b4f699fdb9f829a32145126ab91649e99b` |
+| `tests/fixtures/inspection-provider.ts` | `d91ba5a398742169a5d7c6b9b2d585ca59beb404688c427831b087bfa1c552db` |
+| `src/activation.ts` | `de2435c9cebcc5991ae53983154fb13603793c47735aea7a08bd484152b0b28a` |
+| `src/mcp.ts` | `0374073cec864afc11d9382bf431fff8a80f59395efce24ac9bf124c1fafc3f5` |
+| `src/codex.ts` | `8c142d4053a9dabebd1174e1bb01444cbde0a6ee0e29a1e9b96bcc9107741722` |
+| `src/host-config.ts` | `637d16cdf2309b098a95628be77799c3d2aebc7f4419af5c60994adfae77a063` |
+
+### Observations still requiring applicability or execution
+
+The run-187 account below preserves its tested checkpoint, original authority,
+actual statuses and criterion-linked logs, including `187-214-owner-tests.log`
+and the four quality logs. Those results are historical here; this activity did
+not reread those logs or execute software checks. Matching parity/listing,
+activation and LocalMcp bytes does not establish unchanged dependencies,
+environment, captured authority, adapter behavior or operation parameters.
+Testing must obtain applicable `owner-tests` results for the existing boundary
+and assembled CLI cases, or establish a justified reuse decision from complete
+relevant observations. Implementation must obtain applicable passing
+`owner-format`, `owner-lint`, `owner-tests`, `repository-types` and
+`repository-build` results, retaining resolved selections, input identities,
+status and complete logs. Run 204's plan explicitly says supplied run-202
+checkpoint verification does not discharge unexercised parity behavior.
+
+The listing-retention repair and enrichment assertions are already present.
+Characterize with expected pass. Preserve historical intended red and fixture
+diagnostics; add red only for a demonstrated new uncovered behavioral gap.
+No new product or fixture defect is established by this source review.
+
+Testing must classify available registered configured-provider request,
+invocation, requested-listing and event artifacts with each activation's actual
+authority and runtime attribution. Current timeline references include Director
+`204-2-native-request.json`, `204-5-native-invocation.json` and requested
+listing `204-6-mcp-observation.json`; Documentation starts with
+`204-84-native-request.json`. These references are leads for complete reads,
+not completed comparisons in this activity. Compare full prepared tools after
+removing only internal handlers with actual requested responses where available.
+Do not infer a requested empty listing or Reviewer listing from a prepared array.
+Historical populated real-provider comparisons remain identified below.
+
+The retained [provider research](../../../.arc/research/execution/00ffe9d0f3fd962bb54eb21db01bbae6521269e7c2b4e4c1fb1953bcb86fd761.md)
+was consulted. Its pre-repair missing-listing diagnosis and proposed question
+belong to run 138; later historical sections record the repair and clarification.
+They are not new prerequisites or a current defect. Controlled receipts establish
+transport, approved-file visibility and normal discovery configuration.
+Prepared configured-provider envelopes establish host preparation; neither is an
+independent complete real-model received-context receipt or authoritative
+automatic AGENTS/skill discovery record. The historical operator-observed Codex
+version/image retains that provenance. Unexposed fields and skipped native cases
+remain unavailable evidence, without inventing new events or weakening criteria.
+
+Documentation validation reviews source facts, assertion anchors, local links
+and consistency with the accepted plan. This contribution changes prose only
+and claims no new software or configured-provider pass, live qualification,
+independent verdict, CI or staging delivery. The following run-187 and earlier
+sections preserve their original revision-specific meaning; their use of
+“current” refers to the candidate named in that historical section.
+
 ## Implementation assessment at revision fe55cd8
 
 Implementation consumed the resumed Testing findings below, the complete retained
