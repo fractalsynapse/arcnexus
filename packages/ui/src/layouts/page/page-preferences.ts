@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import type { Workspace, DisplayRegistration } from '../../registry/workspace.js';
-import { columnCounts, panelLayoutFor } from '../panels/presets/index.js';
+import { columnCounts, fullWidthRegions } from '../panels/presets/index.js';
 
 const stored = z.object({
   columns: z.literal(columnCounts),
   order: z.array(z.string()),
   hidden: z.array(z.string()),
-  regions: z.record(z.string(), z.number().int().nonnegative()),
+  regions: z.record(
+    z.string(),
+    z.union([z.number().int().nonnegative(), z.enum(fullWidthRegions)]),
+  ),
   widths: z.array(z.number().positive()),
 });
 
@@ -41,9 +44,7 @@ export function orderedDisplays(panels: readonly DisplayRegistration[], order: r
 }
 
 /** Resolve a display's desktop placement within the selected layout. */
-export function panelColumn(panel: DisplayRegistration, layout: PagePreferences) {
-  return Math.min(
-    panelLayoutFor(layout.columns).regions.length - 1,
-    layout.regions[panel.id] ?? panel.defaultColumn ?? 0,
-  );
+export function panelRegion(panel: DisplayRegistration, layout: PagePreferences) {
+  const region = layout.regions[panel.id] ?? panel.defaultRegion ?? 0;
+  return typeof region === 'number' ? Math.min(layout.columns - 1, region) : region;
 }

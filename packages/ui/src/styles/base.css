@@ -72,7 +72,7 @@ body {
   font-size: var(--font-label);
   font-weight: 640;
 }
-.arc-app :is(input, select, textarea) {
+.arc-app :is(input, select, textarea, .arc-select-trigger) {
   inline-size: 100%;
   min-inline-size: 0;
   min-block-size: 38px;

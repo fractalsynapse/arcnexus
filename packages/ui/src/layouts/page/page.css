@@ -26,9 +26,6 @@
   inline-size: 22rem;
   max-inline-size: 100%;
 }
-.arc-page-title-action select {
-  text-overflow: ellipsis;
-}
 .arc-page-context {
   min-inline-size: 0;
   margin-inline-start: auto;

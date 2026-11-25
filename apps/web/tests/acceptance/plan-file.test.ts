@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Page, Route } from 'playwright';
+import { chooseOption, openSelect } from '../fixtures/browser-select.js';
 import {
   browserPage,
   otherProject,
@@ -40,6 +41,49 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   );
 });
 
+test('Plan File uses editable full-width and column regions on desktop', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page, [project]);
+  await page.goto(application.url + '/plan/files/goals/fixture-goal/');
+  const information = filePanel(page, 'File information');
+  const content = filePanel(page, 'Content');
+  const layout = page.locator('.arc-panel-layout');
+  await information.waitFor();
+  await assertPanelWidth(information, layout);
+  await placeFileInformation(page, 'Top', 'Left');
+  await assertPanelWidth(information, content);
+  await placeFileInformation(page, 'Left', 'Bottom');
+  await page.reload();
+  await information.waitFor();
+  await assertPanelWidth(information, layout);
+  const changes = await filePanel(page, 'Changes').boundingBox();
+  const bottom = await information.boundingBox();
+  assert.ok(changes && bottom && bottom.y > changes.y + changes.height);
+  await page.setViewportSize({ width: 360, height: 800 });
+  assert.ok((await information.boundingBox())!.y < (await content.boundingBox())!.y);
+  await page.getByRole('button', { name: 'Expand File information' }).click();
+  assert.equal(await content.isVisible(), false);
+  await page.getByRole('button', { name: 'Collapse File information' }).click();
+  await content.waitFor();
+});
+
+function filePanel(page: Page, name: string) {
+  return page.getByRole('region', { name, exact: true });
+}
+
+async function assertPanelWidth(panel: ReturnType<typeof filePanel>, reference: typeof panel) {
+  const [box, expected] = await Promise.all([panel.boundingBox(), reference.boundingBox()]);
+  assert.ok(box && expected && Math.abs(box.width - expected.width) < 1);
+}
+
+async function placeFileInformation(page: Page, from: string, to: string) {
+  await page.getByRole('button', { name: 'Plan file page settings', exact: true }).click();
+  const placement = page.getByLabel('File information region');
+  assert.equal(await placement.textContent(), from);
+  await chooseOption(page, 'File information region', to);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+}
+
 async function verifyHeadingSpacing(page: Page) {
   const original = page.viewportSize();
   for (const width of [1180, 360]) {
@@ -53,9 +97,11 @@ async function verifyHeadingSpacing(page: Page) {
       return {
         gap: box('.arc-page-title').top - box('.arc-file-breadcrumbs').bottom,
         spacing: parseFloat(getComputedStyle(main).getPropertyValue('--gap')),
-        centers: ['.arc-page-title button', '.arc-page-title h1', '.arc-page-title select'].map(
-          center,
-        ),
+        centers: [
+          '.arc-page-title .arc-icon-button',
+          '.arc-page-title h1',
+          '.arc-page-title [role=combobox]',
+        ].map(center),
       };
     });
     assert.ok(Math.abs(alignment.gap - alignment.spacing) < 1);
@@ -83,34 +129,32 @@ test('a pinned Plan File can switch between its historical and latest approved r
   const revisions = page.getByLabel('File revision');
   const edit = page.getByRole('checkbox', { name: 'Edit' });
   await content.getByRole('heading', { name: 'Captured goal' }).waitFor();
-  const pinned = await revisions.inputValue();
-  assert.match(await revisions.locator('option:checked').innerText(), /2025.*\(bbbbbbbb\)$/);
+  const pinned = await revisions.innerText();
+  assert.match(pinned, /2025.*\(bbbbbbbb\)$/);
   assert.equal(await edit.isDisabled(), true);
   await assertCompactRevisionMenu(page);
-  await revisions.selectOption({ label: 'Latest revision (aaaaaaaa)' });
+  await chooseOption(page, 'File revision', 'Latest revision (aaaaaaaa)');
   await content.getByRole('heading', { name: 'Verified goal' }).waitFor();
   assert.equal(await edit.isEnabled(), true);
-  await revisions.selectOption(pinned);
+  await chooseOption(page, 'File revision', pinned);
   await content.getByRole('heading', { name: 'Captured goal' }).waitFor();
   assert.equal(await edit.isDisabled(), true);
 });
 
 async function assertCompactRevisionMenu(page: Page) {
   await page.setViewportSize({ width: 320, height: 800 });
-  const selector = page.getByLabel('File revision');
-  await selector.click();
-  const presentation = await selector.evaluate((field: HTMLSelectElement) => ({
-    menuWidth: parseFloat(getComputedStyle(field, '::picker(select)').width),
-    fieldWidth: field.getBoundingClientRect().width,
-    rows: Array.from(field.options, (option) => getComputedStyle(option).whiteSpace),
-    inViewport: Array.from(field.options).every((option) => {
-      const { left, right } = option.getBoundingClientRect();
-      return left >= 0 && right <= innerWidth;
-    }),
-  }));
-  assert.ok(presentation.menuWidth >= presentation.fieldWidth);
-  assert.ok(presentation.rows.every((style) => style === 'nowrap'));
-  assert.ok(presentation.inViewport);
+  const field = await page.getByLabel('File revision').boundingBox();
+  const menu = await openSelect(page, 'File revision');
+  const bounds = await menu.boundingBox();
+  assert.ok(bounds && field && bounds.width >= field.width);
+  assert.ok(
+    await menu.getByRole('option').evaluateAll((options) =>
+      options.every((option) => {
+        const { left, right } = option.getBoundingClientRect();
+        return left >= 0 && right <= innerWidth && getComputedStyle(option).whiteSpace === 'nowrap';
+      }),
+    ),
+  );
   await page.keyboard.press('Escape');
 }
 
@@ -133,10 +177,7 @@ async function historicalFile(route: Route) {
 async function verifyFileHeading(page: Page) {
   const selector = page.locator('.arc-page-heading').getByLabel('File revision');
   assert.equal(await selector.count(), 1);
-  assert.equal(
-    await selector.locator('option').first().textContent(),
-    'Latest revision (aaaaaaaa)',
-  );
+  assert.equal(await selector.textContent(), 'Latest revision (aaaaaaaa)');
   assert.equal(await page.getByRole('link', { name: 'Open current capture' }).count(), 0);
   assert.equal(
     await page.locator('.arc-page-context').getByRole('checkbox', { name: 'Edit' }).count(),

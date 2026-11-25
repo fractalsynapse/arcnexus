@@ -22,7 +22,6 @@ export function DisplayPanel({ panel, order, workspace }: PanelProps) {
       style: { ...palette, order },
       'aria-labelledby': title,
       'data-focused': expanded ? '' : undefined,
-      'data-full-width': panel.fullWidth ? '' : undefined,
     },
     h(DisplayHeading, header),
     theme && appearance.open && h(DisplayAppearance, { theme, ...appearance }),

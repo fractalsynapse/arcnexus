@@ -14,6 +14,7 @@ import {
 } from '../fixtures/plan-browser.js';
 import { serveApi } from '../../../api/src/serve.js';
 import { serveWeb } from '../../src/serve.js';
+import { chooseOption, openSelect } from '../fixtures/browser-select.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 
@@ -70,14 +71,14 @@ test('Plan history keeps the header and all displays scoped to the selected proj
     .filter({ hasText: 'Input / output tokens' })
     .waitFor();
   assert.equal(await selector.count(), 1);
-  assert.equal(await selector.inputValue(), '');
-  assert.match(await selector.locator('option[value="earlier"]').innerText(), /2025/);
-  await selector.selectOption('earlier');
+  assert.equal(await selector.textContent(), 'Latest run');
+  await chooseOption(page, 'Plan run', /11\/24\/2025/);
   await assertHistoricalPlan(page, requests);
   await selectProject(page, otherProject.id);
   await page.getByText('Other outcome', { exact: true }).waitFor();
-  assert.equal(await selector.inputValue(), '');
-  assert.equal(await selector.locator('option[value="earlier"]').count(), 0);
+  assert.equal(await selector.textContent(), 'Latest run');
+  const menu = await openSelect(page, 'Plan run');
+  assert.equal(await menu.getByRole('option', { name: /11\/24\/2025/ }).count(), 0);
   assert.ok(!requests.some((path) => path.includes('/other-project/plan-executions/earlier')));
 });
 
@@ -382,10 +383,10 @@ test('the Connection manager downloads only an available launcher build', async 
   await page
     .getByText('No capacity providers connected.', { exact: true })
     .waitFor({ state: 'visible' });
-  await page.getByLabel('Launcher build').selectOption('linux-x64');
+  await chooseOption(page, 'Launcher build', 'Linux · x64');
   const link = page.getByRole('link', { name: 'Download launcher' });
   assert.equal(await link.getAttribute('href'), '/api/launcher-builds/linux-x64');
-  await page.getByLabel('Launcher build').selectOption('linux-arm64');
+  await chooseOption(page, 'Launcher build', 'Linux · ARM64');
   assert.equal(await link.count(), 0);
   await verifyRegistrationCode(page);
 });

@@ -83,7 +83,7 @@ const context = await mountWeb(root, binding, {
       context.ui.registerDisplay('/plan/', {
         id: 'outcome',
         label: 'Planner outcome',
-        defaultColumn: 1,
+        defaultRegion: 1,
         content: 'Fixture outcome',
       }),
     );

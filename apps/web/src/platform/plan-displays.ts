@@ -19,10 +19,10 @@ export const planDisplaysPlugin = {
         id: 'outcome',
         label: 'Planner outcome',
         content: h(PlanDisplay, { kind: 'outcome' }),
-        defaultColumn: 1,
+        defaultRegion: 1,
       },
       { id: 'files', label: 'Files', content: h(GuideDisplay) },
-      { id: 'events', label: 'Event log', content: h(EventDisplay, { binding }), defaultColumn: 1 },
+      { id: 'events', label: 'Event log', content: h(EventDisplay, { binding }), defaultRegion: 1 },
     ];
     for (const display of displays)
       context.effect(() => context.ui.registerDisplay('/plan/', display));

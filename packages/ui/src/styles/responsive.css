@@ -21,7 +21,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: 'operation send' 'instruction instruction';
   }
-  .arc-app :is(.arc-button, .arc-nav a, input, select, textarea) {
+  .arc-app :is(.arc-button, .arc-nav a, input, select, textarea, .arc-select-trigger) {
     min-block-size: 44px;
   }
 }

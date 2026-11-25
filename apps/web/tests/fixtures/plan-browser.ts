@@ -2,14 +2,17 @@ import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
 import { chromium, type Page } from 'playwright';
 import { serveWeb } from '../../src/serve.js';
+import { chooseOption } from './browser-select.js';
 
 export const project = {
   id: 'bound-project',
+  name: 'plan',
   remote: 'https://github.com/example/plan.git',
   revision: 'a'.repeat(40),
 };
 export const otherProject = {
   id: 'other-project',
+  name: 'Other project',
   remote: 'https://github.com/example/other.git',
   revision: project.revision,
 };
@@ -55,6 +58,7 @@ export function planData(path: string, projects = [project]) {
 export async function selectProject(page: Page, id = project.id) {
   await page.getByRole('button', { name: 'Project manager' }).click();
   assert.equal(await page.getByLabel('Operator credential', { exact: true }).count(), 0);
-  await page.getByLabel('Active project').selectOption(id);
+  const target = id === otherProject.id ? otherProject : project;
+  await chooseOption(page, 'Active project', target.name);
   await page.getByRole('button', { name: 'Close' }).click();
 }

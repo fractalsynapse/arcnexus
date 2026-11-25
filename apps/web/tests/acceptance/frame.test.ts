@@ -7,6 +7,7 @@ import { chromium, type Browser, type Page } from 'playwright';
 import { bundleWeb } from '../../src/bundle.js';
 import { serveWeb } from '../../src/serve.js';
 import type {} from '../fixtures/browser.js';
+import { chooseOption, openSelect } from '../fixtures/browser-select.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 
@@ -181,7 +182,7 @@ async function makeSiteScheme(page: Page) {
   await picker.getByRole('button', { name: 'Indigo #14132a for background' }).click();
   assert.equal(await picker.isVisible(), false);
   await button(page, 'Save scheme').click();
-  await dialog.getByLabel('Site background and default scheme').selectOption({ label: 'Midnight' });
+  await chooseOption(page, 'Site background and default scheme', 'Midnight');
   await dialog.getByLabel('Scheme name').fill('Midnight revised');
   await button(page, 'Text color').click();
   const custom = page.getByRole('dialog', { name: 'Text color' }).getByLabel('Custom hex color');
@@ -189,7 +190,7 @@ async function makeSiteScheme(page: Page) {
   await custom.press('Enter');
   await button(page, 'Save scheme').click();
   assert.equal(
-    await dialog.locator('select').first().locator('option:checked').textContent(),
+    await dialog.getByLabel('Site background and default scheme').textContent(),
     'Midnight revised',
   );
 }
@@ -229,7 +230,7 @@ async function assertDocked(page: Page) {
 async function submitFixtureCommand(page: Page) {
   const instruction = page.getByRole('textbox', { name: 'Instruction optional' });
   await instruction.fill('Keep this draft if the command fails.');
-  await page.getByLabel('Operation', { exact: true }).selectOption('architect');
+  await chooseOption(page, 'Operation', 'Architect');
   await button(page, 'Send').click();
   const readout = page.getByRole('group', { name: 'Round state' });
   await readout.getByText('Active', { exact: true }).waitFor();
@@ -298,25 +299,19 @@ test('header tooltips clear the narrow navigation and menu options share the fie
 });
 
 async function assertStyledMenu(page: Page, label: string) {
-  const select = page.getByLabel(label, { exact: true });
-  await select.click();
-  await page.locator('select:open').waitFor();
-  assert.equal(
-    await select.evaluate((element) => {
-      const trigger = getComputedStyle(element);
-      const menu = getComputedStyle(element, '::picker(select)');
-      return (
-        menu.appearance === 'base-select' &&
-        menu.backgroundColor === trigger.backgroundColor &&
-        menu.borderColor === trigger.borderColor &&
-        trigger.alignItems === 'center' &&
-        trigger.paddingBlockStart === trigger.paddingBlockEnd &&
-        parseFloat(trigger.columnGap) >= parseFloat(trigger.paddingInlineStart)
-      );
-    }),
-    true,
-  );
+  const select = page.getByRole('combobox', { name: label, exact: true });
+  const triggerId = await select.getAttribute('id');
+  const trigger = await select.evaluate(fieldPalette);
+  const menu = await openSelect(page, label);
+  assert.deepEqual(await menu.evaluate(fieldPalette), trigger);
   await page.keyboard.press('Escape');
+  await menu.waitFor({ state: 'hidden' });
+  await page.waitForFunction((id) => document.activeElement?.id === id, triggerId);
+}
+
+function fieldPalette(element: Element) {
+  const style = getComputedStyle(element);
+  return [style.backgroundColor, style.borderColor, style.color];
 }
 
 test('page settings save layout and panel placement, while plugin contributions update mounted pages', async (t) => {
@@ -406,7 +401,7 @@ async function configureLayout(page: Page) {
   await button(page, 'Add Planner outcome').click();
   await button(page, 'Active panels').click();
   await assertStyledMenu(page, 'Planner outcome region');
-  await page.getByLabel('Planner outcome region').selectOption({ label: 'Right' });
+  await chooseOption(page, 'Planner outcome region', 'Right');
   await button(page, 'Reorder Planner outcome').press('ArrowUp');
   await button(page, 'Save').click();
   assert.equal(await settings.evaluate((element) => document.activeElement === element), true);

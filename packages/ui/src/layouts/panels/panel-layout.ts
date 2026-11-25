@@ -4,10 +4,9 @@ import type { DisplayRegistration } from '../../registry/workspace.js';
 import { orderedDisplays } from '../page/page-preferences.js';
 import type { PagePreferences } from '../page/page-preferences.js';
 import { ColumnDivider } from './column-divider.js';
-import { DisplayColumn } from './display-column.js';
-import { panelLayoutFor } from './presets/index.js';
+import { DisplayRegion } from './display-region.js';
+import { panelLayoutFor, panelRegionsFor } from './presets/index.js';
 import { displayFocus } from '../../displays/display-focus.js';
-import { DisplayPanel } from '../../displays/display-panel.js';
 
 interface LayoutProps {
   panels: readonly DisplayRegistration[];
@@ -27,8 +26,9 @@ export function PanelLayout({ panels, preferences, resize, workspace }: LayoutPr
   const focused = active.some(({ id }) => id === focus) ? focus : undefined;
   const widths =
     preview ??
-    panelLayoutFor(preferences.columns).regions.map((_, index) => preferences.widths[index] ?? 1);
-  const style = columnStyle(widths);
+    panelLayoutFor(preferences.columns).columnLabels.map(
+      (_, index) => preferences.widths[index] ?? 1,
+    );
   return h(
     displayFocus.Provider,
     { value: focusControls(focused, setFocus) },
@@ -39,8 +39,7 @@ export function PanelLayout({ panels, preferences, resize, workspace }: LayoutPr
       widths,
       setPreview,
       resize,
-      style,
-      preview,
+      resizing: !!preview,
       focused,
     }),
   );
@@ -54,7 +53,7 @@ function columnStyle(widths: number[]): CSSProperties {
   } as CSSProperties;
 }
 
-function LayoutColumns({
+function LayoutRegions({
   active,
   preferences,
   workspace,
@@ -69,38 +68,34 @@ function LayoutColumns({
   return h(
     Fragment,
     null,
-    widths.map((_, column) =>
+    panelRegionsFor(panelLayoutFor(preferences.columns)).map(({ id }) =>
       h(
         Fragment,
-        { key: column },
-        h(DisplayColumn, { active, preferences, column, workspace }),
-        column + 1 < widths.length && h(ColumnDivider, { column, widths, setPreview, resize }),
+        { key: id },
+        h(DisplayRegion, { active, preferences, region: id, workspace }),
+        typeof id === 'number' &&
+          id + 1 < widths.length &&
+          h(ColumnDivider, { column: id, widths, setPreview, resize }),
       ),
     ),
   );
 }
 
-type RegionProps = Parameters<typeof LayoutColumns>[0] & {
-  style: CSSProperties;
-  preview?: number[];
+type RegionProps = Parameters<typeof LayoutRegions>[0] & {
+  resizing: boolean;
   focused?: string;
 };
 
-function PanelRegions({ style, preview, focused, ...columns }: RegionProps) {
-  const { active, workspace } = columns;
+function PanelRegions({ resizing, focused, ...regions }: RegionProps) {
   return h(
     'div',
     {
       className: 'arc-panel-layout',
-      style,
-      'data-resizing': preview ? '' : undefined,
+      style: columnStyle(regions.widths),
+      'data-resizing': resizing ? '' : undefined,
       'data-focus': focused ? '' : undefined,
     },
-    active.map(
-      (panel, order) =>
-        panel.fullWidth && h(DisplayPanel, { key: panel.id, panel, order, workspace }),
-    ),
-    h(LayoutColumns, columns),
+    h(LayoutRegions, regions),
   );
 }
 

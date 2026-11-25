@@ -1,6 +1,7 @@
 import { useState, createElement as h } from 'react';
 import { orderedDisplays } from '../../layouts/page/page-preferences.js';
 import type { PagePreferences } from '../../layouts/page/page-preferences.js';
+import type { PanelRegion } from '../../layouts/panels/presets/index.js';
 import type { DisplayRegistration } from '../../registry/workspace.js';
 import { ActivePanels } from './active-panels.js';
 import { AvailablePanels } from './available-panels.js';
@@ -16,8 +17,8 @@ export function DisplaySettings({ panels, draft, update }: DisplaySettingsProps)
   const [available, setAvailable] = useState(false);
   const ordered = orderedDisplays(panels, draft.order);
   const visible = ordered.filter(({ id }) => !draft.hidden.includes(id));
-  const place = (id: string, region: string) =>
-    update({ ...draft, regions: { ...draft.regions, [id]: Number(region) } });
+  const place = (id: string, region: PanelRegion) =>
+    update({ ...draft, regions: { ...draft.regions, [id]: region } });
   const show = (id: string, showPanel: boolean) =>
     update({
       ...draft,

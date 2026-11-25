@@ -1,5 +1,6 @@
 import { createElement as h } from 'react';
 import type { Context } from 'cordis';
+import type { DisplayRegistration } from '../../../../packages/ui/src/index.js';
 import { FileBreadcrumbs } from './file-breadcrumbs.js';
 import { FileChanges } from './file-changes.js';
 import { FileContent } from './file-content.js';
@@ -35,7 +36,12 @@ export const planFilePlugin = {
 };
 
 const fileDisplays = [
-  { id: 'information', label: 'File information', content: h(FileInformation), fullWidth: true },
+  {
+    id: 'information',
+    label: 'File information',
+    content: h(FileInformation),
+    defaultRegion: 'top',
+  },
   { id: 'content', label: 'Content', content: h(FileContent) },
-  { id: 'changes', label: 'Changes', content: h(FileChanges), defaultColumn: 1 },
-];
+  { id: 'changes', label: 'Changes', content: h(FileChanges), defaultRegion: 1 },
+] satisfies DisplayRegistration[];

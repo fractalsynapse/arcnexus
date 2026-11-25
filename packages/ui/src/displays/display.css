@@ -30,7 +30,7 @@
   grid-template-columns: minmax(0, 1fr);
 }
 .arc-panel-layout[data-focus] .arc-column-divider,
-.arc-panel-layout[data-focus] .arc-layout-column:not(:has([data-focused])),
+.arc-panel-layout[data-focus] .arc-layout-region:not(:has([data-focused])),
 .arc-panel-layout[data-focus] .arc-display:not([data-focused]) {
   display: none;
 }
@@ -41,13 +41,5 @@
   }
   .arc-page-heading .arc-page-context {
     margin-inline-start: 0;
-  }
-}
-.arc-display[data-full-width] {
-  grid-column: 1 / -1;
-}
-@media (min-width: 900px) {
-  .arc-display[data-full-width]:not([data-focused]) {
-    margin-block-end: var(--gap);
   }
 }

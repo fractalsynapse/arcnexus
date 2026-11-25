@@ -4,6 +4,8 @@
 
 ### Added
 
+- Offer optional full-width Top and Bottom display regions in every desktop workspace layout (#746).
+
 - Browse historical executions from the Plan heading, with every panel scoped to the selected project and run (#746).
 
 - Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals. Inspect retained and live tool payloads on demand (#746).
@@ -31,6 +33,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Let Page Settings control File Information placement and give selector options shared theme colors in Firefox and Chromium (#746).
 
 - Keep workspace headings evenly spaced below breadcrumbs on desktop and mobile (#746).
 

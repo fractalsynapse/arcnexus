@@ -1,6 +1,14 @@
 :is(.arc-app, #arc-preview) select {
   padding-inline-end: 14px;
 }
+:is(.arc-app, #arc-preview) select option {
+  background: var(--paper);
+  color: var(--ink);
+}
+:is(.arc-app, #arc-preview) select option:is(:hover, :focus, :checked) {
+  background: var(--tint);
+  color: var(--link);
+}
 @supports (appearance: base-select) {
   :is(.arc-app, #arc-preview) select,
   :is(.arc-app, #arc-preview) select::picker(select) {
@@ -40,13 +48,57 @@
   :is(.arc-app, #arc-preview) select option {
     padding: 7px 9px;
     border-radius: 5px;
-    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  :is(.arc-app, #arc-preview) select option:is(:hover, :focus, :checked) {
-    background: var(--tint);
-    color: var(--link);
-  }
+}
+.arc-app .arc-select-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 12px;
+  padding-inline-end: 14px;
+  text-align: start;
+}
+.arc-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.arc-select-trigger svg {
+  flex: none;
+  color: var(--muted);
+}
+.arc-select-trigger[data-state='open'] svg {
+  rotate: 180deg;
+}
+.arc-select-menu {
+  z-index: 6;
+  inline-size: max-content;
+  min-inline-size: var(--radix-select-trigger-width);
+  max-inline-size: calc(100dvw - 2 * var(--pad));
+  max-block-size: var(--radix-select-content-available-height);
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--picker-shadow, 0 5px 16px #0b182a32);
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+}
+.arc-select-option {
+  cursor: pointer;
+  padding: 7px 9px;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  outline: none;
+}
+.arc-select-option:is([data-highlighted], [data-state='checked']) {
+  background: var(--tint);
+  color: var(--link);
 }

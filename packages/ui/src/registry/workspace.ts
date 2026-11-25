@@ -1,12 +1,11 @@
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
-import type { ColumnCount } from '../layouts/panels/presets/index.js';
+import type { ColumnCount, PanelRegion } from '../layouts/panels/presets/index.js';
 
 export interface DisplayRegistration {
   id: string;
   label: string;
   content: ReactNode;
-  defaultColumn?: number;
-  fullWidth?: boolean;
+  defaultRegion?: PanelRegion;
 }
 
 export interface Workspace {
