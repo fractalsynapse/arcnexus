@@ -57,6 +57,32 @@ test('web server defaults to loopback and can listen on the container interface'
   assert.equal((await fetch(container.url + '/plan/')).status, 200);
 });
 
+test('the shell uses the brain logo as its favicon and increases desktop reading sizes', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+  t.after(() => page.close());
+  await page.goto(application.url);
+  const brand = page.getByRole('link', { name: 'ArcNexus home' }).locator('img').first();
+  await brand.waitFor();
+  const favicon = page.locator('head link[rel="icon"]');
+  assert.equal(await favicon.count(), 1);
+  const source = await favicon.getAttribute('href');
+  assert.ok(source);
+  assert.equal(source, await brand.getAttribute('src'));
+  const icon = await page.request.get(new URL(source, application.url).href);
+  assert.equal(icon.status(), 200);
+  assert.equal(icon.headers()['content-type'], 'image/webp');
+  const sizes = () =>
+    page
+      .locator('.arc-app')
+      .evaluate((root) => [
+        getComputedStyle(root).fontSize,
+        getComputedStyle(root.querySelector('label')!).fontSize,
+      ]);
+  assert.deepEqual(await sizes(), ['16px', '14px']);
+  await page.setViewportSize({ width: 390, height: 850 });
+  assert.deepEqual(await sizes(), ['13px', '11px']);
+});
+
 test('built shell exposes all workspaces and reports unavailable live commands', async (t) => {
   const page = await browser.newPage();
   t.after(() => page.close());

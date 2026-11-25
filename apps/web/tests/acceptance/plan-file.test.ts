@@ -119,7 +119,7 @@ async function verifyFileHeading(page: Page) {
   );
   assert.equal(
     await page.locator('.arc-markdown h1').evaluate((node) => getComputedStyle(node).fontSize),
-    '19px',
+    '24px',
   );
 }
 

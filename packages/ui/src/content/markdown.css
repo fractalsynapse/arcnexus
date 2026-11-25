@@ -5,10 +5,10 @@
 }
 :is(.arc-app, #arc-preview) .arc-markdown :is(h1, h2, h3, h4, h5, h6) {
   margin: 1em 0 0.4em;
-  font-size: 16px;
+  font-size: var(--font-markdown-heading);
 }
 :is(.arc-app, #arc-preview) .arc-markdown h1 {
-  font-size: 19px;
+  font-size: var(--font-markdown-title);
 }
 :is(.arc-app, #arc-preview) .arc-markdown :is(p, ul, ol, blockquote, pre, table) {
   margin: 0.65em 0;
@@ -52,7 +52,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font:
-    12px/1.55 ui-monospace,
+    var(--font-small) / 1.55 ui-monospace,
     monospace;
 }
 :is(.arc-app, #arc-preview) .arc-markdown :not(pre) > code {

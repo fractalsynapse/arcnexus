@@ -1,5 +1,6 @@
 import '@mdxeditor/editor/style.css';
 import './styles/base.css';
+import './styles/typography.css';
 import './controls/controls.css';
 import './controls/select.css';
 import './controls/tooltip.css';

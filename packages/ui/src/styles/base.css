@@ -21,11 +21,6 @@ body {
   flex-direction: column;
   background: var(--ground);
   color: var(--ink);
-  font:
-    400 13px/1.45 Inter,
-    'Segoe UI',
-    system-ui,
-    sans-serif;
 }
 .arc-app *,
 .arc-app *::before,
@@ -39,16 +34,16 @@ body {
   margin: 0;
 }
 .arc-app h1 {
-  font-size: 25px;
+  font-size: var(--font-page-title);
   line-height: 1.15;
   letter-spacing: -0.035em;
 }
 .arc-app h2 {
-  font-size: 17px;
+  font-size: var(--font-panel-title);
   letter-spacing: -0.025em;
 }
 .arc-app h3 {
-  font-size: 14px;
+  font-size: var(--font-section-title);
 }
 .arc-app :is(button, input, select, textarea) {
   color: inherit;
@@ -74,7 +69,7 @@ body {
   min-inline-size: 0;
   gap: 4px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-label);
   font-weight: 640;
 }
 .arc-app :is(input, select, textarea) {

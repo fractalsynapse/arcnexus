@@ -30,6 +30,7 @@ const script = bundle('main.ts', Boolean(values.viewer));
 
 const shared = (path: string) => readFileSync(resolve(source, '../../../packages/ui/src', path), 'utf8');
 const layout = readFileSync(resolve(source, 'layout.html'), 'utf8')
+  .replace('/* shared-typography-styles */', shared('styles/typography.css'))
   .replace('/* shared-sortable-styles */', shared('controls/sortable.css'))
   .replace('/* shared-select-styles */', shared('controls/select.css'))
   .replace('/* shared-tooltip-styles */', shared('controls/tooltip.css'))
