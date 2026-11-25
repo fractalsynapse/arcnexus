@@ -80,6 +80,7 @@ function readyResponse(args: string[]) {
     case repository + '/commits/' + head + '/check-suites':
       return JSON.stringify({ total_count: 1 });
     case repository + '/commits/' + head + '/check-runs?filter=latest':
+    case repository + '/commits/' + head + '/check-runs?filter=all':
       return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
     case repository + '/commits/' + head + '/status':
       return JSON.stringify({ sha: head, status: 'pending', total_count: 0, statuses: [] });
@@ -191,29 +192,71 @@ function overlappingSuiteRun(id: string) {
   return { '1': old, '2': retry, '3': independent }[id];
 }
 
+const suites = Array.from({ length: 1001 }, (_, index) => ({ id: index + 1, head_sha: head }));
+
+function suiteResponse(args: string[], resolve: (id: string) => unknown) {
+  if (args[1]?.endsWith('/check-suites')) {
+    const total_count = suites.length;
+    return args.includes('--paginate')
+      ? JSON.stringify({ total_count, check_suites: suites })
+      : JSON.stringify({ total_count });
+  }
+  const match = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '');
+  if (!match?.[1]) return readyResponse(args);
+  const check = resolve(match[1]);
+  return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
+}
+
+function latestFailure(error: unknown) {
+  assert.ok(error instanceof GitHubCheckFailure);
+  assert.equal(error.check.runId, 1);
+  return true;
+}
+
 test('suite pagination finds omitted checks and orders overlapping attempts by start time', async (t) => {
-  const suites = Array.from({ length: 1001 }, (_, index) => ({ id: index + 1, head_sha: head }));
-  const scenario = new ProviderResults(t, (args) => {
-    if (args[1]?.endsWith('/check-suites')) {
-      const total_count = suites.length;
-      return args.includes('--paginate')
-        ? JSON.stringify({ total_count, check_suites: suites })
-        : JSON.stringify({ total_count });
-    }
-    const id = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '')?.[1];
-    if (!id) return readyResponse(args);
-    const check = overlappingSuiteRun(id);
-    return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
-  });
-  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
-    assert.ok(error instanceof GitHubCheckFailure);
-    assert.equal(error.check.runId, 1);
-    return true;
-  });
+  const scenario = new ProviderResults(t, (args) => suiteResponse(args, overlappingSuiteRun));
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), latestFailure);
   assert.equal(
     scenario.calls.filter((args) => /\/check-suites\/\d+\/check-runs/.test(args[1] ?? '')).length,
     suites.length,
   );
+});
+
+test('ordinary refs apply the same attempt ordering as the suite path', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    const old = overlappingSuiteRun('1');
+    const runs = args[1].endsWith('filter=all') ? [old, overlappingSuiteRun('2')] : [old];
+    return JSON.stringify({ total_count: runs.length, check_runs: runs });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), latestFailure);
+});
+
+test('a queued rerun stays pending in the presence of a prior failure', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') scenario.cancellation.abort();
+    return suiteResponse(args, (id) => {
+      if (id === '1') return overlappingSuiteRun('2');
+      if (id === '2')
+        return { ...successfulRun, id: 2, started_at: null, status: 'queued', conclusion: null };
+      return undefined;
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
+});
+
+test('an unavailable suite retains checks already read from other suites', async (t) => {
+  const scenario = new ProviderResults(t, (args) =>
+    suiteResponse(args, (id) => {
+      if (id === '1') return overlappingSuiteRun('1');
+      throw new Error('The next suite is unavailable');
+    }),
+  );
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.ok(error.observation.checks?.some(({ runId }) => runId === 99));
+    return true;
+  });
 });
 
 test('missing, rejected or raced review facts cannot authorize a pull request', async (t) => {

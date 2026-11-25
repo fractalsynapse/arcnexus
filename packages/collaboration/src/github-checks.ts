@@ -79,7 +79,9 @@ async function legacyStatuses(read: Read, ref: string, head: string) {
   }));
 }
 
-/** Use GitHub's latest view for ordinary refs and enumerate suites when its coverage is limited. */
+type CheckRun = z.output<typeof run>;
+
+/** Use the same attempt selection for refs with and without complete provider coverage. */
 async function checkRuns(
   read: Read,
   repo: string,
@@ -87,18 +89,49 @@ async function checkRuns(
   head: string,
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {
-  const current = (await runsFrom(read, `${ref}/check-runs?filter=latest`, head)).map(normalizeRun);
-  observe(current);
+  const current = await runsFrom(read, `${ref}/check-runs?filter=all`, head);
+  observe(current.map(normalizeRun));
   const count = total.parse(JSON.parse(await read(['api', `${ref}/check-suites`]))).total_count;
-  if (count <= gitHubRefCheckSuiteCoverage) return current;
-
-  const checks = (await suiteRuns(read, repo, ref, head, count)).map(normalizeRun);
+  const runs =
+    count > gitHubRefCheckSuiteCoverage
+      ? await suiteRuns(read, repo, ref, head, count, current, observe)
+      : current;
+  const checks = latestRuns(runs).map(normalizeRun);
   observe(checks);
   return checks;
 }
 
-/** Enumerate every attempt when GitHub's ref view omitted part of the suite inventory. */
-async function suiteRuns(read: Read, repo: string, ref: string, head: string, count: number) {
+/** Enumerate the full suite inventory while preserving already read facts on a provider error. */
+async function suiteRuns(
+  read: Read,
+  repo: string,
+  ref: string,
+  head: string,
+  count: number,
+  current: CheckRun[],
+  observe: (checks: readonly ProviderCheck[]) => void,
+) {
+  const suites = await suiteInventory(read, ref, head, count);
+  const runs = new Map<number, CheckRun>();
+  try {
+    for (const suite of suites) {
+      const observed = await runsFrom(
+        read,
+        `${repo}/check-suites/${suite.id}/check-runs?filter=all`,
+        head,
+      );
+      for (const run of observed) runs.set(run.id, run);
+    }
+  } catch (error) {
+    for (const run of current) if (!runs.has(run.id)) runs.set(run.id, run);
+    observe([...runs.values()].map(normalizeRun));
+    throw error;
+  }
+  return [...runs.values()];
+}
+
+/** Require every collected suite to belong to the same head and coverage snapshot. */
+async function suiteInventory(read: Read, ref: string, head: string, count: number) {
   const pages = await decodePages(read, `${ref}/check-suites`, suitePage);
   const suites = complete(
     pages,
@@ -106,31 +139,31 @@ async function suiteRuns(read: Read, repo: string, ref: string, head: string, co
     (item) => item.id,
   );
   if (suites.length < count) throw new Error('GitHub returned an incomplete check suite inventory');
-  const contexts = new Map<string, z.output<typeof run>[]>();
-  for (const suite of suites) {
-    if (suite.head_sha !== head)
-      throw new Error('GitHub returned a check suite for a different head');
-    const runs = await runsFrom(
-      read,
-      `${repo}/check-suites/${suite.id}/check-runs?filter=all`,
-      head,
-    );
-    for (const item of runs) {
-      const key = runContext(item);
-      const group = contexts.get(key) ?? [];
-      group.push(item);
-      contexts.set(key, group);
-    }
+  if (suites.some((item) => item.head_sha !== head))
+    throw new Error('GitHub returned a check suite for a different head');
+  return suites;
+}
+
+/** Select the latest attempts independently for each provider and check name. */
+function latestRuns(runs: CheckRun[]) {
+  const contexts = new Map<string, CheckRun[]>();
+  for (const run of runs) {
+    const key = runContext(run);
+    const group = contexts.get(key) ?? [];
+    group.push(run);
+    contexts.set(key, group);
   }
   return [...contexts.values()].flatMap(latestInContext);
 }
 
-function runContext(item: z.output<typeof run>) {
+function runContext(item: CheckRun) {
   return item.app ? JSON.stringify([item.app.id, item.name]) : JSON.stringify([null, item.id]);
 }
 
-/** Compare starts across suites and retain attempts whose order GitHub has not exposed. */
-function latestInContext(runs: z.output<typeof run>[]) {
+/** Treat unstarted attempts as pending while the provider is still assigning their order. */
+function latestInContext(runs: CheckRun[]) {
+  const queued = runs.filter((item) => !item.started_at && item.status !== 'completed');
+  if (queued.length) return queued;
   const latest = runs.reduce((time, item) => {
     return item.started_at ? Math.max(time, Date.parse(item.started_at)) : time;
   }, -Infinity);
