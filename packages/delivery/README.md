@@ -10,7 +10,11 @@ they do not establish that a real delivery has occurred.
 assesses issue #744's `retained-publication-evidence` milestone at capture
 `945d4546ace2a55670020d8dd37de3b0d1500eed`. It maps current production services
 and public assertions to the accepted criteria, consumes completed Execution
-recovery evidence and identifies the observations still needed for Delivery.
+recovery evidence and records the [completed characterization](docs/check-recovery.md#executed-characterization-issue-744-run-213).
+The retained Host answer reports 12 native passes at the secured checkpoint;
+ordinary owner evidence separately records 40 passes and 12 native skips.
+The reference retains runtime identities, criterion mapping and external archive
+access limitations. No demonstrated behavioral defect required a code change.
 Preserve the task and its history, require acceptance for the recovered identity,
 inspect provider facts before effects, and reconcile the existing PR.
 
