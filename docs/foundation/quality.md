@@ -69,8 +69,8 @@ for confinement, independent applicability and conservative evidence reuse.
 This reference guides stewards choosing checks and maintainers correcting shared
 suite discovery. The accepted correction preserves Foundation FND-5 and FND-6:
 owner selection runs exactly the catalog owner's suites, and invalid registration
-fails before execution. The diagnostic distinction and expanded parity scenarios
-below are intended behavior awaiting executable evidence.
+fails before execution. The public inventory and selection scenarios establish
+the diagnostic distinctions and source/built parity described below.
 
 Source applicability and built registration use the same ownership and metadata
 rules. `hasOwnerTestSuites(directory, owner, components)` inspects source suites
@@ -99,21 +99,40 @@ requesting a different owner cannot conceal an invalid suite. Read metadata
 without importing suite code; observable module effects occur only during actual
 execution.
 
-Extend the existing public
+The missing-declaration correction preserves the requirement that every discovered
+suite export literal `suite` metadata with owner, level and tags. Public source
+applicability and built inventory reject a discovered suite without that export,
+naming the affected
+file and the missing required suite metadata as the registration cause.
+Path-derived ownership and level do not replace the declaration, and missing
+metadata must not become an empty tag list or an omitted suite. The shared
+literal metadata reader rejects a missing declaration before owner filtering
+and without importing the module.
+
+The existing public
 [inventory scenarios](../../packages/foundation/tests/unit/test-inventory.test.ts)
 and [selection scenarios](../../packages/foundation/tests/unit/test-selection.test.ts)
-with explicit catalog fixtures, an owner without suites and ownership independent
-of directory names. Compare source applicability with corresponding built
-registrations, and compare every represented owner's selection with the complete
-built subset, including unchanged emitted paths. Negative cases must identify the
-missing-owner or collision cause and path, all collision IDs, invalid placement
-and metadata. Include an invalid suite outside the selected owner and an
-observable import effect to distinguish validation from execution.
+use explicit catalog fixtures, an owner without suites and ownership independent
+of directory names. They compare source applicability with corresponding built
+registrations and every represented owner's selection with the complete built
+subset, including unchanged emitted paths. Negative cases identify the missing-owner
+or collision cause and path, all collision IDs, invalid placement and metadata.
+Missing-declaration cases cover both the selected owner and a foreign owner.
+Both public source applicability and built inventory refuse the unregistered suite
+with its file and missing-registration cause while its observable module effect
+remains dormant.
 
-Retain characterization evidence for behavior already correct and an intended
-failing public regression for the diagnostic correction before implementation.
-The corrected candidate needs passing inventory and selection scenarios and
-applicable owner formatting, lint, repository types and build observations.
+Run 205 retains the original behavioral red in `205-196-owner-tests.log`: the
+four missing-declaration assertions failed while the existing characterization
+passed. After the shared reader correction, `205-291-owner-tests.log` records
+`npm test -- foundation` exiting zero with all 64 cases passing across eight
+Foundation suites, including inventory and selection. Both logs are retained in
+the run's external evidence directory, indexed by its timeline. The correction
+reuses discovery, registration and the literal parser; it removes the reader's
+undefined fallthrough without adding another classifier or changing emitted paths.
+Retain applicable owner formatting, lint, repository types and build observations
+with each actual command, scope, directory, exit and evidence reference against
+the candidate observed.
 Assembled verification and independent review remain separate host obligations.
 The measurable benefit is actionable ownership failures and exact suite coverage
 for every represented owner through the existing shared path. Human callers,

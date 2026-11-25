@@ -94,7 +94,7 @@ export class SuiteMetadataReader {
   }
 
   /** Inspect exported declarations without evaluating their expressions or executing suite code. */
-  read(text: string): SuiteMetadata | undefined {
+  read(text: string): SuiteMetadata {
     const ts = this.parser;
     const source = ts.createSourceFile(this.path, text, ts.ScriptTarget.Latest, true);
     for (const statement of source.statements) {
@@ -106,6 +106,7 @@ export class SuiteMetadataReader {
         return this.metadata(declaration.initializer);
       }
     }
+    assert.fail(`Missing required suite metadata declaration: ${this.path}`);
   }
 
   /** Require literal scalar and tag fields rather than silently guessing computed metadata. */
