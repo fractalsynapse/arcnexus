@@ -9,6 +9,7 @@ import {
   suiteProgress,
   suiteSnapshot,
   type CIObserver,
+  type ProviderCISnapshot,
 } from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
@@ -66,6 +67,11 @@ const gitHubRefCheckSuiteCoverage = 1000;
 
 export type ProviderCheckSuite = z.output<typeof suite>;
 
+interface CIProgress {
+  suites: Set<number>;
+  intermediate: ProviderCISnapshot[];
+}
+
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
 export async function readGitHubChecks(
   read: Read,
@@ -79,32 +85,42 @@ export async function readGitHubChecks(
   let inventory = await suiteInventory(read, scope.ref, head);
   observe.suites(inventory, 'initial');
   let previous = prior;
-  const progressedSuites = new Set<number>();
+  const progress: CIProgress = { suites: new Set(), intermediate: [] };
   for (;;) {
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
-    if (!stable) observe.earlier(snapshot.observedChecks, inventory);
+    if (!stable) retainIntermediate(progress, observe, snapshot.observedChecks, inventory);
     observe.suites(current, 'subsequent');
-    if (stable) return stableCheckRead(snapshot, current, progressedSuites);
+    if (stable) return stableCheckRead(snapshot, current, progress);
     const progressed = suiteProgress(inventory, current, snapshot.observedChecks);
     if (!progressed) throw new Error('GitHub check suite inventory changed during CI observation');
-    for (const id of progressed) progressedSuites.add(id);
+    for (const id of progressed) progress.suites.add(id);
     inventory = current;
     previous = snapshot.observedChecks;
   }
 }
 
+function retainIntermediate(
+  progress: CIProgress,
+  observe: CIObserver,
+  checks: readonly ProviderCheck[],
+  suites: readonly ProviderCheckSuite[],
+) {
+  progress.intermediate.push({ checks, suites });
+  observe.earlier(checks, suites);
+}
+
 function stableCheckRead(
   snapshot: Awaited<ReturnType<typeof readChecks>>,
   suites: ProviderCheckSuite[],
-  progressedSuites: ReadonlySet<number>,
+  progress: CIProgress,
 ) {
   return {
     ...snapshot,
     suites,
     pendingSuites: suites.filter(suitePending).map(({ id }) => id),
-    progressedSuites,
+    progress,
   };
 }
 

@@ -299,7 +299,10 @@ for (const activeAt of [1, 2]) {
   });
 }
 
-function confirmedLegacyStatus(changed: boolean) {
+function confirmedLegacyStatus(coverage: string, inventory: number) {
+  const changed =
+    (coverage === 'persistent status change' && inventory >= 4) ||
+    (coverage === 'transient status change' && inventory === 4);
   const status = {
     context: 'CI',
     state: 'success',
@@ -308,21 +311,25 @@ function confirmedLegacyStatus(changed: boolean) {
   return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
 }
 
-for (const coverage of ['grows', 'matches', 'unrelated status changes']) {
+for (const coverage of [
+  'grows',
+  'matches',
+  'persistent status change',
+  'transient status change',
+]) {
   test(`a suite restarts during confirmation and coverage ${coverage}`, async (t) => {
     let inventories = 0;
     let reviews = 0;
     const scenario = new ProviderResults(t, (args) => {
       if (args[1] === 'graphql') reviews++;
-      if (args[1]?.endsWith('/status'))
-        return confirmedLegacyStatus(coverage === 'unrelated status changes' && inventories >= 4);
+      if (args[1]?.endsWith('/status')) return confirmedLegacyStatus(coverage, inventories);
       if (args[1]?.endsWith('/check-suites') && ++inventories === 4)
         return completedSuiteGrowth(args, true)
           .replace('"status":"completed"', '"status":"in_progress"')
           .replace('"conclusion":"success"', '"conclusion":null');
       return completedSuiteGrowth(args, inventories < 5 || coverage === 'matches');
     });
-    if (coverage === 'unrelated status changes') {
+    if (coverage.endsWith('status change')) {
       await assert.rejects(
         scenario.provider.verify(pr, head, 'staging'),
         /CI changed during review/,

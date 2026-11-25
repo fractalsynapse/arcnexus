@@ -291,8 +291,15 @@ ${marker}`,
       suites: initial.suites,
     });
     const ready = successfulChecks(confirmed);
-    const progressed = confirmed.progressedSuites;
-    if (ready && checkSnapshot(initial, progressed) !== checkSnapshot(confirmed, progressed))
+    const { suites: progressed, intermediate } = confirmed.progress;
+    const prior = checkSnapshot(
+      { checks: initial.observedChecks, suites: initial.suites },
+      progressed,
+    );
+    const changed =
+      checkSnapshot(initial, progressed) !== checkSnapshot(confirmed, progressed) ||
+      intermediate.some((read) => checkSnapshot(read, progressed) !== prior);
+    if (ready && changed)
       throw new GitHubPullReadFailure(
         'CI confirmation',
         evidence,
