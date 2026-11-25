@@ -7,8 +7,18 @@
 .arc-page-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: inherit;
   min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.arc-page-title > .arc-icon-wrap {
+  flex: none;
+  align-self: center;
+}
+.arc-page-title-action {
+  min-inline-size: 0;
+  /* Match the visual gap after the inset settings icon. */
+  margin-inline-start: 9px;
 }
 .arc-page-context {
   min-inline-size: 0;

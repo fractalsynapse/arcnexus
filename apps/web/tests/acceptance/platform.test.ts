@@ -141,15 +141,30 @@ async function assertHistoricalPlan(page: Page, requests: string[]) {
   await page.getByText('earlier message', { exact: true }).waitFor();
   assert.equal(await page.getByText('latest message', { exact: true }).count(), 0);
   assert.ok(requests.some((path) => path.endsWith('/goals?revision=' + earlier.revision)));
-  await page.setViewportSize({ width: 360, height: 800 });
+  await assertPlanHeading(page, 1180);
+  await assertPlanHeading(page, 320);
+  const label = page.locator('.arc-page-context strong', { hasText: 'plan' });
+  assert.equal(await label.evaluate((node) => getComputedStyle(node).fontWeight), '700');
+}
+
+async function assertPlanHeading(page: Page, width: number) {
+  await page.setViewportSize({ width, height: 800 });
+  const gear = await page
+    .getByRole('button', { name: 'Plan page settings' })
+    .locator('svg')
+    .boundingBox();
   const title = await page.getByRole('heading', { name: 'Plan', exact: true }).boundingBox();
   const selector = await page.getByRole('combobox', { name: 'Plan run' }).boundingBox();
   const context = await page.locator('.arc-page-context').boundingBox();
-  assert.ok(title && selector && context && title.x < selector.x);
+  assert.ok(gear && title && selector && context);
+  const gearGap = title.x - (gear.x + gear.width);
+  const selectorGap = selector.x - (title.x + title.width);
+  assert.ok(Math.abs(gearGap - selectorGap) < 1, 'Title spacing should match on both sides');
   assert.ok(title.y < selector.y + selector.height && selector.y < title.y + title.height);
-  assert.ok(context.y >= selector.y + selector.height);
-  const label = page.locator('.arc-page-context strong', { hasText: 'plan' });
-  assert.equal(await label.evaluate((node) => getComputedStyle(node).fontWeight), '700');
+  if (width === 1180)
+    assert.ok(selector.width >= 346, 'Desktop run selector should have room for dates');
+  else assert.ok(context.y >= selector.y + selector.height);
+  assert.ok(selector.x + selector.width <= width);
 }
 
 async function verifySinglePanelToggle(page: Page) {

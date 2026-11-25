@@ -259,7 +259,10 @@ async function assertStyledMenu(page: Page, label: string) {
       return (
         menu.appearance === 'base-select' &&
         menu.backgroundColor === trigger.backgroundColor &&
-        menu.borderColor === trigger.borderColor
+        menu.borderColor === trigger.borderColor &&
+        trigger.alignItems === 'center' &&
+        trigger.paddingBlockStart === trigger.paddingBlockEnd &&
+        parseFloat(trigger.columnGap) >= parseFloat(trigger.paddingInlineStart)
       );
     }),
     true,

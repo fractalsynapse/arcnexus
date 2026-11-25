@@ -14,28 +14,27 @@ interface PageHeadingProps {
   context?: ReactNode;
 }
 
-export function PageHeading({
-  label,
-  title,
-  heading,
-  gear,
-  settings,
-  toggle,
-  titleAction,
-  context,
-}: PageHeadingProps): ReactElement {
+export function PageHeading(props: PageHeadingProps): ReactElement {
+  const { label, title, heading, gear, settings, toggle, titleAction, context } = props;
   const titleElement = h('h1', { ref: heading, tabIndex: -1 }, label);
+  const settingsButton = h(IconButton, {
+    icon: 'settings',
+    label: title,
+    ref: gear,
+    'aria-expanded': settings,
+    onClick: toggle,
+  });
   return h(SurfaceHeading, {
     className: 'arc-page-heading',
-    settings: h(IconButton, {
-      icon: 'settings',
-      label: title,
-      ref: gear,
-      'aria-expanded': settings,
-      onClick: toggle,
-    }),
+    settings: !titleAction && settingsButton,
     heading: titleAction
-      ? h('div', { className: 'arc-page-title' }, titleElement, titleAction)
+      ? h(
+          'div',
+          { className: 'arc-page-title' },
+          settingsButton,
+          titleElement,
+          h('div', { className: 'arc-page-title-action' }, titleAction),
+        )
       : titleElement,
     actions: context && h('div', { className: 'arc-page-context' }, context),
   });

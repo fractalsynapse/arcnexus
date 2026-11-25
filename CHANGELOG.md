@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- Center text and space the arrows in shared selectors, and give the Plan run selector more room beside the title (#746).
+
 - Keep Plan File links pinned to the project and captured revision (#746).
 
 - Use the mockup’s drag behavior in page settings, including a lifted row, visible insertion gap, and drop cancellation (#746).
