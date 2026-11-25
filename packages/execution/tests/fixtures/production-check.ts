@@ -15,6 +15,7 @@ const catalog = '.arc/architecture';
 /** Isolate native check prerequisites with committed authority and a real admitted SQLite writer. */
 export class ProductionCheckFixture extends RoundConsumptionFixture {
   private task?: HostTask;
+
   /** Commit explicit commands and ownership before the production architecture capture. */
   constructor(t: TestContext) {
     super(t, 'https://github.com/example/production-check.git');
@@ -57,7 +58,7 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
   }
 
   /** Admit through Execution and materialize the captured tree before invoking HostTask.check. */
-  async open(t: TestContext) {
+  async open() {
     const execution = new Execution(
       this.architecture,
       new Coordination(this.storage),
@@ -69,12 +70,19 @@ export class ProductionCheckFixture extends RoundConsumptionFixture {
       signal,
     );
     assert(task instanceof HostTask, JSON.stringify(task));
+    this.task = task;
     task.planningWorkspace(signal);
-    t.after(() => {
-      task.cleanup();
-      task.close();
-    });
     return task;
+  }
+
+  /** Release the worktree and SQLite writer while their repository still exists. */
+  protected override cleanup() {
+    try {
+      this.task?.cleanup();
+    } finally {
+      this.task?.close();
+    }
+    super.cleanup();
   }
 
   /** Retain complete observable runtime policy and namespace probes before the check attempts. */
