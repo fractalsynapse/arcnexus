@@ -187,6 +187,37 @@ test('a later unavailable read retains a stable pending observation', async (t) 
   });
 });
 
+test('a pending confirmation preserves the initial green observation before a later read failure', async (t) => {
+  const completing = completingSuite('success');
+  let pulls = 0;
+  let statuses = 0;
+  let reviewed = false;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99') && ++pulls === 2) throw new Error('Pull unavailable');
+    if (args[1] === 'graphql') reviewed = true;
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    const state = reviewed ? 'pending' : ++statuses === 1 ? 'pending' : 'success';
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'CI', state, target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+    assert(failure instanceof GitHubPullReadFailure);
+    const history = failure.observation.earlierChecks ?? [];
+    assert(
+      history.some(
+        ({ phase, checks }) =>
+          phase === 'CI checks' &&
+          checks.some(({ context, state }) => context === 'CI' && state === 'SUCCESS'),
+      ),
+    );
+    assert(history.some(({ phase }) => phase === 'CI confirmation'));
+    return true;
+  });
+});
+
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
   const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
   const scenario = new ProviderResults(t, (args) =>

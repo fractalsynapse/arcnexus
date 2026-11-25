@@ -79,6 +79,18 @@ export function recordEarlierChecks(
     earlier.push({ phase, ...snapshot });
 }
 
+/** Preserve both sides of a completed CI read when verification must poll again. */
+export function recordPolledChecks(evidence: GitHubPullObservation) {
+  const { observedChecks, suites, confirmedObservedChecks, confirmedSuites } = evidence;
+  if (observedChecks && suites)
+    recordEarlierChecks(evidence, 'CI checks', { checks: observedChecks, suites });
+  if (confirmedObservedChecks && confirmedSuites)
+    recordEarlierChecks(evidence, 'CI confirmation', {
+      checks: confirmedObservedChecks,
+      suites: confirmedSuites,
+    });
+}
+
 /** Retain each observed suite and its expected run coverage across separate reads. */
 export function requireRetainedSuites(
   observed: readonly ProviderCheckSuite[],

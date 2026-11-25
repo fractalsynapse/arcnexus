@@ -7,6 +7,7 @@ import { readGitHubChecks, suiteFailure, type ProviderCheckSuite } from './githu
 import {
   checkSnapshot,
   recordEarlierChecks,
+  recordPolledChecks,
   requireRetainedSuites,
   type ProviderCISnapshot,
 } from './github-ci-coverage.js';
@@ -220,8 +221,7 @@ ${marker}`,
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
       if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return observe?.(evidence);
-      const phase = evidence.confirmedChecks ? 'CI confirmation' : 'CI checks';
-      recordEarlierChecks(evidence, phase, { checks: facts.observedChecks, suites });
+      recordPolledChecks(evidence);
       earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
