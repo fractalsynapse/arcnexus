@@ -3,6 +3,7 @@ import test from 'node:test';
 import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
 import {
   ProviderResults,
+  completingSuite,
   pr,
   head,
   successfulRun,
@@ -37,6 +38,30 @@ test('a failed refresh retains the completed review and the prior check snapshot
     assert.ok(error instanceof GitHubPullReadFailure);
     assert.equal(error.observation.reviewDecision, null);
     assert.equal(error.observation.checks?.[0]?.runId, successfulRun.id);
+    return true;
+  });
+});
+
+test('a failed completion reread retains the earlier legacy status alongside the current run', async (t) => {
+  const completing = completingSuite('success');
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    if (++statuses > 1) throw new Error('Legacy status read unavailable');
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'lint', state: 'failure', target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.checks?.[0]?.status, 'COMPLETED');
+    const earlier = error.observation.earlierChecks?.[0];
+    assert.equal(earlier?.phase, 'CI checks');
+    assert.equal(earlier.checks[0]?.status, 'IN_PROGRESS');
+    assert.equal(earlier.checks[1]?.context, 'lint');
+    assert.equal(earlier.checks[1]?.state, 'FAILURE');
     return true;
   });
 });

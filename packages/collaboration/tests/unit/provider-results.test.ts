@@ -3,6 +3,7 @@ import test from 'node:test';
 import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
 import {
   ProviderResults,
+  completingSuite,
   pr,
   head,
   review,
@@ -311,6 +312,22 @@ test('a different suite inventory invalidates an otherwise green CI snapshot', a
     message: /suite inventory changed/,
   });
 });
+
+for (const conclusion of ['success', 'failure'] as const) {
+  test(`a suite completing during observation is reread before reporting ${conclusion}`, async (t) => {
+    const scenario = new ProviderResults(t, completingSuite(conclusion));
+    const verification = scenario.provider.verify(pr, head, 'staging');
+    if (conclusion === 'success') await verification;
+    else
+      await assert.rejects(verification, (failure: unknown) => {
+        assert(failure instanceof GitHubCheckFailure);
+        assert.equal(failure.check.conclusion, 'FAILURE');
+        assert.equal(failure.log, 'Retained actual failure');
+        return true;
+      });
+    assert(scenario.calls.filter((args) => args[1]?.endsWith('/check-suites')).length > 2);
+  });
+}
 
 test('stable suite metadata cannot hide runs missing from the ref snapshot', async (t) => {
   const scenario = new ProviderResults(t, (args) => {

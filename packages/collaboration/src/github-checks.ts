@@ -4,6 +4,7 @@ import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
 
+const pendingCheckStatuses = ['in_progress', 'queued', 'requested', 'waiting', 'pending'] as const;
 const total = z.object({ total_count: z.int().nonnegative() });
 const suite = z.object({
   id: z.int().positive(),
@@ -18,7 +19,7 @@ const run = z.object({
   check_suite: z.object({ id: z.int().positive() }).nullish(),
   head_sha: z.string(),
   name: z.string().min(1),
-  status: z.enum(['completed', 'in_progress', 'queued', 'requested', 'waiting', 'pending']),
+  status: z.enum(['completed', ...pendingCheckStatuses]),
   conclusion: z
     .enum([
       'action_required',
@@ -58,24 +59,44 @@ export async function readGitHubChecks(
   read: Read,
   repository: string,
   head: string,
-  observe: (checks: readonly ProviderCheck[]) => void,
+  observe: (checks: readonly ProviderCheck[], beforeReread?: boolean) => void,
 ): Promise<ProviderCheck[]> {
   const repo = `repos/${repository}`;
   const ref = `${repo}/commits/${head}`;
-  const inventory = await suiteInventory(read, ref, head);
-  const checks = await checkRuns(read, repo, ref, head, inventory, observe);
-  const statuses = await readGitHubStatuses(read, repository, head);
-  observe([...checks, ...statuses]);
-  const current = await suiteInventory(read, ref, head);
-  if (suiteSnapshot(inventory) !== suiteSnapshot(current))
-    throw new Error('GitHub check suite inventory changed during CI observation');
-  return [...checks, ...statuses];
+  let inventory = await suiteInventory(read, ref, head);
+  for (;;) {
+    const checks = await checkRuns(read, repo, ref, head, inventory, observe);
+    const statuses = await readGitHubStatuses(read, repository, head);
+    const combined = [...checks, ...statuses];
+    observe(combined);
+    const current = await suiteInventory(read, ref, head);
+    if (suiteSnapshot(inventory) === suiteSnapshot(current)) return combined;
+    if (!suiteCompletion(inventory, current))
+      throw new Error('GitHub check suite inventory changed during CI observation');
+    observe(combined, true);
+    inventory = current;
+  }
 }
 
 type CheckSuite = z.output<typeof suite>;
 
 function suiteSnapshot(suites: CheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
+}
+
+/** Reread after forward completion on the same suite inventory and run coverage. */
+function suiteCompletion(previous: CheckSuite[], current: CheckSuite[]) {
+  if (previous.length !== current.length) return false;
+  const byId = new Map(current.map((item) => [item.id, item]));
+  return previous.every((before) => {
+    const after = byId.get(before.id);
+    if (!after || before.latest_check_runs_count !== after.latest_check_runs_count) return false;
+    if (JSON.stringify(before) === JSON.stringify(after)) return true;
+    return (
+      after.status === 'completed' &&
+      pendingCheckStatuses.some((status) => status === before.status)
+    );
+  });
 }
 
 function normalizeRun({

@@ -101,6 +101,7 @@ export interface GitHubPullObservation {
   confirmedPull?: PublishedPull;
   checks?: readonly ProviderCheck[];
   confirmedChecks?: readonly ProviderCheck[];
+  earlierChecks?: { phase: 'CI checks' | 'CI confirmation'; checks: readonly ProviderCheck[] }[];
   reviewDecision?: ReturnType<typeof reviewDecision>;
 }
 

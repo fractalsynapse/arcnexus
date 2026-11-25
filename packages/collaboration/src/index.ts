@@ -261,8 +261,9 @@ ${marker}`,
         (args) => this.query(args),
         this.repository,
         evidence.head,
-        (partial) => {
-          evidence[slot] = partial;
+        (partial, beforeReread) => {
+          if (beforeReread) (evidence.earlierChecks ??= []).push({ phase: read, checks: partial });
+          else evidence[slot] = partial;
         },
       ),
     );

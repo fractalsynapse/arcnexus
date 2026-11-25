@@ -93,3 +93,33 @@ export function workflowJobs(attempts: [id: number, attempt: number][]) {
     })),
   });
 }
+
+export function completingSuite(conclusion: 'success' | 'failure') {
+  let inventories = 0;
+  return (args: string[]) => {
+    if (args[1]?.endsWith('/check-suites')) return suiteState(++inventories > 1);
+    if (args[1]?.includes('/check-runs?')) {
+      const completed = inventories > 1;
+      const check = {
+        ...successfulRun,
+        check_suite: { id: 5 },
+        status: completed ? 'completed' : 'in_progress',
+        conclusion: completed ? conclusion : null,
+      };
+      return JSON.stringify({ total_count: 1, check_runs: [check] });
+    }
+    if (args[1]?.endsWith('/jobs/42/logs')) return 'Retained actual failure';
+    return readyResponse(args);
+  };
+}
+
+function suiteState(completed: boolean) {
+  const suite = {
+    id: 5,
+    head_sha: head,
+    latest_check_runs_count: 1,
+    status: completed ? 'completed' : 'in_progress',
+    updated_at: completed ? '2026-11-24T00:01:00Z' : '2026-11-24T00:00:00Z',
+  };
+  return JSON.stringify({ total_count: 1, check_suites: [suite] });
+}
