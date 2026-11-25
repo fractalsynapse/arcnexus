@@ -322,7 +322,13 @@ test('one suite can start while another completes during the same observation', 
     if (!args[1]?.endsWith('/check-suites')) return output;
     const suites = JSON.parse(output).check_suites;
     const status = ['requested', 'queued'][inventories++] ?? 'completed';
-    suites.push({ id: 6, head_sha: head, status, latest_check_runs_count: 0 });
+    suites.push({
+      id: 6,
+      head_sha: head,
+      status,
+      conclusion: 'success',
+      latest_check_runs_count: 0,
+    });
     return JSON.stringify({ total_count: suites.length, check_suites: suites });
   });
   await scenario.provider.verify(pr, head, 'staging');
@@ -341,7 +347,13 @@ for (const reportedRuns of [0, 1]) {
       return JSON.stringify({
         total_count: 2,
         check_suites: [
-          { id: 5, head_sha: head, status: 'completed', latest_check_runs_count: 0 },
+          {
+            id: 5,
+            head_sha: head,
+            status: 'completed',
+            conclusion: 'success',
+            latest_check_runs_count: 0,
+          },
           { id: 6, head_sha: head, status: 'queued', latest_check_runs_count: reportedRuns },
         ],
       });

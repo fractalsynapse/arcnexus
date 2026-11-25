@@ -3,7 +3,12 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
-import { readGitHubChecks } from './github-checks.js';
+import {
+  readGitHubChecks,
+  suiteFailure,
+  suiteSnapshot,
+  type ProviderCheckSuite,
+} from './github-checks.js';
 import {
   GitHubPullReadFailure,
   GitHubReviewRejection,
@@ -204,15 +209,18 @@ ${marker}`,
         earlierChecks,
       };
       const facts = await this.verificationFacts(evidence, base, state, branch);
-      const { checks, pendingSuites, review } = facts;
+      const { checks, pendingSuites, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
-      const failed = checks.find((check) => terminalCheckFailure(check, pendingSuites));
+      const failed =
+        checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
+        terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
       if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return;
       recordEarlierChecks(
         evidence,
         evidence.confirmedChecks ? 'CI confirmation' : 'CI checks',
         checks,
+        suites,
       );
       earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
@@ -227,7 +235,7 @@ ${marker}`,
     branch?: string,
   ) {
     const current = await this.verificationPull(evidence, base, state, branch, 'pull');
-    const initial = await this.checks(evidence, 'checks');
+    const initial = await this.checks(evidence, 'checks', evidence.earlierChecks?.at(-1)?.suites);
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
     if (
@@ -237,9 +245,13 @@ ${marker}`,
     )
       return { ...initial, review };
 
-    const confirmed = await this.checks(evidence, 'confirmedChecks');
+    const confirmed = await this.checks(evidence, 'confirmedChecks', initial.suites);
     const ready = successfulChecks(confirmed);
-    if (ready && checkSnapshot(initial.checks) !== checkSnapshot(confirmed.checks))
+    if (
+      ready &&
+      (checkSnapshot(initial.checks) !== checkSnapshot(confirmed.checks) ||
+        suiteSnapshot(initial.suites) !== suiteSnapshot(confirmed.suites))
+    )
       throw new GitHubPullReadFailure(
         'CI confirmation',
         evidence,
@@ -272,34 +284,41 @@ ${marker}`,
   }
 
   /** Keep both CI snapshots and their partial results when verification cannot proceed. */
-  private async checks(evidence: GitHubPullObservation, slot: 'checks' | 'confirmedChecks') {
+  private checks(
+    evidence: GitHubPullObservation,
+    slot: 'checks' | 'confirmedChecks',
+    priorSuites?: readonly ProviderCheckSuite[],
+  ) {
     const read = slot === 'checks' ? 'CI checks' : 'CI confirmation';
-    const snapshot = await this.pullRead(read, evidence, () =>
-      readGitHubChecks(
-        (args) => this.query(args),
-        this.repository,
-        evidence.head,
-        (partial, beforeReread) => {
-          if (beforeReread) recordEarlierChecks(evidence, read, partial);
-          else evidence[slot] = partial;
+    const suites = slot === 'checks' ? 'suites' : 'confirmedSuites';
+    return this.pullRead(read, evidence, () =>
+      readGitHubChecks((args) => this.query(args), this.repository, evidence.head, {
+        checks: (observed) => {
+          evidence[slot] = observed;
         },
-      ),
+        suites: (observed) => {
+          evidence[suites] = observed;
+          const ids = new Set(observed.map(({ id }) => id));
+          if (priorSuites?.some(({ id }) => !ids.has(id)))
+            throw new Error('GitHub omitted a previously observed check suite');
+        },
+        beforeReread: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
+      }),
     );
-    evidence[slot] = snapshot.checks;
-    evidence.pendingSuites = snapshot.pendingSuites;
-    return snapshot;
   }
 
   /** Preserve complete check diagnostics from the authorized repository's provider job. */
   private async failedCheck(check: ProviderCheck, evidence: GitHubPullObservation) {
     const job = /\/job\/(\d+)/.exec(check.detailsUrl ?? '')?.[1];
+    const suites = evidence.confirmedSuites ?? evidence.suites;
+    const suite =
+      check.runId === undefined ? suites?.find(({ id }) => id === check.suiteId) : undefined;
     const log = job
       ? await this.pullRead('CI job log', evidence, () =>
           this.query(['api', `repos/${this.repository}/actions/jobs/${job}/logs`], true),
         )
-      : JSON.stringify(check, null, 2);
-    const observation = evidence.earlierChecks ? evidence : undefined;
-    return new GitHubCheckFailure(evidence.pr, evidence.head, check, log, observation);
+      : JSON.stringify(suite ?? check, null, 2);
+    return new GitHubCheckFailure(evidence.pr, evidence.head, check, log, evidence);
   }
 
   /** Request a head-pinned squash merge and verify the resulting provider identity. */
@@ -418,6 +437,7 @@ function successfulChecks(snapshot: Awaited<ReturnType<typeof readGitHubChecks>>
   const { checks, pendingSuites } = snapshot;
   return (
     pendingSuites.length === 0 &&
+    !snapshot.suites.some(suiteFailure) &&
     checks.length > 0 &&
     checks.every(
       ({ status, conclusion, state }) =>
@@ -435,16 +455,28 @@ function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly numb
   return suiteKnown && status === 'COMPLETED' && conclusion !== 'SUCCESS';
 }
 
+/** Translate a provider suite failure into a check diagnostic without inventing a job. */
+function terminalSuiteFailure(suites: readonly ProviderCheckSuite[]): ProviderCheck | undefined {
+  const suite = suites.find(suiteFailure);
+  if (!suite) return;
+  return { suiteId: suite.id, status: 'COMPLETED', conclusion: suite.conclusion.toUpperCase() };
+}
+
 /** Retain distinct CI observations even when a later poll is unavailable. */
 function recordEarlierChecks(
   evidence: GitHubPullObservation,
   phase: 'CI checks' | 'CI confirmation',
   checks: readonly ProviderCheck[],
+  suites: readonly ProviderCheckSuite[],
 ) {
   const earlier = (evidence.earlierChecks ??= []);
   const previous = earlier.findLast((item) => item.phase === phase);
-  if (!previous || checkSnapshot(previous.checks) !== checkSnapshot(checks))
-    earlier.push({ phase, checks });
+  if (
+    !previous ||
+    checkSnapshot(previous.checks) !== checkSnapshot(checks) ||
+    suiteSnapshot(previous.suites) !== suiteSnapshot(suites)
+  )
+    earlier.push({ phase, checks, suites });
 }
 
 function checkSnapshot(checks: readonly ProviderCheck[]) {

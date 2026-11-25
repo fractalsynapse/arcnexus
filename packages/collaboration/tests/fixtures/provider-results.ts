@@ -63,7 +63,15 @@ export function readyResponse(args: string[]) {
     case repository + '/commits/' + head + '/check-suites':
       return JSON.stringify({
         total_count: 1,
-        check_suites: [{ id: 5, head_sha: head, status: 'completed', latest_check_runs_count: 0 }],
+        check_suites: [
+          {
+            id: 5,
+            head_sha: head,
+            status: 'completed',
+            conclusion: 'success',
+            latest_check_runs_count: 0,
+          },
+        ],
       });
     case repository + '/commits/' + head + '/check-runs?filter=latest':
     case repository + '/commits/' + head + '/check-runs?filter=all':
@@ -131,6 +139,7 @@ export const suites = Array.from({ length: 1001 }, (_, index) => ({
   id: index + 1,
   head_sha: head,
   status: 'completed',
+  conclusion: 'success',
   latest_check_runs_count: 0,
 }));
 

@@ -10,6 +10,7 @@ const suite = z.object({
   id: z.int().positive(),
   head_sha: z.string(),
   status: z.string().optional(),
+  conclusion: z.string().nullable().optional(),
   updated_at: z.string().optional(),
   latest_check_runs_count: z.int().nonnegative().optional(),
 });
@@ -54,43 +55,55 @@ const jobPage = total.extend({ jobs: z.array(job) });
 // GitHub's ref endpoint searches only its most recent check suites past this provider ceiling.
 const gitHubRefCheckSuiteCoverage = 1000;
 
+export type ProviderCheckSuite = z.output<typeof suite>;
+
+interface CheckObserver {
+  checks(checks: readonly ProviderCheck[]): void;
+  suites(suites: readonly ProviderCheckSuite[]): void;
+  beforeReread(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
+}
+
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
 export async function readGitHubChecks(
   read: Read,
   repository: string,
   head: string,
-  observe: (checks: readonly ProviderCheck[], beforeReread?: boolean) => void,
+  observe: CheckObserver,
 ) {
   const repo = `repos/${repository}`;
   const ref = `${repo}/commits/${head}`;
   let inventory = await suiteInventory(read, ref, head);
+  observe.suites(inventory);
   for (;;) {
-    const checks = await checkRuns(read, repo, ref, head, inventory, observe);
+    const checks = await checkRuns(read, repo, ref, head, inventory, observe.checks);
     const statuses = await readGitHubStatuses(read, repository, head);
     const combined: ProviderCheck[] = [...checks, ...statuses];
-    observe(combined);
+    observe.checks(combined);
     const current = await suiteInventory(read, ref, head);
+    observe.suites(current);
     if (suiteSnapshot(inventory) === suiteSnapshot(current))
-      return { checks: combined, pendingSuites: current.filter(suitePending).map(({ id }) => id) };
+      return {
+        checks: combined,
+        suites: current,
+        pendingSuites: current.filter(suitePending).map(({ id }) => id),
+      };
     if (!suiteProgress(inventory, current))
       throw new Error('GitHub check suite inventory changed during CI observation');
-    observe(combined, true);
+    observe.beforeReread(combined, inventory);
     inventory = current;
   }
 }
 
-type CheckSuite = z.output<typeof suite>;
-
-function suiteSnapshot(suites: CheckSuite[]) {
+export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
-function suitePending({ status }: CheckSuite) {
+function suitePending({ status }: ProviderCheckSuite) {
   return pendingCheckStatuses.some((pending) => pending === status);
 }
 
 /** Reread when an existing active suite advances or registers more expected runs. */
-function suiteProgress(previous: CheckSuite[], current: CheckSuite[]) {
+function suiteProgress(previous: ProviderCheckSuite[], current: ProviderCheckSuite[]) {
   if (previous.length !== current.length) return false;
   const byId = new Map(current.map((item) => [item.id, item]));
   return previous.every((before) => {
@@ -110,6 +123,14 @@ function suiteProgress(previous: CheckSuite[], current: CheckSuite[]) {
       (before.status === after.status && newCount > oldCount)
     );
   });
+}
+
+/** Identify an explicit provider suite failure even when no job was created. */
+export function suiteFailure(
+  observation: ProviderCheckSuite,
+): observation is ProviderCheckSuite & { conclusion: string } {
+  const { status, conclusion } = observation;
+  return status === 'completed' && Boolean(conclusion && conclusion !== 'success');
 }
 
 function normalizeRun({
@@ -166,7 +187,7 @@ async function checkRuns(
   repo: string,
   ref: string,
   head: string,
-  inventory: CheckSuite[],
+  inventory: ProviderCheckSuite[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {
   const current = await runsFrom(read, `${ref}/check-runs?filter=all`, head);
@@ -184,18 +205,19 @@ async function checkRuns(
 }
 
 /** Compare each suite's reported run count with the head-pinned check inventory. */
-function requireSuiteCoverage(inventory: CheckSuite[], runs: CheckRun[]) {
+function requireSuiteCoverage(inventory: ProviderCheckSuite[], runs: CheckRun[]) {
   const counts = new Map<number, number>();
   for (const run of runs) {
     const id = run.check_suite?.id;
     if (id !== undefined) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   for (const suite of inventory) {
-    if (suitePending(suite)) continue;
+    if (suitePending(suite) || suiteFailure(suite)) continue;
     const count = counts.get(suite.id) ?? 0;
     const expected = suite.latest_check_runs_count;
     if (
-      (count === 0 && (expected === undefined || suite.status === undefined)) ||
+      (count === 0 &&
+        (expected === undefined || suite.status !== 'completed' || !suite.conclusion)) ||
       (expected !== undefined && count < expected)
     )
       throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
@@ -207,7 +229,7 @@ async function suiteRuns(
   read: Read,
   repo: string,
   head: string,
-  suites: CheckSuite[],
+  suites: ProviderCheckSuite[],
   current: CheckRun[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {

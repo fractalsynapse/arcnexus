@@ -241,6 +241,51 @@ test('suite metadata omissions cannot make an unseen suite eligible', async (t) 
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /missing check runs/);
 });
 
+test('a pending suite must not disappear on the next verification poll', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99')) pulls++;
+    if (!args[1]?.endsWith('/check-suites') || pulls > 1) return readyResponse(args);
+    const observed = JSON.parse(readyResponse(args));
+    observed.check_suites.push({
+      id: 6,
+      head_sha: head,
+      status: 'queued',
+      latest_check_runs_count: 1,
+    });
+    return JSON.stringify({ total_count: 2, check_suites: observed.check_suites });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert(error instanceof GitHubPullReadFailure);
+    assert.match(error.message, /previously observed check suite/);
+    assert.match(JSON.stringify(error.observation), /"status":"queued"/);
+    return true;
+  });
+});
+
+test('a failed suite blocks delivery even when the provider supplies no job', async (t) => {
+  let inventories = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+    const observed = JSON.parse(readyResponse(args));
+    const completed = ++inventories > 1;
+    observed.check_suites.push({
+      id: 6,
+      head_sha: head,
+      status: completed ? 'completed' : 'queued',
+      conclusion: completed ? 'startup_failure' : null,
+      latest_check_runs_count: 0,
+    });
+    return JSON.stringify({ total_count: 2, check_suites: observed.check_suites });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert(error instanceof GitHubCheckFailure);
+    assert.equal(error.check.suiteId, 6);
+    assert.equal(error.check.conclusion, 'STARTUP_FAILURE');
+    return true;
+  });
+});
+
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
   const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
   const scenario = new ProviderResults(t, (args) =>
