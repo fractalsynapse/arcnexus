@@ -96,14 +96,18 @@ cannot establish assembled parity.
 
 ## Current evidence scope
 
-This review evaluates revision `cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1`
-under run 185's accepted `inspection-current-assessment` milestone. It records
-intent before any new behavioral correction. Reviews at
+This review evaluates revision `ce690126388cd30f8b601b91498e91b586008ff3`
+under run 204's accepted `inspection-current-assessment` milestone, issue 738,
+branch `738-task`. The accepted plan is recorded at sequence 155716 in
+`204-1-run-timeline.jsonl`. The prior run-185/187 assessment at
+`cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1` and
+`fe55cd8ec28f25383f30822479c4b8ef8ecd32a7`, and reviews at
 `83acc2f956b3595a2594c6051c3e541928427919`,
 `8b369c4fe0ba7bba585fc2530f2e085899edd5c2` and
 `7d04db61627b4e76e0fda4ac1003ab5b26d18e8e` remain historical.
 The [characterization account](inspection-characterization.md) preserves their
-results, original criteria, candidate identities and provider limitations.
+results, original criteria, candidate identities and provider limitations, and
+records the current source review before any behavioral correction.
 
 Current source already contains both the requested-listing retention repair and
 the run-173 enrichment assertions. `LocalMcp.listTools` emits the requested
