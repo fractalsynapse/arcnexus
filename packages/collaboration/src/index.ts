@@ -212,7 +212,7 @@ ${marker}`,
     branch?: string,
   ) {
     const evidence: GitHubPullObservation = { repository: this.repository, pr, head };
-    const current = await this.verificationPull(evidence, base, state, branch);
+    const current = await this.verificationPull(evidence, base, state, branch, 'pull');
     const checks = await this.checks(evidence, 'checks');
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
@@ -226,6 +226,8 @@ ${marker}`,
         evidence,
         new Error('GitHub CI changed during review'),
       );
+    if (successfulChecks(confirmed))
+      await this.verificationPull(evidence, base, state, branch, 'confirmedPull');
     return { checks: confirmed, review };
   }
 
@@ -234,11 +236,13 @@ ${marker}`,
     evidence: GitHubPullObservation,
     base: string,
     state: string,
-    branch?: string,
+    branch: string | undefined,
+    slot: 'pull' | 'confirmedPull',
   ) {
-    return this.pullRead('PR identity', evidence, async () => {
+    const read = slot === 'pull' ? 'PR identity' : 'PR confirmation';
+    return this.pullRead(read, evidence, async () => {
       const current = await this.observe(evidence.pr, branch);
-      evidence.pull = current;
+      evidence[slot] = current;
       if (
         current.head !== evidence.head ||
         current.target !== base ||

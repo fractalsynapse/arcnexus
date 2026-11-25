@@ -89,3 +89,20 @@ test('a conflicting PR head is retained with the unavailable identity', async (t
     return true;
   });
 });
+
+test('a PR retargeted during CI confirmation remains ineligible', async (t) => {
+  let identities = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    const response = readyResponse(args);
+    if (args[1] !== repository + '/pulls/99' || ++identities === 1) return response;
+    const pull = JSON.parse(response);
+    return JSON.stringify({ ...pull, base: { ...pull.base, ref: 'main' } });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.match(error.message, /changed before integration/);
+    assert.equal(error.observation.pull?.target, 'staging');
+    assert.equal(error.observation.confirmedPull?.target, 'main');
+    return true;
+  });
+});

@@ -98,6 +98,7 @@ export interface GitHubPullObservation {
   pr: string;
   head: string;
   pull?: PublishedPull;
+  confirmedPull?: PublishedPull;
   checks?: readonly ProviderCheck[];
   confirmedChecks?: readonly ProviderCheck[];
   reviewDecision?: ReturnType<typeof reviewDecision>;

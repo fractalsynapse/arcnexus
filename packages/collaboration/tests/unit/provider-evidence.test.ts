@@ -52,3 +52,25 @@ test('a malformed CI page retains the original output and the valid preceding pa
     return true;
   });
 });
+
+test('third-party latest results cannot contradict the same ref check', async (t) => {
+  const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/check-suites/5/check-runs'))
+      return JSON.stringify({
+        total_count: 1,
+        check_runs: [{ ...current, status: 'queued', conclusion: null }],
+      });
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [current, { ...current, id: 99, conclusion: 'failure' }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.match(error.message, /ref and suite disagree/);
+    assert.ok(error.observation.checks?.some((check) => check.status === 'QUEUED'));
+    return true;
+  });
+});

@@ -133,7 +133,7 @@ async function checkRuns(
       : current;
   observe(runs.map(normalizeRun));
   requireSuiteCoverage(inventory, runs);
-  const checks = (await latestRuns(read, repo, head, runs)).map(normalizeRun);
+  const checks = (await latestRuns(read, repo, head, runs, observe)).map(normalizeRun);
   observe(checks);
   return checks;
 }
@@ -179,7 +179,7 @@ async function suiteRuns(
 }
 
 /** Check that overlapping provider snapshots describe the same checks and states. */
-function reconcileRefChecks(ref: CheckRun[], suites: Map<number, CheckRun>) {
+function reconcileRefChecks(ref: CheckRun[], suites: ReadonlyMap<number, CheckRun>) {
   for (const run of ref) {
     const suite = suites.get(run.id);
     if (!suite) throw new Error('GitHub suite inventory omitted an observed check');
@@ -210,29 +210,40 @@ interface CheckContext {
 }
 
 /** Prefer the provider's selection without joining independent check identities. */
-async function latestRuns(read: Read, repo: string, head: string, checks: CheckRun[]) {
+async function latestRuns(
+  read: Read,
+  repo: string,
+  head: string,
+  checks: CheckRun[],
+  observe: (checks: readonly ProviderCheck[]) => void,
+) {
   const workflows = new Map<string, Map<number, number>>();
   const suites = new Map<number, Set<number>>();
   const selected: CheckRun[] = [];
-  const checkIds = new Set(checks.map((check) => check.id));
+  const ref = new Map(checks.map((check) => [check.id, check]));
   for (const { workflow, suite, runs } of checkContexts(repo, checks)) {
     if (runs.length === 1) {
       selected.push(...runs);
     } else if (workflow) {
       const attempts =
-        workflows.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow, checkIds));
+        workflows.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow, ref));
       workflows.set(workflow, attempts);
       selected.push(...latestInContext(runs, attempts));
     } else if (suite !== undefined) {
-      const ids = suites.get(suite) ?? (await latestSuiteIds(read, repo, head, suite, checkIds));
+      const ids =
+        suites.get(suite) ?? (await latestSuiteIds(read, repo, head, suite, ref, observe));
       suites.set(suite, ids);
-      const latest = runs.filter((run) => ids.has(run.id));
-      if (latest.length === 0)
-        throw new Error(`GitHub did not identify the current checks for suite ${suite}`);
-      selected.push(...latest);
+      selected.push(...selectSuiteChecks(runs, ids, suite));
     }
   }
   return selected;
+}
+
+function selectSuiteChecks(runs: CheckRun[], ids: Set<number>, suite: number) {
+  const latest = runs.filter((run) => ids.has(run.id));
+  if (latest.length === 0)
+    throw new Error(`GitHub did not identify the current checks for suite ${suite}`);
+  return latest;
 }
 
 /** Group independently identified checks by workflow or third-party suite and name. */
@@ -259,15 +270,21 @@ async function latestSuiteIds(
   repo: string,
   head: string,
   suite: number,
-  checkIds: ReadonlySet<number>,
+  ref: ReadonlyMap<number, CheckRun>,
+  observe: (checks: readonly ProviderCheck[]) => void,
 ) {
   const latest = await runsFrom(
     read,
     `${repo}/check-suites/${suite}/check-runs?filter=latest`,
     head,
+    ref,
   );
-  if (latest.some(({ id }) => !checkIds.has(id)))
-    throw new Error('GitHub suite checks changed during CI observation');
+  try {
+    reconcileRefChecks(latest, ref);
+  } catch (error) {
+    observe([...ref.values(), ...latest].map(normalizeRun));
+    throw error;
+  }
   return new Set(latest.map((run) => run.id));
 }
 
@@ -291,7 +308,7 @@ async function workflowAttempts(
   repo: string,
   head: string,
   workflow: string,
-  checkIds: ReadonlySet<number>,
+  checkIds: ReadonlyMap<number, CheckRun>,
 ) {
   const jobs = await readCollection(
     read,
@@ -303,7 +320,7 @@ async function workflowAttempts(
   return new Map(jobs.map((job) => [job.id, job.run_attempt]));
 }
 
-function workflowJobScope(repo: string, head: string, checkIds: ReadonlySet<number>) {
+function workflowJobScope(repo: string, head: string, checkIds: ReadonlyMap<number, CheckRun>) {
   return jobPage
     .refine(
       (value) =>
@@ -340,7 +357,7 @@ async function runsFrom(
   read: Read,
   endpoint: string,
   head: string,
-  checkIds?: ReadonlySet<number>,
+  checkIds?: ReadonlyMap<number, CheckRun>,
 ) {
   const page = runPage
     .refine(
