@@ -96,14 +96,18 @@ cannot establish assembled parity.
 
 ## Current evidence scope
 
-This review evaluates revision `cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1`
-under run 185's accepted `inspection-current-assessment` milestone. It records
-intent before any new behavioral correction. Reviews at
+This review evaluates revision `ce690126388cd30f8b601b91498e91b586008ff3`
+under run 204's accepted `inspection-current-assessment` milestone, issue 738,
+branch `738-task`. The accepted plan is recorded at sequence 155716 in
+`204-1-run-timeline.jsonl`. The prior run-185/187 assessment at
+`cd5c2b30e596d8da2ad3c9024cf00a6e6ee35ec1` and
+`fe55cd8ec28f25383f30822479c4b8ef8ecd32a7`, and reviews at
 `83acc2f956b3595a2594c6051c3e541928427919`,
 `8b369c4fe0ba7bba585fc2530f2e085899edd5c2` and
 `7d04db61627b4e76e0fda4ac1003ab5b26d18e8e` remain historical.
 The [characterization account](inspection-characterization.md) preserves their
-results, original criteria, candidate identities and provider limitations.
+results, original criteria, candidate identities and provider limitations, and
+records the current source review before any behavioral correction.
 
 Current source already contains both the requested-listing retention repair and
 the run-173 enrichment assertions. `LocalMcp.listTools` emits the requested
@@ -139,13 +143,16 @@ listing-retention red nor the resolved enrichment coverage needs recreation.
 | `inspection-effects-provider-policy` | Repeatability/no-effects, `assertInvocation`, the activity matrix and changed-guidance refusal cover no model/admission/upstream/storage/worktree effects, independent cached/disabled/live web policy, approved guidance visibility and unchanged discovery configuration. Establish current applicability. Controlled receipts do not establish automatic real-harness discovery. |
 | `inspection-evidence-quality` | Record actual status/log, source, candidate, authority, parameters and environment for applicable format, lint, strict types, build and behavioral observations. Distinguish controlled receipts, configured-provider artifacts, skipped native cases and unavailable provider internals. Host verification, CI and delivery remain separate. |
 
-The characterization account identifies the run-173 criterion-linked logs and
-current matching source hashes. Matching those files alone does not establish
-unchanged dependencies, environment, captured authority or check parameters.
-Run 185's accepted plan also distinguishes the supplied run-183 checkpoint
-verification from parity acceptance: broad repository checks against checkpoint
-criteria cannot discharge these parity measures. Reuse requires matching relevant
-inputs and environment, or a fresh applicable observation.
+The characterization account preserves run-173 and run-187 criterion-linked logs
+and identifies source hashes reviewed for run 204. Matching those files alone
+does not establish unchanged dependencies, environment, captured authority or
+check parameters. Run 204's accepted plan distinguishes the supplied run-202
+checkpoint verification from parity acceptance: broad repository checks against
+checkpoint criteria cannot discharge these parity measures. Testing must establish
+applicable owner-test results; Implementation must establish applicable owner
+format/lint/tests and repository types/build results. Reuse requires matching
+relevant inputs and environment, or a fresh applicable observation. This
+Documentation activity makes no software-result reuse decision.
 
 ## Provider observations and remaining limitations
 
