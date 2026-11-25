@@ -293,6 +293,43 @@ test('page settings save layout and panel placement, while plugin contributions 
   await assertMobilePanelOrder(page);
 });
 
+test('panel drag lifts the row and previews the insertion gap before saving', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  await button(page, 'Plan page settings').click();
+  const source = button(page, 'Reorder Planning data');
+  const target = button(page, 'Reorder Planner outcome');
+  const labels = () => page.locator('.arc-panel-settings-list li strong').allTextContents();
+  const before = await labels();
+  await dragPanel(page, source, target);
+  await page.mouse.move(1, 1);
+  assert.equal(await page.locator('.arc-sort-gap').count(), 0);
+  await page.mouse.up();
+  assert.deepEqual(await labels(), before);
+  await dragPanel(page, source, target);
+  await page.mouse.up();
+  assert.deepEqual(await labels(), ['Planner outcome', 'Planning data']);
+  assert.equal(await source.evaluate((element) => document.activeElement === element), true);
+  await button(page, 'Save').click();
+  await assertMobilePanelOrder(page);
+});
+
+async function dragPanel(
+  page: Page,
+  source: ReturnType<typeof button>,
+  target: ReturnType<typeof button>,
+) {
+  const from = await source.boundingBox();
+  const to = await target.boundingBox();
+  assert.ok(from && to);
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height - 1);
+  assert.equal(await page.locator('[data-sort-dragging]').count(), 1);
+  assert.equal(await page.locator('.arc-sort-gap').count(), 1);
+}
+
 async function assertMobilePanelOrder(page: Page) {
   await page.setViewportSize({ width: 360, height: 800 });
   assert.equal(await page.getByRole('separator').count(), 0);

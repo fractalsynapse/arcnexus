@@ -10,6 +10,7 @@ import './theme/color-picker/picker.css';
 import './styles/responsive.css';
 import './layouts/page/page.css';
 import './settings/page/page-settings.css';
+import './controls/sortable.css';
 import './layouts/panels/desktop-columns.css';
 import './layouts/panels/mobile-stack.css';
 import './displays/display.css';

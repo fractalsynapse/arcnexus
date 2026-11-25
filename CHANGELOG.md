@@ -26,6 +26,8 @@
 
 ### Fixed
 
+- Use the mockup’s drag behavior in page settings, including a lifted row, visible insertion gap, and drop cancellation (#746).
+
 - Open local review directly in a fresh browser by keeping the operator credential on the loopback Web proxy (#746).
 
 - Restore compact Project and Connection managers and the single expand/collapse control for Plan workspace panels (#746).

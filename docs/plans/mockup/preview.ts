@@ -28,13 +28,19 @@ const capture = gzipSync(previewCapture(readFileSync(capturePath), values.file),
 
 const script = bundle('main.ts', Boolean(values.viewer));
 
-const layout = readFileSync(resolve(source, 'layout.html'), 'utf8').replace(
-  /(["'])brand\/([a-z-]+\.webp)\1/g,
-  (_, quote: string, filename: string) => {
-    const image = readFileSync(resolve(source, 'brand', filename)).toString('base64');
-    return quote + 'data:image/webp;base64,' + image + quote;
-  },
+const sortable = readFileSync(
+  resolve(source, '../../../packages/ui/src/controls/sortable.css'),
+  'utf8',
 );
+const layout = readFileSync(resolve(source, 'layout.html'), 'utf8')
+  .replace('/* shared-sortable-styles */', sortable)
+  .replace(
+    /(["'])brand\/([a-z-]+\.webp)\1/g,
+    (_, quote: string, filename: string) => {
+      const image = readFileSync(resolve(source, 'brand', filename)).toString('base64');
+      return quote + 'data:image/webp;base64,' + image + quote;
+    },
+  );
 
 const encodedCapture = values.viewer ? encodeBase85(capture) : capture.toString('base64');
 const fragment = `${layout}

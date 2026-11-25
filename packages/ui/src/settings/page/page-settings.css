@@ -60,25 +60,25 @@
   display: grid;
   gap: 5px;
 }
-.arc-panel-settings-list li {
+.arc-panel-settings-list > li:not(.arc-sort-gap) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
   min-block-size: 38px;
+}
+.arc-panel-settings-list > li:not([data-sort-row], .arc-sort-gap) {
+  grid-template-columns: minmax(0, 1fr) auto;
   border-bottom: 1px solid var(--line);
 }
-.arc-panel-settings-list li:not([data-panel-order]) {
-  grid-template-columns: minmax(0, 1fr) auto;
+.arc-panel-settings-list > li[data-sort-row] {
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+.arc-panel-settings-list > li[data-sort-dragging] {
+  border-color: var(--link);
 }
 .arc-settings-actions {
   justify-content: end;
-}
-.arc-app .arc-order-handle {
-  cursor: grab;
-  touch-action: none;
-}
-.arc-app .arc-order-handle:active {
-  cursor: grabbing;
-  background: var(--tint);
 }
