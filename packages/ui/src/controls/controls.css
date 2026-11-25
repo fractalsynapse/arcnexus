@@ -91,3 +91,57 @@
     color: var(--link);
   }
 }
+
+.arc-topic-picker {
+  position: relative;
+}
+.arc-topic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.arc-topic-tags:empty {
+  display: none;
+}
+.arc-topic-tags > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding-inline-start: 7px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--quiet);
+}
+.arc-app .arc-topic-tags .arc-icon-button {
+  min-block-size: 23px;
+  min-inline-size: 23px;
+}
+.arc-topic-options {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 100%;
+  inset-inline: 0;
+  display: grid;
+  gap: 3px;
+  max-block-size: 14rem;
+  overflow: auto;
+  padding: 5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px #0002;
+}
+.arc-topic-options button {
+  padding: 5px 7px;
+  text-align: start;
+  border: 0;
+  border-radius: 5px;
+  background: var(--quiet);
+  color: var(--ink);
+}
+.arc-topic-options button:is(:hover, [aria-selected='true']) {
+  background: var(--tint);
+}

@@ -1,5 +1,5 @@
 import { createElement as h } from 'react';
-import { DialogButton } from '../../../../packages/ui/src/index.js';
+import { DialogButton, JsonView } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 import { usePlatformSession } from './session.js';
 
@@ -35,8 +35,6 @@ function Evidence({ sequence, execution }: { sequence: string; execution: string
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    evidence.value.entries.map((entry, index) =>
-      h('pre', { className: 'arc-guide-content', key: index }, JSON.stringify(entry, null, 2)),
-    ),
+    evidence.value.entries.map((entry, index) => h(JsonView, { key: index, value: entry })),
   );
 }

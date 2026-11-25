@@ -1,6 +1,7 @@
 import type { Context } from 'cordis';
 import { createElement as h } from 'react';
 import { RefineButton } from '../refine-button.js';
+import { PlanContext } from '../platform/plan-context.js';
 
 const workspaces = [
   { path: '/plan/', label: 'Plan', defaultColumns: 2 as const },
@@ -16,7 +17,14 @@ export function workspacePlugin() {
     apply(context: Context) {
       const headerAction = h(RefineButton, { binding: context.webCommands });
       for (const item of workspaces) {
-        context.effect(() => context.ui.register({ ...item, headerAction }));
+        context.effect(() =>
+          context.ui.register({
+            ...item,
+            headerAction,
+            context:
+              item.path === '/plan/' ? h(PlanContext, { binding: context.webCommands }) : undefined,
+          }),
+        );
       }
     },
   };

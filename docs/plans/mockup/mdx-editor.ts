@@ -1,44 +1,28 @@
-import { syntaxHighlighting } from '@codemirror/language';
-import { classHighlighter } from '@lezer/highlight';
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
   ListsToggle,
   MDXEditor,
   UndoRedo,
-  codeBlockPlugin,
-  diffSourcePlugin,
-  headingsPlugin,
-  linkPlugin,
-  listsPlugin,
   markdownProcessingError$,
-  markdownShortcutPlugin,
-  markdownSourceEditorValue$,
-  quotePlugin,
-  tablePlugin,
-  thematicBreakPlugin,
-  toolbarPlugin,
-  useCodeBlockEditorContext,
   viewMode$,
 } from '@mdxeditor/editor';
-import type { CodeBlockEditorProps } from '@mdxeditor/editor';
 import { useCellValue, useRealm } from '@mdxeditor/gurx';
-import type { Realm } from '@mdxeditor/gurx';
 import editorStyle from '@mdxeditor/editor/style.css';
 import { createElement, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { splitMarkdown } from './markdown.ts';
 import type { Revision } from './model.ts';
 
-type EditMode = 'rich-text' | 'source';
+import {
+  markdownDraft,
+  markdownPlugins,
+  switchMarkdownMode,
+  updateMarkdownDraft,
+  type MarkdownDraft,
+} from '../../../packages/ui/src/content/markdown-editing.js';
 
-type Draft = {
-  mode: EditMode;
-  body: string;
-  switching: boolean;
-};
-
-let draft: (Draft & { revision: Revision }) | undefined;
+let draft: (MarkdownDraft & { revision: Revision }) | undefined;
 let unmountFile: (() => void) | undefined;
 
 export function detachMarkdownEditor() {
@@ -54,7 +38,7 @@ export function mountMarkdownEditor(host: HTMLElement | null, revision: Revision
   const entry =
     draft?.revision === revision
       ? draft
-      : { revision, ...newDraft(splitMarkdown(revision.content).body) };
+      : { revision, ...markdownDraft(splitMarkdown(revision.content).body) };
   draft = entry;
   unmountFile = mountMarkdownBody(host, entry);
 }
@@ -64,12 +48,12 @@ export function mountMarkdownField(
   body: string,
   onEdit: (body: string) => void,
 ) {
-  return mountMarkdownBody(host, newDraft(body), onEdit, host);
+  return mountMarkdownBody(host, markdownDraft(body), onEdit, host);
 }
 
 function mountMarkdownBody(
   host: HTMLElement,
-  entry: Draft,
+  entry: MarkdownDraft,
   onEdit?: (body: string) => void,
   overlay = host.closest<HTMLElement>('.arc-surface') ?? host,
 ) {
@@ -86,17 +70,13 @@ function mountMarkdownBody(
       toMarkdownOptions: { bullet: '-', emphasis: '*', fences: true },
       onChange: (body, initial) => {
         const previous = entry.body;
-        updateDraft(entry, body, initial);
+        updateMarkdownDraft(entry, body, initial);
         if (entry.body !== previous) onEdit?.(entry.body);
       },
-      plugins: editorPlugins(entry),
+      plugins: markdownPlugins(entry.mode, () => createElement(EditorToolbar, { entry })),
     }),
   );
   return () => root.unmount();
-}
-
-function newDraft(body: string): Draft {
-  return { mode: 'rich-text', body, switching: false };
 }
 
 function installStyle() {
@@ -115,54 +95,12 @@ export function editedMarkdown(revision: Revision) {
   return frontmatter + draft.body.replace(/\r?\n/g, newline);
 }
 
-function updateDraft(entry: Draft, body: string, initial: boolean) {
-  // Ignore visual normalization during import or a mode switch until the operator edits.
-  if (entry.switching || (initial && entry.mode === 'rich-text')) return;
-  if (entry.mode === 'rich-text') {
-    const before = entry.body.match(/^(?:[ \t]*\r?\n)*/)?.[0] ?? '';
-    const after = entry.body.match(/(?:\r?\n)+$/)?.[0] ?? '';
-    entry.body = before + body.replace(/^(?:[ \t]*\r?\n)+|(?:\r?\n)+$/g, '') + after;
-  } else {
-    entry.body = body;
-  }
-}
-
-function editorPlugins(entry: Draft) {
-  return [
-    headingsPlugin(),
-    listsPlugin(),
-    quotePlugin(),
-    thematicBreakPlugin(),
-    linkPlugin(),
-    tablePlugin(),
-    codeBlockPlugin({
-      codeBlockEditorDescriptors: [{ priority: 0, match: () => true, Editor: CodeBlock }],
-    }),
-    markdownShortcutPlugin(),
-    diffSourcePlugin({
-      viewMode: entry.mode,
-      codeMirrorExtensions: [syntaxHighlighting(classHighlighter)],
-    }),
-    toolbarPlugin({ toolbarContents: () => createElement(EditorToolbar, { entry }) }),
-  ];
-}
-
-function CodeBlock({ code, language }: CodeBlockEditorProps) {
-  const { setCode } = useCodeBlockEditorContext();
-  return createElement('textarea', {
-    className: 'arc-mdx-code',
-    'aria-label': language ? language + ' code block' : 'Code block',
-    value: code,
-    onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => setCode(event.currentTarget.value),
-  });
-}
-
-function EditorToolbar({ entry }: { entry: Draft }) {
+function EditorToolbar({ entry }: { entry: MarkdownDraft }) {
   const realm = useRealm();
   const mode = useCellValue(viewMode$);
   const error = useCellValue(markdownProcessingError$);
   useEffect(() => {
-    if (error && mode === 'rich-text') changeMode(entry, realm, 'source');
+    if (error && mode === 'rich-text') switchMarkdownMode(entry, realm, 'source');
   }, [entry, realm, error, mode]);
   return createElement(
     'div',
@@ -170,8 +108,8 @@ function EditorToolbar({ entry }: { entry: Draft }) {
     createElement(
       'div',
       { className: 'arc-mdx-modes', role: 'group', 'aria-label': 'Markdown editing mode' },
-      modeButton('Visual', mode === 'rich-text', () => changeMode(entry, realm, 'rich-text')),
-      modeButton('Raw', mode === 'source', () => changeMode(entry, realm, 'source')),
+      modeButton('Visual', mode === 'rich-text', () => switchMarkdownMode(entry, realm, 'rich-text')),
+      modeButton('Raw', mode === 'source', () => switchMarkdownMode(entry, realm, 'source')),
     ),
     mode === 'rich-text' &&
       createElement(
@@ -183,18 +121,6 @@ function EditorToolbar({ entry }: { entry: Draft }) {
         createElement(ListsToggle),
       ),
   );
-}
-
-function changeMode(entry: Draft, realm: Realm, next: EditMode) {
-  if (entry.mode === next) return;
-  entry.switching = true;
-  entry.mode = next;
-  try {
-    realm.pub(viewMode$, next);
-    if (next === 'source') realm.pub(markdownSourceEditorValue$, entry.body);
-  } finally {
-    entry.switching = false;
-  }
 }
 
 function modeButton(label: string, selected: boolean, onClick: () => void) {

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals (#746).
+
 - Provision pinned Host checkouts, check gateway reachability, and support explicit provider egress and repository-scoped GitHub App publication for isolated execution (#706).
 
 - Add the shared Data registry and isolated REST and MCP reads for captured Plan guides and execution timelines. Add resumable HTTP event streaming, verified PostgreSQL import rehearsal, operator-scoped project catalog records, and launcher enrollment and revocation (#706).

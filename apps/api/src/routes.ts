@@ -82,10 +82,7 @@ export const routes: readonly Route[] = [
     query: ['component', 'activity'],
   },
 
-  { path: '/goals', resource: 'goals', operation: 'list' },
-  { path: '/goals/{id}', resource: 'goals', operation: 'read', parameter: 'id' },
-  { path: '/objectives', resource: 'objectives', operation: 'list' },
-  { path: '/objectives/{id}', resource: 'objectives', operation: 'read', parameter: 'id' },
+  ...['goals', 'objectives'].flatMap((resource) => guideRoutes(resource)),
   {
     path: '/executions/{execution}/events',
     resource: 'execution-events',
@@ -94,6 +91,22 @@ export const routes: readonly Route[] = [
     stream: 'timeline',
   },
 ];
+
+function guideRoutes(resource: string): Route[] {
+  const path = '/' + resource;
+  const detail = { resource, parameter: 'id' };
+  return [
+    { path, resource, operation: 'list', query: ['revision', 'search'] },
+    { ...detail, path: path + '/{id}', operation: 'read', query: ['revision', 'fileRevision'] },
+    { ...detail, path: path + '/{id}/revisions', operation: 'revisions' },
+    {
+      ...detail,
+      path: path + '/{id}/changes',
+      operation: 'changes',
+      query: ['revision', 'fileRevision'],
+    },
+  ];
+}
 
 export function matchRoute(path: string, method?: string) {
   for (const route of routes) {

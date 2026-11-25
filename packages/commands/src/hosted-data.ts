@@ -30,6 +30,9 @@ function operations(data: Data, requests: WorkflowRequests, resolve: Resolve) {
     ),
     create: dataOperation(workflowSubmission, workflowReceipt, async (scope, input) => {
       const binding = await caller(scope, resolve);
+      const draft = input.request.command === 'task_plan' ? input.request.draft : undefined;
+      if (draft && draft.revision !== binding.revision)
+        throw new Error('Refresh the project before submitting an edit from a different revision');
       return workflowReceipt.parse(
         await requests.submit(binding, input.id, input.request, binding.revision),
       );

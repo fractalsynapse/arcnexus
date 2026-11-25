@@ -8,33 +8,25 @@ export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] 
 const project = {
   id: 'bound-project',
   remote: 'https://github.com/example/plan.git',
-  revision: 'verified-revision',
+  revision: 'a'.repeat(40),
 };
 
-test('the built Plan requests only visible project guides and loads detail on demand', async (t) => {
+test('the built Plan opens a pinned file through the shared workspace layout', async (t) => {
   const { application, page } = await browserPage(t);
   const requests = await responses(page);
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      'arcnexus.web.layout:/plan/',
-      JSON.stringify({
-        columns: 2,
-        order: [],
-        hidden: ['objectives'],
-        regions: {},
-        widths: [],
-      }),
-    ),
-  );
   await page.goto(application.url);
   await selectProject(page);
-  const goal = page.getByRole('button', { name: 'fixture-goal' });
+  const goal = page.getByRole('link', { name: 'fixture-goal' });
   await goal.waitFor();
   assert.ok(
     !requests.some((path) => path.includes('/objectives') || path.includes('/fixture-goal')),
   );
   await goal.click();
-  await page.getByText('# Verified goal', { exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
+  await page.getByRole('button', { name: 'Expand Content' }).click();
+  assert.equal(await page.getByRole('heading', { name: 'Changes' }).isVisible(), false);
+  await page.getByRole('button', { name: 'Restore Content' }).click();
+  await page.getByRole('heading', { name: 'Changes' }).waitFor();
   assert.ok(
     requests.includes(
       '/api/projects/' + project.id + '/goals/fixture-goal?revision=' + project.revision,
@@ -57,17 +49,24 @@ async function responses(page: Page) {
     const url = new URL(route.request().url());
     requests.push(url.pathname + url.search);
     if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
-    const json =
-      url.pathname === '/api/projects'
-        ? { entries: [project] }
-        : url.pathname.endsWith('/goals')
-          ? { entries: [{ id: 'fixture-goal' }] }
-          : url.pathname.endsWith('/objectives')
-            ? { entries: [] }
-            : { content: '# Verified goal' };
-    return route.fulfill({ json });
+    return route.fulfill({ json: planData(url.pathname) });
   });
   return requests;
+}
+
+const fixtureGoal = { id: 'fixture-goal', path: '.arc/goals/fixture-goal.md', priority: 1 };
+const fixtureContent = '---\npriority: 1\n---\n\n# Verified goal';
+
+function planData(path: string) {
+  if (path === '/api/projects') return { entries: [project] };
+  if (path.endsWith('/current'))
+    return { revision: project.revision, execution: null, active: false };
+  if (path.endsWith('/goals')) return { revision: project.revision, entries: [fixtureGoal] };
+  if (path.endsWith('/objectives')) return { entries: [] };
+  if (path.endsWith('/revisions')) return { revisions: [] };
+  if (path.endsWith('/changes'))
+    return { path: fixtureGoal.path, before: '# Previous', after: '# Verified goal' };
+  return { revision: project.revision, entry: fixtureGoal, content: fixtureContent };
 }
 
 async function selectProject(page: Page) {
@@ -82,6 +81,20 @@ test('the browser keeps native messages and resumes an interrupted event log', a
   const { application, page } = await browserPage(t);
   const cursors: Array<string | undefined> = [];
   await responses(page);
+  await timelineResponses(page, cursors);
+  await page.goto(application.url);
+  await selectProject(page);
+  const timeline = page.getByRole('log', { name: 'Planning events' });
+  await timeline.getByText('Opening café 🛠', { exact: true }).waitFor();
+  await timeline.getByText('1 operation', { exact: true }).click();
+  await timeline.getByText('Passed', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
+  await timeline.getByText('Closing message', { exact: true }).waitFor();
+  assert.equal(await timeline.getByText('Opening café 🛠', { exact: true }).count(), 1);
+  assert.deepEqual(cursors, [undefined, 'cursor-2']);
+});
+
+async function timelineResponses(page: Page, cursors: Array<string | undefined>) {
   await page.route('**/plan-executions/current', (route) =>
     route.fulfill({
       json: { execution: 'retained-plan', revision: project.revision, active: true },
@@ -92,21 +105,20 @@ test('the browser keeps native messages and resumes an interrupted event log', a
     cursors.push(cursor);
     return route.fulfill({
       contentType: 'text/event-stream',
-      body: cursor ? timelineRecord('2', 'Closing message') : timelineRecord('1', 'Opening café 🛠'),
+      body: cursor
+        ? timelineRecord('3', 'Closing message')
+        : timelineRecord('1', 'Opening café 🛠') +
+          timelineFrame('2', { check: { id: 'repository-tests', status: 0 } }),
     });
   });
-  await page.goto(application.url);
-  await selectProject(page);
-  const timeline = page.getByRole('log', { name: 'Planning events' });
-  await timeline.getByText('Opening café 🛠', { exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
-  await timeline.getByText('Closing message', { exact: true }).waitFor();
-  assert.equal(await timeline.getByText('Opening café 🛠', { exact: true }).count(), 1);
-  assert.deepEqual(cursors, [undefined, 'cursor-1']);
-});
+}
 
 function timelineRecord(sequence: string, text: string) {
   const observation = { nativeEvent: { event: { item: { type: 'agent_message', text } } } };
+  return timelineFrame(sequence, observation);
+}
+
+function timelineFrame(sequence: string, observation: object) {
   const data = JSON.stringify({ sequence, timestamp: null, observation });
   return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + data + '\n\n';
 }
@@ -133,6 +145,35 @@ test('the built command dock submits Plan and answers only the retained question
     [
       { id: actions[0]?.receipt, request: { command: 'task_plan' } },
       { gate: 'exact-gate', answer: 'Use the verified baseline.' },
+    ],
+  );
+});
+
+test('Save submits the selected goal revision and exact draft for approval', async (t) => {
+  const { application, page } = await browserPage(t);
+  const actions = await commandResponses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.getByRole('link', { name: fixtureGoal.id }).click();
+  await page.getByRole('checkbox', { name: 'Edit', exact: true }).check();
+  await page.getByRole('button', { name: 'Raw', exact: true }).click();
+  await page.locator('.arc-mdx .cm-content').fill('# Updated measure');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByText('Submitted for approval.').waitFor();
+  assert.deepEqual(
+    actions.map((action) => action.body),
+    [
+      {
+        id: actions[0]?.receipt,
+        request: {
+          command: 'task_plan',
+          draft: {
+            id: fixtureGoal.id,
+            revision: project.revision,
+            content: fixtureContent.replace('\n# Verified goal', '# Updated measure'),
+          },
+        },
+      },
     ],
   );
 });

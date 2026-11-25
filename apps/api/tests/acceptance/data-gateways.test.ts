@@ -82,10 +82,12 @@ test('the REST and MCP adapters expose the same captured goals', async (t) => {
   const goals = await fetch(address + '/goals', { headers });
   assert.equal(goals.status, 200);
   const read = await goals.json();
-  assert.deepEqual(read, {
-    revision,
-    entries: [{ id: 'first', priority: 1, path: '.arc/goals/first.md' }],
-  });
+  assert.equal(read.revision, revision);
+  assert.equal(read.entries.length, 1);
+  assert.equal(read.entries[0].id, 'first');
+  assert.equal(read.entries[0].priority, 1);
+  assert.equal(read.entries[0].path, '.arc/goals/first.md');
+  assert.ok(read.entries[0].updated);
   const spec = await (await fetch(address + '/openapi.json', { headers })).json();
   assert.ok(spec.paths['/projects/{project}/goals']);
   const client = await mcp(context, t);
@@ -95,6 +97,27 @@ test('the REST and MCP adapters expose the same captured goals', async (t) => {
     (await client.callTool({ name: 'list_goals', arguments: {} })).structuredContent,
     read,
   );
+});
+
+test('a Plan file exposes only revisions from the captured guide history', async (t) => {
+  const { context, revision } = await gateway(t);
+  const base = 'http://arc.test/projects/fixture/goals/first';
+  const history = await context.api(
+    new Request(base + '/revisions?revision=' + revision, { headers }),
+  );
+  assert.equal(history.status, 200);
+  const { revisions } = await history.json();
+  assert.equal(revisions[0].revision, revision);
+  const changes = await context.api(
+    new Request(base + '/changes?revision=' + revision, { headers }),
+  );
+  assert.deepEqual(await changes.json(), {
+    path: '.arc/goals/first.md',
+    before: '',
+    after: '---\npriority: 1\n---\n# First goal\n',
+  });
+  const refused = await context.api(new Request(base + '?fileRevision=HEAD', { headers }));
+  assert.equal(refused.status, 409);
 });
 
 test('a REST cursor replays the same committed timeline through MCP', async (t) => {

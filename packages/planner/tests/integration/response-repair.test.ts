@@ -103,3 +103,54 @@ test('Planner holds an unchanged finding despite new transcript filenames', asyn
   await assert.rejects(scenario.run(), AgentActivityHold);
   assert.equal(scenario.requests.length, 2);
 });
+
+test('Planner records the exact goal draft only after the retained approval', async (t) => {
+  const { task, draft } = draftFixture(t);
+  const planner = new Planner({} as Agent);
+  const signal = new AbortController().signal;
+  await assert.rejects(
+    planner.proposeDraft(task, { ...draft, revision: 'stale' }, () => {}, signal),
+    /revision is stale/,
+  );
+  task.ask = async (question) => {
+    assert.match(question, /-Previous outcome/);
+    assert.match(question, /\+Updated outcome/);
+    return undefined;
+  };
+  const propose = () => planner.proposeDraft(task, draft, () => {}, signal);
+  await assert.rejects(propose(), /Review these exact goal changes/);
+  assert.equal(
+    task.observations<{ plannerEdits?: unknown }>().some((event) => event.plannerEdits),
+    false,
+  );
+  task.ask = async () => 'approve';
+  const approved = await propose();
+  assert.ok('milestones' in approved);
+  const observation = task
+    .observations<{ plannerEdits?: { edits: { path: string; content: string }[] } }>()
+    .find((event) => event.plannerEdits);
+  assert.equal(observation?.plannerEdits?.edits[0]?.content, draft.content);
+});
+
+function draftFixture(t: TestContext) {
+  const scenario = new PlannerRepairScenario(t, []);
+  const task = scenario.task;
+  const source = task.capture.source;
+  const path = '.arc/goals/fixture-goal.md';
+  const content = '---\npriority: 1\n---\n\nPrevious outcome\n';
+  Object.assign(source, {
+    paths: [path],
+    read: (requested: string) => {
+      assert.equal(requested, path);
+      return content;
+    },
+  });
+  return {
+    task,
+    draft: {
+      id: 'fixture-goal',
+      revision: source.revision,
+      content: content.replace('Previous', 'Updated'),
+    },
+  };
+}

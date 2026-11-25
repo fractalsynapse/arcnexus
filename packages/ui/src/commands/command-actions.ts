@@ -33,6 +33,7 @@ function answerControl(gate: CommandState['gate'], binding: CommandBinding) {
   if (gate && binding.answer)
     return h(CommandQuestion, {
       key: gate.key,
+      identity: gate.key,
       question: gate.question,
       send: (answer) => binding.answer!(gate.key, answer),
     });

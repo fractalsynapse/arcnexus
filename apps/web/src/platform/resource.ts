@@ -59,7 +59,11 @@ function sharedRead(path: string, token: string) {
 }
 
 /** Fetch only while a visible consumer holds this project-scoped resource. */
-export function useResource<T>(path: string | undefined, token: string | undefined, refresh = 0) {
+export function useResource<T>(
+  path: string | undefined,
+  token: string | undefined,
+  refresh?: unknown,
+) {
   const [state, setState] = useState<Resource<T>>({});
   useEffect(() => {
     if (!path || !token) return;

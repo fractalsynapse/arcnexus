@@ -3,6 +3,7 @@ import { gatewayRequest } from './resource.js';
 
 export interface TimelineFrame {
   sequence: string;
+  run?: number;
   timestamp: string | null;
   observation: unknown;
 }

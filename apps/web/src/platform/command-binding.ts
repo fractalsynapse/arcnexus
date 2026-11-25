@@ -4,6 +4,7 @@ import {
   type CurrentWorkflow,
 } from '../../../../packages/commands/src/browser.js';
 import type { WorkflowRequest } from '../../../../packages/commands/src/request.js';
+import type { GoalDraft } from '../../../../packages/planner/src/goal-draft.js';
 import type {
   CommandBinding,
   CommandRequest,
@@ -69,6 +70,9 @@ class PlatformCommands implements CommandBinding {
 
   /** Send the selected dock instruction using the Commands owner's request variants. */
   submit = (input: CommandRequest) => this.submitWorkflow(launch(input));
+
+  /** Submit the exact, revision-bound goal draft for approval through the same command receipt. */
+  saveGoal = (draft: GoalDraft) => this.submitWorkflow({ command: 'task_plan', draft });
 
   /** Start one refinement round, matching the foreground default. */
   refine = () => this.submitWorkflow({ command: 'refine', rounds: '1' });

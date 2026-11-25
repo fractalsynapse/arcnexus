@@ -3,6 +3,7 @@ import type { Context } from 'cordis';
 import { platformCommandsPlugin } from './command-binding.js';
 import { ConnectionManager } from './connection-manager.js';
 import { planDisplaysPlugin } from './plan-displays.js';
+import { planFilePlugin } from './plan-file-plugin.js';
 import { ProjectManager } from './project-manager.js';
 import { projectName, usePlatformSession } from './session.js';
 import './platform.css';
@@ -25,5 +26,6 @@ export const platformUiPlugin = {
     context.effect(() => context.ui.registerHeaderControl('projects', h(ProjectManager)));
     context.effect(() => context.ui.registerWorkspaceContext(h(WorkspaceProject)));
     await context.use(planDisplaysPlugin);
+    await context.use(planFilePlugin);
   },
 };

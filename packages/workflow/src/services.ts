@@ -22,6 +22,7 @@ export interface TaskInput {
   scope?: string;
   standing?: boolean;
   planning?: 'exploration' | 'objective';
+  goalDraft?: import('../../planner/src/goal-draft.js').GoalDraft;
   architecture?: boolean;
   guide?: string;
   inbox?: { owner: string; question: string };
@@ -239,6 +240,7 @@ export interface WorkflowServices {
     ): Promise<Candidate>;
   };
   planner?: {
+    proposeDraft?: import('../../planner/src/index.js').Planner['proposeDraft'];
     propose(
       session: TaskSession,
       mode: NonNullable<TaskInput['planning']>,

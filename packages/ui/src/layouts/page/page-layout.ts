@@ -16,29 +16,37 @@ interface PageLayoutProps {
 /** Keep every workspace on the same heading, settings and display layout. */
 export function PageLayout({ workspace, path, context }: PageLayoutProps) {
   const page = usePageLayout(workspace, path);
-  const { heading, gear, settings, toggle, title, panels, preferences, close, save } = page;
+  const { heading, gear, settings, toggle, title, label } = page;
   return h(
     'main',
     { className: 'arc-main' },
-    h(PageHeading, { label: workspace.label, title, heading, gear, settings, toggle, context }),
-    settings &&
-      h(PageSettings, {
-        title,
-        panels,
-        preferences,
-        close,
-        save: (value) => {
-          save(value);
-          close();
-        },
-      }),
-    h(
-      'div',
-      { hidden: settings },
-      workspace.content,
-      h(PanelLayout, { panels, preferences, resize: (widths) => save({ ...preferences, widths }) }),
-    ),
+    workspace.breadcrumbs,
+    h(PageHeading, {
+      label,
+      title,
+      heading,
+      gear,
+      settings,
+      toggle,
+      context: workspace.context ?? context,
+    }),
+    settings && h(PageAppearance, { page }),
+    h(PageDisplays, { workspace, page }),
   );
+}
+
+function PageAppearance({ page }: { page: ReturnType<typeof usePageLayout> }) {
+  const { title, panels, preferences, close, save } = page;
+  return h(PageSettings, {
+    title,
+    panels,
+    preferences,
+    close,
+    save: (value) => {
+      save(value);
+      close();
+    },
+  });
 }
 
 function usePageLayout(workspace: Workspace, path: string) {
@@ -46,7 +54,8 @@ function usePageLayout(workspace: Workspace, path: string) {
   const gear = useRef<HTMLButtonElement>(null);
   const [settings, open] = useState(false);
   const [preferences, update] = useState(() => loadLayout(workspace));
-  usePageFocus(heading, workspace.label, path);
+  const label = workspace.title?.(path) ?? workspace.label;
+  usePageFocus(heading, label, path);
   const close = () => {
     open(false);
     gear.current?.focus({ preventScroll: true });
@@ -57,6 +66,7 @@ function usePageLayout(workspace: Workspace, path: string) {
   };
   return {
     title: workspace.label + ' page settings',
+    label,
     panels: workspace.displays ?? [],
     heading,
     gear,
@@ -78,4 +88,25 @@ function usePageFocus(
     heading.current?.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }, [heading, label, path]);
+}
+
+function PageDisplays({
+  workspace,
+  page,
+}: {
+  workspace: Workspace;
+  page: ReturnType<typeof usePageLayout>;
+}) {
+  const { settings, panels, preferences, save } = page;
+  return h(
+    'div',
+    { hidden: settings },
+    workspace.content,
+    h(PanelLayout, {
+      workspace: workspace.path,
+      panels,
+      preferences,
+      resize: (widths) => save({ ...preferences, widths }),
+    }),
+  );
 }

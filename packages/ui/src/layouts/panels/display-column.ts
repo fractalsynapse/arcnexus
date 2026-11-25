@@ -8,17 +8,19 @@ export function DisplayColumn({
   active,
   preferences,
   column,
+  workspace,
 }: {
   active: readonly DisplayRegistration[];
   preferences: PagePreferences;
   column: number;
+  workspace: string;
 }) {
   return h(
     'div',
     { className: 'arc-layout-column' },
     active.map((panel, order) =>
-      panelColumn(panel, preferences) === column
-        ? h(DisplayPanel, { key: panel.id, panel, order })
+      !panel.fullWidth && panelColumn(panel, preferences) === column
+        ? h(DisplayPanel, { key: panel.id, panel, order, workspace })
         : null,
     ),
   );

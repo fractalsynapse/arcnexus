@@ -14,13 +14,22 @@ const reference = z.strictObject({
   execution: z.string(),
   revision: z.string(),
   active: z.boolean(),
+  startedAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
 });
 const currentSchema = z.strictObject({
   execution: z.string().nullable(),
   revision: z.string().nullable(),
   active: z.boolean(),
+  startedAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
 });
-const outcomeSchema = reference.extend({ outcome: z.unknown().nullable() });
+const outcomeSchema = reference.extend({
+  outcome: z.unknown().nullable(),
+  changedPaths: z.array(z.string()),
+  issue: z.string().optional(),
+  pull: z.object({ url: z.string(), state: z.string().optional() }).optional(),
+});
 const metrics = z
   .object({
     wallElapsedMs: z.number().nullable(),
@@ -35,20 +44,11 @@ function projections(database: Client, resolve: ResolveJournalProject) {
   const load = (scope: DataScope, execution: string) =>
     planEvents(database, remoteFor, scope, execution);
   return {
-    current: dataOperation(
-      z.strictObject({}),
-      currentSchema,
-      async (scope) =>
-        (await readPlanReference(database, await remoteFor(scope))) ?? {
-          execution: null,
-          revision: null,
-          active: false,
-        },
-    ),
+    current: currentPlan(database, remoteFor),
     outcome: dataOperation(selection, outcomeSchema, async (scope, { execution }) => {
       const { task, events } = await load(scope, execution);
       const outcome = lastOutcome(events, execution);
-      return { ...task, outcome };
+      return { ...task, outcome, ...guideChanges(events) };
     }),
     'tool-counts': dataOperation(selection, toolCountsSchema, async (scope, { execution }) =>
       frequencies((await load(scope, execution)).events),
@@ -58,6 +58,32 @@ function projections(database: Client, resolve: ResolveJournalProject) {
       return measured(events, execution);
     }),
   };
+}
+
+type PlanEvidence = {
+  issue?: string;
+  publication?: { issue?: string };
+  publicationObserved?: { pull?: { url: string; state?: string } | null };
+  publicationVerification?: { pr?: string };
+  plannerEdits?: { edits: { path: string }[] };
+  editReceipt?: { path: string };
+};
+
+function guideChanges(events: JournalEvent[]) {
+  const changed = new Set<string>();
+  let issue: string | undefined;
+  let pull: { url: string; state?: string } | undefined;
+  for (const { observation } of events) {
+    const event = observation as PlanEvidence | null;
+    if (!event) continue;
+    issue = event.publication?.issue ?? event.issue ?? issue;
+    pull = event.publicationObserved?.pull ?? pull;
+    if (!pull && event.publicationVerification?.pr)
+      pull = { url: event.publicationVerification.pr };
+    if (event.editReceipt) changed.add(event.editReceipt.path);
+    for (const edit of event.plannerEdits?.edits ?? []) changed.add(edit.path);
+  }
+  return { changedPaths: [...changed], issue: typeof issue === 'string' ? issue : undefined, pull };
 }
 
 async function projectFor(resolve: ResolveJournalProject, scope: DataScope) {
@@ -108,4 +134,19 @@ export function planExecutionDataPlugin(database: Client, resolve: ResolveJourna
       );
     },
   };
+}
+
+function currentPlan(database: Client, remoteFor: (scope: DataScope) => Promise<string>) {
+  return dataOperation(
+    z.strictObject({}),
+    currentSchema,
+    async (scope) =>
+      (await readPlanReference(database, await remoteFor(scope))) ?? {
+        execution: null,
+        revision: null,
+        active: false,
+        startedAt: null,
+        updatedAt: null,
+      },
+  );
 }

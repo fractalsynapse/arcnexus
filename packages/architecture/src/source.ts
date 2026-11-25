@@ -5,6 +5,13 @@ export interface ProjectSource extends GuidanceSource {
   readonly root: string;
   readonly revision: string;
   readonly remote: string;
+  fileHistory?(path: string): FileHistory;
+  fileDates?(directory: string): ReadonlyMap<string, string>;
+}
+
+interface FileHistory {
+  revisions: readonly { revision: string; updated: string }[];
+  read(revision: string): string;
 }
 
 /** Open a fixed Git tree without consulting the worktree or contacting the remote. */
@@ -27,12 +34,53 @@ export function openProject(directory: string, requested = 'HEAD'): ProjectSourc
     revision,
     remote,
     paths,
-    /** Read an exact repository-relative path from the captured commit. */
-    read(path: string) {
-      if (!byPath.has(path)) throw new Error(`Missing from captured project: ${path}`);
+    ...capturedFiles(root, revision, byPath),
+  });
+}
+
+/** Read the last change for each path in a collection with one Git command. */
+function capturedFileDates(root: string, revision: string, directory: string) {
+  const args = ['--format=%x1f%cI', '--diff-filter=AMRT', '--name-only', '-z'];
+  const records = git(root, '--literal-pathspecs', 'log', ...args, revision, '--', directory);
+  let date = '';
+  const dates = new Map<string, string>();
+  for (const record of records.split('\0')) {
+    if (record.startsWith('\x1f')) date = record.slice(1);
+    else if (record && date) {
+      const path = record.replace(/^\n/, '');
+      if (!dates.has(path)) dates.set(path, date);
+    }
+  }
+  return dates;
+}
+
+/** Read only the file revisions reachable from this captured tree. */
+function capturedHistory(root: string, capture: string, path: string): FileHistory {
+  const revisions = git(
+    root,
+    '--literal-pathspecs',
+    'log',
+    '--diff-filter=AMRT',
+    '--format=%H%x09%cI',
+    capture,
+    '--',
+    path,
+  )
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [revision, updated] = line.split('\t') as [string, string];
+      return { revision, updated };
+    });
+  return {
+    revisions,
+    read(revision) {
+      if (!revisions.some((entry) => entry.revision === revision))
+        throw new Error('File revision unavailable at the captured revision');
       return git(root, 'show', `${revision}:${path}`);
     },
-  });
+  };
 }
 
 /** Run a local read and expose failures without leaking command output or credentials. */
@@ -48,4 +96,19 @@ function git(directory: string, ...args: string[]): string {
   } catch {
     throw new Error(`Cannot read Git project (${args[0]} ${args[1] ?? ''}) from ${directory}`);
   }
+}
+
+function capturedFiles(root: string, revision: string, byPath: ReadonlySet<string>) {
+  return {
+    /** Read an exact repository-relative path from the captured commit. */
+    read(path: string) {
+      if (!byPath.has(path)) throw new Error(`Missing from captured project: ${path}`);
+      return git(root, 'show', `${revision}:${path}`);
+    },
+    fileHistory(path: string) {
+      if (!byPath.has(path)) throw new Error(`Missing from captured project: ${path}`);
+      return capturedHistory(root, revision, path);
+    },
+    fileDates: (directory: string) => capturedFileDates(root, revision, directory),
+  };
 }

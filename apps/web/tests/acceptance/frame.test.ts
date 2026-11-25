@@ -283,7 +283,11 @@ test('page settings save layout and panel placement, while plugin contributions 
   await page.reload();
   await page.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
   assert.equal(
-    await page.locator('.arc-layout-column').nth(2).getByText('Planner outcome').count(),
+    await page
+      .locator('.arc-layout-column')
+      .nth(2)
+      .getByRole('heading', { name: 'Planner outcome' })
+      .count(),
     1,
   );
   await assertMobilePanelOrder(page);
@@ -295,11 +299,11 @@ async function assertMobilePanelOrder(page: Page) {
   assert.deepEqual(
     await page.locator('.arc-display').evaluateAll((panels) =>
       panels
-        .map((panel) => [panel.textContent?.trim(), panel.getBoundingClientRect().top])
+        .map((panel) => [panel.querySelector('h2')?.textContent, panel.getBoundingClientRect().top])
         .sort((left, right) => Number(left[1]) - Number(right[1]))
         .map(([label]) => label),
     ),
-    ['Planner outcomeFixture outcome', 'Planning data'],
+    ['Planner outcome', 'Planning data'],
   );
 }
 

@@ -12,7 +12,8 @@ import {
   type VerifiedGoalRun,
 } from '../../execution/src/index.js';
 import type { TaskInput, TaskObserver, TaskSession } from '../../workflow/src/index.js';
-import { goalInventory } from './inventory.js';
+import { goalInventory, readGoal } from './inventory.js';
+import type { GoalDraft } from './goal-draft.js';
 import { plannerAssignment, pathForGoal } from './assignment.js';
 import { decodeProposal, type Proposal } from './proposal.js';
 import {
@@ -50,6 +51,35 @@ interface ApprovedEdits {
 export class Planner {
   /** Use the application's Agent service for every Planner proposal and refinement. */
   constructor(private readonly agent: Context['agent']) {}
+
+  /** Submit the operator's exact goal bytes through the existing approval and delivery path. */
+  async proposeDraft(
+    session: TaskSession,
+    draft: GoalDraft,
+    progress: TaskObserver['progress'],
+    signal: AbortSignal,
+  ) {
+    const task = hostTask(session);
+    const { source } = task.capture;
+    if (source.revision !== draft.revision) throw new Error('The selected goal revision is stale');
+    readGoal(draft.id, draft.content);
+    const path = pathForGoal(task, draft.id);
+    const before = source.read(path);
+    if (before === draft.content) return planned(task, 'The goal is unchanged.', []);
+    const proposed = [{ path, before, content: draft.content }];
+    const edits = await this.approve(
+      task,
+      new Clarifications(task, selection, signal),
+      proposed,
+      progress,
+    );
+    if (!edits.length) return planned(task, 'The goal edit was declined.', []);
+    const report = task.store('goal-draft.diff', showPatch(edits));
+    task.note({
+      plannerEdits: { edits: edits.map(toCheckedEdit), report } satisfies ApprovedEdits,
+    });
+    return deliveryPlan(task, edits, report);
+  }
 
   /** Report a mapping, or use the shared task lane to deliver its approved records. */
   async propose(

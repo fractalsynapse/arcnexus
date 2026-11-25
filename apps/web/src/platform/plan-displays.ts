@@ -1,47 +1,30 @@
 import { EventDisplay } from './event-display.js';
-import { PlanDisplay, type PlanReadout } from './plan-display.js';
+import { PlanDisplay } from './plan-display.js';
+import { GuideDisplay } from './guide-display.js';
 import { createElement as h } from 'react';
 import type { Context } from 'cordis';
-import { GuideDisplay, type GuideKind } from './guide-display.js';
-
-const guides: Array<{ id: GuideKind; label: string }> = [
-  { id: 'objectives', label: 'Objectives' },
-  { id: 'goals', label: 'Goals' },
-];
-
-const readouts: Array<{ id: PlanReadout; label: string; defaultColumn?: number }> = [
-  { id: 'metrics', label: 'Planner metrics' },
-  { id: 'outcome', label: 'Planner outcome', defaultColumn: 1 },
-];
 
 export const planDisplaysPlugin = {
   inject: ['ui', 'webCommands'],
   /** Register the independent Plan data displays with the shared workspace. */
   apply(context: Context) {
-    for (const { id, label, defaultColumn } of readouts)
-      context.effect(() =>
-        context.ui.registerDisplay('/plan/', {
-          id,
-          label,
-          defaultColumn,
-          content: h(PlanDisplay, { kind: id }),
-        }),
-      );
-    context.effect(() =>
-      context.ui.registerDisplay('/plan/', {
-        id: 'events',
-        label: 'Event log',
-        content: h(EventDisplay, { binding: context.webCommands }),
+    const binding = context.webCommands;
+    const displays = [
+      {
+        id: 'metrics',
+        label: 'Planner metrics',
+        content: h(PlanDisplay, { kind: 'metrics', binding }),
+      },
+      {
+        id: 'outcome',
+        label: 'Planner outcome',
+        content: h(PlanDisplay, { kind: 'outcome', binding }),
         defaultColumn: 1,
-      }),
-    );
-    for (const { id, label } of guides)
-      context.effect(() =>
-        context.ui.registerDisplay('/plan/', {
-          id,
-          label,
-          content: h(GuideDisplay, { kind: id }),
-        }),
-      );
+      },
+      { id: 'files', label: 'Files', content: h(GuideDisplay, { binding }) },
+      { id: 'events', label: 'Event log', content: h(EventDisplay, { binding }), defaultColumn: 1 },
+    ];
+    for (const display of displays)
+      context.effect(() => context.ui.registerDisplay('/plan/', display));
   },
 };
