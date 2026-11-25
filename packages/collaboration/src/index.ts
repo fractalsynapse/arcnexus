@@ -274,7 +274,6 @@ ${marker}`,
     if (
       review === 'CHANGES_REQUESTED' ||
       review === 'REVIEW_REQUIRED' ||
-      initial.failed ||
       !successfulChecks(initial)
     )
       return { ...initial, review, reviewCurrent: false, confirmationChanged: false };
@@ -294,11 +293,12 @@ ${marker}`,
       suites: initial.suites,
     });
     const ready = successfulChecks(confirmed);
-    const changed = confirmationChanged(initial, confirmed, ready);
-    const reviewCurrent =
-      ready && !confirmed.failed && !changed && confirmed.progress.suites.size === 0;
+    // Preserve terminal failures observed after review, even when the provider reread is green.
+    const failed = confirmed.failed ?? confirmed.progress.failure;
+    const changed = !failed && confirmationChanged(initial, confirmed, ready);
+    const reviewCurrent = ready && !failed && !changed && confirmed.progress.suites.size === 0;
     if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
-    return { ...confirmed, reviewCurrent, confirmationChanged: changed };
+    return { ...confirmed, failed, reviewCurrent, confirmationChanged: changed };
   }
 
   /** Retain the observed PR even when it conflicts with captured publication identity. */

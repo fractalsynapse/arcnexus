@@ -119,7 +119,7 @@ function stableCheckRead(
     suites,
     pendingSuites: pendingSuiteIds(suites),
     progress,
-    failed: progress.failure ?? observedCIFailure({ ...snapshot, suites }),
+    failed: observedCIFailure({ ...snapshot, suites }),
   };
 }
 
