@@ -79,32 +79,32 @@ export async function readGitHubChecks(
   let inventory = await suiteInventory(read, scope.ref, head);
   observe.suites(inventory, 'initial');
   let previous = prior;
-  let reread = false;
+  const progressedSuites = new Set<number>();
   for (;;) {
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
     if (!stable) observe.earlier(snapshot.observedChecks, inventory);
     observe.suites(current, 'subsequent');
-    if (stable) return stableCheckRead(snapshot, current, reread);
-    if (!suiteProgress(inventory, current, snapshot.observedChecks))
-      throw new Error('GitHub check suite inventory changed during CI observation');
+    if (stable) return stableCheckRead(snapshot, current, progressedSuites);
+    const progressed = suiteProgress(inventory, current, snapshot.observedChecks);
+    if (!progressed) throw new Error('GitHub check suite inventory changed during CI observation');
+    for (const id of progressed) progressedSuites.add(id);
     inventory = current;
     previous = snapshot.observedChecks;
-    reread = true;
   }
 }
 
 function stableCheckRead(
   snapshot: Awaited<ReturnType<typeof readChecks>>,
   suites: ProviderCheckSuite[],
-  reread: boolean,
+  progressedSuites: ReadonlySet<number>,
 ) {
   return {
     ...snapshot,
     suites,
     pendingSuites: suites.filter(suitePending).map(({ id }) => id),
-    reread,
+    progressedSuites,
   };
 }
 

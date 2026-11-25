@@ -291,14 +291,14 @@ ${marker}`,
       suites: initial.suites,
     });
     const ready = successfulChecks(confirmed);
-    const changed = ready && checkSnapshot(initial) !== checkSnapshot(confirmed);
-    if (changed && !confirmed.reread)
+    const progressed = confirmed.progressedSuites;
+    if (ready && checkSnapshot(initial, progressed) !== checkSnapshot(confirmed, progressed))
       throw new GitHubPullReadFailure(
         'CI confirmation',
         evidence,
         new Error('GitHub CI changed during review'),
       );
-    const reviewCurrent = ready && !changed;
+    const reviewCurrent = ready && progressed.size === 0;
     if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
     return { ...confirmed, reviewCurrent };
   }

@@ -299,21 +299,39 @@ for (const activeAt of [1, 2]) {
   });
 }
 
-test('a suite that starts and finishes during confirmation requires a fresh review', async (t) => {
-  let inventories = 0;
-  let reviews = 0;
-  const scenario = new ProviderResults(t, (args) => {
-    if (args[1] === 'graphql') reviews++;
-    if (args[1]?.endsWith('/status')) return readyResponse(args);
-    if (args[1]?.endsWith('/check-suites') && ++inventories === 4)
-      return completedSuiteGrowth(args, true)
-        .replace('"status":"completed"', '"status":"in_progress"')
-        .replace('"conclusion":"success"', '"conclusion":null');
-    return completedSuiteGrowth(args, inventories < 5);
+for (const coverage of ['grows', 'matches', 'unrelated status changes']) {
+  test(`a suite restarts during confirmation and coverage ${coverage}`, async (t) => {
+    let inventories = 0;
+    let reviews = 0;
+    const scenario = new ProviderResults(t, (args) => {
+      if (args[1] === 'graphql') reviews++;
+      if (args[1]?.endsWith('/status')) {
+        const changed = coverage === 'unrelated status changes' && inventories >= 4;
+        const status = {
+          context: 'CI',
+          state: 'success',
+          target_url: changed ? 'https://example.com/replaced' : null,
+        };
+        return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
+      }
+      if (args[1]?.endsWith('/check-suites') && ++inventories === 4)
+        return completedSuiteGrowth(args, true)
+          .replace('"status":"completed"', '"status":"in_progress"')
+          .replace('"conclusion":"success"', '"conclusion":null');
+      return completedSuiteGrowth(args, inventories < 5 || coverage === 'matches');
+    });
+    if (coverage === 'unrelated status changes') {
+      await assert.rejects(
+        scenario.provider.verify(pr, head, 'staging'),
+        /CI changed during review/,
+      );
+      assert.equal(reviews, 1);
+      return;
+    }
+    await scenario.provider.verify(pr, head, 'staging');
+    assert.equal(reviews, 2);
   });
-  await scenario.provider.verify(pr, head, 'staging');
-  assert.equal(reviews, 2);
-});
+}
 
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {

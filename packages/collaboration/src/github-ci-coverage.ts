@@ -36,27 +36,32 @@ export function suiteProgress(
   current: ProviderCheckSuite[],
   checks: readonly ProviderCheck[],
 ) {
-  if (!hasCIObservations({ checks, suites: previous })) return true;
-  if (previous.length !== current.length) return false;
+  if (!hasCIObservations({ checks, suites: previous })) return current.map(({ id }) => id);
+  if (previous.length !== current.length) return;
   const byId = new Map(current.map((item) => [item.id, item]));
-  return previous.every((before) => {
+  const progressed: number[] = [];
+  for (const before of previous) {
     const after = byId.get(before.id);
-    if (!after) return false;
-    if (JSON.stringify(before) === JSON.stringify(after)) return true;
-    const oldCount = before.latest_check_runs_count ?? 0;
-    const newCount = after.latest_check_runs_count ?? 0;
-    if (newCount < oldCount) return false;
-    if (before.status === 'completed') return suitePending(after);
-    if (!suitePending(before)) return false;
-    return (
-      after.status === 'completed' ||
-      (before.status !== 'in_progress' && after.status === 'in_progress') ||
-      (after.status === 'queued' &&
-        before.status !== 'queued' &&
-        before.status !== 'in_progress') ||
-      (before.status === after.status && newCount > oldCount)
-    );
-  });
+    if (!after) return;
+    if (JSON.stringify(before) === JSON.stringify(after)) continue;
+    if (!suiteAdvanced(before, after)) return;
+    progressed.push(before.id);
+  }
+  return progressed;
+}
+
+function suiteAdvanced(before: ProviderCheckSuite, after: ProviderCheckSuite) {
+  const oldCount = before.latest_check_runs_count ?? 0;
+  const newCount = after.latest_check_runs_count ?? 0;
+  if (newCount < oldCount) return false;
+  if (before.status === 'completed') return suitePending(after);
+  if (!suitePending(before)) return false;
+  return (
+    after.status === 'completed' ||
+    (before.status !== 'in_progress' && after.status === 'in_progress') ||
+    (after.status === 'queued' && before.status !== 'queued' && before.status !== 'in_progress') ||
+    (before.status === after.status && newCount > oldCount)
+  );
 }
 
 /** Identify an explicit provider suite failure even when no job was created. */
@@ -71,9 +76,13 @@ export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
-export function checkSnapshot(snapshot: ProviderCISnapshot) {
-  const checks = snapshot.checks.map((check) => JSON.stringify(check)).sort();
-  return JSON.stringify([checks, suiteSnapshot(snapshot.suites)]);
+export function checkSnapshot(snapshot: ProviderCISnapshot, progressed?: ReadonlySet<number>) {
+  const checks = snapshot.checks
+    .filter(({ suiteId }) => suiteId == null || !progressed?.has(suiteId))
+    .map((check) => JSON.stringify(check))
+    .sort();
+  const suites = snapshot.suites.filter(({ id }) => !progressed?.has(id));
+  return JSON.stringify([checks, suiteSnapshot(suites)]);
 }
 
 /** Retain distinct raw CI observations even when a later poll is unavailable. */
