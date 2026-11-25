@@ -276,26 +276,28 @@ test('the last actual poll governs growth when its log snapshot is a duplicate',
   );
 });
 
-test('observed new activity permits growth after an earlier completed poll', async (t) => {
-  let polls = 0;
-  let newInventories = 0;
-  const scenario = new ProviderResults(t, (args) => {
-    if (args[1]?.endsWith('/pulls/99')) polls++;
-    if (args[1]?.endsWith('/status')) return readyResponse(args);
-    if (polls === 1 && args[1] === 'graphql')
-      return readyResponse(args).replace(
-        '"reviewDecision":null',
-        '"reviewDecision":"REVIEW_REQUIRED"',
-      );
-    if (polls > 1 && args[1]?.endsWith('/check-suites') && ++newInventories === 1)
-      return completedSuiteGrowth(args, true)
-        .replace('"status":"completed"', '"status":"in_progress"')
-        .replace('"conclusion":"success"', '"conclusion":null');
-    return completedSuiteGrowth(args, polls === 1 || newInventories < 2);
+for (const activeAt of [1, 2]) {
+  test(`observed new activity on inventory read ${activeAt} permits growth`, async (t) => {
+    let polls = 0;
+    let newInventories = 0;
+    const scenario = new ProviderResults(t, (args) => {
+      if (args[1]?.endsWith('/pulls/99')) polls++;
+      if (args[1]?.endsWith('/status')) return readyResponse(args);
+      if (polls === 1 && args[1] === 'graphql')
+        return readyResponse(args).replace(
+          '"reviewDecision":null',
+          '"reviewDecision":"REVIEW_REQUIRED"',
+        );
+      if (polls > 1 && args[1]?.endsWith('/check-suites') && ++newInventories === activeAt)
+        return completedSuiteGrowth(args, true)
+          .replace('"status":"completed"', '"status":"in_progress"')
+          .replace('"conclusion":"success"', '"conclusion":null');
+      return completedSuiteGrowth(args, polls === 1 || newInventories <= activeAt);
+    });
+    await scenario.provider.verify(pr, head, 'staging');
+    assert(newInventories > activeAt);
   });
-  await scenario.provider.verify(pr, head, 'staging');
-  assert(newInventories > 2);
-});
+}
 
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {

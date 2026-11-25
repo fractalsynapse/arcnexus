@@ -30,7 +30,7 @@ export function suitePending({ status }: ProviderCheckSuite) {
   return pendingCheckStatuses.some((pending) => pending === status);
 }
 
-/** Reread when an existing active suite advances or registers more expected runs. */
+/** Reread when a completed suite restarts or an active suite advances. */
 export function suiteProgress(
   previous: ProviderCheckSuite[],
   current: ProviderCheckSuite[],
@@ -43,10 +43,11 @@ export function suiteProgress(
     const after = byId.get(before.id);
     if (!after) return false;
     if (JSON.stringify(before) === JSON.stringify(after)) return true;
-    if (!suitePending(before)) return false;
     const oldCount = before.latest_check_runs_count ?? 0;
     const newCount = after.latest_check_runs_count ?? 0;
     if (newCount < oldCount) return false;
+    if (before.status === 'completed') return suitePending(after);
+    if (!suitePending(before)) return false;
     return (
       after.status === 'completed' ||
       (before.status !== 'in_progress' && after.status === 'in_progress') ||
