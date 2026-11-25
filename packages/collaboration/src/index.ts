@@ -247,11 +247,7 @@ ${marker}`,
 
     const confirmed = await this.checks(evidence, 'confirmedChecks', initial.suites);
     const ready = successfulChecks(confirmed);
-    if (
-      ready &&
-      (checkSnapshot(initial.checks) !== checkSnapshot(confirmed.checks) ||
-        suiteSnapshot(initial.suites) !== suiteSnapshot(confirmed.suites))
-    )
+    if (ready && checkSnapshot(initial) !== checkSnapshot(confirmed))
       throw new GitHubPullReadFailure(
         'CI confirmation',
         evidence,
@@ -471,19 +467,16 @@ function recordEarlierChecks(
 ) {
   const earlier = (evidence.earlierChecks ??= []);
   const previous = earlier.findLast((item) => item.phase === phase);
-  if (
-    !previous ||
-    checkSnapshot(previous.checks) !== checkSnapshot(checks) ||
-    suiteSnapshot(previous.suites) !== suiteSnapshot(suites)
-  )
+  if (!previous || checkSnapshot(previous) !== checkSnapshot({ checks, suites }))
     earlier.push({ phase, checks, suites });
 }
 
-function checkSnapshot(checks: readonly ProviderCheck[]) {
-  return checks
-    .map((check) => JSON.stringify(check))
-    .sort()
-    .join('\n');
+function checkSnapshot(snapshot: {
+  checks: readonly ProviderCheck[];
+  suites: readonly ProviderCheckSuite[];
+}) {
+  const checks = snapshot.checks.map((check) => JSON.stringify(check)).sort();
+  return JSON.stringify([checks, suiteSnapshot(snapshot.suites)]);
 }
 
 /** Use only the first line of the goal as the provider title. */

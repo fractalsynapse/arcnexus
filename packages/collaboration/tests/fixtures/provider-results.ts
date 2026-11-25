@@ -56,23 +56,19 @@ export const successfulRun = {
   details_url: 'https://github.com/example/project/actions/runs/7/job/42',
 };
 
+const emptySuite = {
+  head_sha: head,
+  status: 'completed',
+  conclusion: 'success',
+  latest_check_runs_count: 0,
+};
+
 export function readyResponse(args: string[]) {
   switch (args[1]) {
     case repository + '/pulls/99':
       return JSON.stringify(restPull);
     case repository + '/commits/' + head + '/check-suites':
-      return JSON.stringify({
-        total_count: 1,
-        check_suites: [
-          {
-            id: 5,
-            head_sha: head,
-            status: 'completed',
-            conclusion: 'success',
-            latest_check_runs_count: 0,
-          },
-        ],
-      });
+      return JSON.stringify({ total_count: 1, check_suites: [{ id: 5, ...emptySuite }] });
     case repository + '/commits/' + head + '/check-runs?filter=latest':
     case repository + '/commits/' + head + '/check-runs?filter=all':
       return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
@@ -137,10 +133,7 @@ function suiteState(completed: boolean) {
 
 export const suites = Array.from({ length: 1001 }, (_, index) => ({
   id: index + 1,
-  head_sha: head,
-  status: 'completed',
-  conclusion: 'success',
-  latest_check_runs_count: 0,
+  ...emptySuite,
 }));
 
 export function suiteResponse(args: string[], resolve: (id: string) => unknown) {
