@@ -1,13 +1,39 @@
 import type { ProviderCheck } from './check-failure.js';
 import type { ProviderCheckSuite } from './github-checks.js';
+import type { GitHubPullObservation } from './github-pull.js';
 
 export interface ProviderCISnapshot {
   checks: readonly ProviderCheck[];
   suites: readonly ProviderCheckSuite[];
 }
 
+export interface CIObserver {
+  checks(checks: readonly ProviderCheck[]): void;
+  observedChecks(checks: readonly ProviderCheck[]): void;
+  suites(suites: readonly ProviderCheckSuite[]): void;
+  earlier(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
+}
+
 export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
+}
+
+export function checkSnapshot(snapshot: ProviderCISnapshot) {
+  const checks = snapshot.checks.map((check) => JSON.stringify(check)).sort();
+  return JSON.stringify([checks, suiteSnapshot(snapshot.suites)]);
+}
+
+/** Retain distinct raw CI observations even when a later poll is unavailable. */
+export function recordEarlierChecks(
+  evidence: GitHubPullObservation,
+  phase: 'CI checks' | 'CI confirmation',
+  checks: readonly ProviderCheck[],
+  suites: readonly ProviderCheckSuite[],
+) {
+  const earlier = (evidence.earlierChecks ??= []);
+  const previous = earlier.findLast((item) => item.phase === phase);
+  if (!previous || checkSnapshot(previous) !== checkSnapshot({ checks, suites }))
+    earlier.push({ phase, checks, suites });
 }
 
 /** Retain each observed suite and its expected run coverage across separate reads. */

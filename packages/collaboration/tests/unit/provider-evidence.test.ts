@@ -325,6 +325,28 @@ for (const reportedRuns of [undefined, 1]) {
   });
 }
 
+test('CI confirmation retains all prior attempts after identifying a successful rerun', async (t) => {
+  let reviewing = false;
+  const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+  const old = { ...current, id: 41, conclusion: 'failure' };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviewing = true;
+    if (args[1]?.includes('/check-runs?filter=latest'))
+      return JSON.stringify({ total_count: 1, check_runs: [current] });
+    if (args[1]?.includes('/check-runs?filter=all')) {
+      const runs = reviewing ? [current] : [old, current];
+      return JSON.stringify({ total_count: runs.length, check_runs: runs });
+    }
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+    assert(failure instanceof GitHubPullReadFailure);
+    assert.equal(failure.read, 'CI confirmation');
+    assert.match(failure.message, /omitted previously observed check run 41/);
+    return true;
+  });
+});
+
 test('a failed suite blocks delivery even when the provider supplies no job', async (t) => {
   let inventories = 0;
   const scenario = new ProviderResults(t, (args) => {

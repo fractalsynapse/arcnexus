@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
-import { requireRetainedChecks, suiteSnapshot } from './github-ci-coverage.js';
+import { requireRetainedChecks, suiteSnapshot, type CIObserver } from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
@@ -58,18 +58,12 @@ const gitHubRefCheckSuiteCoverage = 1000;
 
 export type ProviderCheckSuite = z.output<typeof suite>;
 
-interface CheckObserver {
-  checks(checks: readonly ProviderCheck[]): void;
-  suites(suites: readonly ProviderCheckSuite[]): void;
-  earlier(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
-}
-
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
 export async function readGitHubChecks(
   read: Read,
   repository: string,
   head: string,
-  observe: CheckObserver,
+  observe: CIObserver,
   prior: readonly ProviderCheck[] = [],
 ) {
   const repo = `repos/${repository}`;
@@ -78,21 +72,21 @@ export async function readGitHubChecks(
   observe.suites(inventory);
   let previous = prior;
   for (;;) {
-    const combined = await readChecks(read, scope, inventory, observe.checks, previous);
+    const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
-    if (!stable) observe.earlier(combined, inventory);
+    if (!stable) observe.earlier(snapshot.observedChecks, inventory);
     observe.suites(current);
     if (stable)
       return {
-        checks: combined,
+        ...snapshot,
         suites: current,
         pendingSuites: current.filter(suitePending).map(({ id }) => id),
       };
     if (!suiteProgress(inventory, current))
       throw new Error('GitHub check suite inventory changed during CI observation');
     inventory = current;
-    previous = combined;
+    previous = snapshot.observedChecks;
   }
 }
 
@@ -101,15 +95,17 @@ async function readChecks(
   read: Read,
   { repo, ref, head }: { repo: string; ref: string; head: string },
   inventory: ProviderCheckSuite[],
-  observe: CheckObserver['checks'],
+  observe: CIObserver,
   previous: readonly ProviderCheck[],
 ) {
-  const { checks, runs } = await checkRuns(read, repo, ref, head, inventory, observe);
+  const { checks, runs } = await checkRuns(read, repo, ref, head, inventory, observe.checks);
   const statuses = await readGitHubStatuses(read, ref, head);
-  const combined: ProviderCheck[] = [...checks, ...statuses];
-  observe(combined);
+  const observedChecks: ProviderCheck[] = [...runs.map(normalizeRun), ...statuses];
+  const current: ProviderCheck[] = [...checks, ...statuses];
+  observe.observedChecks(observedChecks);
+  observe.checks(current);
   requireRetainedChecks(runs, statuses, previous);
-  return combined;
+  return { checks: current, observedChecks };
 }
 
 function suitePending({ status }: ProviderCheckSuite) {

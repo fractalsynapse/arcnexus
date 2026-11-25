@@ -5,8 +5,9 @@ import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import { readGitHubChecks, suiteFailure, type ProviderCheckSuite } from './github-checks.js';
 import {
+  checkSnapshot,
+  recordEarlierChecks,
   requireRetainedSuites,
-  suiteSnapshot,
   type ProviderCISnapshot,
 } from './github-ci-coverage.js';
 import {
@@ -219,7 +220,7 @@ ${marker}`,
       recordEarlierChecks(
         evidence,
         evidence.confirmedChecks ? 'CI confirmation' : 'CI checks',
-        checks,
+        facts.observedChecks,
         suites,
       );
       earlierChecks = evidence.earlierChecks;
@@ -245,7 +246,8 @@ ${marker}`,
     )
       return { ...initial, review };
 
-    const confirmed = await this.checks(evidence, 'confirmedChecks', initial);
+    const { observedChecks: checks, suites } = initial;
+    const confirmed = await this.checks(evidence, 'confirmedChecks', { checks, suites });
     const ready = successfulChecks(confirmed);
     if (ready && checkSnapshot(initial) !== checkSnapshot(confirmed))
       throw new GitHubPullReadFailure(
@@ -287,6 +289,7 @@ ${marker}`,
   ) {
     const read = slot === 'checks' ? 'CI checks' : 'CI confirmation';
     const suites = slot === 'checks' ? 'suites' : 'confirmedSuites';
+    const observedChecks = slot === 'checks' ? 'observedChecks' : 'confirmedObservedChecks';
     return this.pullRead(read, evidence, () =>
       readGitHubChecks(
         (args) => this.query(args),
@@ -295,6 +298,9 @@ ${marker}`,
         {
           checks: (observed) => {
             evidence[slot] = observed;
+          },
+          observedChecks: (observed) => {
+            evidence[observedChecks] = observed;
           },
           suites: (observed) => {
             evidence[suites] = observed;
@@ -460,24 +466,6 @@ function terminalSuiteFailure(suites: readonly ProviderCheckSuite[]): ProviderCh
   const suite = suites.find(suiteFailure);
   if (!suite) return;
   return { suiteId: suite.id, status: 'COMPLETED', conclusion: suite.conclusion.toUpperCase() };
-}
-
-/** Retain distinct CI observations even when a later poll is unavailable. */
-function recordEarlierChecks(
-  evidence: GitHubPullObservation,
-  phase: 'CI checks' | 'CI confirmation',
-  checks: readonly ProviderCheck[],
-  suites: readonly ProviderCheckSuite[],
-) {
-  const earlier = (evidence.earlierChecks ??= []);
-  const previous = earlier.findLast((item) => item.phase === phase);
-  if (!previous || checkSnapshot(previous) !== checkSnapshot({ checks, suites }))
-    earlier.push({ phase, checks, suites });
-}
-
-function checkSnapshot(snapshot: ProviderCISnapshot) {
-  const checks = snapshot.checks.map((check) => JSON.stringify(check)).sort();
-  return JSON.stringify([checks, suiteSnapshot(snapshot.suites)]);
 }
 
 /** Use only the first line of the goal as the provider title. */
