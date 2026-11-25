@@ -60,17 +60,18 @@ export async function readGitHubChecks(
   repository: string,
   head: string,
   observe: (checks: readonly ProviderCheck[], beforeReread?: boolean) => void,
-): Promise<ProviderCheck[]> {
+) {
   const repo = `repos/${repository}`;
   const ref = `${repo}/commits/${head}`;
   let inventory = await suiteInventory(read, ref, head);
   for (;;) {
     const checks = await checkRuns(read, repo, ref, head, inventory, observe);
     const statuses = await readGitHubStatuses(read, repository, head);
-    const combined = [...checks, ...statuses];
+    const combined: ProviderCheck[] = [...checks, ...statuses];
     observe(combined);
     const current = await suiteInventory(read, ref, head);
-    if (suiteSnapshot(inventory) === suiteSnapshot(current)) return combined;
+    if (suiteSnapshot(inventory) === suiteSnapshot(current))
+      return { checks: combined, pendingSuites: current.filter(suitePending).map(({ id }) => id) };
     if (!suiteProgress(inventory, current))
       throw new Error('GitHub check suite inventory changed during CI observation');
     observe(combined, true);
@@ -84,18 +85,26 @@ function suiteSnapshot(suites: CheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
-/** Reread after a suite starts or finishes with the same inventory and run coverage. */
+function suitePending({ status }: CheckSuite) {
+  return pendingCheckStatuses.some((pending) => pending === status);
+}
+
+/** Reread when an existing active suite advances or registers more expected runs. */
 function suiteProgress(previous: CheckSuite[], current: CheckSuite[]) {
   if (previous.length !== current.length) return false;
   const byId = new Map(current.map((item) => [item.id, item]));
   return previous.every((before) => {
     const after = byId.get(before.id);
-    if (!after || before.latest_check_runs_count !== after.latest_check_runs_count) return false;
+    if (!after) return false;
     if (JSON.stringify(before) === JSON.stringify(after)) return true;
-    if (!pendingCheckStatuses.some((status) => status === before.status)) return false;
+    if (!suitePending(before)) return false;
+    const oldCount = before.latest_check_runs_count ?? 0;
+    const newCount = after.latest_check_runs_count ?? 0;
+    if (newCount < oldCount) return false;
     return (
       after.status === 'completed' ||
-      (before.status !== 'in_progress' && after.status === 'in_progress')
+      (before.status !== 'in_progress' && after.status === 'in_progress') ||
+      (before.status === after.status && newCount > oldCount)
     );
   });
 }
@@ -178,7 +187,7 @@ function requireSuiteCoverage(inventory: CheckSuite[], runs: CheckRun[]) {
     if (id !== undefined) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   for (const suite of inventory) {
-    if ((counts.get(suite.id) ?? 0) < (suite.latest_check_runs_count ?? 0))
+    if (!suitePending(suite) && (counts.get(suite.id) ?? 0) < (suite.latest_check_runs_count ?? 0))
       throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
   }
 }

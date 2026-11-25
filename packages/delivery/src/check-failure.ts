@@ -1,6 +1,7 @@
 import type { HostTask } from '../../execution/src/index.js';
 import {
   GitHubPullReadFailure,
+  GitHubReviewRejection,
   type GitHubPullObservation,
 } from '../../collaboration/src/index.js';
 import type { Publication } from './publication.js';
@@ -29,6 +30,8 @@ export function retainProviderFailure(task: HostTask, publication: Publication, 
   const evidence = [task.store('publication-provider-failure.log', log)];
   if (error instanceof GitHubPullReadFailure)
     evidence.push(retainProviderObservation(task, error.observation, error.read));
+  if (error instanceof GitHubReviewRejection)
+    evidence.push(retainProviderObservation(task, error.observation));
   task.note({
     publicationHold: {
       branch: publication.branch,

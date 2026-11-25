@@ -101,6 +101,7 @@ export interface GitHubPullObservation {
   confirmedPull?: PublishedPull;
   checks?: readonly ProviderCheck[];
   confirmedChecks?: readonly ProviderCheck[];
+  pendingSuites?: readonly number[];
   earlierChecks?: { phase: 'CI checks' | 'CI confirmation'; checks: readonly ProviderCheck[] }[];
   reviewDecision?: ReturnType<typeof reviewDecision>;
 }
@@ -120,5 +121,13 @@ export class GitHubPullReadFailure extends Error {
         cause,
       },
     );
+  }
+}
+
+/** Report an authoritative negative review with its retained CI observations. */
+export class GitHubReviewRejection extends Error {
+  /** Preserve the provider's explicit decision alongside the head-pinned observations. */
+  constructor(readonly observation: GitHubPullObservation) {
+    super(`GitHub review requested changes: ${observation.pr}`);
   }
 }

@@ -344,6 +344,27 @@ test('one suite can start while another completes during the same observation', 
   assert(inventories > 3);
 });
 
+for (const reportedRuns of [0, 1]) {
+  test(`a pending suite with ${reportedRuns} expected invisible runs cannot authorize delivery`, async (t) => {
+    let scheduled = false;
+    const scenario = new ProviderResults(t, (args) => {
+      if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+      if (!scheduled) {
+        scheduled = true;
+        setImmediate(() => scenario.cancellation.abort());
+      }
+      return JSON.stringify({
+        total_count: 2,
+        check_suites: [
+          { id: 5, head_sha: head, status: 'completed' },
+          { id: 6, head_sha: head, status: 'queued', latest_check_runs_count: reportedRuns },
+        ],
+      });
+    });
+    await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
+  });
+}
+
 test('stable suite metadata cannot hide runs missing from the ref snapshot', async (t) => {
   const scenario = new ProviderResults(t, (args) => {
     if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
