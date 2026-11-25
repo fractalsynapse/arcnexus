@@ -23,18 +23,17 @@ export function usePlanFile() {
 function usePlanFileState() {
   const { path } = useWorkspaceRoute();
   const route = guideRoute(path);
-  const { project, token } = usePlatformSession();
+  const { project } = usePlatformSession();
   const { collection, base, revision } = fileAddress(route, project);
   const identity = JSON.stringify([base, revision]);
   const state = useFileDraft(identity);
   const query = new URLSearchParams({ revision: revision ?? '' });
-  const revisions = useResource<GuideHistory>(base && base + '/revisions?' + query, token);
+  const revisions = useResource<GuideHistory>(base && base + '/revisions?' + query);
   if (state.version) query.set('fileRevision', state.version);
-  const detail = useResource<GuideFile>(base && base + '?' + query, token);
+  const detail = useResource<GuideFile>(base && base + '?' + query);
   return {
     ...state,
     project,
-    token,
     route,
     revision,
     base,

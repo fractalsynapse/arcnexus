@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readSecret } from '../../foundation/src/secret-file.js';
 import { Client } from 'pg';
 
 /** Load a dedicated application's credential from its mounted Docker secret. */
@@ -12,9 +12,4 @@ export async function connectDatabase() {
   return database;
 }
 
-/** Read a mounted credential without putting its bytes in process arguments. */
-export function readSecret(file: string) {
-  const secret = readFileSync(file, 'utf8').trim();
-  if (!secret) throw new Error('A configured secret file is empty');
-  return secret;
-}
+export { readSecret };

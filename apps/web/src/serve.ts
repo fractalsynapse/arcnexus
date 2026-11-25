@@ -1,3 +1,4 @@
+import { allowsLocalRequest, browserAuthority, type LocalOperator } from './local-operator.js';
 import { proxyApi } from './api-proxy.js';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -6,14 +7,16 @@ import { join } from 'node:path';
 const types = { js: 'text/javascript', css: 'text/css', webp: 'image/webp', html: 'text/html' };
 
 /** Serve the compiled browser entry and its public assets on the requested interface. */
-export async function serveWeb(directory: string, port = 0, host = '127.0.0.1', api?: URL) {
-  const server = createServer((request, response) => {
-    if (api && request.url?.startsWith('/api/')) {
-      proxyApi(api, request, response);
-      return;
-    }
-    void serveAsset(directory, request, response);
-  });
+export async function serveWeb(
+  directory: string,
+  port = 0,
+  host = '127.0.0.1',
+  api?: URL,
+  operator?: LocalOperator,
+) {
+  if (operator && !api) throw new Error('Configure the API for the local operator');
+  const authority = operator && browserAuthority(host, operator);
+  const server = createServer(webHandler(directory, api, operator, authority));
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, host, resolve);
@@ -27,6 +30,25 @@ export async function serveWeb(directory: string, port = 0, host = '127.0.0.1', 
         ? '127.0.0.1'
         : address.address;
   return { server, url: `http://${hostname}:${address.port}` };
+}
+
+function webHandler(directory: string, api?: URL, operator?: LocalOperator, authority?: string) {
+  return (request: IncomingMessage, response: ServerResponse) => {
+    if (!request.url?.startsWith('/api/')) {
+      void serveAsset(directory, request, response);
+      return;
+    }
+    const port = request.socket.localPort;
+    if (!api || !port) {
+      response.writeHead(503).end();
+      return;
+    }
+    if (operator && !allowsLocalRequest(request, port, authority)) {
+      response.writeHead(403).end();
+      return;
+    }
+    proxyApi(api, request, response, operator?.credential);
+  };
 }
 
 /** Give workspace addresses the same shell while serving generated assets by exact path. */

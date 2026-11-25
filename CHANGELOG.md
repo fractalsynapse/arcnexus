@@ -26,6 +26,8 @@
 
 ### Fixed
 
+- Open local review directly in a fresh browser by keeping the operator credential on the loopback Web proxy (#746).
+
 - Restore compact Project and Connection managers and the single expand/collapse control for Plan workspace panels (#746).
 
 - Continue observing the same GitHub pull request when an existing check suite finishes during verification (#734).

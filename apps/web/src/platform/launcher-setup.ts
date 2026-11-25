@@ -2,7 +2,6 @@ import { createElement as h, useEffect, useState } from 'react';
 import { launcherTargets, type LauncherBuild } from '../../../launcher/src/targets.js';
 import { LauncherDownload } from './launcher-download.js';
 import { useResource } from './resource.js';
-import { usePlatformSession } from './session.js';
 import { Button, SelectField } from '../../../../packages/ui/src/index.js';
 
 const targets = [
@@ -48,8 +47,7 @@ function useLauncherTarget() {
 /** Pick a launcher target and display the operator-issued registration code. */
 export function LauncherSetup({ code, issue }: { code?: string; issue(): void }) {
   const [target, select] = useLauncherTarget();
-  const { token } = usePlatformSession();
-  const builds = useResource<{ entries: LauncherBuild[] }>('/launcher-builds', token);
+  const builds = useResource<{ entries: LauncherBuild[] }>('/launcher-builds');
   const published = builds.value?.entries?.find((build) => build.target === target);
   return h(
     'section',

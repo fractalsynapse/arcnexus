@@ -22,7 +22,7 @@ export function OperationDetail({
 }
 
 function Evidence({ sequence, execution, phase }: EvidenceLocation) {
-  const { project, token } = usePlatformSession();
+  const { project } = usePlatformSession();
   const path = project
     ? '/projects/' +
       project.id +
@@ -31,7 +31,7 @@ function Evidence({ sequence, execution, phase }: EvidenceLocation) {
       '?execution=' +
       encodeURIComponent(execution)
     : undefined;
-  const evidence = useResource<{ entries: unknown[] }>(path, token, phase);
+  const evidence = useResource<{ entries: unknown[] }>(path, phase);
   if (evidence.error) return h('p', { role: 'alert' }, evidence.error);
   if (!evidence.value) return h('p', { role: 'status' }, 'Loading recorded tool evidence…');
   return h(

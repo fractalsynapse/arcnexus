@@ -31,6 +31,9 @@ services:
       dockerfile: apps/web/Dockerfile
     environment:
       ARC_WEB_API_ORIGIN: http://api:8080
+      ARC_WEB_OPERATOR_TOKEN_FILE: /run/secrets/operator_token
+      ARC_WEB_BROWSER_ORIGIN: http://127.0.0.1:${ARC_WEB_PORT:-38648}
+    secrets: [operator_token]
     ports:
       - '127.0.0.1:${ARC_WEB_PORT:-38648}:8080'
     networks: [transport]

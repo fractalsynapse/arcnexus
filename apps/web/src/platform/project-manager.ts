@@ -8,14 +8,13 @@ import {
 import type { Project } from './session.js';
 import { projectName, setSession, usePlatformSession } from './session.js';
 import { api, useResource } from './resource.js';
-import { OperatorGate } from './operator-gate.js';
 import { ImportProject } from './project-import.js';
 
 export function ProjectManager() {
   return h(DialogButton, {
     icon: 'folder',
     title: 'Project manager',
-    children: h(OperatorGate, { children: h(Projects) }),
+    children: h(Projects),
   });
 }
 
@@ -25,7 +24,6 @@ function Projects() {
     projects,
     select: (project) => setSession({ ...session, project }),
     selected: session.project?.id,
-    token: session.token,
     error,
     change,
     loaded,
@@ -36,16 +34,16 @@ function useProjects() {
   const session = usePlatformSession();
   const [refresh, reload] = useState(0);
   const [error, showError] = useState('');
-  const result = useResource<{ entries: Project[] }>('/projects', session.token, refresh);
+  const result = useResource<{ entries: Project[] }>('/projects', refresh);
   const projects = result.value?.entries ?? [];
   const change = async (project?: Project, remote?: string) => {
     try {
       if (project) {
-        await api('/projects/' + project.id, session.token!, { method: 'DELETE' });
+        await api('/projects/' + project.id, { method: 'DELETE' });
         if (project.id === session.project?.id)
           setSession({ ...session, project: projects.find((item) => item.id !== project.id) });
       } else {
-        const added = await api<Project>('/projects', session.token!, {
+        const added = await api<Project>('/projects', {
           method: 'POST',
           body: JSON.stringify({ remote }),
         });
@@ -65,22 +63,13 @@ function useProjects() {
 interface ProjectRowsProps {
   projects: Project[];
   selected?: string;
-  token?: string;
   select(project?: Project): void;
   change(project?: Project, remote?: string): Promise<boolean>;
   error?: string;
   loaded: boolean;
 }
 
-function ProjectRows({
-  projects,
-  selected,
-  token,
-  select,
-  change,
-  error,
-  loaded,
-}: ProjectRowsProps) {
+function ProjectRows({ projects, selected, select, change, error, loaded }: ProjectRowsProps) {
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -93,23 +82,23 @@ function ProjectRows({
       ],
       onChange: (id) => select(projects.find((project) => project.id === id)),
     }),
-    h(ProjectList, { projects, token, loaded, remove: (project) => void change(project) }),
+    h(ProjectList, { projects, loaded, remove: (project) => void change(project) }),
     h(ImportProject, { submit: (remote) => change(undefined, remote) }),
     error && h('p', { role: 'alert' }, error),
   );
 }
 
-interface ProjectListProps extends Pick<ProjectRowsProps, 'projects' | 'token' | 'loaded'> {
+interface ProjectListProps extends Pick<ProjectRowsProps, 'projects' | 'loaded'> {
   remove(project: Project): void;
 }
 
-function ProjectList({ projects, token, loaded, remove }: ProjectListProps) {
+function ProjectList({ projects, loaded, remove }: ProjectListProps) {
   if (!projects.length) return loaded ? h('p', null, 'No projects registered.') : null;
   return h(
     'ul',
     { className: 'arc-management-list', 'aria-label': 'Projects' },
     projects.map((project) =>
-      h(ProjectRow, { key: project.id, project, token, remove: () => remove(project) }),
+      h(ProjectRow, { key: project.id, project, remove: () => remove(project) }),
     ),
   );
 }
@@ -118,12 +107,11 @@ type Probe = { reachable: true; revision: string } | { reachable: false; diagnos
 
 interface ProjectRowProps {
   project: Project;
-  token?: string;
   remove(): void;
 }
 
-function ProjectRow({ project, token, remove }: ProjectRowProps) {
-  const { probe, checking, check } = useProjectProbe(project.id, token);
+function ProjectRow({ project, remove }: ProjectRowProps) {
+  const { probe, checking, check } = useProjectProbe(project.id);
   const { remote } = project;
   const name = projectName(project);
   return h(ManagementRow, {
@@ -137,7 +125,7 @@ function ProjectRow({ project, token, remove }: ProjectRowProps) {
       Button,
       {
         className: 'arc-management-status-action',
-        disabled: checking || !token,
+        disabled: checking,
         onClick: () => void check(),
       },
       checking ? 'Checking…' : 'Check reachability',
@@ -146,14 +134,13 @@ function ProjectRow({ project, token, remove }: ProjectRowProps) {
   });
 }
 
-function useProjectProbe(id: string, token?: string) {
+function useProjectProbe(id: string) {
   const [probe, setProbe] = useState<Probe>();
   const [checking, setChecking] = useState(false);
   async function check() {
-    if (!token) return;
     setChecking(true);
     try {
-      setProbe(await api<Probe>('/projects/' + id + '/reachability', token));
+      setProbe(await api<Probe>('/projects/' + id + '/reachability'));
     } catch {
       setProbe({ reachable: false, diagnostic: 'The gateway could not check this project.' });
     } finally {

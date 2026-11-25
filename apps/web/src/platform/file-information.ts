@@ -7,12 +7,11 @@ import { useResource } from './resource.js';
 /** Display the selected revision and share its metadata draft with the editor. */
 export function FileInformation() {
   const file = usePlanFile();
-  const { detail, project, editing, collection, revision, token } = file;
+  const { detail, project, editing, collection, revision } = file;
   const catalog = useResource<GuideCollection>(
     editing && collection
       ? collection + '?' + new URLSearchParams({ revision: revision ?? '' })
       : undefined,
-    token,
   );
   if (!project) return h('p', null, 'Select a project to open this file.');
   if (detail.error) return h('p', { role: 'alert' }, detail.error);

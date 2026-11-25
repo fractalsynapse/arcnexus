@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { get } from 'node:http';
 import test, { type TestContext } from 'node:test';
 import { chromium, type Page } from 'playwright';
 import { serveApi } from '../../../api/src/serve.js';
@@ -12,10 +13,49 @@ const project = {
   revision: 'a'.repeat(40),
 };
 
+test('the local Web proxy supplies the operator only for the local browser', async (t) => {
+  const forwarded: (string | null)[] = [];
+  const gateway = await serveApi(async (request) => {
+    forwarded.push(request.headers.get('authorization'));
+    return Response.json({ entries: [project] });
+  });
+  t.after(() => gateway.server.close());
+  const operator = { credential: 'server-only-fixture' };
+  const api = new URL(gateway.url);
+  const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api, operator);
+  t.after(() => application.server.close());
+  const route = application.url + '/api/projects';
+  const visible = await fetch(route);
+  assert.deepEqual(await visible.json(), { entries: [project] });
+  assert.equal(visible.headers.get('cache-control'), 'no-store');
+  await rejectForeignBrowser(route);
+  assert.deepEqual(forwarded, ['Bearer server-only-fixture']);
+  await assert.rejects(
+    serveWeb('dist/apps/web/site', 0, '0.0.0.0', api, operator),
+    /loopback origin/,
+  );
+});
+
+async function rejectForeignBrowser(route: string) {
+  const response = await fetch(route, {
+    method: 'POST',
+    headers: { origin: 'http://untrusted.example', 'sec-fetch-site': 'cross-site' },
+  });
+  assert.equal(response.status, 403);
+  const rebound = await new Promise<number | undefined>((resolve, reject) => {
+    get(route, { headers: { host: 'untrusted.example' } }, (response) => {
+      response.resume();
+      resolve(response.statusCode);
+    }).on('error', reject);
+  });
+  assert.equal(rebound, 403);
+}
+
 test('the built Plan opens a pinned file through the shared workspace layout', async (t) => {
   const { application, page } = await browserPage(t);
   const requests = await responses(page);
   await page.goto(application.url);
+  await page.reload();
   await selectProject(page);
   const goal = page.getByRole('link', { name: 'fixture-goal' });
   await goal.waitFor();
@@ -91,8 +131,7 @@ function planData(path: string) {
 
 async function selectProject(page: Page) {
   await page.getByRole('button', { name: 'Project manager' }).click();
-  await page.getByLabel('Operator credential').fill('review-fixture');
-  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  assert.equal(await page.getByLabel('Operator credential', { exact: true }).count(), 0);
   await page.getByLabel('Active project').selectOption(project.id);
   await page.getByRole('button', { name: 'Close' }).click();
 }

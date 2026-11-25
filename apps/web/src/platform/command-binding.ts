@@ -16,7 +16,6 @@ import { activeSession, subscribeSession } from './session.js';
 
 type Connection = {
   base: string;
-  token: string;
   id: string;
   abort: AbortController;
   updates: number;
@@ -105,10 +104,10 @@ class PlatformCommands implements CommandBinding {
 
   /** Close the previous project's subscription before opening the new scope. */
   private connect = (retry = false) => {
-    const { token, project } = activeSession();
+    const { project } = activeSession();
     const base = project && '/projects/' + encodeURIComponent(project.id) + '/commands';
     const prior = this.connection;
-    const same = Boolean(prior && prior.base === base && prior.token === token);
+    const same = Boolean(prior && prior.base === base);
     if (same && !retry) return;
     prior?.abort.abort();
     this.connection = undefined;
@@ -116,9 +115,9 @@ class PlatformCommands implements CommandBinding {
       this.current = undefined;
       this.submission = undefined;
     }
-    if (!base || !token) return this.publish(unavailable);
+    if (!base) return this.publish(unavailable);
     const id = same && prior ? prior.id : String(++this.sequence);
-    const scope = { base, token, id, abort: new AbortController(), updates: 0 };
+    const scope = { base, id, abort: new AbortController(), updates: 0 };
     this.connection = scope;
     this.publish(this.current ? dockState(this.current, id) : { ...unavailable, scope: id });
     this.listen(scope);
@@ -136,7 +135,7 @@ class PlatformCommands implements CommandBinding {
             : 'Command updates disconnected.';
       this.publish({ ...this.snapshot, connectionError: message, canReconnect: true });
     };
-    void followCommands(scope.base, scope.token, scope.abort.signal, (value) => {
+    void followCommands(scope.base, scope.abort.signal, (value) => {
       if (this.connection !== scope) return;
       scope.updates += 1;
       this.current = value;
@@ -163,7 +162,7 @@ class PlatformCommands implements CommandBinding {
   private async post(scope: Connection, path: string, input?: object) {
     try {
       return workflowReceipt.parse(
-        await api(scope.base + path, scope.token, {
+        await api(scope.base + path, {
           method: 'POST',
           body: input && JSON.stringify(input),
         }),

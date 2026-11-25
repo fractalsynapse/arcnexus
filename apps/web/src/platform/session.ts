@@ -7,7 +7,7 @@ export interface Project {
   revision: string;
 }
 
-type Session = { token?: string; project?: Project };
+type Session = { project?: Project };
 
 let session: Session = {};
 const listeners = new Set<() => void>();
@@ -22,7 +22,7 @@ export function subscribeSession(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-/** Share the active project and in-memory operator session across workspace routes. */
+/** Share the active project across workspace routes. */
 export function usePlatformSession() {
   return useSyncExternalStore(subscribeSession, activeSession);
 }

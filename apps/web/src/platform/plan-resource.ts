@@ -19,15 +19,15 @@ export interface PlanOutcome {
 
 /** Resolve the selected project and the shared small Plan execution reference. */
 export function usePlanResource(binding: CommandBinding) {
-  const { project, token } = usePlatformSession();
+  const { project } = usePlatformSession();
   const command = useSyncExternalStore(binding.subscribe, binding.getSnapshot);
   const refresh = command.command === 'Plan' ? [command.execution, command.status].join(':') : '';
   const root = project && '/projects/' + encodeURIComponent(project.id);
   const plans = root && root + '/plan-executions/';
-  const current = useResource<PlanReference>(plans && plans + 'current', token, refresh);
+  const current = useResource<PlanReference>(plans && plans + 'current', refresh);
   const execution = current.value?.execution;
   const plan = plans && execution ? plans + encodeURIComponent(execution) : undefined;
-  return { project, token, root, current, execution, plan, command, refresh };
+  return { project, root, current, execution, plan, command, refresh };
 }
 import { useSyncExternalStore } from 'react';
 import type { CommandBinding } from '../../../../packages/ui/src/index.js';

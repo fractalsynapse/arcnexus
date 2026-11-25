@@ -61,18 +61,17 @@ function compare(left: Guide, right: Guide, order: GuideFilter['order']) {
 }
 
 function useGuideCollection(
-  { project, root, token, current, plan, refresh }: ReturnType<typeof usePlanResource>,
+  { project, root, current, plan, refresh }: ReturnType<typeof usePlanResource>,
   filter: GuideFilter,
 ) {
   const search = useDeferredValue(filter.search);
-  const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', token, refresh);
+  const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh);
   const delivered =
     outcome.value?.outcome?.kind === 'merged' ? outcome.value.outcome.commit : undefined;
   const revision = delivered ?? current.value?.revision ?? project?.revision;
   const query = new URLSearchParams({ revision: revision ?? '', ...(search.trim() && { search }) });
   const files = useResource<GuideCollection>(
     root && current.value && revision ? root + '/' + filter.kind + '?' + query : undefined,
-    token,
   );
   return {
     files,

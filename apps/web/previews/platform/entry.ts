@@ -6,7 +6,7 @@ import { fixtureTransport, project } from './fixture-api.js';
 
 const showProviders = new URLSearchParams(location.search).get('providers') === 'sample';
 setPlatformTransport(fixtureTransport(showProviders));
-setSession({ token: 'preview', project });
+setSession({ project });
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Platform preview root is missing');

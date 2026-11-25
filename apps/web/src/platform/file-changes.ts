@@ -6,10 +6,9 @@ import { useResource } from './resource.js';
 
 /** Read the diff only while its panel is mounted, using the file's pinned source. */
 export function FileChanges() {
-  const { base, query, token, editing, detail, draft } = usePlanFile();
+  const { base, query, editing, detail, draft } = usePlanFile();
   const changes = useResource<GuideDifference>(
     base && !editing ? base + '/changes?' + query : undefined,
-    token,
   );
   if (!base) return null;
   if (editing && detail.value) {

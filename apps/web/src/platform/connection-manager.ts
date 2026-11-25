@@ -2,9 +2,7 @@ import { isLauncherTarget, launcherTargets } from '../../../launcher/src/targets
 import { LauncherSetup } from './launcher-setup.js';
 import { createElement as h, useState } from 'react';
 import { Button, DialogButton, ManagementRow } from '../../../../packages/ui/src/index.js';
-import { OperatorGate } from './operator-gate.js';
 import { api, useResource } from './resource.js';
-import { usePlatformSession } from './session.js';
 
 interface Provider {
   id: string;
@@ -15,19 +13,11 @@ interface Provider {
 }
 
 export function ConnectionManager() {
-  const { token } = usePlatformSession();
-  const [registration, setRegistration] = useState<{ token: string; value: string }>();
+  const [code, setCode] = useState('');
   return h(DialogButton, {
     icon: 'computer',
     title: 'Connection manager',
-    children: h(OperatorGate, {
-      children: h(Connections, {
-        code: registration?.token === token ? registration?.value : undefined,
-        onCode: (value) => {
-          if (token) setRegistration({ token, value });
-        },
-      }),
-    }),
+    children: h(Connections, { code, onCode: setCode }),
   });
 }
 
@@ -64,20 +54,18 @@ function ProviderList({
 }
 
 function useProviders(onCode: ConnectionsProps['onCode']) {
-  const { token } = usePlatformSession();
   const [refresh, reload] = useState(0);
   const [error, showError] = useState('');
   const root = '/capacity-providers';
-  const result = useResource<Provider[]>(root, token, refresh);
+  const result = useResource<Provider[]>(root, refresh);
   const change = async (provider?: Provider) => {
     try {
       if (provider) {
-        await api(root + '/' + provider.id, token!, {
+        await api(root + '/' + provider.id, {
           method: 'PATCH',
           body: JSON.stringify({ state: provider.state === 'pending' ? 'admitted' : 'revoked' }),
         });
-      } else
-        onCode((await api<{ code: string }>(root + '/codes', token!, { method: 'POST' })).code);
+      } else onCode((await api<{ code: string }>(root + '/codes', { method: 'POST' })).code);
       showError('');
       reload((index) => index + 1);
     } catch (error) {

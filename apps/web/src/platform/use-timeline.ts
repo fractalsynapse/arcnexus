@@ -5,17 +5,16 @@ type Snapshot = { frames: TimelineFrame[]; cursor?: string };
 const retained = new Map<string, Snapshot>();
 
 /** Keep the applied cursor when a panel closes or its network connection ends. */
-export function useTimeline(path?: string, token?: string) {
+export function useTimeline(path?: string) {
   const [revision, refresh] = useState(0);
   const [live, setLive] = useState<{ key: string; error: string }>();
-  const key = path && token ? JSON.stringify([path, token]) : undefined;
   useEffect(() => {
-    if (!path || !token || !key) return;
-    return subscribeTimeline(path, token, key, (error) => setLive({ key, error }));
-  }, [path, token, revision, key]);
+    if (!path) return;
+    return subscribeTimeline(path, (error) => setLive({ key: path, error }));
+  }, [path, revision]);
   return {
-    frames: (key && retained.get(key)?.frames) || [],
-    error: live?.key === key ? live?.error : undefined,
+    frames: (path && retained.get(path)?.frames) || [],
+    error: live?.key === path ? live?.error : undefined,
     reconnect: () => {
       setLive(undefined);
       refresh((value) => value + 1);
@@ -23,16 +22,11 @@ export function useTimeline(path?: string, token?: string) {
   };
 }
 
-function subscribeTimeline(
-  path: string,
-  token: string,
-  key: string,
-  notify: (error: string) => void,
-) {
+function subscribeTimeline(path: string, notify: (error: string) => void) {
   const controller = new AbortController();
-  const snapshot = retained.get(key) ?? { frames: [] };
-  retained.set(key, snapshot);
-  void followTimeline(path, token, controller.signal, snapshot.cursor, ({ id, frame }) => {
+  const snapshot = retained.get(path) ?? { frames: [] };
+  retained.set(path, snapshot);
+  void followTimeline(path, controller.signal, snapshot.cursor, ({ id, frame }) => {
     if (controller.signal.aborted || !nextSequence(snapshot.frames, frame.sequence)) return;
     snapshot.cursor = id;
     snapshot.frames.push(frame);

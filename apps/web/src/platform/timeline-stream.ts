@@ -16,14 +16,13 @@ interface TimelineEvent {
 /** Decode ordered SSE frames without truncating split UTF-8 characters or message lines. */
 export async function followTimeline(
   path: string,
-  token: string,
   signal: AbortSignal,
   cursor: string | undefined,
   receive: (event: TimelineEvent) => void,
 ) {
   const headers = new Headers({ Accept: 'text/event-stream' });
   if (cursor) headers.set('Last-Event-ID', cursor);
-  const response = await gatewayRequest(path, token, { headers, signal });
+  const response = await gatewayRequest(path, { headers, signal });
   if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
     throw new Error('The live event stream is unavailable.');
   await readServerEvents(response.body, (frame) => {

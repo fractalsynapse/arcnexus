@@ -9,8 +9,8 @@ type PlanReadout = 'outcome' | 'metrics';
 
 /** Mount one Plan projection against the stable execution selected for the current project. */
 export function PlanDisplay({ kind, binding }: { kind: PlanReadout; binding: CommandBinding }) {
-  const { project, token, current, execution, plan, refresh } = usePlanResource(binding);
-  const result = useResource<PlanOutcome & PlanMetrics>(plan && plan + '/' + kind, token, refresh);
+  const { project, current, execution, plan, refresh } = usePlanResource(binding);
+  const result = useResource<PlanOutcome & PlanMetrics>(plan && plan + '/' + kind, refresh);
   const unavailable = current.error ?? result.error;
   if (!project) return h('p', null, 'Select a project to view Planner ' + kind + '.');
   if (unavailable) return h('p', { role: 'alert' }, unavailable);
@@ -18,5 +18,5 @@ export function PlanDisplay({ kind, binding }: { kind: PlanReadout; binding: Com
   if (!result.value || !plan) return h('p', { role: 'status' }, 'Loading Planner ' + kind + '…');
   return kind === 'outcome'
     ? h(PlannerOutcome, { value: result.value, remote: project.remote })
-    : h(PlannerMetrics, { value: result.value, path: plan + '/tool-counts', token });
+    : h(PlannerMetrics, { value: result.value, path: plan + '/tool-counts' });
 }

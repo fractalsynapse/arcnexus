@@ -10,6 +10,19 @@ layout settings, where workspaces use one shared editor for registered
 panels, desktop columns, placement and mobile display order. The frame reports
 commands and metrics as unavailable until workspace integration.
 
+## Local platform review
+
+Set `ARC_WEB_API_ORIGIN` to the API URL and `ARC_WEB_OPERATOR_TOKEN_FILE` to
+the existing operator secret file. The loopback Web proxy supplies this
+credential to the API. Open the local URL in any browser to use the
+Project manager and Connection manager. The API and MCP keep their
+programmatic operator authentication.
+
+The root platform Compose configuration publishes the Web port on
+loopback and sets `ARC_WEB_BROWSER_ORIGIN` to that published origin. Use
+this local review configuration on a private machine. External OAuth
+will handle shared user sign-in when the application is ready for it.
+
 The browser entry composes the UI plugin with separate workspace, command
 binding, and React frame plugins in `src/plugins`.
 

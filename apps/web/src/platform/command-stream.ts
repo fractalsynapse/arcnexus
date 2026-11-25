@@ -20,11 +20,10 @@ const labels: Record<Receipt['request']['command'], string> = {
 /** Follow the latest scoped receipt through the same browser API transport as other displays. */
 export async function followCommands(
   path: string,
-  token: string,
   signal: AbortSignal,
   receive: (data: CurrentWorkflow) => void,
 ) {
-  const response = await gatewayRequest(path + '/current', token, {
+  const response = await gatewayRequest(path + '/current', {
     signal,
     headers: { accept: 'text/event-stream' },
   });

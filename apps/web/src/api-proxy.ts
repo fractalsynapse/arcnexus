@@ -2,7 +2,12 @@ import { request as http, type IncomingMessage, type ServerResponse } from 'node
 import { request as https } from 'node:https';
 
 /** Forward only same-origin API requests to the configured internal adapter. */
-export function proxyApi(origin: URL, incoming: IncomingMessage, outgoing: ServerResponse) {
+export function proxyApi(
+  origin: URL,
+  incoming: IncomingMessage,
+  outgoing: ServerResponse,
+  credential?: string,
+) {
   const destination = new URL(origin);
   const path = incoming.url!.slice('/api'.length);
   const index = path.indexOf('?');
@@ -10,8 +15,12 @@ export function proxyApi(origin: URL, incoming: IncomingMessage, outgoing: Serve
   destination.search = index < 0 ? '' : path.slice(index);
   const send = destination.protocol === 'https:' ? https : http;
   const headers = { ...incoming.headers, host: destination.host };
+  if (credential) headers.authorization = 'Bearer ' + credential;
   const request = send(destination, { method: incoming.method, headers }, (response) => {
-    outgoing.writeHead(response.statusCode ?? 502, response.headers);
+    const returned = credential
+      ? { ...response.headers, 'cache-control': 'no-store' }
+      : response.headers;
+    outgoing.writeHead(response.statusCode ?? 502, returned);
     response.pipe(outgoing);
   });
   request.on('error', () => {
