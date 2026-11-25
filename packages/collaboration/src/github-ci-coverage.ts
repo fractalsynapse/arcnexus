@@ -154,3 +154,36 @@ export function requireRunSuites(
     if (check_suite && !known.has(check_suite.id))
       throw new Error(`GitHub check run ${id} belongs to unlisted check suite ${check_suite.id}`);
 }
+
+export function successfulChecks(
+  snapshot: ProviderCISnapshot & { pendingSuites: readonly number[] },
+) {
+  const { checks, pendingSuites } = snapshot;
+  return (
+    pendingSuites.length === 0 &&
+    !snapshot.suites.some(suiteFailure) &&
+    checks.length > 0 &&
+    checks.every(
+      ({ status, conclusion, state }) =>
+        (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
+    )
+  );
+}
+
+/** Keep unresolved run associations from turning incomplete reruns into terminal failures. */
+export function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly number[]) {
+  const { state, status, conclusion, suiteId } = check;
+  if (state) return ['ERROR', 'FAILURE'].includes(state);
+  const suiteKnown =
+    suiteId == null ? pendingSuites.length === 0 : !pendingSuites.includes(suiteId);
+  return suiteKnown && status === 'COMPLETED' && conclusion !== 'SUCCESS';
+}
+
+/** Translate a provider suite failure into a check diagnostic without inventing a job. */
+export function terminalSuiteFailure(
+  suites: readonly ProviderCheckSuite[],
+): ProviderCheck | undefined {
+  const suite = suites.find(suiteFailure);
+  if (!suite) return;
+  return { suiteId: suite.id, status: 'COMPLETED', conclusion: suite.conclusion.toUpperCase() };
+}

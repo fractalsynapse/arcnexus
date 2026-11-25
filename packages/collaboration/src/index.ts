@@ -3,13 +3,15 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
-import { readGitHubChecks, type ProviderCheckSuite } from './github-checks.js';
+import { readGitHubChecks } from './github-checks.js';
 import {
   checkSnapshot,
   recordEarlierChecks,
   recordPolledChecks,
   requireRetainedSuites,
-  suiteFailure,
+  successfulChecks,
+  terminalCheckFailure,
+  terminalSuiteFailure,
   type ProviderCISnapshot,
 } from './github-ci-coverage.js';
 import {
@@ -213,10 +215,19 @@ ${marker}`,
   ) {
     const pinned = { repository: this.repository, pr, head };
     let earlierChecks: GitHubPullObservation['earlierChecks'];
+    let previous: ProviderCISnapshot | undefined;
     for (;;) {
       const evidence: GitHubPullObservation = { ...pinned, earlierChecks };
-      if (await this.verificationReady(evidence, base, state, branch, observe))
-        return observe?.(evidence, 'verified');
+      const attempt = await this.verificationAttempt(
+        evidence,
+        base,
+        state,
+        branch,
+        previous,
+        observe,
+      );
+      if (attempt.ready) return observe?.(evidence, 'verified');
+      previous = attempt.snapshot;
       if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
       earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
@@ -224,22 +235,26 @@ ${marker}`,
   }
 
   /** Decide from fresh provider facts and retain partial facts when an in-flight read is cancelled. */
-  private async verificationReady(
+  private async verificationAttempt(
     evidence: GitHubPullObservation,
     base: string,
     state: string,
     branch: string | undefined,
+    previous: ProviderCISnapshot | undefined,
     observe?: GitHubVerificationObserver,
   ) {
     try {
-      const facts = await this.verificationFacts(evidence, base, state, branch);
+      const facts = await this.verificationFacts(evidence, base, state, branch, previous);
       const { checks, pendingSuites, review, suites } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
       const failed =
         checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
-      return review !== 'REVIEW_REQUIRED' && successfulChecks(facts);
+      return {
+        ready: review !== 'REVIEW_REQUIRED' && successfulChecks(facts),
+        snapshot: { checks: facts.observedChecks, suites },
+      };
     } catch (error) {
       if (this.signal.aborted && evidence.pull) observe?.(evidence, 'pending');
       throw error;
@@ -252,9 +267,10 @@ ${marker}`,
     base: string,
     state: string,
     branch?: string,
+    previous?: ProviderCISnapshot,
   ) {
     const current = await this.verificationPull(evidence, base, state, branch, 'pull');
-    const initial = await this.checks(evidence, 'checks', evidence.earlierChecks?.at(-1));
+    const initial = await this.checks(evidence, 'checks', previous);
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
     if (
@@ -455,35 +471,6 @@ ${marker}`,
     const token = await this.credential('https://github.com/' + this.repository + '.git');
     return { ...process.env, GH_TOKEN: token };
   }
-}
-
-function successfulChecks(snapshot: Awaited<ReturnType<typeof readGitHubChecks>>) {
-  const { checks, pendingSuites } = snapshot;
-  return (
-    pendingSuites.length === 0 &&
-    !snapshot.suites.some(suiteFailure) &&
-    checks.length > 0 &&
-    checks.every(
-      ({ status, conclusion, state }) =>
-        (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
-    )
-  );
-}
-
-/** Keep unresolved run associations from turning incomplete reruns into terminal failures. */
-function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly number[]) {
-  const { state, status, conclusion, suiteId } = check;
-  if (state) return ['ERROR', 'FAILURE'].includes(state);
-  const suiteKnown =
-    suiteId == null ? pendingSuites.length === 0 : !pendingSuites.includes(suiteId);
-  return suiteKnown && status === 'COMPLETED' && conclusion !== 'SUCCESS';
-}
-
-/** Translate a provider suite failure into a check diagnostic without inventing a job. */
-function terminalSuiteFailure(suites: readonly ProviderCheckSuite[]): ProviderCheck | undefined {
-  const suite = suites.find(suiteFailure);
-  if (!suite) return;
-  return { suiteId: suite.id, status: 'COMPLETED', conclusion: suite.conclusion.toUpperCase() };
 }
 
 /** Use only the first line of the goal as the provider title. */

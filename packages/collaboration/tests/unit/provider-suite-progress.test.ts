@@ -251,6 +251,31 @@ function completedSuiteGrowth(args: string[], initial: boolean) {
   return readyResponse(args);
 }
 
+test('the last actual poll governs growth when its log snapshot is a duplicate', async (t) => {
+  let polls = 0;
+  let reviewed = false;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99')) polls++;
+    if (args[1] === 'graphql') {
+      reviewed = true;
+      const response = readyResponse(args);
+      return polls === 2
+        ? response.replace('"reviewDecision":null', '"reviewDecision":"REVIEW_REQUIRED"')
+        : response;
+    }
+    if (polls === 1 && reviewed && args[1]?.endsWith('/check-suites')) {
+      const inventory = completedSuiteGrowth(args, true);
+      return inventory.replace('"status":"completed"', '"status":"in_progress"');
+    }
+    if (args[1]?.endsWith('/status')) return readyResponse(args);
+    return completedSuiteGrowth(args, polls < 3);
+  });
+  await assert.rejects(
+    scenario.provider.verify(pr, head, 'staging'),
+    /completed GitHub suite.*changed/,
+  );
+});
+
 for (const reportedRuns of [undefined, 1]) {
   test(`polling cannot lose a visible check when the previous count was ${reportedRuns}`, async (t) => {
     let pulls = 0;
