@@ -153,14 +153,7 @@
 .arc-plan-event small {
   color: var(--muted);
 }
-.arc-plan-disclosure {
-  padding-block-start: 6px;
-  border-block-start: 1px solid var(--line);
-}
-.arc-plan-disclosure summary {
-  cursor: pointer;
-}
-.arc-plan-disclosure ul {
+.arc-plan-timeline .arc-disclosure ul {
   list-style: none;
   padding: 0;
   margin: 6px 0 0;

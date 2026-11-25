@@ -21,8 +21,8 @@
   margin-inline-start: 9px;
 }
 .arc-page-title h1 {
-  min-inline-size: 0;
-  overflow-wrap: anywhere;
+  max-inline-size: 50%;
+  overflow-wrap: break-word;
 }
 .arc-page-title-action > .arc-field {
   inline-size: 22rem;

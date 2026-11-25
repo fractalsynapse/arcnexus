@@ -1,3 +1,4 @@
+import { Subscriptions } from './subscriptions.js';
 import type { ReactNode } from 'react';
 import type { Workspace, DisplayRegistration } from './workspace.js';
 
@@ -5,7 +6,7 @@ import type { Workspace, DisplayRegistration } from './workspace.js';
 export class UiRegistry {
   private readonly entries = new Map<string, Omit<Workspace, 'displays'>>();
   private readonly displays = new Map<string, Map<string, DisplayRegistration>>();
-  private readonly listeners = new Set<() => void>();
+  private readonly subscriptions = new Subscriptions();
   private readonly controls = new Map<string, ReactNode>();
   private snapshot: readonly Workspace[] = [];
   private controlSnapshot: ReadonlyArray<readonly [string, ReactNode]> = [];
@@ -70,12 +71,7 @@ export class UiRegistry {
   readonly workspaces = () => this.snapshot;
 
   /** Notify mounted frames about contributions and plugin disposal. */
-  readonly subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
+  readonly subscribe = this.subscriptions.subscribe;
 
   /** Rebuild the renderable workspace registrations in navigation order. */
   private publish() {
@@ -84,6 +80,6 @@ export class UiRegistry {
       ...workspace,
       displays: [...(this.displays.get(workspace.path)?.values() ?? [])],
     }));
-    for (const listener of this.listeners) listener();
+    this.subscriptions.publish();
   }
 }

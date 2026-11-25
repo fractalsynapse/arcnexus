@@ -9,21 +9,30 @@ export function themeStyle(scheme: Scheme | undefined, base: Palette): CSSProper
       '--ink': base.text,
       '--link': base.accent,
     } as CSSProperties;
-  const { background, text, accent } = scheme.colors;
-  const dark = luminance(background) < 0.179;
   return {
-    colorScheme: dark ? 'dark' : 'light',
+    colorScheme: paletteMode(scheme.colors.background),
+    ...paletteVariables(scheme.colors),
+  } as CSSProperties;
+}
+
+/** Apply the same theme tokens in React and the standalone mockup. */
+export function paletteVariables({ background, text, accent }: Partial<Palette>) {
+  return {
     '--ground': background,
     '--paper': background,
     '--ink': text,
     '--muted': text,
     '--link': accent,
     '--accent': accent,
-    '--on-accent': luminance(accent) < 0.179 ? '#fff' : '#000',
-    '--quiet': 'color-mix(in srgb, var(--paper), var(--ink) 7%)',
-    '--line': 'color-mix(in srgb, var(--paper), var(--ink) 27%)',
-    '--tint': 'color-mix(in srgb, var(--paper), var(--link) 17%)',
-  } as CSSProperties;
+    '--on-accent': accent && (paletteMode(accent) === 'dark' ? '#fff' : '#000'),
+    '--quiet': (background || text) && 'color-mix(in srgb, var(--paper), var(--ink) 7%)',
+    '--line': (background || text) && 'color-mix(in srgb, var(--paper), var(--ink) 27%)',
+    '--tint': (background || accent) && 'color-mix(in srgb, var(--paper), var(--link) 17%)',
+  };
+}
+
+export function paletteMode(background: string) {
+  return contrast(background, '#ffffff') > contrast(background, '#000000') ? 'dark' : 'light';
 }
 
 /** Describe insufficient contrast within the same previewed combination. */

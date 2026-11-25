@@ -51,6 +51,7 @@ test('a pinned Plan File can switch between its historical and latest approved r
   const pinned = await revisions.inputValue();
   assert.match(await revisions.locator('option:checked').innerText(), /2025.*\(bbbbbbbb\)$/);
   assert.equal(await edit.isDisabled(), true);
+  await assertCompactRevisionMenu(page);
   await revisions.selectOption({ label: 'Latest revision (aaaaaaaa)' });
   await content.getByRole('heading', { name: 'Verified goal' }).waitFor();
   assert.equal(await edit.isEnabled(), true);
@@ -58,6 +59,25 @@ test('a pinned Plan File can switch between its historical and latest approved r
   await content.getByRole('heading', { name: 'Captured goal' }).waitFor();
   assert.equal(await edit.isDisabled(), true);
 });
+
+async function assertCompactRevisionMenu(page: Page) {
+  await page.setViewportSize({ width: 320, height: 800 });
+  const selector = page.getByLabel('File revision');
+  await selector.click();
+  const presentation = await selector.evaluate((field: HTMLSelectElement) => ({
+    menuWidth: parseFloat(getComputedStyle(field, '::picker(select)').width),
+    fieldWidth: field.getBoundingClientRect().width,
+    rows: Array.from(field.options, (option) => getComputedStyle(option).whiteSpace),
+    inViewport: Array.from(field.options).every((option) => {
+      const { left, right } = option.getBoundingClientRect();
+      return left >= 0 && right <= innerWidth;
+    }),
+  }));
+  assert.ok(presentation.menuWidth >= presentation.fieldWidth);
+  assert.ok(presentation.rows.every((style) => style === 'nowrap'));
+  assert.ok(presentation.inViewport);
+  await page.keyboard.press('Escape');
+}
 
 async function historicalFile(route: Route) {
   const url = new URL(route.request().url());

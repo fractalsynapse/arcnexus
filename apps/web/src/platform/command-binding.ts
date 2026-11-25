@@ -1,3 +1,4 @@
+import { Subscriptions } from '../../../../packages/ui/src/index.js';
 import type { Context } from 'cordis';
 import {
   workflowReceipt,
@@ -36,7 +37,7 @@ function launch({ operation, instruction }: CommandRequest): WorkflowRequest {
 
 /** Keep the web dock bound to the selected project's durable command receipt. */
 class PlatformCommands implements CommandBinding {
-  private readonly listeners = new Set<() => void>();
+  private readonly subscriptions = new Subscriptions();
   private snapshot: CommandState = unavailable;
   private current?: CurrentWorkflow;
   private connection?: Connection;
@@ -57,12 +58,7 @@ class PlatformCommands implements CommandBinding {
   getSnapshot = () => this.snapshot;
 
   /** Notify consumers only through the selected scope's binding. */
-  subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
+  subscribe = this.subscriptions.subscribe;
 
   /** Rediscover current permissions and any held approval after an interruption. */
   reconnect = () => this.connect(true);
@@ -181,7 +177,7 @@ class PlatformCommands implements CommandBinding {
   /** Publish one immutable state for all mounted consumers. */
   private publish(snapshot: CommandState) {
     this.snapshot = snapshot;
-    for (const listener of this.listeners) listener();
+    this.subscriptions.publish();
   }
 }
 

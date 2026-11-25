@@ -148,7 +148,10 @@ async function assertPlanHeading(page: Page, width: number) {
   assert.ok(title.y < selector.y + selector.height && selector.y < title.y + title.height);
   if (width === 1180)
     assert.ok(selector.width >= 346, 'Desktop run selector should have room for dates');
-  else assert.ok(context.y >= selector.y + selector.height);
+  else {
+    assert.ok(context.y >= selector.y + selector.height);
+    assert.ok(title.height < selector.height, 'Plan should stay on one line at mobile width');
+  }
   assert.ok(selector.x + selector.width <= width);
 }
 

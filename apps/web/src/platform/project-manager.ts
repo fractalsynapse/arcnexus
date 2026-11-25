@@ -2,6 +2,7 @@ import { createElement as h, useState } from 'react';
 import {
   Button,
   DialogButton,
+  ExternalLink,
   ManagementRow,
   SelectField,
 } from '../../../../packages/ui/src/index.js';
@@ -115,7 +116,7 @@ function ProjectRow({ project, remove }: ProjectRowProps) {
   const { remote } = project;
   const name = projectName(project);
   return h(ManagementRow, {
-    title: h('a', { href: remote, target: '_blank', rel: 'noreferrer' }, name),
+    title: h(ExternalLink, { href: remote }, name),
     detail: probe?.reachable === false ? probe.diagnostic : remote,
     status: {
       label: probe ? (probe.reachable ? 'Reachable' : 'Unavailable') : 'Revision verified',

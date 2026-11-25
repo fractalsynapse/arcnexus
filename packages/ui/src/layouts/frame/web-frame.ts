@@ -32,30 +32,29 @@ export function WebFrame({ registry, commands }: FrameProps) {
   if (!home || !workspace) return null;
   const active = workspace.parent ?? workspace.path;
   const action = workspace.headerAction ?? roots.find((item) => item.path === active)?.headerAction;
-  return h(
+  const shell = h(
     'div',
     {
       className: 'arc-app',
       'data-header-controls': controls.length ? '' : undefined,
       style: themeStyle(theme.current, theme.defaultColors),
     },
-    h(FrameHeader, { home, navigate, action, controls, theme }),
-    h(Navigation, { workspaces: roots, active, navigate }),
-    h(WorkspaceRegion, { workspace, path, navigate, theme, context }),
+    h(FrameHeader, { home, action, controls, theme }),
+    h(Navigation, { workspaces: roots, active }),
+    h(WorkspaceRegion, { workspace, path, theme, context }),
     h(CommandPanel, { binding: commands, workspace: active }),
   );
+  return h(workspaceRoute.Provider, { value: { path, navigate } }, shell);
 }
 
 function WorkspaceRegion({
   workspace,
   path,
-  navigate,
   theme,
   context,
 }: {
   workspace: import('../../registry/workspace.js').Workspace;
   path: string;
-  navigate: ReturnType<typeof useWorkspacePath>[1];
   theme: ReturnType<typeof useTheme>;
   context: ReturnType<UiRegistry['workspaceContext']>;
 }) {
@@ -63,33 +62,26 @@ function WorkspaceRegion({
     themeScope.Provider,
     { value: theme },
     h(
-      workspaceRoute.Provider,
-      { value: { path, navigate } },
-      h(
-        workspace.scope ?? Fragment,
-        null,
-        h(PageLayout, { key: workspace.title ? path : workspace.path, workspace, path, context }),
-      ),
+      workspace.scope ?? Fragment,
+      null,
+      h(PageLayout, { key: workspace.title ? path : workspace.path, workspace, path, context }),
     ),
   );
 }
 
 function FrameHeader({
   home,
-  navigate,
   action,
   controls,
   theme,
 }: {
   home: import('../../registry/workspace.js').Workspace;
-  navigate: ReturnType<typeof useWorkspacePath>[1];
   action: import('react').ReactNode;
   controls: ReturnType<UiRegistry['headerControls']>;
   theme: ReturnType<typeof useTheme>;
 }) {
   return h(Header, {
     home: home.path,
-    navigate,
     action,
     controls,
     schemes: h(ColorSchemes, { theme }),

@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import { ExternalLink } from '../../../../packages/ui/src/index.js';
 import { CommitLink, issueLink, pullLink } from './github-links.js';
 import type { PlanOutcome } from './plan-resource.js';
 
@@ -34,7 +35,7 @@ function LinkedRecord({
   state?: string;
   closed?: boolean;
 }) {
-  const anchor = h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, label);
+  const anchor = h(ExternalLink, { href }, label);
   return h(
     'span',
     { className: 'arc-github-record' },

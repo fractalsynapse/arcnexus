@@ -1,6 +1,7 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h } from 'react';
 import {
   CommandQuestion,
+  Disclosure,
   type CommandBinding,
   type CommandState,
 } from '../../../../packages/ui/src/index.js';
@@ -40,24 +41,15 @@ function OperationGroup({
   operations: Operation[];
   execution?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const label = operations.length + (operations.length === 1 ? ' operation' : ' operations');
   return h(
-    'details',
-    {
-      className: 'arc-plan-disclosure',
-      onToggle: (event) => setOpen(event.currentTarget.hasAttribute('open')),
-    },
+    Disclosure,
+    { label },
     h(
-      'summary',
+      'ul',
       null,
-      operations.length + (operations.length === 1 ? ' operation' : ' operations'),
+      operations.map((entry) => h(OperationRow, { key: entry.key, entry, execution })),
     ),
-    open &&
-      h(
-        'ul',
-        null,
-        operations.map((entry) => h(OperationRow, { key: entry.key, entry, execution })),
-      ),
   );
 }
 

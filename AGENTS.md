@@ -30,9 +30,12 @@ and keeps ArcNexus-specific release rules in this repository.
 - Make every public interface a Cordis plugin. Co-locate its contract, public entry,
   implementation, docs, tests and owner-specific scripts. Compose the CLI in
   [apps/cli](apps/cli/README.md).
-- Use the least code that satisfies the accepted outcome. Define each responsibility,
-  service shape and command once. Reuse its definition directly. Omit boilerplate,
-  duplicate implementations and compatibility machinery for the previous runtime.
+- Code duplication and boilerplate are prohibited everywhere in this repository.
+  Use the least code that satisfies the accepted outcome. Define each responsibility,
+  behavior, schema, component, style and command once, and reuse its canonical
+  implementation directly. When you find duplication or boilerplate, fix it as
+  part of the current work through the existing ownership and approval boundaries.
+  Apply the same rule to production code, prototypes, tests, tooling and guidance.
 - NEVER EVER create or introduce a quantitative limit without the human architect's
   express permission. Every implemented limit must have an entry in the
   [accepted-limits log](.arc/architecture/accepted-limits.md) citing that approval.

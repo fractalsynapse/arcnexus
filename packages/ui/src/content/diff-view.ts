@@ -1,5 +1,6 @@
-import { diffLines } from 'diff';
+import { textChanges } from './line-changes.js';
 import { createElement as h, useState } from 'react';
+import { Button } from '../controls/button.js';
 
 export interface FileDelta {
   path: string;
@@ -23,8 +24,12 @@ export function DiffView({ files }: { files: readonly FileDelta[] }) {
           'li',
           { key: file.path },
           h(
-            'button',
-            { type: 'button', 'aria-pressed': file === current, onClick: () => select(file.path) },
+            Button,
+            {
+              variant: 'plain',
+              'aria-pressed': file === current,
+              onClick: () => select(file.path),
+            },
             file.path,
           ),
         ),
@@ -36,23 +41,10 @@ export function DiffView({ files }: { files: readonly FileDelta[] }) {
 
 function DiffContent({ file }: { file: FileDelta }) {
   if (file.before === file.after) return h('p', null, 'No changes for this revision.');
+  const lines = textChanges(file.before, file.after);
   return h(
     'pre',
-    { className: 'arc-diff-content', 'aria-label': 'Changes for ' + file.path },
-    diffLines(file.before, file.after).flatMap(({ value, added, removed }, index) =>
-      value
-        .replace(/\n$/, '')
-        .split('\n')
-        .map((line, row) =>
-          h(
-            'span',
-            {
-              key: index + ':' + row,
-              'data-change': added ? 'added' : removed ? 'removed' : 'context',
-            },
-            (added ? '+ ' : removed ? '− ' : '  ') + line + '\n',
-          ),
-        ),
-    ),
+    { className: 'arc-diff-content arc-diff-lines', 'aria-label': 'Changes for ' + file.path },
+    lines.map(([kind, text], index) => h('span', { key: index, 'data-change': kind }, text + '\n')),
   );
 }

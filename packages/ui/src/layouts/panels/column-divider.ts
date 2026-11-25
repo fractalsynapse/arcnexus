@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import { Button } from '../../controls/button.js';
 import { useWidthDrag } from './use-width-drag.js';
 import type { DividerProps } from './use-width-drag.js';
 
@@ -8,9 +9,9 @@ export function ColumnDivider(props: DividerProps) {
   const left = widths[column] ?? 1;
   const right = widths[column + 1] ?? 1;
   return h(
-    'button',
+    Button,
     {
-      type: 'button',
+      variant: 'plain',
       className: 'arc-column-divider',
       role: 'separator',
       'aria-orientation': 'vertical',

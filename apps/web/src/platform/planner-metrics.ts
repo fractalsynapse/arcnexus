@@ -1,5 +1,5 @@
-import { createElement as h, useState } from 'react';
-import { Readouts, TokenPair, Tooltip } from '../../../../packages/ui/src/index.js';
+import { createElement as h } from 'react';
+import { Disclosure, Readouts, TokenPair, Tooltip } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 
 type Reported = { reported?: number | null };
@@ -29,7 +29,7 @@ export function PlannerMetrics({ value, path }: { value: PlanMetrics; path: stri
         ['Token cache rate', rate],
       ],
     }),
-    h(ToolFrequency, { path }),
+    h(Disclosure, { label: 'Tools by frequency' }, h(ToolFrequency, { path })),
   );
 }
 
@@ -38,25 +38,12 @@ function seconds(value?: number | null) {
 }
 
 function ToolFrequency({ path }: { path: string }) {
-  const [open, setOpen] = useState(false);
-  const result = useResource<{ entries: Array<{ name: string; calls: number }> }>(
-    open ? path : undefined,
-  );
-  return h(
-    'details',
-    {
-      className: 'arc-plan-disclosure',
-      onToggle: (event) => setOpen(event.currentTarget.hasAttribute('open')),
-    },
-    h('summary', null, 'Tools by frequency'),
-    open && result.error && h('p', { role: 'alert' }, result.error),
-    open &&
-      result.value &&
-      h(Readouts, {
-        values: result.value.entries.map(({ name, calls }) => [name, calls] as const),
-      }),
-    open && result.value?.entries.length === 0 && h('p', null, 'No tool calls recorded.'),
-  );
+  const result = useResource<{ entries: Array<{ name: string; calls: number }> }>(path);
+  if (result.error) return h('p', { role: 'alert' }, result.error);
+  if (!result.value) return null;
+  return result.value.entries.length
+    ? h(Readouts, { values: result.value.entries.map(({ name, calls }) => [name, calls] as const) })
+    : h('p', null, 'No tool calls recorded.');
 }
 
 function AgentElapsed({ milliseconds }: { milliseconds?: number | null }) {

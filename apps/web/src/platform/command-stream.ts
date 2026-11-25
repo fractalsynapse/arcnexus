@@ -3,9 +3,8 @@ import {
   type CurrentWorkflow,
   type Receipt,
 } from '../../../../packages/commands/src/browser.js';
-import { readServerEvents } from '../../../../packages/foundation/src/server-events.js';
 import type { CommandState, Operation } from '../../../../packages/ui/src/index.js';
-import { gatewayRequest } from './resource.js';
+import { followGatewayEvents } from './gateway-events.js';
 
 export const unavailable: CommandState = { status: 'Unavailable', supported: [] };
 const supported: readonly Operation[] = ['plan', 'architect', 'run'];
@@ -23,16 +22,11 @@ export async function followCommands(
   signal: AbortSignal,
   receive: (data: CurrentWorkflow) => void,
 ) {
-  const response = await gatewayRequest(path + '/current', {
+  await followGatewayEvents(path + '/current', {
+    kind: 'command',
     signal,
-    headers: { accept: 'text/event-stream' },
-  });
-  if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
-    throw new Error('Command updates are unavailable.');
-  await readServerEvents(response.body, (frame) => {
-    if (!/^event: command$/m.test(frame)) return;
-    const data = /^data: (.+)$/m.exec(frame)?.[1];
-    if (data && !signal.aborted) receive(currentWorkflow.parse(JSON.parse(data) as unknown));
+    unavailable: 'Command updates are unavailable.',
+    receive: (data) => receive(currentWorkflow.parse(data)),
   });
 }
 

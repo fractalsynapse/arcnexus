@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import { ExternalLink } from '../../../../packages/ui/src/index.js';
 
 function repository(remote: string | undefined) {
   const url = remote && URL.parse(remote);
@@ -29,10 +30,6 @@ export function CommitLink({ remote, revision }: { remote?: string; revision?: s
   const root = repository(remote);
   const href = root && /^[\da-f]+$/i.test(revision) ? root + '/commit/' + revision : undefined;
   return href
-    ? h(
-        'a',
-        { href, target: '_blank', rel: 'noopener noreferrer', title: revision },
-        shortCommit(revision),
-      )
+    ? h(ExternalLink, { href, title: revision }, shortCommit(revision))
     : h('code', null, revision);
 }

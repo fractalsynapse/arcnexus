@@ -1,0 +1,15 @@
+:is(.arc-app, #arc-preview) .arc-diff-lines [data-change='added'] {
+  background: light-dark(#dcfae6, #143d2b);
+  color: light-dark(#085631, #a5edbc);
+}
+:is(.arc-app, #arc-preview) .arc-diff-lines [data-change='removed'] {
+  background: light-dark(#ffebe9, #4e252c);
+  color: light-dark(#8b262b, #ffc2c2);
+}
+:is(.arc-app, #arc-preview) .arc-diff-lines [data-change='hunk'] {
+  background: var(--tint);
+  color: var(--link);
+}
+:is(.arc-app, #arc-preview) .arc-diff-lines [data-change='context'] {
+  background: var(--quiet);
+}

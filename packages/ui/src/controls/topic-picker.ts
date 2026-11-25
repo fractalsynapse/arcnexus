@@ -1,6 +1,8 @@
 import { createElement as h, useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { Button } from './button.js';
 import { IconButton } from './icon-button.js';
+import { matchTopics } from './topic-matches.js';
 
 interface TopicProps {
   label?: string;
@@ -55,13 +57,8 @@ function topicMatches(
   query: string,
   creatable?: boolean,
 ) {
-  const included = new Set(selected.map((item) => item.toLocaleLowerCase()));
-  const needle = query.toLocaleLowerCase();
-  const matches = options.filter((item) => {
-    const value = item.toLocaleLowerCase();
-    return !included.has(value) && value.includes(needle);
-  });
-  return matches.length || !query || !creatable || included.has(needle) ? matches : [query];
+  const { matches, alreadySelected } = matchTopics(options, selected, query);
+  return matches.length || !query || !creatable || alreadySelected ? matches : [query];
 }
 
 interface TopicKeys {
@@ -137,12 +134,12 @@ function TopicOptions({
     candidates.length === 0 && h('small', null, 'No matching topics'),
     candidates.map((topic, index) =>
       h(
-        'button',
+        Button,
         {
           key: topic,
           id: id + '-' + index,
           tabIndex: -1,
-          type: 'button',
+          variant: 'plain',
           role: 'option',
           'aria-selected': active === index,
           onPointerDown: (event) => event.preventDefault(),

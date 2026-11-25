@@ -1,3 +1,4 @@
+import { Subscriptions } from '../../../../packages/ui/src/index.js';
 import { useSyncExternalStore } from 'react';
 
 export interface Project {
@@ -10,17 +11,14 @@ export interface Project {
 type Session = { project?: Project };
 
 let session: Session = {};
-const listeners = new Set<() => void>();
+const subscriptions = new Subscriptions();
 
 export function setSession(value: Session) {
   session = value;
-  for (const listener of listeners) listener();
+  subscriptions.publish();
 }
 
-export function subscribeSession(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+export const subscribeSession = subscriptions.subscribe;
 
 /** Share the active project across workspace routes. */
 export function usePlatformSession() {

@@ -1,7 +1,5 @@
-import { diffArrays } from 'diff';
+import { lineChanges as draftDiff, type DiffLine } from '../../../packages/ui/src/content/line-changes.js';
 import { commitReferences, escape, noData, panel } from './view.ts';
-
-type DiffLine = [kind: string, text: string];
 
 export type FileDelta = {
   path: string;
@@ -68,24 +66,7 @@ export function diffBody(files: FileDelta[], localPatch = false) {
       <div class="arc-diff-content">${views.map((view) => view.content).join('')}</div></div></div>`;
 }
 
-export function draftDiff(before: string[], after: string[]): DiffLine[] {
-  const parts = diffArrays(before, after);
-  const start = parts.findIndex((part) => part.added || part.removed);
-  if (start < 0) return [];
-  const end = parts.findLastIndex((part) => part.added || part.removed);
-  const startLine = (parts[start - 1]?.count ?? 0) + 1;
-  return [
-    ['hunk', `@@ Draft changes from line ${startLine}`],
-    ...parts.slice(start, end + 1).flatMap(({ added, removed, value }) => {
-      const [kind, prefix] = added
-        ? ['added', '+ ']
-        : removed
-          ? ['removed', '− ']
-          : ['context', '  '];
-      return value.map<DiffLine>((line) => [kind, prefix + line]);
-    }),
-  ];
-}
+export { draftDiff };
 
 function fileTab(file: FileDelta, id: string, selected: boolean) {
   const path = escape(file.path);
@@ -102,14 +83,14 @@ function diffContent(file: FileDelta) {
   if (!file.lines.length) return note || noData('No text changes recorded for this file.');
   const added = file.lines.filter(([kind]) => kind === 'added').length;
   const removed = file.lines.filter(([kind]) => kind === 'removed').length;
-  const legend = `<div class="arc-diff-legend"><span class="added">+${added} additions</span>
-    <span class="removed">−${removed} deletions</span></div>`;
+  const legend = `<div class="arc-diff-legend arc-diff-lines"><span data-change="added">+${added} additions</span>
+    <span data-change="removed">−${removed} deletions</span></div>`;
   return (
     note +
     legend +
-    '<pre class="arc-diff arc-patch">' +
+    '<pre class="arc-diff arc-patch arc-diff-lines">' +
     file.lines
-      .map(([kind, line]) => `<span class="${kind}">${escape(line) || ' '}</span>`)
+      .map(([kind, line]) => `<span data-change="${kind}">${escape(line) || ' '}</span>`)
       .join('') +
     '</pre>'
   );

@@ -2,7 +2,7 @@
   <header class="arc-header">
     <button type="button" class="arc-brand" data-go="/plan/" aria-label="ArcNexus home">
       <img class="arc-mark" src="brand/brain.webp" alt="" width="24" height="24">
-      <img class="arc-wordmark" src="brand/wordmark-dark.webp" alt="ArcNexus" width="146" height="20">
+      <img class="arc-wordmark" src="brand/wordmark.webp" alt="ArcNexus" width="146" height="20">
     </button>
     <div class="arc-header-controls">
       <button type="button" class="arc-link arc-palette-trigger" data-action="color-schemes"
@@ -362,10 +362,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-file-diff [role=tabpanel] { border:1px solid var(--line); padding:7px; min-width:0; }
 #arc-preview .arc-diff-legend { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 6px; font-size:11px; font-weight:650; }
 #arc-preview .arc-diff-legend span { padding:2px 6px; border-radius:4px; }
-#arc-preview .arc-file-diff .added { background:light-dark(#dcfae6,#143d2b); color:light-dark(#085631,#a5edbc); }
-#arc-preview .arc-file-diff .removed { background:light-dark(#ffebe9,#4e252c); color:light-dark(#8b262b,#ffc2c2); }
-#arc-preview .arc-file-diff .hunk { background:var(--tint); color:var(--link); }
-#arc-preview .arc-file-diff .context { background:var(--quiet); }
+/* shared-diff-styles */
 #arc-preview .arc-diff-load { max-width:100%; width:fit-content; }
 #arc-preview .arc-stages { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); align-items: stretch; gap: 10px; }
 #arc-preview .arc-stages > section { display: flex; flex-direction: column; }
@@ -497,20 +494,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 }
 #arc-preview .arc-topic-create { color:var(--link); }
 #arc-preview .arc-topic-message { padding:7px 9px; color:var(--muted); }
-@supports (appearance:base-select) {
-  #arc-preview select, #arc-preview select::picker(select) { appearance:base-select; }
-  #arc-preview select::picker(select) {
-    inline-size:anchor-size(width); min-inline-size:0; padding:4px; margin-block:4px;
-    border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
-    box-shadow:var(--picker-shadow); font:inherit; overscroll-behavior:contain;
-  }
-  #arc-preview select::picker-icon { color:var(--muted); align-self:center; }
-  #arc-preview select:open::picker-icon { rotate:180deg; }
-  #arc-preview select option {
-    padding:7px 9px; border-radius:5px; color:var(--ink); white-space:normal; overflow-wrap:anywhere;
-  }
-  #arc-preview select option:is(:hover,:focus,:checked) { background:var(--tint); color:var(--link); }
-}
+/* shared-select-styles */
 #arc-preview .arc-facts { padding-left:18px; margin:4px 0; display:grid; gap:6px; overflow-wrap:anywhere; }
 #arc-preview .arc-assignment-count { display:block; margin-top:2px; }
 #arc-preview .arc-finding { display:grid; gap:4px; }

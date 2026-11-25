@@ -1,0 +1,52 @@
+:is(.arc-app, #arc-preview) select {
+  padding-inline-end: 14px;
+}
+@supports (appearance: base-select) {
+  :is(.arc-app, #arc-preview) select,
+  :is(.arc-app, #arc-preview) select::picker(select) {
+    appearance: base-select;
+  }
+  :is(.arc-app, #arc-preview) select {
+    align-items: center;
+    column-gap: 12px;
+  }
+  :is(.arc-app, #arc-preview) select::picker(select) {
+    inline-size: max-content;
+    min-inline-size: anchor-size(width);
+    max-inline-size: calc(100dvw - 2 * var(--pad));
+    position-area: block-end span-inline-start;
+    justify-self: end;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
+    margin-block: 4px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: var(--picker-shadow, 0 5px 16px #0b182a32);
+    font: inherit;
+    overscroll-behavior: contain;
+  }
+  :is(.arc-app, #arc-preview) select::picker-icon {
+    color: var(--muted);
+    align-self: center;
+  }
+  :is(.arc-app, #arc-preview) select:open::picker-icon {
+    rotate: 180deg;
+  }
+  :is(.arc-app, #arc-preview) select option {
+    padding: 7px 9px;
+    border-radius: 5px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  :is(.arc-app, #arc-preview) select option:is(:hover, :focus, :checked) {
+    background: var(--tint);
+    color: var(--link);
+  }
+}

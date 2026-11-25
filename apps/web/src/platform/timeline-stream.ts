@@ -1,5 +1,4 @@
-import { readServerEvents } from '../../../../packages/foundation/src/server-events.js';
-import { gatewayRequest } from './resource.js';
+import { followGatewayEvents } from './gateway-events.js';
 
 export interface TimelineFrame {
   sequence: string;
@@ -20,20 +19,13 @@ export async function followTimeline(
   cursor: string | undefined,
   receive: (event: TimelineEvent) => void,
 ) {
-  const headers = new Headers({ Accept: 'text/event-stream' });
-  if (cursor) headers.set('Last-Event-ID', cursor);
-  const response = await gatewayRequest(path, { headers, signal });
-  if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
-    throw new Error('The live event stream is unavailable.');
-  await readServerEvents(response.body, (frame) => {
-    const event = decode(frame);
-    if (event) receive(event);
+  await followGatewayEvents(path, {
+    kind: 'observation',
+    signal,
+    cursor,
+    unavailable: 'The live event stream is unavailable.',
+    receive: (data, id) => {
+      if (id) receive({ id, frame: data as TimelineFrame });
+    },
   });
-}
-
-function decode(block: string): TimelineEvent | undefined {
-  if (!/^event: observation$/m.test(block)) return;
-  const id = /^id: (.+)$/m.exec(block)?.[1];
-  const data = /^data: (.+)$/m.exec(block)?.[1];
-  if (id && data) return { id, frame: JSON.parse(data) as TimelineFrame };
 }

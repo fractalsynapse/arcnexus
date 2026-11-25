@@ -34,14 +34,6 @@
 .arc-diff-content span {
   display: block;
 }
-.arc-diff-content [data-change='added'] {
-  background: light-dark(#deefe6, #254637);
-  color: light-dark(#165537, #c1f6d3);
-}
-.arc-diff-content [data-change='removed'] {
-  background: light-dark(#f7e4e7, #502c38);
-  color: light-dark(#852941, #ffc6d1);
-}
 .arc-json-section > div {
   padding-inline-start: 12px;
   border-inline-start: 1px solid var(--line);

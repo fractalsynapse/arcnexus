@@ -1,13 +1,14 @@
 import { useRef, createElement as h } from 'react';
 import type { KeyboardEvent } from 'react';
-import type { PickerProps } from './palette.js';
+import { normalizeHex, type PickerProps } from './palette.js';
+import { Button } from '../../controls/button.js';
 
 export function CustomColor({ color, pick }: Pick<PickerProps, 'color' | 'pick'>) {
   const input = useRef<HTMLInputElement>(null);
   const choose = () => {
     const field = input.current;
     if (!field?.reportValidity()) return;
-    pick('#' + field.value.replace(/^#/, '').toLowerCase());
+    pick(normalizeHex(field.value));
   };
   return h(
     'div',
@@ -28,7 +29,7 @@ export function CustomColor({ color, pick }: Pick<PickerProps, 'color' | 'pick'>
         onKeyDown: (event) => confirmWithEnter(event, choose),
       }),
     ),
-    h('button', { type: 'button', className: 'arc-button', onClick: choose }, 'Use color'),
+    h(Button, { onClick: choose }, 'Use color'),
   );
 }
 
