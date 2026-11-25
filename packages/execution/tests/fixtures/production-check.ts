@@ -14,6 +14,7 @@ const catalog = '.arc/architecture';
 
 /** Isolate native check prerequisites with committed authority and a real admitted SQLite writer. */
 export class ProductionCheckFixture extends RoundConsumptionFixture {
+  private task?: HostTask;
   /** Commit explicit commands and ownership before the production architecture capture. */
   constructor(t: TestContext) {
     super(t, 'https://github.com/example/production-check.git');
