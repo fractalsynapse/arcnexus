@@ -3,7 +3,11 @@ import type { Candidate, Verdict } from '../../verification/src/index.js';
 import type { TaskObserver, TaskOutcome, TaskSession } from '../../workflow/src/index.js';
 import { publish, type Publication } from './publication.js';
 import { GitHubCheckFailure } from '../../collaboration/src/index.js';
-import { PublicationCheckFailure, retainProviderFailure } from './check-failure.js';
+import {
+  PublicationCheckFailure,
+  retainProviderFailure,
+  retainProviderObservation,
+} from './check-failure.js';
 import {
   acceptedIdentity,
   currentAcceptance,
@@ -154,6 +158,7 @@ async function checkedPublication(task: HostTask, publication: Publication, sign
 function recordedFailure(task: HostTask, publication: Publication, error: unknown) {
   if (!(error instanceof GitHubCheckFailure)) throw retainProviderFailure(task, publication, error);
   const evidence = [task.store('publication-check-failure.log', error.log)];
+  if (error.observation) evidence.push(retainProviderObservation(task, error.observation));
   task.note({
     publicationCheckFailure: {
       candidate: publication.candidate,

@@ -5,22 +5,44 @@ import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import { readGitHubChecks } from './github-checks.js';
 import {
+  confirmationChanged,
+  failedSuiteDiagnostic,
+  recordEarlierChecks,
+  recordPolledChecks,
+  requireRetainedSuites,
+  successfulChecks,
+  type ProviderCISnapshot,
+} from './github-ci-coverage.js';
+import {
   GitHubPullReadFailure,
+  GitHubReviewRejection,
   publishedPull,
   pullNumber,
   pullReviewQuery,
   reviewDecision,
   type GitHubPullObservation,
+  type GitHubVerificationObserver,
   type PublishedPull,
 } from './github-pull.js';
 
 export { isTransientReadFailure } from './read.js';
 export { verifyBoundCommit } from './repository-read.js';
 export { GitHubCheckFailure } from './check-failure.js';
-export { GitHubPullReadFailure, type PublishedPull } from './github-pull.js';
+export {
+  GitHubPullReadFailure,
+  GitHubReviewRejection,
+  type GitHubPullObservation,
+  type PublishedPull,
+} from './github-pull.js';
 
 const run = promisify(execFile);
 export type GitHubCredential = (remote: string) => Promise<string>;
+
+interface VerificationTarget {
+  base: string;
+  state: string;
+  branch?: string;
+}
 
 /** Use the trusted GitHub CLI for scoped tracking and publication operations. */
 export class GitHub {
@@ -187,56 +209,102 @@ ${marker}`,
     );
   }
 
-  /** Observe checks and the configured GitHub review decision on the pinned candidate. */
-  async verify(pr: string, head: string, base: string, state = 'OPEN', branch?: string) {
+  /** Verify the pinned candidate and report the complete observation before delivery proceeds. */
+  async verify(
+    pr: string,
+    head: string,
+    base: string,
+    state = 'OPEN',
+    branch?: string,
+    observe?: GitHubVerificationObserver,
+  ) {
+    const pinned = { repository: this.repository, pr, head };
+    const target = { base, state, branch };
+    let earlierChecks: GitHubPullObservation['earlierChecks'];
+    let previous: ProviderCISnapshot | undefined;
     for (;;) {
-      const { checks, review } = await this.verificationFacts(pr, head, base, state, branch);
-      if (review === 'CHANGES_REQUESTED') throw new Error(`GitHub review requested changes: ${pr}`);
-      const failed = checks.find(
-        ({ status, conclusion, state }) =>
-          (status === 'COMPLETED' && conclusion !== 'SUCCESS') ||
-          ['ERROR', 'FAILURE'].includes(state ?? ''),
-      );
-      if (failed) throw await this.failedCheck(pr, head, failed);
-      if (review !== 'REVIEW_REQUIRED' && successfulChecks(checks)) return;
+      const evidence: GitHubPullObservation = { ...pinned, earlierChecks };
+      const attempt = await this.verificationAttempt(evidence, target, previous, observe);
+      if (attempt.ready) return observe?.(evidence, 'verified');
+      previous = attempt.snapshot;
+      if (recordPolledChecks(evidence)) observe?.(evidence, 'pending');
+      earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
+    }
+  }
+
+  /** Decide from fresh provider facts and retain partial facts when an in-flight read is cancelled. */
+  private async verificationAttempt(
+    evidence: GitHubPullObservation,
+    target: VerificationTarget,
+    previous: ProviderCISnapshot | undefined,
+    observe?: GitHubVerificationObserver,
+  ) {
+    try {
+      const facts = await this.verificationFacts(evidence, target, previous);
+      const { failed, review, suites } = facts;
+      if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
+      if (failed) throw await this.failedCheck(failed, evidence);
+      if (facts.confirmationChanged)
+        throw new GitHubPullReadFailure(
+          'CI confirmation',
+          evidence,
+          new Error('GitHub CI changed during review'),
+        );
+      return {
+        ready: facts.reviewCurrent,
+        snapshot: { checks: facts.observedChecks, suites },
+      };
+    } catch (error) {
+      if (this.signal.aborted && evidence.pull) observe?.(evidence, 'pending');
+      throw error;
     }
   }
 
   /** Join head-pinned facts while retaining completed reads for an unavailable provider response. */
   private async verificationFacts(
-    pr: string,
-    head: string,
-    base: string,
-    state: string,
-    branch?: string,
+    evidence: GitHubPullObservation,
+    target: VerificationTarget,
+    previous?: ProviderCISnapshot,
   ) {
-    const evidence: GitHubPullObservation = { repository: this.repository, pr, head };
-    const current = await this.verificationPull(evidence, base, state, branch, 'pull');
-    const checks = await this.checks(evidence, 'checks');
+    const current = await this.verificationPull(evidence, target, 'pull');
+    const initial = await this.checks(evidence, 'checks', previous);
     const review = await this.pullRead('review decision', evidence, () => this.review(current));
     evidence.reviewDecision = review;
-    if (review === 'CHANGES_REQUESTED' || review === 'REVIEW_REQUIRED' || !successfulChecks(checks))
-      return { checks, review };
+    if (
+      review === 'CHANGES_REQUESTED' ||
+      review === 'REVIEW_REQUIRED' ||
+      !successfulChecks(initial)
+    )
+      return { ...initial, review, reviewCurrent: false, confirmationChanged: false };
 
-    const confirmed = await this.checks(evidence, 'confirmedChecks');
-    if (successfulChecks(confirmed) && checkSnapshot(checks) !== checkSnapshot(confirmed))
-      throw new GitHubPullReadFailure(
-        'CI confirmation',
-        evidence,
-        new Error('GitHub CI changed during review'),
-      );
-    if (successfulChecks(confirmed))
-      await this.verificationPull(evidence, base, state, branch, 'confirmedPull');
-    return { checks: confirmed, review };
+    const confirmed = await this.confirmCI(evidence, target, initial);
+    return { ...confirmed, review };
+  }
+
+  /** Confirm the same CI scope after review or require fresh review after observed CI progress. */
+  private async confirmCI(
+    evidence: GitHubPullObservation,
+    target: VerificationTarget,
+    initial: Awaited<ReturnType<typeof readGitHubChecks>>,
+  ) {
+    const confirmed = await this.checks(evidence, 'confirmedChecks', {
+      checks: initial.observedChecks,
+      suites: initial.suites,
+    });
+    const ready = successfulChecks(confirmed);
+    // Preserve terminal failures observed after review, even when the provider reread is green.
+    const failed = confirmed.failed ?? confirmed.progress.failure;
+    const changed = !failed && confirmationChanged(initial, confirmed, ready);
+    const reviewCurrent = ready && !failed && !changed && confirmed.progress.suites.size === 0;
+    if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
+    return { ...confirmed, failed, reviewCurrent, confirmationChanged: changed };
   }
 
   /** Retain the observed PR even when it conflicts with captured publication identity. */
   private verificationPull(
     evidence: GitHubPullObservation,
-    base: string,
-    state: string,
-    branch: string | undefined,
+    { base, state, branch }: VerificationTarget,
     slot: 'pull' | 'confirmedPull',
   ) {
     const read = slot === 'pull' ? 'PR identity' : 'PR confirmation';
@@ -254,29 +322,47 @@ ${marker}`,
   }
 
   /** Keep both CI snapshots and their partial results when verification cannot proceed. */
-  private async checks(evidence: GitHubPullObservation, slot: 'checks' | 'confirmedChecks') {
+  private checks(
+    evidence: GitHubPullObservation,
+    slot: 'checks' | 'confirmedChecks',
+    prior?: ProviderCISnapshot,
+  ) {
     const read = slot === 'checks' ? 'CI checks' : 'CI confirmation';
-    const checks = await this.pullRead(read, evidence, () =>
+    const suites = slot === 'checks' ? 'suites' : 'confirmedSuites';
+    const observedChecks = slot === 'checks' ? 'observedChecks' : 'confirmedObservedChecks';
+    return this.pullRead(read, evidence, () =>
       readGitHubChecks(
         (args) => this.query(args),
         this.repository,
         evidence.head,
-        (partial) => {
-          evidence[slot] = partial;
+        {
+          checks: (observed) => {
+            evidence[slot] = observed;
+          },
+          observedChecks: (observed) => {
+            evidence[observedChecks] = observed;
+          },
+          suites: (observed, phase) => {
+            evidence[suites] = observed;
+            if (phase === 'initial') requireRetainedSuites(observed, prior);
+          },
+          earlier: (checks, suites) => recordEarlierChecks(evidence, read, { checks, suites }),
         },
+        prior?.checks,
       ),
     );
-    evidence[slot] = checks;
-    return checks;
   }
 
   /** Preserve complete check diagnostics from the authorized repository's provider job. */
-  private async failedCheck(pr: string, head: string, check: ProviderCheck) {
+  private async failedCheck(check: ProviderCheck, evidence: GitHubPullObservation) {
     const job = /\/job\/(\d+)/.exec(check.detailsUrl ?? '')?.[1];
+    const suite = failedSuiteDiagnostic(evidence, check);
     const log = job
-      ? await this.query(['api', `repos/${this.repository}/actions/jobs/${job}/logs`], true)
-      : JSON.stringify(check, null, 2);
-    return new GitHubCheckFailure(pr, head, check, log);
+      ? await this.pullRead('CI job log', evidence, () =>
+          this.query(['api', `repos/${this.repository}/actions/jobs/${job}/logs`], true),
+        )
+      : JSON.stringify(suite ?? check, null, 2);
+    return new GitHubCheckFailure(evidence.pr, evidence.head, check, log, evidence);
   }
 
   /** Request a head-pinned squash merge and verify the resulting provider identity. */
@@ -389,23 +475,6 @@ ${marker}`,
     const token = await this.credential('https://github.com/' + this.repository + '.git');
     return { ...process.env, GH_TOKEN: token };
   }
-}
-
-function successfulChecks(checks: readonly ProviderCheck[]) {
-  return (
-    checks.length > 0 &&
-    checks.every(
-      ({ status, conclusion, state }) =>
-        (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
-    )
-  );
-}
-
-function checkSnapshot(checks: readonly ProviderCheck[]) {
-  return checks
-    .map((check) => JSON.stringify(check))
-    .sort()
-    .join('\n');
 }
 
 /** Use only the first line of the goal as the provider title. */

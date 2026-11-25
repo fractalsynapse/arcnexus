@@ -3,12 +3,15 @@ import test from 'node:test';
 import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
 import {
   ProviderResults,
+  completingSuite,
   pr,
   head,
   review,
   successfulRun,
   readyResponse,
   workflowJobs,
+  suites,
+  suiteResponse,
 } from '../fixtures/provider-results.js';
 
 export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery'] } as const;
@@ -78,23 +81,6 @@ function overlappingSuiteRun(id: string) {
   };
   const independent = { ...successfulRun, id: 50, app: { id: 9 }, name: 'Earlier producer' };
   return { '1': old, '2': retry, '3': independent }[id];
-}
-
-const suites = Array.from({ length: 1001 }, (_, index) => ({ id: index + 1, head_sha: head }));
-
-function suiteResponse(args: string[], resolve: (id: string) => unknown) {
-  if (args[1]?.endsWith('/check-suites')) {
-    const total_count = suites.length;
-    return args.includes('--paginate')
-      ? JSON.stringify({ total_count, check_suites: suites })
-      : JSON.stringify({ total_count });
-  }
-  if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
-    return JSON.stringify({ total_count: 0, check_runs: [] });
-  const match = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '');
-  if (!match?.[1]) return readyResponse(args);
-  const check = resolve(match[1]);
-  return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
 }
 
 function latestFailure(error: unknown) {
@@ -311,6 +297,70 @@ test('a different suite inventory invalidates an otherwise green CI snapshot', a
     message: /suite inventory changed/,
   });
 });
+
+for (const conclusion of ['success', 'failure'] as const) {
+  test(`a suite completing during observation is reread before reporting ${conclusion}`, async (t) => {
+    const scenario = new ProviderResults(t, completingSuite(conclusion));
+    const verification = scenario.provider.verify(pr, head, 'staging');
+    if (conclusion === 'success') await verification;
+    else
+      await assert.rejects(verification, (failure: unknown) => {
+        assert(failure instanceof GitHubCheckFailure);
+        assert.equal(failure.check.conclusion, 'FAILURE');
+        assert.equal(failure.log, 'Retained actual failure');
+        return true;
+      });
+    assert(scenario.calls.filter((args) => args[1]?.endsWith('/check-suites')).length > 2);
+  });
+}
+
+test('one suite can start while another completes during the same observation', async (t) => {
+  const completing = completingSuite('success');
+  let inventories = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    const output = completing(args);
+    if (!args[1]?.endsWith('/check-suites')) return output;
+    const suites = JSON.parse(output).check_suites;
+    const status = ['requested', 'queued'][inventories++] ?? 'completed';
+    suites.push({
+      id: 6,
+      head_sha: head,
+      status,
+      conclusion: 'success',
+      latest_check_runs_count: 0,
+    });
+    return JSON.stringify({ total_count: suites.length, check_suites: suites });
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+  assert(inventories > 3);
+});
+
+for (const reportedRuns of [0, 1]) {
+  test(`a pending suite with ${reportedRuns} expected invisible runs cannot authorize delivery`, async (t) => {
+    let scheduled = false;
+    const scenario = new ProviderResults(t, (args) => {
+      if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+      if (!scheduled) {
+        scheduled = true;
+        setImmediate(() => scenario.cancellation.abort());
+      }
+      return JSON.stringify({
+        total_count: 2,
+        check_suites: [
+          {
+            id: 5,
+            head_sha: head,
+            status: 'completed',
+            conclusion: 'success',
+            latest_check_runs_count: 0,
+          },
+          { id: 6, head_sha: head, status: 'queued', latest_check_runs_count: reportedRuns },
+        ],
+      });
+    });
+    await assert.rejects(scenario.provider.verify(pr, head, 'staging'), { name: 'AbortError' });
+  });
+}
 
 test('stable suite metadata cannot hide runs missing from the ref snapshot', async (t) => {
   const scenario = new ProviderResults(t, (args) => {

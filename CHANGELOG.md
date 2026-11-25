@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Continue observing the same GitHub pull request when an existing check suite finishes during verification (#734).
+
 - Observe GitHub PR identity, head-pinned CI checks, and the repository's review decision through separate reads before staging publication (#731).
 
 - Retry transient GitHub CLI HTTP responses while observing a staging pull request so an interrupted status read can recover without restarting the refinement run (#724).

@@ -33,7 +33,7 @@ export async function publish(publication: Publication, actions: PublicationActi
   if (observed) {
     verifyPull(publication, observed);
     if (observed.state === 'merged' && observed.commit) {
-      await provider.verify(observed.url, head, target, 'MERGED', branch);
+      await verifyPublication(publication, actions, observed.url, 'MERGED');
       await provider.confirm(observed.commit, candidate, target);
       return { pr: observed.url, commit: observed.commit };
     }
@@ -43,12 +43,28 @@ export async function publish(publication: Publication, actions: PublicationActi
       throw new Error(`Remote publication branch changed: ${branch}`);
   }
   const pr = observed?.url ?? (await open(publication, actions));
-  await provider.verify(pr, head, target, 'OPEN', branch);
+  await verifyPublication(publication, actions, pr, 'OPEN');
   await currentBase(publication, provider);
   record({ publicationAction: 'merge', pr, head });
   const commit = await provider.merge(pr, head, issue);
   await provider.confirm(commit, candidate, target);
   return { pr, commit };
+}
+
+/** Retain the head-pinned provider evidence before attempting or confirming integration. */
+function verifyPublication(
+  { head, target, branch }: Publication,
+  { provider, record }: PublicationActions,
+  pr: string,
+  state: 'OPEN' | 'MERGED',
+) {
+  return provider.verify(pr, head, target, state, branch, (observation, result) =>
+    record(
+      result === 'pending'
+        ? { publicationVerificationPending: observation }
+        : { publicationVerification: observation },
+    ),
+  );
 }
 
 /** Open one PR after observing the exact issue branch and checking the retained base. */

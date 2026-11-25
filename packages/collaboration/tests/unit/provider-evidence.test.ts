@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { GitHubCheckFailure, GitHubPullReadFailure } from '../../src/index.js';
+import {
+  GitHubCheckFailure,
+  GitHubPullReadFailure,
+  GitHubReviewRejection,
+  type GitHubPullObservation,
+} from '../../src/index.js';
 import {
   ProviderResults,
+  completingSuite,
   pr,
   head,
   successfulRun,
@@ -25,6 +31,29 @@ test('unavailable suite metadata retains the completed ref check read', async (t
   });
 });
 
+test('an unavailable legacy status read retains failed attempts excluded from the current selection', async (t) => {
+  const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+  const previous = { ...current, id: 41, conclusion: 'failure' };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/check-runs?filter=latest'))
+      return JSON.stringify({ total_count: 1, check_runs: [current] });
+    if (args[1]?.includes('/check-runs?filter=all'))
+      return JSON.stringify({ total_count: 2, check_runs: [previous, current] });
+    if (args[1]?.endsWith('/status')) throw new Error('Legacy status unavailable');
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+    assert(failure instanceof GitHubPullReadFailure);
+    assert.deepEqual(
+      failure.observation.checks?.map(({ runId }) => runId),
+      [42],
+    );
+    const prior = failure.observation.observedChecks?.find(({ runId }) => runId === 41);
+    assert.equal(prior?.conclusion, 'FAILURE');
+    return true;
+  });
+});
+
 test('a failed refresh retains the completed review and the prior check snapshot', async (t) => {
   let reviewReceived = false;
   const scenario = new ProviderResults(t, (args) => {
@@ -39,6 +68,198 @@ test('a failed refresh retains the completed review and the prior check snapshot
     assert.equal(error.observation.checks?.[0]?.runId, successfulRun.id);
     return true;
   });
+});
+
+test('a failed completion reread retains the earlier legacy status alongside the current run', async (t) => {
+  const completing = completingSuite('success');
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    if (++statuses > 1) throw new Error('Legacy status read unavailable');
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'lint', state: 'failure', target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.checks?.[0]?.status, 'COMPLETED');
+    const earlier = error.observation.earlierChecks?.[0];
+    assert.equal(earlier?.phase, 'CI checks');
+    assert.equal(earlier.checks[0]?.status, 'IN_PROGRESS');
+    assert.equal(earlier.checks[1]?.context, 'lint');
+    assert.equal(earlier.checks[1]?.state, 'FAILURE');
+    return true;
+  });
+});
+
+test('a terminal check failure retains the preceding snapshot from the same observation', async (t) => {
+  const completing = completingSuite('failure');
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [
+        { context: 'lint', state: ++statuses === 1 ? 'failure' : 'success', target_url: null },
+      ],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.log, 'Retained actual failure');
+    assert.equal(error.observation?.earlierChecks?.[0]?.checks[1]?.state, 'FAILURE');
+    return true;
+  });
+});
+
+test('review rejection retains earlier CI evidence without becoming an unavailable read', async (t) => {
+  const completing = completingSuite('success');
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') {
+      const pull = JSON.parse(readyResponse(args)).data.repository.pullRequest;
+      return JSON.stringify({
+        data: { repository: { pullRequest: { ...pull, reviewDecision: 'CHANGES_REQUESTED' } } },
+      });
+    }
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [
+        { context: 'lint', state: ++statuses === 1 ? 'failure' : 'success', target_url: null },
+      ],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert(error instanceof GitHubReviewRejection);
+    assert.match(error.message, /review requested changes/);
+    assert.equal(error.observation.reviewDecision, 'CHANGES_REQUESTED');
+    assert.equal(error.observation.earlierChecks?.[0]?.checks[1]?.state, 'FAILURE');
+    return true;
+  });
+});
+
+test('a later polling attempt retains CI evidence from before the wait', async (t) => {
+  const completing = completingSuite('success');
+  let pulls = 0;
+  let statuses = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99') && ++pulls === 2) throw new Error('PR read unavailable');
+    if (args[1] === 'graphql')
+      return readyResponse(args).replace(
+        '"reviewDecision":null',
+        '"reviewDecision":"REVIEW_REQUIRED"',
+      );
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [
+        { context: 'lint', state: ++statuses === 1 ? 'failure' : 'success', target_url: null },
+      ],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.earlierChecks?.[0]?.checks[1]?.state, 'FAILURE');
+    return true;
+  });
+});
+
+test('a later unavailable read retains a stable pending observation', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99') && ++pulls === 2) throw new Error('PR read unavailable');
+    if (!args[1]?.endsWith('/status')) return readyResponse(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'lint', state: 'pending', target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.earlierChecks?.[0]?.checks[1]?.state, 'PENDING');
+    return true;
+  });
+});
+
+test('a pending confirmation preserves the initial green observation before a later read failure', async (t) => {
+  const completing = completingSuite('success');
+  let pulls = 0;
+  let statuses = 0;
+  let reviewed = false;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99') && ++pulls === 2) throw new Error('Pull unavailable');
+    if (args[1] === 'graphql') reviewed = true;
+    if (!args[1]?.endsWith('/status')) return completing(args);
+    const state = reviewed ? 'pending' : ++statuses === 1 ? 'pending' : 'success';
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'CI', state, target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+    assert(failure instanceof GitHubPullReadFailure);
+    const history = failure.observation.earlierChecks ?? [];
+    assert(
+      history.some(
+        ({ phase, checks }) =>
+          phase === 'CI checks' &&
+          checks.some(({ context, state }) => context === 'CI' && state === 'SUCCESS'),
+      ),
+    );
+    assert(history.some(({ phase }) => phase === 'CI confirmation'));
+    return true;
+  });
+});
+
+test('cancellation during polling still exposes the original and pending confirmation reads', async (t) => {
+  let reviewed = false;
+  let observation: GitHubPullObservation | undefined;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') reviewed = true;
+    if (!args[1]?.endsWith('/status')) return readyResponse(args);
+    if (reviewed) setImmediate(() => scenario.cancellation.abort());
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'CI', state: reviewed ? 'pending' : 'success', target_url: null }],
+    });
+  });
+  const ready = scenario.provider.verify(pr, head, 'staging', 'OPEN', undefined, (evidence) => {
+    observation = evidence;
+  });
+  await assert.rejects(ready, { name: 'AbortError' });
+  assert.equal(
+    observation?.observedChecks?.find(({ context }) => context === 'CI')?.state,
+    'SUCCESS',
+  );
+  assert.equal(
+    observation?.confirmedObservedChecks?.find(({ context }) => context === 'CI')?.state,
+    'PENDING',
+  );
+});
+
+test('cancellation while reading the review retains already observed CI facts', async (t) => {
+  let observation: GitHubPullObservation | undefined;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1] === 'graphql') {
+      scenario.cancellation.abort();
+      throw new DOMException('Stopped during review lookup', 'AbortError');
+    }
+    return readyResponse(args);
+  });
+  const ready = scenario.provider.verify(pr, head, 'staging', 'OPEN', undefined, (evidence) => {
+    observation = evidence;
+  });
+  await assert.rejects(ready, { name: 'AbortError' });
+  assert.equal(observation?.observedChecks?.[0]?.runId, successfulRun.id);
 });
 
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { publish, type Publication } from '../../src/index.js';
-import type { PublishedPull } from '../../../collaboration/src/index.js';
+import type { GitHubPullObservation, PublishedPull } from '../../../collaboration/src/index.js';
 
 export const suite = { owner: 'delivery', level: 'unit', tags: ['regression'] } as const;
 
@@ -115,6 +115,67 @@ test('DE-6: confirm an already merged candidate without any mutation', async () 
   assert.deepEqual(actions.calls, ['observe PR', 'verify', 'confirm']);
 });
 
+test('successful verification retains the provider’s earlier attempt before requesting merge', async () => {
+  const actions = fixture(undefined, accepted.head);
+  const evidence: GitHubPullObservation = {
+    repository: 'example/target',
+    pr: url,
+    head: accepted.head,
+    observedChecks: [
+      { runId: 41, conclusion: 'FAILURE' },
+      { runId: 42, conclusion: 'SUCCESS' },
+    ],
+  };
+  const verify = async (
+    _pr: string,
+    _head: string,
+    _base: string,
+    _state?: string,
+    _branch?: string,
+    observe?: (value: GitHubPullObservation, result: 'pending' | 'verified') => void,
+  ) => observe?.(evidence, 'verified');
+  const events: Record<string, unknown>[] = [];
+  await publish(accepted, {
+    ...actions,
+    provider: { ...actions.provider, verify },
+    record: (event) => events.push(event),
+  });
+  const verified = events.findIndex((event) => event.publicationVerification);
+  const merge = events.findIndex((event) => event.publicationAction === 'merge');
+  assert(verified >= 0 && verified < merge);
+  assert.deepEqual(events[verified]?.publicationVerification, evidence);
+});
+
+test('cancelling pending verification retains the evidence without recording acceptance', async () => {
+  const actions = fixture(undefined, accepted.head);
+  const evidence = { repository: 'example/target', pr: url, head: accepted.head };
+  const verify = async (
+    _pr: string,
+    _head: string,
+    _base: string,
+    _state?: string,
+    _branch?: string,
+    observe?: (value: GitHubPullObservation, result: 'pending' | 'verified') => void,
+  ) => {
+    observe?.(evidence, 'pending');
+    throw new DOMException('Held during polling', 'AbortError');
+  };
+  const events: Record<string, unknown>[] = [];
+  await assert.rejects(
+    publish(accepted, {
+      ...actions,
+      provider: { ...actions.provider, verify },
+      record: (event) => events.push(event),
+    }),
+    { name: 'AbortError' },
+  );
+  const pending = events.find((event) => event.publicationVerificationPending);
+  assert.equal(pending?.publicationVerificationPending, evidence);
+  assert(
+    !events.some((event) => event.publicationVerification || event.publicationAction === 'merge'),
+  );
+});
+
 test('DE-5: conflicting publication identities and unavailable reads stop before mutation', async () => {
   const conflict = fixture(undefined, 'different-head');
   await assert.rejects(publish(accepted, conflict), /branch changed/);
@@ -141,7 +202,8 @@ function scenario(pull?: PublishedPull, remote?: string, bases = [accepted.paren
       return branch === accepted.target ? (bases.length > 1 ? bases.shift() : bases[0]) : head;
     },
     async verify(...args) {
-      assert.deepEqual(args, expectedVerification(url, pull?.state === 'merged'));
+      assert.deepEqual(args.slice(0, 5), expectedVerification(url, pull?.state === 'merged'));
+      assert.equal(typeof args[5], 'function');
       await actions.provider.verify();
     },
     async merge(...args) {
@@ -245,7 +307,7 @@ test('DE-GATES: resumed publication uses the observed PR identity at every gate'
   const provider: Parameters<typeof publish>[1]['provider'] = {
     ...actions.provider,
     async verify(...args) {
-      assert.deepEqual(args, expectedVerification(observedUrl));
+      assert.deepEqual(args.slice(0, 5), expectedVerification(observedUrl));
       await actions.provider.verify();
     },
     async merge(...args) {

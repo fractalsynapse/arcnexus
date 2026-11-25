@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
+import type { ProviderCheckSuite } from './github-checks.js';
+import type { ProviderCISnapshot } from './github-ci-coverage.js';
 
 const commit = z.string().regex(/^[a-f0-9]{40}$/);
 const repositoryName = z.object({ full_name: z.string() });
@@ -101,8 +103,18 @@ export interface GitHubPullObservation {
   confirmedPull?: PublishedPull;
   checks?: readonly ProviderCheck[];
   confirmedChecks?: readonly ProviderCheck[];
+  observedChecks?: readonly ProviderCheck[];
+  confirmedObservedChecks?: readonly ProviderCheck[];
+  suites?: readonly ProviderCheckSuite[];
+  confirmedSuites?: readonly ProviderCheckSuite[];
+  earlierChecks?: readonly (ProviderCISnapshot & { phase: 'CI checks' | 'CI confirmation' })[];
   reviewDecision?: ReturnType<typeof reviewDecision>;
 }
+
+export type GitHubVerificationObserver = (
+  evidence: GitHubPullObservation,
+  result: 'pending' | 'verified',
+) => void;
 
 /** Preserve completed provider facts with the exact unavailable read. */
 export class GitHubPullReadFailure extends Error {
@@ -119,5 +131,13 @@ export class GitHubPullReadFailure extends Error {
         cause,
       },
     );
+  }
+}
+
+/** Report an authoritative negative review with its retained CI observations. */
+export class GitHubReviewRejection extends Error {
+  /** Preserve the provider's explicit decision alongside the head-pinned observations. */
+  constructor(readonly observation: GitHubPullObservation) {
+    super(`GitHub review requested changes: ${observation.pr}`);
   }
 }

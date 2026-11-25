@@ -1,5 +1,19 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
+import {
+  observedCIFailure,
+  pendingCheckStatuses,
+  pendingSuiteIds,
+  requireRetainedChecks,
+  requireRunSuites,
+  retainIntermediateCIRead,
+  suiteFailure,
+  suitePending,
+  suiteProgress,
+  suiteSnapshot,
+  type CIObserver,
+  type CIProgress,
+} from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
@@ -9,6 +23,7 @@ const suite = z.object({
   id: z.int().positive(),
   head_sha: z.string(),
   status: z.string().optional(),
+  conclusion: z.string().nullable().optional(),
   updated_at: z.string().optional(),
   latest_check_runs_count: z.int().nonnegative().optional(),
 });
@@ -18,7 +33,7 @@ const run = z.object({
   check_suite: z.object({ id: z.int().positive() }).nullish(),
   head_sha: z.string(),
   name: z.string().min(1),
-  status: z.enum(['completed', 'in_progress', 'queued', 'requested', 'waiting', 'pending']),
+  status: z.enum(['completed', ...pendingCheckStatuses]),
   conclusion: z
     .enum([
       'action_required',
@@ -53,29 +68,76 @@ const jobPage = total.extend({ jobs: z.array(job) });
 // GitHub's ref endpoint searches only its most recent check suites past this provider ceiling.
 const gitHubRefCheckSuiteCoverage = 1000;
 
+export type ProviderCheckSuite = z.output<typeof suite>;
+
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
 export async function readGitHubChecks(
   read: Read,
   repository: string,
   head: string,
-  observe: (checks: readonly ProviderCheck[]) => void,
-): Promise<ProviderCheck[]> {
+  observe: CIObserver,
+  prior: readonly ProviderCheck[] = [],
+) {
   const repo = `repos/${repository}`;
-  const ref = `${repo}/commits/${head}`;
-  const inventory = await suiteInventory(read, ref, head);
-  const checks = await checkRuns(read, repo, ref, head, inventory, observe);
-  const statuses = await readGitHubStatuses(read, repository, head);
-  observe([...checks, ...statuses]);
-  const current = await suiteInventory(read, ref, head);
-  if (suiteSnapshot(inventory) !== suiteSnapshot(current))
-    throw new Error('GitHub check suite inventory changed during CI observation');
-  return [...checks, ...statuses];
+  const scope = { repo, ref: `${repo}/commits/${head}`, head };
+  let inventory = await suiteInventory(read, scope.ref, head);
+  observe.suites(inventory, 'initial');
+  let previous = prior;
+  const progress: CIProgress = { suites: new Set(pendingSuiteIds(inventory)), intermediate: [] };
+  for (;;) {
+    const snapshot = await readChecks(read, scope, inventory, observe, previous);
+    const current = await suiteInventory(read, scope.ref, head);
+    const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
+    if (!stable) observe.earlier(snapshot.observedChecks, inventory);
+    observe.suites(current, 'subsequent');
+    if (stable) return stableCheckRead(snapshot, current, progress);
+    const progressed = suiteProgress(inventory, current, snapshot.observedChecks);
+    if (!progressed) throw new Error('GitHub check suite inventory changed during CI observation');
+    retainIntermediateCIRead(progress, progressed, { ...snapshot, suites: inventory });
+    inventory = current;
+    previous = snapshot.observedChecks;
+  }
 }
 
-type CheckSuite = z.output<typeof suite>;
+function stableCheckRead(
+  snapshot: Awaited<ReturnType<typeof readChecks>>,
+  suites: ProviderCheckSuite[],
+  progress: CIProgress,
+) {
+  return {
+    ...snapshot,
+    suites,
+    pendingSuites: pendingSuiteIds(suites),
+    progress,
+    failed: observedCIFailure({ ...snapshot, suites }),
+  };
+}
 
-function suiteSnapshot(suites: CheckSuite[]) {
-  return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
+/** Record both sources before comparing them against the previously observed coverage. */
+async function readChecks(
+  read: Read,
+  { repo, ref, head }: { repo: string; ref: string; head: string },
+  inventory: ProviderCheckSuite[],
+  observe: CIObserver,
+  previous: readonly ProviderCheck[],
+) {
+  const { checks, runs, observedRuns } = await checkRuns(
+    read,
+    repo,
+    ref,
+    head,
+    inventory,
+    observe.checks,
+  );
+  observe.observedChecks(observedRuns);
+  observe.checks(checks);
+  const statuses = await readGitHubStatuses(read, ref, head);
+  const observedChecks: ProviderCheck[] = [...observedRuns, ...statuses];
+  const current: ProviderCheck[] = [...checks, ...statuses];
+  observe.observedChecks(observedChecks);
+  observe.checks(current);
+  requireRetainedChecks(runs, statuses, previous);
+  return { checks: current, observedChecks };
 }
 
 function normalizeRun({
@@ -100,12 +162,7 @@ function normalizeRun({
 }
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
-async function readGitHubStatuses(
-  read: Read,
-  repository: string,
-  head: string,
-): Promise<ProviderCheck[]> {
-  const ref = `repos/${repository}/commits/${head}`;
+async function readGitHubStatuses(read: Read, ref: string, head: string): Promise<ProviderCheck[]> {
   const page = statusPage.refine(
     (value) => value.sha === head,
     'GitHub returned commit statuses for a different head',
@@ -132,7 +189,7 @@ async function checkRuns(
   repo: string,
   ref: string,
   head: string,
-  inventory: CheckSuite[],
+  inventory: ProviderCheckSuite[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {
   const current = await runsFrom(read, `${ref}/check-runs?filter=all`, head);
@@ -141,23 +198,33 @@ async function checkRuns(
     inventory.length > gitHubRefCheckSuiteCoverage
       ? await suiteRuns(read, repo, head, inventory, current, observe)
       : current;
-  observe(runs.map(normalizeRun));
-  requireSuiteCoverage(inventory, runs);
-  const checks = (await latestRuns(read, repo, head, runs, observe)).map(normalizeRun);
-  observe(checks);
-  return checks;
+  const observedRuns = runs.map(normalizeRun);
+  observe(observedRuns);
+  requireRunSuites(runs, inventory);
+  const latest = await latestRuns(read, repo, head, runs, observe);
+  const checks = latest.map(normalizeRun);
+  requireSuiteCoverage(inventory, latest);
+  return { checks, runs, observedRuns };
 }
 
 /** Compare each suite's reported run count with the head-pinned check inventory. */
-function requireSuiteCoverage(inventory: CheckSuite[], runs: CheckRun[]) {
+function requireSuiteCoverage(inventory: ProviderCheckSuite[], runs: CheckRun[]) {
   const counts = new Map<number, number>();
   for (const run of runs) {
     const id = run.check_suite?.id;
     if (id !== undefined) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   for (const suite of inventory) {
-    if ((counts.get(suite.id) ?? 0) < (suite.latest_check_runs_count ?? 0))
-      throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
+    if (suitePending(suite) || suiteFailure(suite)) continue;
+    const count = counts.get(suite.id) ?? 0;
+    const expected = suite.latest_check_runs_count;
+    if (
+      suite.status !== 'completed' ||
+      expected === undefined ||
+      count < expected ||
+      (count === 0 && !suite.conclusion)
+    )
+      throw new Error(`GitHub suite ${suite.id} is missing check runs or completion status`);
   }
 }
 
@@ -166,7 +233,7 @@ async function suiteRuns(
   read: Read,
   repo: string,
   head: string,
-  suites: CheckSuite[],
+  suites: ProviderCheckSuite[],
   current: CheckRun[],
   observe: (checks: readonly ProviderCheck[]) => void,
 ) {

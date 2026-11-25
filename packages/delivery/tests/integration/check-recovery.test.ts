@@ -100,8 +100,7 @@ class CheckScenario {
       }),
       remoteHead: async (branch: string) => (branch === 'staging' ? this.authority : this.head),
       verify: async () => {
-        if (this.failed)
-          throw new GitHubCheckFailure('pull/7', this.head, { conclusion: 'FAILURE' }, log);
+        if (this.failed) throw this.failure();
       },
       merge: async () => {
         this.merged++;
@@ -115,6 +114,18 @@ class CheckScenario {
         this.head = head;
       },
     };
+  }
+
+  /** Supply the full provider log and the earlier status from the same read. */
+  private failure() {
+    return new GitHubCheckFailure('pull/7', this.head, { conclusion: 'FAILURE' }, log, {
+      repository: 'example/check-recovery',
+      pr: 'pull/7',
+      head: this.head,
+      earlierChecks: [
+        { phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }], suites: [] },
+      ],
+    });
   }
 
   /** Consume the actual public Execution assembly record through Delivery. */
@@ -145,6 +156,13 @@ class CheckScenario {
     assert.ok(error instanceof PublicationCheckFailure);
     assert.equal(error.candidate, candidate.digest);
     assert.equal(readFileSync(error.evidence[0]!, 'utf8'), log);
+    const observation = error.evidence[1];
+    assert(observation, 'Delivery retains previous CI observations');
+    const observed = JSON.parse(readFileSync(observation, 'utf8'));
+    assert.equal(observed.head, this.head);
+    assert.deepEqual(observed.earlierChecks, [
+      { phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }], suites: [] },
+    ]);
     const finding = this.task
       .observations<{ publicationCheckFailure?: { head: string; evidence: string[] } }>()
       .findLast((event) => event.publicationCheckFailure)?.publicationCheckFailure;
