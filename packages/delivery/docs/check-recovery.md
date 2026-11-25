@@ -201,8 +201,16 @@ Their trusted timeline records report exit 0. The ordinary owner suite records
 40 passes and 12 native skips; its SHA-256 is
 `62f8b4e53926859d466152fe89bb58f835aa182d95c1d694c5ac8842fb6060c3`.
 The native evidence above supplies the separate recorded execution observation;
-ordinary skips are never native passes. Mapped Implementation checks resolve
-current applicability through their captured input identities.
+ordinary skips are never native passes.
+
+Mapped Implementation observations also returned exit 0: complete logs
+`213-813-owner-format.log`, `213-816-owner-lint.log`,
+`213-821-repository-types.log`, `213-824-repository-build.log` and
+`213-827-owner-tests.log`. Implementation read all five complete logs.
+The latter records 40 passes, no failures and 12 explicit native skips, SHA-256
+`db9924ab9e00dc27217ae999581f1d3419c5aac40268068ec68a2a52ed70d47d`.
+These observations cover unchanged executable inputs; the subsequent edit only
+adds their references to this Markdown record.
 
 Only this evidence record and its README pointer change in Implementation.
 Real confined commands, Git/SQLite persistence and local squash commits remain
