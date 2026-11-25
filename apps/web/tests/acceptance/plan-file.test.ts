@@ -30,6 +30,7 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   await page.reload();
   await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
   await verifyFileHeading(page);
+  await verifyHeadingSpacing(page);
   await verifyFullWidthDiff(page);
   await verifySinglePanelToggle(page);
   assert.ok(
@@ -38,6 +39,30 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
     ),
   );
 });
+
+async function verifyHeadingSpacing(page: Page) {
+  const original = page.viewportSize();
+  for (const width of [1180, 360]) {
+    await page.setViewportSize({ width, height: 800 });
+    const alignment = await page.locator('.arc-main').evaluate((main) => {
+      const box = (selector: string) => main.querySelector(selector)!.getBoundingClientRect();
+      const center = (selector: string) => {
+        const { top, height } = box(selector);
+        return top + height / 2;
+      };
+      return {
+        gap: box('.arc-page-title').top - box('.arc-file-breadcrumbs').bottom,
+        spacing: parseFloat(getComputedStyle(main).getPropertyValue('--gap')),
+        centers: ['.arc-page-title button', '.arc-page-title h1', '.arc-page-title select'].map(
+          center,
+        ),
+      };
+    });
+    assert.ok(Math.abs(alignment.gap - alignment.spacing) < 1);
+    assert.ok(alignment.centers.every((center) => Math.abs(center - alignment.centers[0]!) < 1));
+  }
+  if (original) await page.setViewportSize(original);
+}
 
 async function verifyFullWidthDiff(page: Page) {
   const diff = page.locator('pre[aria-label="Changes for .arc/goals/fixture-goal.md"]');

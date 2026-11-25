@@ -17,20 +17,20 @@ interface PageLayoutProps {
 export function PageLayout({ workspace, path, context }: PageLayoutProps) {
   const page = usePageLayout(workspace, path);
   const { heading, gear, settings, toggle, title, label } = page;
+  const titleRow = h(PageHeading, {
+    label,
+    title,
+    heading,
+    gear,
+    settings,
+    toggle,
+    titleAction: workspace.titleAction,
+    context: workspace.context ?? context,
+  });
   return h(
     'main',
     { className: 'arc-main' },
-    workspace.breadcrumbs,
-    h(PageHeading, {
-      label,
-      title,
-      heading,
-      gear,
-      settings,
-      toggle,
-      titleAction: workspace.titleAction,
-      context: workspace.context ?? context,
-    }),
+    h('header', { className: 'arc-page-header' }, workspace.breadcrumbs, titleRow),
     settings && h(PageAppearance, { page }),
     h(PageDisplays, { workspace, page }),
   );

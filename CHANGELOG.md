@@ -32,6 +32,8 @@
 
 ### Fixed
 
+- Keep workspace headings evenly spaced below breadcrumbs on desktop and mobile (#746).
+
 - Keep Plan and Plan File dropdown rows consistent on narrow screens and reuse common UI controls, display logic, and theme rules (#746).
 
 - Match the mockup's Markdown viewer and editor, use the shared heading selector for Plan File history, and describe token counts with a tooltip (#746).
