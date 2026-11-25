@@ -3,12 +3,228 @@
 This reference is for Delivery maintainers and host consumers deciding whether a
 retained publication can continue after staging moves or a provider response is
 lost. It records the accepted boundary and current characterization scope for
-`retained-publication-current-evidence`
+`retained-publication-evidence`
 under [DE-2 through DE-6, DE-14 and DE-17](../contract.md).
 It consumes [Execution's prepared recovery](../../execution/docs/prepared-checkpoint-recovery.md)
 and [Verification's recovered acceptance](../../verification/README.md).
 Source assertions, executed owner observations and live delivery have distinct
 scopes, identified below.
+
+## Current evidence assessment: issue #744, run 213
+
+This assessment supports Delivery maintainers deciding whether the existing public
+recovery path needs correction. It records intent for
+`retained-publication-evidence` before any behavioral change. Engineering base
+and active capture are `945d4546ace2a55670020d8dd37de3b0d1500eed`.
+The retained task uses issue #744 and branch `744-task`; run 213's
+`213-1-run-timeline.jsonl` records the base, accepted plan and preparation at
+sequences 160468, 160770 and 160772–160773. This contribution creates no new
+task or publication.
+
+The [run 194 account](#executed-recovered-commands-issue-730-run-194) is historical
+native fixture evidence. All five Delivery scenario/fixture SHA-256 values in its
+source table still match the complete files inspected in this activity.
+In particular, the current prepared fixture does not replace `HostTask.check`:
+production Verification calls it, and `assertExecutedChecks` inspects real
+command records before supplying a controlled reviewer response. The earlier
+`controlChecks` description below describes the historical fixture, not the
+current source. Matching scenario hashes does not establish matching production
+implementation, capture, resolved bindings, dependencies, runtime or check inputs.
+This documentation assessment therefore does not validate reuse of run 194 for
+the current candidate.
+
+### Current services and distinguishing observations
+
+The inspected production path retains the locked boundary without a new recovery
+mechanism. [Execution assembly](../../execution/src/execution.ts) returns the
+actual tree digest, diff evidence and owner-evidence digest; it supplies no
+assignment-shaped base field. [Verification](../../verification/src/native.ts)
+runs the captured acceptance checklist, records its identity and prevents a
+favorable reviewer response from accepting failed required evidence.
+[Delivery admission](../src/acceptance.ts) reconstructs that identity and compares
+assessment, verdict, optional candidate identity, current required check IDs and
+their results before [integration](../src/index.ts) commits the candidate.
+
+Resume validates the retained publication's historical acceptance, observes the
+PR and then applicable issue-branch facts, and refuses unknown or conflicting
+identities. A known checkpoint or changed current acceptance returns to engineering;
+historical approval cannot accept recovered work. A matching historical merge
+instead proceeds through merged-state verification and tree/ancestry confirmation.
+[Publication](../src/publication.ts) observes before missing effects and checks the
+reviewed parent before opening and after provider verification before merging.
+[Failure retention](../src/check-failure.ts) records complete diagnostics and a
+required action in the existing journal.
+
+| Current accepted criterion | Source coverage and evidence needed for this candidate |
+| --- | --- |
+| `recovered-check-execution` | The native retained-publication scenarios use the unmodified check path and inspect executable, complete argv, cwd, numeric exits, exact logs and journal input fingerprints. Original/current commands must execute on applicable recovered inputs. The failed-baseline journey must retain exit 1 and its multiline diagnostic, refuse favorable acceptance, then obtain passing evidence and fresh assessment after checked correction with the same PR. Obtain applicable native execution or validate complete matching historical observations; a `reusedFrom` record is reuse, not another execution. |
+| `recovered-acceptance-refusal` | The public identity suite refuses changed tree, base, capture, acceptance and inputs before commit or provider access. Equal-tree cases change current base, capture, requirement text or required checks. Recovered publication assertions bind assessment checks and verdict to the final tree and staging parent. Obtain applicable observations for both admission refusal and recovered continuation. |
+| `publication-reconciliation` | Native public scenarios lose push, PR and merge responses after their controlled effects; reopened services inspect provider facts first, retain one PR, reuse a confirmed historical merge after later staging work, and reconcile an outdated open PR through fresh acceptance. Further staging movement after that acceptance refuses merge. Retain complete call ordering and observed identities rather than just a merged status. |
+| `publication-holds` | Conflicting head/target/branch and unavailable PR or issue-branch observations permit only observations, preserve checked work/history and refuse success. The branch-unavailable case retains successful PR observation, complete stdout/stderr and the explicit action to resolve the diagnostic and observe facts before retry. Obtain applicable negative observations; unavailable facts cannot establish absence or justify another delivery. |
+
+Current inspected production source SHA-256 identities are:
+
+| Source under `packages/delivery/src/` | SHA-256 |
+| --- | --- |
+| `index.ts` | `a3c8cc45578682377dd7548aae83fed47bb50977bbc34d0c37ac10c974c5ee0d` |
+| `acceptance.ts` | `a0c2b8f3cc8e14f21e3621873f975285c8bb9daf137420adc50c8623328cf0fe` |
+| `publication.ts` | `22b0dd1030daf6045fa3a4738ac71826a3634ea1e3bb3fa57e5bf59fe2023fbc` |
+| `check-failure.ts` | `0b92014c1e6c120e319e4a6456c60c07b6fc63d714e2f66e5dbddb17f5ff3fe2` |
+
+The unchanged [identity suite](../tests/integration/acceptance-identity.test.ts)
+has SHA-256
+`12b21cb41062eb7af718184d578fb6647e3f3d91c869777cd3a36319d58223aa`.
+These are inspected-source identities, not current passing execution results.
+Characterize the existing scenarios as expected pass. Preserve any actual failure
+and diagnose its owning boundary; add a distinguishing public red before correcting
+a demonstrated behavioral defect. This inspection establishes no new defect and
+does not authorize an acceptance, permission or contract change.
+
+### Completed Execution evidence and remaining scope
+
+[Execution's run 213 characterization](../../execution/docs/prepared-checkpoint-recovery.md#executed-prepared-recovery-characterization-run-213)
+is the completed contribution for `prepared-recovery-evidence`.
+The complete `213-341-owner-tests.log`, SHA-256
+`79ffe4a9757bae43d93f4f7114cdb9275e45c047d5a0b6e6a4526b3e59d37fb4`,
+records 253 passes, no failures and 17 skips. Inspected timeline sequence 161502
+records actual exit 0 for the Execution owner operation and its check-input
+identity. Cases 162–170 execute exact-answer/receipt continuity, new ownership and
+missing-activity refusals, retained checked conflicts, repeat staging movement,
+abandoned-workspace reconstruction and receipt replay. Case 33 distinguishes
+ordinary caller continuity from exact host approval and independent review scope.
+The complete log retains deterministic provider and MCP artifacts before cleanup.
+
+Those observations establish Execution recovery, not Delivery command execution,
+an independent inference verdict or hosted publication. The fixture controls
+final verification/delivery and hosted facts; normal interruption/cleanup is not
+abrupt process death. Do not request the completed contribution again or turn its
+skipped native cases into passes.
+
+Run 213 artifacts resolve outside source under evidence invocation
+`e7c8da2bb34e41d070391587635cb32e4bc1cf816b025ae70e900f1ca2811620`,
+using the supplied complete retained-evidence index
+`213-443-retained-evidence-6b7a181b969083f27438052e1b610c57352b9ef75850b534209ff2d8550150cf.json`
+and timeline. Historical run 194 external TAP/archive hashes and operator-reproduced
+records retain the provenance and access limitations stated below; this assessment
+has not newly inspected those external artifacts or established environment reuse.
+
+Native scenarios require the established trusted Host entry. An ordinary suite's
+native skips provide no command-execution evidence. A genuinely unavailable
+required runtime or provider prerequisite must retain its actual diagnostic,
+work and evidence with a named continuation action; it cannot justify bypassing
+checks. Controlled reviewer/provider responses, real confined local commands,
+SQLite/Git persistence and local squash commits remain distinct from live model
+assessment, GitHub CI, configured review and an upstream staging merge.
+
+The host still owns assembled verification and delivery of issue #744. Its final
+record must identify the newly reviewed tree, staging parent, capture, acceptance,
+required evidence, independent verdict, single PR and confirmed merge. No current
+Delivery execution, hosted gate or staging result is claimed by this prose.
+Further staging movement requires renewed reconciliation and applicable
+assessment through the same retained task.
+
+## Executed characterization: issue #744, run 213
+
+This Implementation reconciliation supersedes the pending execution statements in
+the assessment above. It consumes completed Testing without changing executable
+sources, assertions, authority or acceptance. The four production source hashes
+above and the five scenario/fixture hashes recorded for run 194 still match the
+complete current sources. No demonstrated behavioral defect calls for a correction.
+
+### Current checkpoint and native provenance
+
+Implementation read the complete retained Host answer
+`213-643-clarification.json`, SHA-256
+`236792e8cfac7612895d89ffd83072243b97c8df29587eddc494d90573a1ea70`,
+under run 213's evidence invocation identified above. It records two successful
+native invocations at secured checkpoint
+`564073b5ab25960d0b5c32f1cf97351026dee210`, tree
+`9906cb0a50529ef6bab54301e0beb5f417d712d0`, on `744-task`.
+Engineering base and capture remain
+`945d4546ace2a55670020d8dd37de3b0d1500eed`.
+
+The recorded invocation is `/usr/bin/npm test -- --path packages/delivery/tests/integration/retained-publication.test.ts --native true`
+at `/verify/checkout`; each invocation returned exit 0, 12 passes and no skips.
+The second retained all twelve fixture SQLite journals through a read-only
+file-descriptor observer outside the runner without patching test operations.
+The recorded Linux AMD64 image is
+`sha256:9f85e28364eb9846d84913ca918f510a3e14af379d23ee77070dcf0d7f52c518`,
+with Node v22.23.5, npm 10.9.9, Bubblewrap 0.13.1 and Git 2.39.5.
+The answer retains executable hashes, offline dependency installation and lockfile
+identity, seccomp identity, dropped capabilities, no-new-privileges and the
+existing Host AppArmor profile. It reports real confined `HostTask.check`
+execution with no upstream operations or mounted GitHub/Codex credentials.
+
+The answer identifies these external artifacts under
+`/home/adrian/.local/state/arcnexus/706-gateway-completion.THGXCP7w/vm/`:
+
+| Artifact | Recorded SHA-256 |
+| --- | --- |
+| `744-retained-native.log` | `b1f43607b087b100631f0741d805bd71e66469e41abbbc2bd84dd8bd48c9d92c` |
+| `744-journals-native.log` | `f765271d050534ed9ccf2a2962c8966ec29eb79fe5752de27b6ab8a820ae61f6` |
+| `744-delivery-fixture-journals.tar` | `5dbdb15721b474e2cf4bc19e79251db28c992af01b1e668dae4e7490d69bc9c3` |
+| `744-delivery-evidence.json` | `ecdbfad84e7241cc8d1b885ff4b63382830b6327bea31b5637cb3e21e16478e5` |
+
+Testing's direct mapped reads of those external paths were refused as inadmissible.
+This reconciliation relies on the complete recorded Host answer and inspected
+public assertions, not a claim of directly inspecting those external archives.
+The answer reproduces every native verdict and complete deciding process records
+for the outdated-PR and failed-command journeys.
+
+### Criterion reconciliation
+
+| Criterion | Current observation and scope |
+| --- | --- |
+| `recovered-check-execution` | Recorded case 4 executes the original command before recovery and both original/current commands in the recovered worktree with distinct input fingerprints and exits 0. Case 12 records current-command exit 1 and the exact multiline café diagnostic; production Verification refuses favorable acceptance. Checked correction obtains new passing original/current executions and assessment. Reused failed observations are explicitly marked `reusedFrom`, not counted as executions. |
+| `recovered-acceptance-refusal` | The ordinary owner log executes all nine public identity refusals, including equal-tree base, capture, requirement and required-check changes, before commit/provider access. Native assertions bind recovered checks and verdict to the final tree, new parent, capture and evidence inputs. |
+| `publication-reconciliation` | The Host answer reports all lost push/open/merge, outdated-open-PR and further-staging-movement cases passed. Inspected assertions require provider observation before effects, one issue/PR, no replay of a completed lost effect, historical merge confirmation after staging advances and refusal to merge when staging moves again. |
+| `publication-holds` | All five conflicting/unavailable cases passed according to the recorded native TAP. Assertions require observation-only continuation, no merge, retained exact checked work/history and readable evidence. Branch-unavailable coverage preserves the successful PR observation, complete stdout/stderr and the explicit action to resolve the diagnostic and observe facts before retry. |
+
+Case 4's recorded recovered tree is
+`1da50cb33ee912b187b84054f123615adc5f9a0b`, reviewed parent
+`60afd51e81049280d89543401abfcf4d44392c85`, with local confirmed merge
+`2326fb850295325a0f64a8f7499702b418181f57`.
+Case 12's corrected tree is
+`0a6abaff5e880999c0937cb245662df0f128e11f`, reviewed parent
+`c633af3cfc5ef2b34504e5a4dc33c26c5f30f038`, with local confirmed merge
+`eec5c6eb35674c7f68bb0e895cf8dc83e9f85254`.
+Both use the fixture's same PR 17. These are controlled-provider fixture identities,
+not issue #744's upstream delivery. The complete answer retains each verification
+identity, actual argv/cwd/status/log and original human answer with whitespace.
+
+### Applicable owner evidence and remaining delivery
+
+Implementation inspected complete logs `213-603-owner-format.log`,
+`213-597-owner-lint.log`, `213-600-repository-types.log`,
+`213-606-repository-build.log` and `213-594-owner-tests.log`.
+Their trusted timeline records report exit 0. The ordinary owner suite records
+40 passes and 12 native skips; its SHA-256 is
+`62f8b4e53926859d466152fe89bb58f835aa182d95c1d694c5ac8842fb6060c3`.
+The native evidence above supplies the separate recorded execution observation;
+ordinary skips are never native passes.
+
+Mapped Implementation observations also returned exit 0: complete logs
+`213-813-owner-format.log`, `213-816-owner-lint.log`,
+`213-821-repository-types.log`, `213-824-repository-build.log` and
+`213-827-owner-tests.log`. Implementation read all five complete logs.
+The latter records 40 passes, no failures and 12 explicit native skips, SHA-256
+`db9924ab9e00dc27217ae999581f1d3419c5aac40268068ec68a2a52ed70d47d`.
+These observations cover unchanged executable inputs; the subsequent edit only
+adds their references to this Markdown record.
+
+Only this evidence record and its README pointer change in Implementation.
+Real confined commands, Git/SQLite persistence and local squash commits remain
+distinct from controlled reviewer/provider responses. No live independent
+inference, hosted CI, configured GitHub review or upstream staging integration is
+established by these fixture observations. Run 194 remains historical evidence;
+current characterization uses run 213's recorded checkpoint and runtime.
+
+The host must independently assess the final candidate including these prose
+changes, then observe required hosted gates and confirm the single staging merge
+for issue #744. Retain the original task, answers, receipts, failed observations
+and publication identity. Further staging movement requires reconciliation and
+applicable refreshed acceptance. This contribution introduces no alternate
+publication path, store, permission or quantitative limit.
 
 ## Bind the production candidate
 
@@ -102,14 +318,14 @@ for accountable correction. Refresh affected checks and independent acceptance
 before continuing the same publication. Delivery cannot edit or accept a candidate,
 bypass gates or merge main. Release and simulation capabilities remain deferred.
 
-## Pending executed-check evidence: issue #720 continuation
+## Historical executed-check intent: issue #720 continuation
 
 For milestone `recovered-publication-executed-checks`, this intent is recorded
 at captured architecture revision `650b1a356e1525862717cff8f194ff99e628f214`
 before changing the recovery scenarios. The run 145 results below remain
 historical evidence with their original limitations.
 
-The current [prepared fixture](../tests/fixtures/prepared-publication.ts),
+The then-current [prepared fixture](../tests/fixtures/prepared-publication.ts),
 SHA-256 `97276456b9a73d771a805b8c357ec0288811e5d1d83d5f14f111908ec98ae8ed`,
 calls `controlChecks` on each admitted HostTask. That method replaces
 `HostTask.check`, resolves the operation and candidate inputs, then records status
@@ -156,7 +372,7 @@ configured GitHub review or an actual upstream staging merge. Preserve the run 1
 observations below unchanged and append later evidence with its own source and
 candidate identities; only the host performs assembled verification and delivery.
 
-## Current characterization scope: issue #720
+## Historical characterization scope: issue #720
 
 This reconciliation inspects captured revision
 `fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8` and the preceding Execution and
