@@ -99,6 +99,15 @@ requesting a different owner cannot conceal an invalid suite. Read metadata
 without importing suite code; observable module effects occur only during actual
 execution.
 
+The missing-declaration correction preserves the requirement that every discovered
+suite export literal `suite` metadata with owner, level and tags. Its intended
+behavior awaits executable evidence: public source applicability and built
+inventory must reject a discovered suite without that export, naming the affected
+file and the missing required suite metadata as the registration cause.
+Path-derived ownership and level do not replace the declaration, and missing
+metadata must not become an empty tag list or an omitted suite. Validate this
+requirement before owner filtering and without importing the module.
+
 Extend the existing public
 [inventory scenarios](../../packages/foundation/tests/unit/test-inventory.test.ts)
 and [selection scenarios](../../packages/foundation/tests/unit/test-selection.test.ts)
