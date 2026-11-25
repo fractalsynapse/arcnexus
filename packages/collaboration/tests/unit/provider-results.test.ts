@@ -63,7 +63,7 @@ const restPull = {
 const review = { state: 'OPEN', headRefOid: head, baseRefName: 'staging', reviewDecision: null };
 const successfulRun = {
   id: 42,
-  app: { id: 8 },
+  app: { id: 8, slug: 'github-actions' },
   name: 'Repository checks',
   status: 'completed',
   conclusion: 'success',
@@ -84,6 +84,14 @@ function readyResponse(args: string[]) {
       return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
     case repository + '/commits/' + head + '/status':
       return JSON.stringify({ sha: head, status: 'pending', total_count: 0, statuses: [] });
+    case repository + '/actions/jobs/1/logs':
+    case repository + '/actions/jobs/99/logs':
+      return 'Retained exact CI failure';
+    case repository + '/actions/runs/7/jobs?filter=all':
+      return workflowJobs([
+        [99, 1],
+        [1, 2],
+      ]);
     case 'graphql':
       return JSON.stringify({ data: { repository: { pullRequest: review } } });
     default:
@@ -185,9 +193,14 @@ function overlappingSuiteRun(id: string) {
     started_at: '2026-11-24T00:01:00Z',
     completed_at: '2026-11-24T00:02:00Z',
     conclusion: 'failure',
-    details_url: null,
+    details_url: 'https://github.com/example/project/actions/runs/7/job/1',
   };
-  const old = { ...successfulRun, id: 99, completed_at: '2026-11-24T00:03:00Z' };
+  const old = {
+    ...successfulRun,
+    id: 99,
+    details_url: 'https://github.com/example/project/actions/runs/7/job/99',
+    completed_at: '2026-11-24T00:03:00Z',
+  };
   const independent = { ...successfulRun, id: 50, app: { id: 9 }, name: 'Earlier producer' };
   return { '1': old, '2': retry, '3': independent }[id];
 }
@@ -205,6 +218,18 @@ function suiteResponse(args: string[], resolve: (id: string) => unknown) {
   if (!match?.[1]) return readyResponse(args);
   const check = resolve(match[1]);
   return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
+}
+
+function workflowJobs(attempts: [id: number, attempt: number][]) {
+  return JSON.stringify({
+    total_count: attempts.length,
+    jobs: attempts.map(([id, run_attempt]) => ({
+      id,
+      run_attempt,
+      head_sha: head,
+      check_run_url: `https://api.github.com/${repository}/check-runs/${id}`,
+    })),
+  });
 }
 
 function latestFailure(error: unknown) {
@@ -234,11 +259,23 @@ test('ordinary refs apply the same attempt ordering as the suite path', async (t
 
 test('a queued rerun stays pending in the presence of a prior failure', async (t) => {
   const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/actions/runs/7/jobs?'))
+      return workflowJobs([
+        [1, 1],
+        [2, 2],
+      ]);
     if (args[1] === 'graphql') scenario.cancellation.abort();
     return suiteResponse(args, (id) => {
       if (id === '1') return overlappingSuiteRun('2');
       if (id === '2')
-        return { ...successfulRun, id: 2, started_at: null, status: 'queued', conclusion: null };
+        return {
+          ...successfulRun,
+          id: 2,
+          started_at: null,
+          status: 'queued',
+          conclusion: null,
+          details_url: 'https://github.com/example/project/actions/runs/7/job/2',
+        };
       return undefined;
     });
   });
@@ -255,6 +292,71 @@ test('an unavailable suite retains checks already read from other suites', async
   await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
     assert.ok(error instanceof GitHubPullReadFailure);
     assert.ok(error.observation.checks?.some(({ runId }) => runId === 99));
+    return true;
+  });
+});
+
+test('independent workflows from the same App cannot mask a same-name failure', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [
+        {
+          ...successfulRun,
+          id: 99,
+          conclusion: 'failure',
+          details_url: 'https://github.com/example/project/actions/runs/7/job/99',
+        },
+        {
+          ...successfulRun,
+          started_at: '2026-11-24T00:02:00Z',
+          details_url: 'https://github.com/example/project/actions/runs/10/job/42',
+        },
+      ],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.check.runId, 99);
+    return true;
+  });
+});
+
+test('a completed cancellation without a start is superseded by a later attempt', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/actions/runs/7/jobs?'))
+      return workflowJobs([
+        [99, 1],
+        [42, 2],
+      ]);
+    if (!args[1]?.includes('/check-runs?')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 2,
+      check_runs: [
+        {
+          ...successfulRun,
+          id: 99,
+          started_at: null,
+          completed_at: '2026-11-23T23:59:00Z',
+          conclusion: 'cancelled',
+          details_url: 'https://github.com/example/project/actions/runs/7/job/99',
+        },
+        successfulRun,
+      ],
+    });
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+});
+
+test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
+  const output = JSON.stringify({ total_count: 2, check_runs: [successfulRun] }) + '\nmalformed';
+  const scenario = new ProviderResults(t, (args) =>
+    args[1]?.includes('/check-runs?') ? output : readyResponse(args),
+  );
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal((error.cause as { stdout?: string }).stdout, output);
     return true;
   });
 });

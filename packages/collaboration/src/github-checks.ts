@@ -7,8 +7,7 @@ const total = z.object({ total_count: z.int().nonnegative() });
 const suite = z.object({ id: z.int().positive(), head_sha: z.string() });
 const run = z.object({
   id: z.int().positive(),
-  app: z.object({ id: z.int().positive() }).nullable(),
-  started_at: z.iso.datetime().nullable().optional(),
+  app: z.object({ id: z.int().positive(), slug: z.string().optional() }).nullable(),
   head_sha: z.string(),
   name: z.string().min(1),
   status: z.enum(['completed', 'in_progress', 'queued', 'requested', 'waiting', 'pending']),
@@ -35,6 +34,13 @@ const status = z.object({
 const runPage = total.extend({ check_runs: z.array(run) });
 const suitePage = total.extend({ check_suites: z.array(suite) });
 const statusPage = total.extend({ sha: z.string(), statuses: z.array(status) });
+const job = z.object({
+  id: z.int().positive(),
+  run_attempt: z.int().positive(),
+  head_sha: z.string(),
+  check_run_url: z.string(),
+});
+const jobPage = total.extend({ jobs: z.array(job) });
 
 // GitHub's ref endpoint searches only its most recent check suites past this provider ceiling.
 const gitHubRefCheckSuiteCoverage = 1000;
@@ -65,14 +71,18 @@ function normalizeRun({ id, app, name, status, conclusion, details_url }: z.outp
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
 async function legacyStatuses(read: Read, ref: string, head: string) {
-  const statuses = await decodePages(read, `${ref}/status`, statusPage);
-  if (statuses.some((page) => page.sha !== head))
-    throw new Error('GitHub returned commit statuses for a different head');
-  return complete(
-    statuses,
+  const page = statusPage.refine(
+    (value) => value.sha === head,
+    'GitHub returned commit statuses for a different head',
+  );
+  const statuses = await readCollection(
+    read,
+    `${ref}/status`,
+    page,
     (page) => page.statuses,
     (item) => item.context,
-  ).map(({ context, state, target_url }) => ({
+  );
+  return statuses.map(({ context, state, target_url }) => ({
     context,
     state: state.toUpperCase(),
     detailsUrl: target_url ?? undefined,
@@ -96,7 +106,8 @@ async function checkRuns(
     count > gitHubRefCheckSuiteCoverage
       ? await suiteRuns(read, repo, ref, head, count, current, observe)
       : current;
-  const checks = latestRuns(runs).map(normalizeRun);
+  observe(runs.map(normalizeRun));
+  const checks = (await latestRuns(read, repo, head, runs)).map(normalizeRun);
   observe(checks);
   return checks;
 }
@@ -132,63 +143,123 @@ async function suiteRuns(
 
 /** Require every collected suite to belong to the same head and coverage snapshot. */
 async function suiteInventory(read: Read, ref: string, head: string, count: number) {
-  const pages = await decodePages(read, `${ref}/check-suites`, suitePage);
-  const suites = complete(
-    pages,
+  const page = suitePage.refine(
+    (value) => value.check_suites.every((item) => item.head_sha === head),
+    'GitHub returned a check suite for a different head',
+  );
+  const suites = await readCollection(
+    read,
+    `${ref}/check-suites`,
+    page,
     (page) => page.check_suites,
     (item) => item.id,
   );
   if (suites.length < count) throw new Error('GitHub returned an incomplete check suite inventory');
-  if (suites.some((item) => item.head_sha !== head))
-    throw new Error('GitHub returned a check suite for a different head');
   return suites;
 }
 
-/** Select the latest attempts independently for each provider and check name. */
-function latestRuns(runs: CheckRun[]) {
-  const contexts = new Map<string, CheckRun[]>();
+/** Use provider job attempts for Actions reruns and preserve other check identities. */
+async function latestRuns(read: Read, repo: string, head: string, runs: CheckRun[]) {
+  const contexts = new Map<string, { workflow?: string; runs: CheckRun[] }>();
   for (const run of runs) {
-    const key = runContext(run);
-    const group = contexts.get(key) ?? [];
-    group.push(run);
-    contexts.set(key, group);
+    const workflow = workflowRun(run, repo);
+    const key = workflow ? JSON.stringify([workflow, run.name]) : String(run.id);
+    const context = contexts.get(key) ?? { workflow, runs: [] };
+    context.runs.push(run);
+    contexts.set(key, context);
   }
-  return [...contexts.values()].flatMap(latestInContext);
+  const known = new Map<string, Map<number, number>>();
+  const selected: CheckRun[] = [];
+  for (const { workflow, runs } of contexts.values()) {
+    if (!workflow || runs.length === 1) {
+      selected.push(...runs);
+      continue;
+    }
+    const attempts = known.get(workflow) ?? (await workflowAttempts(read, repo, head, workflow));
+    known.set(workflow, attempts);
+    selected.push(...latestInContext(runs, attempts));
+  }
+  return selected;
 }
 
-function runContext(item: CheckRun) {
-  return item.app ? JSON.stringify([item.app.id, item.name]) : JSON.stringify([null, item.id]);
+/** Recognize Actions' own scoped job URL before using it to group attempts. */
+function workflowRun(run: CheckRun, repo: string) {
+  if (run.app?.slug !== 'github-actions' || !run.details_url) return;
+  const action =
+    /^https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/actions\/runs\/(\d+)\/job\/(\d+)$/.exec(
+      run.details_url,
+    );
+  if (
+    action?.[1]?.toLowerCase() === repo.slice('repos/'.length).toLowerCase() &&
+    action?.[3] === String(run.id)
+  )
+    return action[2];
 }
 
-/** Treat unstarted attempts as pending while the provider is still assigning their order. */
-function latestInContext(runs: CheckRun[]) {
-  const queued = runs.filter((item) => !item.started_at && item.status !== 'completed');
-  if (queued.length) return queued;
-  const latest = runs.reduce((time, item) => {
-    return item.started_at ? Math.max(time, Date.parse(item.started_at)) : time;
-  }, -Infinity);
-  return runs.filter((item) => !item.started_at || Date.parse(item.started_at) === latest);
+/** Bind each workflow job to the same head and the provider's exact check-run identity. */
+async function workflowAttempts(read: Read, repo: string, head: string, workflow: string) {
+  const page = jobPage.refine(
+    (value) =>
+      value.jobs.every(
+        (job) =>
+          job.head_sha === head &&
+          job.check_run_url.toLowerCase() ===
+            `https://api.github.com/${repo}/check-runs/${job.id}`.toLowerCase(),
+      ),
+    'GitHub returned a workflow job outside the pinned check scope',
+  );
+  const jobs = await readCollection(
+    read,
+    `${repo}/actions/runs/${workflow}/jobs?filter=all`,
+    page,
+    (result) => result.jobs,
+    (job) => job.id,
+  );
+  return new Map(jobs.map((job) => [job.id, job.run_attempt]));
+}
+
+/** Keep distinct jobs in the latest attempt, even when their display names collide. */
+function latestInContext(runs: CheckRun[], attempts: Map<number, number>) {
+  const numbers = runs.map((item) => attempts.get(item.id));
+  if (numbers.some((number) => number === undefined))
+    throw new Error('GitHub did not identify every check run attempt');
+  const latest = numbers.reduce<number>((latest, number) => Math.max(latest, number ?? 0), 0);
+  return runs.filter((item) => attempts.get(item.id) === latest);
 }
 
 async function runsFrom(read: Read, endpoint: string, head: string) {
-  const pages = await decodePages(read, endpoint, runPage);
-  const runs = complete(
-    pages,
+  const page = runPage.refine(
+    (value) => value.check_runs.every((item) => item.head_sha === head),
+    'GitHub returned check runs for a different head',
+  );
+  return readCollection(
+    read,
+    endpoint,
+    page,
     (page) => page.check_runs,
     (item) => item.id,
   );
-  if (runs.some((item) => item.head_sha !== head))
-    throw new Error('GitHub returned check runs for a different head');
-  return runs;
 }
 
-/** Retain each provider page's metadata for completeness and identity checks. */
-async function decodePages<T>(read: Read, endpoint: string, schema: z.ZodType<T>) {
-  const response = await read(['api', endpoint, '--paginate', '--jq', 'tojson']);
-  return response
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => schema.parse(JSON.parse(line)));
+/** Retain the original provider output when any collected page is invalid or incomplete. */
+async function readCollection<P extends { total_count: number }, T>(
+  read: Read,
+  endpoint: string,
+  schema: z.ZodType<P>,
+  items: (page: P) => T[],
+  identity: (item: T) => number | string,
+) {
+  const stdout = await read(['api', endpoint, '--paginate', '--jq', 'tojson']);
+  try {
+    const pages = stdout
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => schema.parse(JSON.parse(line)));
+    return complete(pages, items, identity);
+  } catch (cause) {
+    const diagnostic = cause instanceof Error ? cause.message : String(cause);
+    throw Object.assign(new Error(`GitHub read ${endpoint}: ${diagnostic}`, { cause }), { stdout });
+  }
 }
 
 function complete<P extends { total_count: number }, T>(
