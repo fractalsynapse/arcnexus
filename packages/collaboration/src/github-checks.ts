@@ -9,7 +9,7 @@ import {
   suiteProgress,
   suiteSnapshot,
   type CIObserver,
-  type ProviderCISnapshot,
+  type CIProgress,
 } from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
@@ -67,11 +67,6 @@ const gitHubRefCheckSuiteCoverage = 1000;
 
 export type ProviderCheckSuite = z.output<typeof suite>;
 
-interface CIProgress {
-  suites: Set<number>;
-  intermediate: ProviderCISnapshot[];
-}
-
 /** Read both CI sources against the same pinned SHA before considering delivery eligible. */
 export async function readGitHubChecks(
   read: Read,
@@ -85,7 +80,7 @@ export async function readGitHubChecks(
   let inventory = await suiteInventory(read, scope.ref, head);
   observe.suites(inventory, 'initial');
   let previous = prior;
-  const progress: CIProgress = { suites: new Set(), intermediate: [] };
+  const progress: CIProgress = { suites: new Set(pendingSuiteIds(inventory)), intermediate: [] };
   for (;;) {
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
@@ -119,9 +114,13 @@ function stableCheckRead(
   return {
     ...snapshot,
     suites,
-    pendingSuites: suites.filter(suitePending).map(({ id }) => id),
+    pendingSuites: pendingSuiteIds(suites),
     progress,
   };
+}
+
+function pendingSuiteIds(suites: readonly ProviderCheckSuite[]) {
+  return suites.filter(suitePending).map(({ id }) => id);
 }
 
 /** Record both sources before comparing them against the previously observed coverage. */

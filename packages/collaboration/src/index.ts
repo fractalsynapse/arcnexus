@@ -5,7 +5,7 @@ import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
 import { readGitHubChecks } from './github-checks.js';
 import {
-  checkSnapshot,
+  confirmationChanged,
   recordEarlierChecks,
   recordPolledChecks,
   requireRetainedSuites,
@@ -249,6 +249,12 @@ ${marker}`,
         checks.find((check) => terminalCheckFailure(check, pendingSuites)) ??
         terminalSuiteFailure(suites);
       if (failed) throw await this.failedCheck(failed, evidence);
+      if (facts.confirmationChanged)
+        throw new GitHubPullReadFailure(
+          'CI confirmation',
+          evidence,
+          new Error('GitHub CI changed during review'),
+        );
       return {
         ready: facts.reviewCurrent,
         snapshot: { checks: facts.observedChecks, suites },
@@ -274,7 +280,7 @@ ${marker}`,
       review === 'REVIEW_REQUIRED' ||
       !successfulChecks(initial)
     )
-      return { ...initial, review, reviewCurrent: false };
+      return { ...initial, review, reviewCurrent: false, confirmationChanged: false };
 
     const confirmed = await this.confirmCI(evidence, target, initial);
     return { ...confirmed, review };
@@ -291,23 +297,10 @@ ${marker}`,
       suites: initial.suites,
     });
     const ready = successfulChecks(confirmed);
-    const { suites: progressed, intermediate } = confirmed.progress;
-    const prior = checkSnapshot(
-      { checks: initial.observedChecks, suites: initial.suites },
-      progressed,
-    );
-    const changed =
-      checkSnapshot(initial, progressed) !== checkSnapshot(confirmed, progressed) ||
-      intermediate.some((read) => checkSnapshot(read, progressed) !== prior);
-    if (ready && changed)
-      throw new GitHubPullReadFailure(
-        'CI confirmation',
-        evidence,
-        new Error('GitHub CI changed during review'),
-      );
-    const reviewCurrent = ready && progressed.size === 0;
+    const changed = confirmationChanged(initial, confirmed, ready);
+    const reviewCurrent = ready && !changed && confirmed.progress.suites.size === 0;
     if (reviewCurrent) await this.verificationPull(evidence, target, 'confirmedPull');
-    return { ...confirmed, reviewCurrent };
+    return { ...confirmed, reviewCurrent, confirmationChanged: changed };
   }
 
   /** Retain the observed PR even when it conflicts with captured publication identity. */

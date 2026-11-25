@@ -7,6 +7,16 @@ export interface ProviderCISnapshot {
   suites: readonly ProviderCheckSuite[];
 }
 
+export interface CIProgress {
+  suites: Set<number>;
+  intermediate: ProviderCISnapshot[];
+}
+
+export interface ProviderCIRead extends ProviderCISnapshot {
+  observedChecks: readonly ProviderCheck[];
+  progress: CIProgress;
+}
+
 export interface CIObserver {
   checks(checks: readonly ProviderCheck[]): void;
   observedChecks(checks: readonly ProviderCheck[]): void;
@@ -76,13 +86,41 @@ export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
 
-export function checkSnapshot(snapshot: ProviderCISnapshot, progressed?: ReadonlySet<number>) {
+function checkSnapshot(
+  snapshot: ProviderCISnapshot,
+  progressed?: ReadonlySet<number>,
+  includeResults = true,
+) {
   const checks = snapshot.checks
     .filter(({ suiteId }) => suiteId == null || !progressed?.has(suiteId))
-    .map((check) => JSON.stringify(check))
+    .map((check) =>
+      JSON.stringify(
+        includeResults
+          ? check
+          : { ...check, status: undefined, conclusion: undefined, state: undefined },
+      ),
+    )
     .sort();
   const suites = snapshot.suites.filter(({ id }) => !progressed?.has(id));
   return JSON.stringify([checks, suiteSnapshot(suites)]);
+}
+
+/** Pending results can advance while coverage outside the observed suites stays pinned. */
+export function confirmationChanged(
+  initial: ProviderCIRead,
+  confirmed: ProviderCIRead,
+  includeResults: boolean,
+) {
+  const { suites: progressed, intermediate } = confirmed.progress;
+  const view = (snapshot: ProviderCISnapshot) =>
+    checkSnapshot(snapshot, progressed, includeResults);
+  const raw = ({ observedChecks: checks, suites }: ProviderCIRead) => ({ checks, suites });
+  const prior = view(raw(initial));
+  return (
+    view(initial) !== view(confirmed) ||
+    view(raw(confirmed)) !== prior ||
+    intermediate.some((read) => view(read) !== prior)
+  );
 }
 
 /** Retain distinct raw CI observations even when a later poll is unavailable. */
