@@ -426,13 +426,11 @@ directory for that invocation.
 
 Documentation inspected the complete scenarios and fixtures below. Their hashes
 still match run 183's exercised sources, including the crash diagnostics corrected
-in run 136. This establishes source continuity only. Neither production dependency
-identity, resolved check inputs nor environment equivalence to run 183 has been
-established here. Its passing observations remain historical until matching-input
-reuse is validated or current operations execute. The supplied initial index and
-inspected current timeline contain planning and documentation observations, with
-no current checkpoint or quality result. Later host observations must resolve this
-gap; this documentation activity has no mapped check operation.
+in run 136. At that initial documentation position, only source continuity was
+established; no current execution or environment equivalence to run 183 had been
+observed. Testing subsequently executed the unchanged scenarios and applicable
+quality operations in run 202. The executed characterization below resolves that
+initial evidence gap without treating run 183's historical results as current.
 
 The inspected source identities at the current capture are:
 
@@ -518,11 +516,11 @@ and passing execution. Do not recreate that correction or describe it as missing
 The remaining gap is current applicability: obtain current executed observations
 through the declared owner checks, or establish valid reuse against matching
 source dependencies, operation parameters, captured authority and environment.
-Run 183 resolved its own initial execution gap. It does not resolve run 202's
-applicability gap. Testing must characterize the existing cases with the declared
-owner-tests operation or validate matching reuse; Implementation must reconcile
-the resulting evidence and applicable quality observations. Preserve actual setup
-failures as prerequisite observations, never as behavioral red.
+Run 183 resolved its own initial execution gap. Testing has now resolved run 202's
+execution gap through the declared owner-tests and quality operations recorded
+below. Implementation reconciles those passing observations without changing
+product behavior or fixtures. Preserve actual setup failures as prerequisite
+observations, never as behavioral red.
 
 For `checkpoint-observe-before-retry`, assess the ordered issue-branch
 observation before any repeated mutation and rejection of duplicate push of the
@@ -565,6 +563,80 @@ unavailable prerequisites and missing observations remain explicit gaps.
   for a demonstrated new regression before correcting it.
 - Keep complete logs outside source and link actual operation provenance here.
   Final independent assessment and staging publication remain host-owned.
+
+### Executed checkpoint characterization: run 202
+
+Testing changed no source or fixture. It exercised documentation checkpoint
+`e1a618f0619f509d7cc5f70d0c1f015286774587`, whose parent is the engineering
+base and captured authority named above. The source hashes in this assessment
+identify the exercised scenarios and fixtures; Implementation changes only this
+evidence account. The complete retained index supplied to Implementation is
+`202-239-retained-evidence-647df99f67ad4e4be3e15c7e55cd038551696c42f7d5d8b7c8c80f1fe2c4ee67.json`.
+All following artifact names resolve under the external evidence directory:
+
+`/home/adrian/.local/state/arcnexus-planner-594.wr9OzP/state/arcnexus/8b40ccad5a575a6294e2358bad463bbffd81c5c2af4eac5f7c63f83a41af3f4c/evidence/45d1a8b511da03bc8518c303bc151074b6a2cdfe912ae58762f9758ac12423d1/`
+
+| Observation | Resolved command and argv | Actual exit | Complete log | Completed MCP observation |
+| --- | --- | --- | --- | --- |
+| Owner scenarios | `npm test -- execution` | 0 | `202-205-owner-tests.log` | `202-206-mcp-observation.json` |
+| Owner formatting | `npm run format:check -- execution` | 0 | `202-214-owner-format.log` | `202-215-mcp-observation.json` |
+| Owner lint | `npm run lint -- execution` | 0 | `202-217-owner-lint.log` | `202-218-mcp-observation.json` |
+| Strict repository types | `npm run check` | 0 | `202-220-repository-types.log` | `202-221-mcp-observation.json` |
+| Repository build | `npm run build` | 0 | `202-223-repository-build.log` | `202-224-mcp-observation.json` |
+
+Each operation ran from the captured `runs/202/worktree` directory under the
+project state directory above. The operation bindings have no caller overrides;
+owner-tests uses the declared empty selectors default. The owner-test log records
+its actual build and shared owner-runner commands. The format and lint logs retain
+their complete selected TypeScript paths. Their scope does not include this
+Markdown account. These are current observed exits, not inferred success from
+source assertions. Host validation determines reuse after this prose-only change.
+
+The owner-test log SHA-256 is
+`7f7cfa781b0fef43ea4ce235e9acf234661e37cbd414e1cf6d7738aaff083df6`.
+It records 270 tests, 253 passed, zero failed or cancelled, and 17 skipped.
+The checkpoint cases below passed without skips. Skipped native cases remain
+unavailable evidence for their respective boundaries.
+
+| Criterion | Executed scenario identities in this log | Observed assertion coverage |
+| --- | --- | --- |
+| `checkpoint-observe-before-retry` | 70, “retry confirms a lost checkpoint push, reconstructs the worktree and resumes the next steward”; 71, “single-file tool checkpoints survive a refused write and interrupted push” | Retry's first issue-branch event observes the accepted head; that secured head is not pushed again. The retained task, issue, branch, acknowledged bytes and original receipt survive refusal, lost response and worktree cleanup. |
+| `checkpoint-abrupt-preservation` | 69, “abrupt acknowledged edit recovers its original receipt before activation and cleans only task worktrees” | Actual child exit and abandoned-state diagnostics precede reopening. Restored bytes, original receipt and artifact, one edit intent, pre-activation reconciliation, one active task worktree and preservation of the unrelated checkout are asserted; committed bytes survive task-worktree removal. |
+| `checkpoint-pending-successor` | 135, “interrupted pass check recovers its expectation, exact exit, evidence and edits”; 136, “omitted pass recheck blocks on repeat failure and resumes after corrected checkpoint”; 137–138, corresponding fail-expectation cases | Original expectations and readable logs survive restart. Required-pass exits 37 and 43 remain distinct retained observations; omitted checks cannot advance the activity or gates. Corrected bytes produce exit 0, recorded completion survives interruption, and only review resumes before verification then delivery. The fail-expectation variant separately preserves its expected negative result. |
+| `checkpoint-evidence-applicable` | The five operation observations above, captured source hashes and retained child diagnostics | Current operations identify the assessed checkpoint, authority, argv, cwd, actual exits, environment and complete external logs. Historical runs retain their original scope. |
+
+Case 69's diagnostic records executable `/usr/local/bin/node`, Node
+`v22.23.5`, the built `checkpoint-crash-child.js` argument and isolated
+temporary project directory, inherited run-202 cwd, actual exit 73, null signal,
+and empty stdout and stderr. Its acknowledgment and `beforeRestart` diagnostic
+retain task `26df8ea67bd8e6f07ce99d75ca181097991442f7a2dc1c4f2757d6796008e7e6`,
+issue `7`, branch `7-task`, original receipt
+`915d91fca120eb7b082e976929bbf9871df0ff6db328dc9ec455f381a6440918`,
+the receipt artifact's original path, abandoned worktree registration and exact
+working and committed bytes `first`. The checked content digest is
+`a7937b64b8caa58f03721bb6bacf5c78cb235febe0e70b1b84cd99541461a08e`.
+These temporary fixture identities differ from issue #736 and its task above.
+The enclosing log preserves the diagnostics after fixture cleanup; temporary
+receipt and checkout paths are provenance, not claims of continued availability.
+
+The interrupted-check cases execute real Git, reopened Coordination SQLite state,
+the steward loop and Workflow position. Their `fixture-check` exits and log text
+are explicitly controlled outcomes, not real command-process exits. Passing
+assertions establish exact retained numeric statuses 37 and 43, both readable
+logs while the fixture runs, original pending expectations, secured checked bytes
+and successor-only resumption. The enclosing log retains scenario results; it
+does not embed the complete temporary check-log artifacts after fixture cleanup.
+The actual crash-child exit 73 is a separate process observation. Neither the
+controlled negative exits nor the deliberate crash is an owner-operation failure.
+
+No new failing regression, recovery mechanism, product correction or fixture edit
+was needed. The scenarios exercise the existing checked checkpoint, journal and
+cursor. They directly construct HostTask with explicit captures, control actors
+and Collaboration, and use controlled final verification/delivery ports. They
+do not establish full production admission, provider MCP transport, native check
+confinement, live model behavior, independent acceptance, hosted CI or an actual
+staging merge. Those boundaries and host verification/delivery gates remain
+unchanged; historical native gaps are not converted into passes.
 
 ### Historical executed checkpoint characterization: run 183
 
