@@ -336,9 +336,9 @@ ${marker}`,
           observedChecks: (observed) => {
             evidence[observedChecks] = observed;
           },
-          suites: (observed) => {
+          suites: (observed, phase) => {
             evidence[suites] = observed;
-            requireRetainedSuites(observed, prior);
+            if (phase === 'initial') requireRetainedSuites(observed, prior);
           },
           earlier: (checks, suites) => recordEarlierChecks(evidence, read, { checks, suites }),
         },

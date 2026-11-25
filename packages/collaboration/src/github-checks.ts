@@ -77,14 +77,14 @@ export async function readGitHubChecks(
   const repo = `repos/${repository}`;
   const scope = { repo, ref: `${repo}/commits/${head}`, head };
   let inventory = await suiteInventory(read, scope.ref, head);
-  observe.suites(inventory);
+  observe.suites(inventory, 'initial');
   let previous = prior;
   for (;;) {
     const snapshot = await readChecks(read, scope, inventory, observe, previous);
     const current = await suiteInventory(read, scope.ref, head);
     const stable = suiteSnapshot(inventory) === suiteSnapshot(current);
     if (!stable) observe.earlier(snapshot.observedChecks, inventory);
-    observe.suites(current);
+    observe.suites(current, 'subsequent');
     if (stable)
       return {
         ...snapshot,

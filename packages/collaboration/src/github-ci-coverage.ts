@@ -10,7 +10,7 @@ export interface ProviderCISnapshot {
 export interface CIObserver {
   checks(checks: readonly ProviderCheck[]): void;
   observedChecks(checks: readonly ProviderCheck[]): void;
-  suites(suites: readonly ProviderCheckSuite[]): void;
+  suites(suites: readonly ProviderCheckSuite[], read: 'initial' | 'subsequent'): void;
   earlier(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
 }
 
