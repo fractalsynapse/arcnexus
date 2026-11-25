@@ -24,6 +24,8 @@
 
 ### Fixed
 
+- Observe GitHub PR identity, head-pinned CI checks, and the repository's review decision through separate reads before staging publication (#731).
+
 - Retry transient GitHub CLI HTTP responses while observing a staging pull request so an interrupted status read can recover without restarting the refinement run (#724).
 
 - Reconcile prepared-work recovery guidance with the completed Execution, Verification and Delivery characterization, preserving the historical #701 claims. Extend publication regressions for prior-merge reuse after later staging movement, another staging advance after outdated-PR reassessment, and unavailable branch facts after successful PR lookup. Link current accountable observations and distinguish controlled check and Reviewer responses from live recovery, assembled independent acceptance, hosted gates and confirmed staging delivery ([#720](https://github.com/fractalsynapse/arcnexus/issues/720)). See the [current recovery evidence](docs/release/verification.md#current-characterization-issue-720). These contributions demonstrate no production defect requiring a behavioral correction and make no production-release claim.

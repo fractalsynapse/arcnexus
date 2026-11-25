@@ -3,10 +3,21 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
+import { readGitHubChecks } from './github-checks.js';
+import {
+  GitHubPullReadFailure,
+  publishedPull,
+  pullNumber,
+  pullReviewQuery,
+  reviewDecision,
+  type GitHubPullObservation,
+  type PublishedPull,
+} from './github-pull.js';
 
 export { isTransientReadFailure } from './read.js';
 export { verifyBoundCommit } from './repository-read.js';
 export { GitHubCheckFailure } from './check-failure.js';
+export { GitHubPullReadFailure, type PublishedPull } from './github-pull.js';
 
 const run = promisify(execFile);
 export type GitHubCredential = (remote: string) => Promise<string>;
@@ -89,26 +100,13 @@ ${marker}`,
   async publication(branch: string): Promise<PublishedPull | undefined> {
     const owner = this.repository.split('/')[0];
     const head = encodeURIComponent(`${owner}:${branch}`);
-    const matches = await this.pages<ProviderPull>(
+    const matches = await this.pages<unknown>(
       `repos/${this.repository}/pulls?head=${head}&state=all`,
       '.[]',
     );
     if (matches.length > 1) throw new Error(`Ambiguous GitHub publication for ${branch}`);
-    const match = matches[0];
-    if (!match) return undefined;
-    if (
-      match.head.repo?.full_name !== this.repository ||
-      match.head.ref !== branch ||
-      match.base.repo?.full_name !== this.repository
-    )
-      throw new Error(`GitHub returned a pull request outside the publication scope: ${branch}`);
-    return {
-      url: match.html_url,
-      head: match.head.sha,
-      target: match.base.ref,
-      state: match.merged_at ? 'merged' : match.state,
-      commit: match.merge_commit_sha,
-    };
+    if (matches.length === 0) return undefined;
+    return publishedPull(matches[0], this.repository, { branch });
   }
 
   /** Observe the exact remote ref. An absent ref and an unavailable query are distinct. */
@@ -191,14 +189,10 @@ ${marker}`,
   }
 
   /** Observe checks and the configured GitHub review decision on the pinned candidate. */
-  async verify(pr: string, head: string, base: string, state = 'OPEN') {
+  async verify(pr: string, head: string, base: string, state = 'OPEN', branch?: string) {
     for (;;) {
-      const current = await this.observe(pr);
-      if (current.headRefOid !== head || current.baseRefName !== base || current.state !== state)
-        throw new Error(`GitHub PR changed before integration: ${pr}`);
-      if (current.reviewDecision === 'CHANGES_REQUESTED')
-        throw new Error(`GitHub review requested changes: ${pr}`);
-      const checks = current.statusCheckRollup;
+      const { checks, review } = await this.verificationFacts(pr, head, base, state, branch);
+      if (review === 'CHANGES_REQUESTED') throw new Error(`GitHub review requested changes: ${pr}`);
       const failed = checks.find(
         ({ status, conclusion, state }) =>
           (status === 'COMPLETED' && conclusion !== 'SUCCESS') ||
@@ -207,12 +201,43 @@ ${marker}`,
       if (failed) throw await this.failedCheck(pr, head, failed);
       if (
         checks.length &&
-        current.reviewDecision !== 'REVIEW_REQUIRED' &&
-        checks.every(({ conclusion, state }) => conclusion === 'SUCCESS' || state === 'SUCCESS')
+        review !== 'REVIEW_REQUIRED' &&
+        checks.every(
+          ({ status, conclusion, state }) =>
+            (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
+        )
       )
         return;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
+  }
+
+  /** Join head-pinned facts while retaining completed reads for an unavailable provider response. */
+  private async verificationFacts(
+    pr: string,
+    head: string,
+    base: string,
+    state: string,
+    branch?: string,
+  ) {
+    const evidence: GitHubPullObservation = { repository: this.repository, pr, head };
+    const current = await this.pullRead('PR identity', evidence, () => this.observe(pr, branch));
+    evidence.pull = current;
+    if (current.head !== head || current.target !== base || current.state !== state.toLowerCase())
+      throw new Error(`GitHub PR changed before integration: ${pr}`);
+    const checks = await this.pullRead('CI checks', evidence, () =>
+      readGitHubChecks(
+        (args) => this.query(args),
+        this.repository,
+        head,
+        (partial) => {
+          evidence.checks = partial;
+        },
+      ),
+    );
+    evidence.checks = checks;
+    const review = await this.pullRead('review decision', evidence, () => this.review(current));
+    return { checks, review };
   }
 
   /** Preserve complete check diagnostics from the authorized repository's provider job. */
@@ -236,23 +261,54 @@ ${marker}`,
       '--body',
       `Part of #${issue}.`,
     ]);
-    const result = await this.observe(pr);
-    if (result.state !== 'MERGED' || result.headRefOid !== head || !result.mergeCommit?.oid)
+    const result = await this.pullRead(
+      'merge confirmation',
+      { repository: this.repository, pr, head },
+      () => this.observe(pr),
+    );
+    if (result.state !== 'merged' || result.head !== head || !result.commit)
       throw new Error(`GitHub did not confirm the verified merge: ${pr}`);
-    return result.mergeCommit.oid;
+    return result.commit;
   }
 
-  /** Read provider facts rather than trusting local push or merge command completion. */
-  private async observe(pr: string): Promise<Pull> {
-    return JSON.parse(
-      await this.query([
-        'pr',
-        'view',
-        pr,
-        '--json',
-        'state,headRefOid,baseRefName,reviewDecision,mergeCommit,statusCheckRollup',
-      ]),
-    );
+  /** Recognize the canonical PR and retrieve only its publication identity. */
+  private async observe(pr: string, branch?: string) {
+    const number = pullNumber(pr, this.repository);
+    const value = await this.query(['api', `repos/${this.repository}/pulls/${number}`]);
+    return publishedPull(JSON.parse(value), this.repository, { branch, number });
+  }
+
+  /** Read the authoritative aggregate review decision without expanding CI contexts. */
+  private async review(pr: PublishedPull) {
+    const [owner, name] = this.repository.split('/');
+    const number = pullNumber(pr.url, this.repository);
+    const value = await this.query([
+      'api',
+      'graphql',
+      '-f',
+      `query=${pullReviewQuery}`,
+      '-f',
+      `owner=${owner}`,
+      '-f',
+      `name=${name}`,
+      '-F',
+      `number=${number}`,
+    ]);
+    return reviewDecision(JSON.parse(value), pr);
+  }
+
+  /** Attach the completed observations to a failed read for Delivery to retain. */
+  private async pullRead<T>(
+    read: string,
+    evidence: GitHubPullObservation,
+    operation: () => Promise<T>,
+  ) {
+    try {
+      return await operation();
+    } catch (cause) {
+      if (this.signal.aborted) throw cause;
+      throw new GitHubPullReadFailure(read, evidence, cause);
+    }
   }
 
   /** Retry transient failures only at explicit read-only provider call sites. */
@@ -292,32 +348,6 @@ ${marker}`,
     const token = await this.credential('https://github.com/' + this.repository + '.git');
     return { ...process.env, GH_TOKEN: token };
   }
-}
-
-export interface PublishedPull {
-  url: string;
-  head: string;
-  target: string;
-  state: 'open' | 'closed' | 'merged';
-  commit: string | null;
-}
-
-interface ProviderPull {
-  html_url: string;
-  head: { ref: string; sha: string; repo?: { full_name: string } };
-  base: { ref: string; repo?: { full_name: string } };
-  state: 'open' | 'closed';
-  merged_at: string | null;
-  merge_commit_sha: string | null;
-}
-
-interface Pull {
-  state: string;
-  headRefOid: string;
-  baseRefName: string;
-  reviewDecision: string;
-  mergeCommit?: { oid: string };
-  statusCheckRollup: ProviderCheck[];
 }
 
 /** Use only the first line of the goal as the provider title. */

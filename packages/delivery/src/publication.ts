@@ -33,7 +33,7 @@ export async function publish(publication: Publication, actions: PublicationActi
   if (observed) {
     verifyPull(publication, observed);
     if (observed.state === 'merged' && observed.commit) {
-      await provider.verify(observed.url, head, target, 'MERGED');
+      await provider.verify(observed.url, head, target, 'MERGED', branch);
       await provider.confirm(observed.commit, candidate, target);
       return { pr: observed.url, commit: observed.commit };
     }
@@ -43,7 +43,7 @@ export async function publish(publication: Publication, actions: PublicationActi
       throw new Error(`Remote publication branch changed: ${branch}`);
   }
   const pr = observed?.url ?? (await open(publication, actions));
-  await provider.verify(pr, head, target);
+  await provider.verify(pr, head, target, 'OPEN', branch);
   await currentBase(publication, provider);
   record({ publicationAction: 'merge', pr, head });
   const commit = await provider.merge(pr, head, issue);

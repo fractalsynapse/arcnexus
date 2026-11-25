@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 
 export interface ProviderCheck {
+  runId?: number;
+  appId?: number;
   name?: string;
   context?: string;
   status?: string;

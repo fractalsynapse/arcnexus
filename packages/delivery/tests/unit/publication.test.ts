@@ -137,8 +137,13 @@ function scenario(pull?: PublishedPull, remote?: string, bases = [accepted.paren
       return branch === accepted.target ? (bases.length > 1 ? bases.shift() : bases[0]) : head;
     },
     async verify(...args) {
-      const expected = [url, accepted.head, accepted.target];
-      if (pull?.state === 'merged') expected.push('MERGED');
+      const expected = [
+        url,
+        accepted.head,
+        accepted.target,
+        pull?.state === 'merged' ? 'MERGED' : 'OPEN',
+        accepted.branch,
+      ];
       assert.deepEqual(args, expected);
       await actions.provider.verify();
     },
@@ -243,7 +248,7 @@ test('DE-GATES: resumed publication uses the observed PR identity at every gate'
   const provider: Parameters<typeof publish>[1]['provider'] = {
     ...actions.provider,
     async verify(...args) {
-      assert.deepEqual(args, [observedUrl, accepted.head, accepted.target]);
+      assert.deepEqual(args, [observedUrl, accepted.head, accepted.target, 'OPEN', accepted.branch]);
       await actions.provider.verify();
     },
     async merge(...args) {
