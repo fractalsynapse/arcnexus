@@ -269,6 +269,40 @@ for (const invalid of invalidMetadata) {
   });
 }
 
+for (const source of [terminal, engine]) {
+  for (const discovery of ['source', 'built']) {
+    test(`${discovery} discovery refuses missing suite metadata in ${source} before filtering or import`, (context) => {
+      const scenario = new InventoryScenario(context);
+      scenario.pair(
+        source,
+        `import { writeFileSync } from 'node:fs';
+writeFileSync(${JSON.stringify(scenario.marker)}, 'unregistered suite executed');
+`,
+      );
+      try {
+        if (discovery === 'source') {
+          assert.throws(
+            () => hasOwnerTestSuites(scenario.root, 'terminal-owner', components),
+            (error: Error) =>
+              /missing|required|expected/i.test(error.message) &&
+              /suite.*metadata|suite.*declaration/i.test(error.message) &&
+              error.message.includes(source),
+          );
+        } else {
+          const result = scenario.inventory('terminal-owner');
+          assert.ifError(result.error);
+          assert.notEqual(result.status, 0, 'Built discovery accepted a suite without metadata');
+          assert.match(result.stderr, /missing|required|expected/i);
+          assert.match(result.stderr, /suite.*metadata|suite.*declaration/i);
+          assert(result.stderr.includes(scenario.built(source)), result.stderr);
+        }
+      } finally {
+        assert.equal(existsSync(scenario.marker), false);
+      }
+    });
+  }
+}
+
 test('invalid foreign level placement is refused before owner selection or execution', (context) => {
   const scenario = new InventoryScenario(context);
   const source = 'packages/engine/tests/fast/invalid.test.ts';
