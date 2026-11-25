@@ -122,7 +122,9 @@ class CheckScenario {
       repository: 'example/check-recovery',
       pr: 'pull/7',
       head: this.head,
-      earlierChecks: [{ phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }] }],
+      earlierChecks: [
+        { phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }], suites: [] },
+      ],
     });
   }
 
@@ -159,7 +161,7 @@ class CheckScenario {
     const observed = JSON.parse(readFileSync(observation, 'utf8'));
     assert.equal(observed.head, this.head);
     assert.deepEqual(observed.earlierChecks, [
-      { phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }] },
+      { phase: 'CI checks', checks: [{ context: 'lint', state: 'FAILURE' }], suites: [] },
     ]);
     const finding = this.task
       .observations<{ publicationCheckFailure?: { head: string; evidence: string[] } }>()
