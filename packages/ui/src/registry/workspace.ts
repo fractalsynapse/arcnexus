@@ -12,6 +12,7 @@ export interface DisplayRegistration {
 export interface Workspace {
   path: string;
   label: string;
+  titleAction?: ReactNode;
   content?: ReactNode;
   headerAction?: ReactNode;
   parent?: string;

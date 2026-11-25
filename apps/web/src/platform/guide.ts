@@ -21,14 +21,20 @@ export function guideRoute(path: string) {
   return {
     kind: match[1] as GuideKind,
     id: match[2]!,
+    project: address.searchParams.get('project') ?? undefined,
     revision: address.searchParams.get('revision') ?? undefined,
   };
 }
 
 /** Keep a file link pinned to the source of its row. */
-export function guideLink(kind: GuideKind, id: string, revision: string) {
+export function guideLink(kind: GuideKind, id: string, project: string, revision: string) {
   return (
-    planFilesPath + kind + '/' + encodeURIComponent(id) + '/?' + new URLSearchParams({ revision })
+    planFilesPath +
+    kind +
+    '/' +
+    encodeURIComponent(id) +
+    '/?' +
+    new URLSearchParams({ project, revision })
   );
 }
 

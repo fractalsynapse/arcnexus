@@ -1,28 +1,14 @@
 import { createElement as h } from 'react';
 import type { Context } from 'cordis';
+import { ActiveProject } from './active-project.js';
 import { platformCommandsPlugin } from './command-binding.js';
 import { ConnectionManager } from './connection-manager.js';
 import { planDisplaysPlugin } from './plan-displays.js';
 import { planFilePlugin } from './plan-file-plugin.js';
 import { ProjectManager } from './project-manager.js';
-import {
-  activeSession,
-  projectName,
-  setSession,
-  usePlatformSession,
-  type Project,
-} from './session.js';
+import { activeSession, setSession, type Project } from './session.js';
 import { api } from './resource.js';
 import './platform.css';
-
-function WorkspaceProject() {
-  const { project } = usePlatformSession();
-  return h(
-    'span',
-    { role: 'status' },
-    project ? 'Project · ' + projectName(project) : 'No active project',
-  );
-}
 
 /** Open the sole project by default and preserve a selection made while it loads. */
 function selectInitialProject() {
@@ -47,7 +33,9 @@ export const platformUiPlugin = {
     context.effect(selectInitialProject);
     context.effect(() => context.ui.registerHeaderControl('connections', h(ConnectionManager)));
     context.effect(() => context.ui.registerHeaderControl('projects', h(ProjectManager)));
-    context.effect(() => context.ui.registerWorkspaceContext(h(WorkspaceProject)));
+    context.effect(() =>
+      context.ui.registerWorkspaceContext(h('span', { role: 'status' }, h(ActiveProject))),
+    );
     await context.use(planDisplaysPlugin);
     await context.use(planFilePlugin);
   },

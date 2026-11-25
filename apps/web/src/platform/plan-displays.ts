@@ -13,15 +13,15 @@ export const planDisplaysPlugin = {
       {
         id: 'metrics',
         label: 'Planner metrics',
-        content: h(PlanDisplay, { kind: 'metrics', binding }),
+        content: h(PlanDisplay, { kind: 'metrics' }),
       },
       {
         id: 'outcome',
         label: 'Planner outcome',
-        content: h(PlanDisplay, { kind: 'outcome', binding }),
+        content: h(PlanDisplay, { kind: 'outcome' }),
         defaultColumn: 1,
       },
-      { id: 'files', label: 'Files', content: h(GuideDisplay, { binding }) },
+      { id: 'files', label: 'Files', content: h(GuideDisplay) },
       { id: 'events', label: 'Event log', content: h(EventDisplay, { binding }), defaultColumn: 1 },
     ];
     for (const display of displays)

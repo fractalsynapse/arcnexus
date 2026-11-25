@@ -50,6 +50,10 @@ and replay and live follow of retained PostgreSQL observations. A project bindin
 Host artifacts. Mount each path read-only at its recorded location. A
 registered launcher can use `connect` to keep its authorized presence active.
 
+`GET /api/projects/{project}/plan-executions` lists retained Plan execution
+references for that project, newest first. Select a reference by its execution
+ID to fetch its outcome, metrics, tool counts, or event stream independently.
+
 The platform CLI uses `ARC_API_URL`, `ARC_PROJECT_ID` and
 `ARC_OPERATOR_TOKEN_FILE`. Include the Web proxy's `/api` prefix in the URL
 when using that proxy. Use `arcnexus platform inspect <component> <activity>`

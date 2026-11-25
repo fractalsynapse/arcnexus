@@ -2,6 +2,9 @@ import type { Context } from 'cordis';
 import { createElement as h } from 'react';
 import { RefineButton } from '../refine-button.js';
 import { PlanContext } from '../platform/plan-context.js';
+import { PlanScope } from '../platform/plan-resource.js';
+import { PlanRunSelector } from '../platform/plan-run-selector.js';
+import type { PropsWithChildren } from 'react';
 
 const workspaces = [
   { path: '/plan/', label: 'Plan', defaultColumns: 2 as const },
@@ -15,14 +18,19 @@ export function workspacePlugin() {
     inject: ['ui', 'webCommands'],
     /** Register the frame's workspace links and route-specific header action. */
     apply(context: Context) {
-      const headerAction = h(RefineButton, { binding: context.webCommands });
+      const binding = context.webCommands;
+      const headerAction = h(RefineButton, { binding });
+      const scope = ({ children }: PropsWithChildren) => h(PlanScope, { binding }, children);
       for (const item of workspaces) {
         context.effect(() =>
           context.ui.register({
             ...item,
             headerAction,
-            context:
-              item.path === '/plan/' ? h(PlanContext, { binding: context.webCommands }) : undefined,
+            ...(item.path === '/plan/' && {
+              context: h(PlanContext),
+              titleAction: h(PlanRunSelector),
+              scope,
+            }),
           }),
         );
       }

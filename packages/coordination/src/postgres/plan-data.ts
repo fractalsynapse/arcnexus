@@ -6,25 +6,15 @@ import { dataOperation, type DataScope } from '../../../data/src/index.js';
 import type { JournalEvent } from '../journal-types.js';
 import type { ResolveJournalProject } from '../data.js';
 import { RunMeasurements } from '../measurements.js';
-import { readPlanReference } from './plan-records.js';
+import { listPlanReferences, planReference, readPlanReference } from './plan-records.js';
 import { readImportedTimeline } from './read-timeline.js';
 
 const selection = z.strictObject({ execution: z.string().min(1) });
-const reference = z.strictObject({
-  execution: z.string(),
-  revision: z.string(),
-  active: z.boolean(),
-  startedAt: z.string().nullable(),
-  updatedAt: z.string().nullable(),
-});
-const currentSchema = z.strictObject({
+const currentSchema = planReference.extend({
   execution: z.string().nullable(),
   revision: z.string().nullable(),
-  active: z.boolean(),
-  startedAt: z.string().nullable(),
-  updatedAt: z.string().nullable(),
 });
-const outcomeSchema = reference.extend({
+const outcomeSchema = planReference.extend({
   outcome: z.unknown().nullable(),
   changedPaths: z.array(z.string()),
   issue: z.string().optional(),
@@ -45,6 +35,11 @@ function projections(database: Client, resolve: ResolveJournalProject) {
     planEvents(database, remoteFor, scope, execution);
   return {
     current: currentPlan(database, remoteFor),
+    list: dataOperation(
+      z.strictObject({}),
+      z.strictObject({ entries: z.array(planReference) }),
+      async (scope) => ({ entries: await listPlanReferences(database, await remoteFor(scope)) }),
+    ),
     outcome: dataOperation(selection, outcomeSchema, async (scope, { execution }) => {
       const { task, events } = await load(scope, execution);
       const outcome = lastOutcome(events, execution);

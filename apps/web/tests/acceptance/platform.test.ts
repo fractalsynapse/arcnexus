@@ -12,6 +12,11 @@ const project = {
   remote: 'https://github.com/example/plan.git',
   revision: 'a'.repeat(40),
 };
+const otherProject = {
+  id: 'other-project',
+  remote: 'https://github.com/example/other.git',
+  revision: project.revision,
+};
 
 test('the local Web proxy supplies the operator only for the local browser', async (t) => {
   const forwarded: (string | null)[] = [];
@@ -53,7 +58,7 @@ async function rejectForeignBrowser(route: string) {
 
 test('the built Plan opens a pinned file through the shared workspace layout', async (t) => {
   const { application, page } = await browserPage(t);
-  const requests = await responses(page);
+  const requests = await responses(page, [project, otherProject]);
   await page.goto(application.url);
   await page.reload();
   await selectProject(page);
@@ -64,6 +69,9 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   );
   await goal.click();
   await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('project'), project.id);
+  await page.reload();
+  await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
   await verifySinglePanelToggle(page);
   assert.ok(
     requests.includes(
@@ -71,6 +79,78 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
     ),
   );
 });
+
+test('Plan history keeps the header and all displays scoped to the selected project and run', async (t) => {
+  const { application, page } = await browserPage(t);
+  const requests = await responses(page, [project, otherProject]);
+  await historyResponses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  const selector = page.getByRole('combobox', { name: 'Plan run' });
+  await page.getByText('Latest outcome', { exact: true }).waitFor();
+  assert.equal(await selector.count(), 1);
+  assert.equal(await selector.inputValue(), '');
+  assert.match(await selector.locator('option[value="earlier"]').innerText(), /2025/);
+  await selector.selectOption('earlier');
+  await assertHistoricalPlan(page, requests);
+  await selectProject(page, otherProject.id);
+  await page.getByText('Other outcome', { exact: true }).waitFor();
+  assert.equal(await selector.inputValue(), '');
+  assert.equal(await selector.locator('option[value="earlier"]').count(), 0);
+  assert.ok(!requests.some((path) => path.includes('/other-project/plan-executions/earlier')));
+});
+
+const earlier = {
+  execution: 'earlier',
+  revision: 'b'.repeat(40),
+  active: false,
+  startedAt: '2025-11-24T17:01:23.000Z',
+  updatedAt: '2025-11-24T17:04:23.000Z',
+};
+const latest = {
+  ...earlier,
+  execution: 'latest',
+  revision: project.revision,
+  startedAt: '2025-11-25T17:01:23.000Z',
+};
+
+async function historyResponses(page: Page) {
+  await page.route('**/plan-executions**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const other = path.includes('/other-project/');
+    const selected = path.includes('/earlier/') ? earlier : latest;
+    if (path.endsWith('/plan-executions'))
+      return route.fulfill({ json: { entries: other ? [latest] : [latest, earlier] } });
+    if (path.endsWith('/current')) return route.fulfill({ json: latest });
+    if (path.endsWith('/events'))
+      return route.fulfill({
+        contentType: 'text/event-stream',
+        body: timelineRecord('1', selected.execution + ' message'),
+      });
+    const summary = other
+      ? 'Other outcome'
+      : selected === earlier
+        ? 'Earlier outcome'
+        : 'Latest outcome';
+    return route.fulfill({ json: { ...selected, outcome: { kind: 'planned', summary } } });
+  });
+}
+
+async function assertHistoricalPlan(page: Page, requests: string[]) {
+  await page.getByText('Earlier outcome', { exact: true }).waitFor();
+  await page.getByText('earlier message', { exact: true }).waitFor();
+  assert.equal(await page.getByText('latest message', { exact: true }).count(), 0);
+  assert.ok(requests.some((path) => path.endsWith('/goals?revision=' + earlier.revision)));
+  await page.setViewportSize({ width: 360, height: 800 });
+  const title = await page.getByRole('heading', { name: 'Plan', exact: true }).boundingBox();
+  const selector = await page.getByRole('combobox', { name: 'Plan run' }).boundingBox();
+  const context = await page.locator('.arc-page-context').boundingBox();
+  assert.ok(title && selector && context && title.x < selector.x);
+  assert.ok(title.y < selector.y + selector.height && selector.y < title.y + title.height);
+  assert.ok(context.y >= selector.y + selector.height);
+  const label = page.locator('.arc-page-context strong', { hasText: 'plan' });
+  assert.equal(await label.evaluate((node) => getComputedStyle(node).fontWeight), '700');
+}
 
 async function verifySinglePanelToggle(page: Page) {
   const expand = page.getByRole('button', { name: 'Expand Content', exact: true });
@@ -103,13 +183,13 @@ async function browserPage(t: TestContext, api?: URL) {
   return { application, page };
 }
 
-async function responses(page: Page) {
+async function responses(page: Page, projects = [project]) {
   const requests: string[] = [];
   await page.route('**/api/**', (route) => {
     const url = new URL(route.request().url());
     requests.push(url.pathname + url.search);
     if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
-    return route.fulfill({ json: planData(url.pathname) });
+    return route.fulfill({ json: planData(url.pathname, projects) });
   });
   return requests;
 }
@@ -117,8 +197,11 @@ async function responses(page: Page) {
 const fixtureGoal = { id: 'fixture-goal', path: '.arc/goals/fixture-goal.md', priority: 1 };
 const fixtureContent = '---\npriority: 1\n---\n\n# Verified goal';
 
-function planData(path: string) {
-  if (path === '/api/projects') return { entries: [project] };
+function planData(path: string, projects = [project]) {
+  if (path === '/api/projects') return { entries: projects };
+  if (path === '/api/projects/' + project.id) return project;
+  if (path === '/api/projects/' + otherProject.id) return otherProject;
+  if (path.endsWith('/plan-executions')) return { entries: [] };
   if (path.endsWith('/current'))
     return { revision: project.revision, execution: null, active: false };
   if (path.endsWith('/goals')) return { revision: project.revision, entries: [fixtureGoal] };
@@ -129,10 +212,10 @@ function planData(path: string) {
   return { revision: project.revision, entry: fixtureGoal, content: fixtureContent };
 }
 
-async function selectProject(page: Page) {
+async function selectProject(page: Page, id = project.id) {
   await page.getByRole('button', { name: 'Project manager' }).click();
   assert.equal(await page.getByLabel('Operator credential', { exact: true }).count(), 0);
-  await page.getByLabel('Active project').selectOption(project.id);
+  await page.getByLabel('Active project').selectOption(id);
   await page.getByRole('button', { name: 'Close' }).click();
 }
 
@@ -154,9 +237,9 @@ test('the browser keeps native messages and resumes an interrupted event log', a
 });
 
 async function timelineResponses(page: Page, cursors: Array<string | undefined>) {
-  await page.route('**/plan-executions/current', (route) =>
+  await page.route('**/plan-executions', (route) =>
     route.fulfill({
-      json: { execution: 'retained-plan', revision: project.revision, active: true },
+      json: { entries: [{ execution: 'retained-plan', revision: project.revision, active: true }] },
     }),
   );
   await page.route('**/plan-executions/retained-plan/events', (route) => {
@@ -236,8 +319,10 @@ function liveToolResponse(
   path: string,
   fixture: { entries(): unknown[]; events(): ReadableStream },
 ) {
-  if (path.endsWith('/plan-executions/current'))
-    return Response.json({ execution: 'live-plan', revision: project.revision, active: true });
+  if (path.endsWith('/plan-executions'))
+    return Response.json({
+      entries: [{ execution: 'live-plan', revision: project.revision, active: true }],
+    });
   if (path.endsWith('/live-plan/events'))
     return new Response(fixture.events(), { headers: { 'content-type': 'text/event-stream' } });
   if (path.endsWith('/operation-evidence/1')) return Response.json({ entries: fixture.entries() });

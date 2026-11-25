@@ -56,6 +56,12 @@ export const routes: readonly Route[] = [
   },
 
   {
+    path: '/plan-executions',
+    resource: 'plan-executions',
+    operation: 'list',
+    query: [],
+  },
+  {
     path: '/plan-executions/current',
     resource: 'plan-executions',
     operation: 'current',

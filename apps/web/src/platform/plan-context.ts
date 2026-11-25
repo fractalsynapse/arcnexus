@@ -1,17 +1,14 @@
 import { createElement as h } from 'react';
-import type { CommandBinding } from '../../../../packages/ui/src/index.js';
+import { ActiveProject } from './active-project.js';
 import { usePlanResource } from './plan-resource.js';
-import { projectName } from './session.js';
 
 /** Give the selected Plan its recording time beside the workspace title. */
-export function PlanContext({ binding }: { binding: CommandBinding }) {
-  const { project, current } = usePlanResource(binding);
-  if (!project) return h('span', { role: 'status' }, 'No active project');
-  const recorded = current.value;
+export function PlanContext() {
+  const { recorded } = usePlanResource();
   return h(
     'span',
     { className: 'arc-platform-inline', role: 'status' },
-    projectName(project),
+    h(ActiveProject),
     recorded?.startedAt &&
       h('time', { dateTime: recorded.startedAt }, new Date(recorded.startedAt).toLocaleString()),
     recorded?.active

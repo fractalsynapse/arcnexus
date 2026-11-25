@@ -1,9 +1,9 @@
-import { createContext, createElement as h, useContext, useState } from 'react';
+import { createContext, createElement as h, useContext, useEffect, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { useWorkspaceRoute } from '../../../../packages/ui/src/index.js';
 import { guideRoute, type GuideFile, type GuideHistory } from './guide.js';
-import { usePlatformSession } from './session.js';
-import { useResource } from './resource.js';
+import { activeSession, setSession, usePlatformSession, type Project } from './session.js';
+import { api, useResource } from './resource.js';
 import { draftContent, type GuideFields } from './goal-content.js';
 
 const fileScope = createContext<ReturnType<typeof usePlanFileState> | undefined>(undefined);
@@ -23,7 +23,7 @@ export function usePlanFile() {
 function usePlanFileState() {
   const { path } = useWorkspaceRoute();
   const route = guideRoute(path);
-  const { project } = usePlatformSession();
+  const project = useLinkedProject(path, route?.project);
   const { collection, base, revision } = fileAddress(route, project);
   const identity = JSON.stringify([base, revision]);
   const state = useFileDraft(identity);
@@ -43,6 +43,25 @@ function usePlanFileState() {
     detail,
     draft: detail.value && draftContent(detail.value.content, state.body, state.fields),
   };
+}
+
+/** Reopen a pinned file in its verified catalog project before reading or editing it. */
+function useLinkedProject(path: string, id?: string) {
+  const { project } = usePlatformSession();
+  useEffect(() => {
+    const initial = activeSession();
+    if (!id || initial.project?.id === id) return;
+    const controller = new AbortController();
+    void api<Project>('/projects/' + encodeURIComponent(id), { signal: controller.signal }).then(
+      (record) => {
+        if (!controller.signal.aborted && initial === activeSession() && record.id === id)
+          setSession({ project: record });
+      },
+      () => {},
+    );
+    return () => controller.abort();
+  }, [path, id]);
+  return id && id !== project?.id ? undefined : project;
 }
 
 function useFileDraft(identity: string) {

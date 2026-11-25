@@ -10,6 +10,7 @@ interface PageHeadingProps {
   gear: Ref<HTMLButtonElement>;
   settings: boolean;
   toggle: () => void;
+  titleAction?: ReactNode;
   context?: ReactNode;
 }
 
@@ -20,8 +21,10 @@ export function PageHeading({
   gear,
   settings,
   toggle,
+  titleAction,
   context,
 }: PageHeadingProps): ReactElement {
+  const titleElement = h('h1', { ref: heading, tabIndex: -1 }, label);
   return h(SurfaceHeading, {
     className: 'arc-page-heading',
     settings: h(IconButton, {
@@ -31,7 +34,9 @@ export function PageHeading({
       'aria-expanded': settings,
       onClick: toggle,
     }),
-    heading: h('h1', { ref: heading, tabIndex: -1 }, label),
+    heading: titleAction
+      ? h('div', { className: 'arc-page-title' }, titleElement, titleAction)
+      : titleElement,
     actions: context && h('div', { className: 'arc-page-context' }, context),
   });
 }

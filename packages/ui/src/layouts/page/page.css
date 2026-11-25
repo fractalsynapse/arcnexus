@@ -4,6 +4,12 @@
   align-items: center;
   gap: 8px;
 }
+.arc-page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+}
 .arc-page-context {
   min-inline-size: 0;
   margin-inline-start: auto;

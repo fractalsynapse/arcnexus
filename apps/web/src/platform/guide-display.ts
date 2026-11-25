@@ -1,5 +1,4 @@
 import { createElement as h, useDeferredValue, useState } from 'react';
-import type { CommandBinding } from '../../../../packages/ui/src/index.js';
 import { GuideFilters, type GuideFilter } from './guide-filters.js';
 import { GuideList } from './guide-list.js';
 import type { Guide, GuideCollection } from './guide.js';
@@ -15,8 +14,8 @@ const initial: GuideFilter = {
 };
 
 /** Mount the visible collection and keep guide bodies behind the file route. */
-export function GuideDisplay({ binding }: { binding: CommandBinding }) {
-  const plan = usePlanResource(binding);
+export function GuideDisplay() {
+  const plan = usePlanResource();
   const { project } = plan;
   const [filter, update] = useState(initial);
   const { files, changed, error } = useGuideCollection(plan, filter);
@@ -35,6 +34,7 @@ export function GuideDisplay({ binding }: { binding: CommandBinding }) {
       ? h(GuideList, {
           entries: visibleGuides(entries, filter, changed),
           kind: filter.kind,
+          project: project.id,
           revision: files.value.revision,
           changed,
         })
@@ -61,21 +61,29 @@ function compare(left: Guide, right: Guide, order: GuideFilter['order']) {
 }
 
 function useGuideCollection(
-  { project, root, current, plan, refresh }: ReturnType<typeof usePlanResource>,
+  {
+    project,
+    root,
+    history,
+    recorded,
+    execution,
+    plan,
+    refresh,
+  }: ReturnType<typeof usePlanResource>,
   filter: GuideFilter,
 ) {
   const search = useDeferredValue(filter.search);
   const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh);
   const delivered =
     outcome.value?.outcome?.kind === 'merged' ? outcome.value.outcome.commit : undefined;
-  const revision = delivered ?? current.value?.revision ?? project?.revision;
+  const revision = delivered ?? recorded?.revision ?? (!execution ? project?.revision : undefined);
   const query = new URLSearchParams({ revision: revision ?? '', ...(search.trim() && { search }) });
   const files = useResource<GuideCollection>(
-    root && current.value && revision ? root + '/' + filter.kind + '?' + query : undefined,
+    root && history.value && revision ? root + '/' + filter.kind + '?' + query : undefined,
   );
   return {
     files,
     changed: new Set(outcome.value?.changedPaths),
-    error: current.error ?? files.error ?? outcome.error,
+    error: history.error ?? files.error ?? outcome.error,
   };
 }

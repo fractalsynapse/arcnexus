@@ -75,7 +75,7 @@ function CurrentCaptureLink() {
   if (!project || !route || project.revision === revision) return null;
   return h(
     WorkspaceLink,
-    { href: guideLink(route.kind, route.id, project.revision) },
+    { href: guideLink(route.kind, route.id, project.id, project.revision) },
     'Open current capture',
   );
 }

@@ -7,14 +7,11 @@ import { useTimeline } from './use-timeline.js';
 
 /** Follow the selected Plan and display only its ordered, retained observations. */
 export function EventDisplay({ binding }: { binding: CommandBinding }) {
-  const { project, root, current, plan, execution, command } = usePlanResource(binding);
-  const recorded = command.command === 'Plan' ? command.execution : undefined;
-  const selected = recorded ?? execution ?? undefined;
-  const path = recorded && root ? root + '/executions/' + encodeURIComponent(recorded) : plan;
-  const timeline = useTimeline(path && path + '/events');
+  const { project, history, events, execution, command } = usePlanResource();
+  const timeline = useTimeline(events && events + '/events');
   if (!project) return h('p', null, 'Select a project to see planning events.');
-  if (current.error && !recorded) return h('p', { role: 'alert' }, current.error);
-  if (current.value && !selected) return h('p', null, 'No recorded planning execution.');
+  if (history.error && !events) return h('p', { role: 'alert' }, history.error);
+  if (history.value && !execution) return h('p', null, 'No recorded planning execution.');
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -29,7 +26,7 @@ export function EventDisplay({ binding }: { binding: CommandBinding }) {
       'div',
       { role: 'log', 'aria-label': 'Planning events', className: 'arc-plan-timeline' },
       groupTimeline(timeline.frames).map((entry) =>
-        h(EventEntry, { key: entry.key, entry, execution: selected, command, binding }),
+        h(EventEntry, { key: entry.key, entry, execution, command, binding }),
       ),
     ),
   );

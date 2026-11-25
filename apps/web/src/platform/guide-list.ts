@@ -5,18 +5,26 @@ import { guideLink, type Guide, type GuideKind } from './guide.js';
 interface ListProps {
   entries: readonly Guide[];
   kind: GuideKind;
+  project: string;
   revision: string;
   changed: ReadonlySet<string>;
 }
 
 /** Present the compact, linked file rows and their retained change status. */
-export function GuideList({ entries, kind, revision, changed }: ListProps) {
+export function GuideList({ entries, kind, project, revision, changed }: ListProps) {
   if (!entries.length) return h('p', { role: 'status' }, 'No files match these filters.');
   return h(
     'ul',
     { className: 'arc-guide-list', 'aria-label': 'Plan files' },
     entries.map((entry) =>
-      h(GuideRow, { key: entry.id, entry, kind, revision, changed: changed.has(entry.path) }),
+      h(GuideRow, {
+        key: entry.id,
+        entry,
+        kind,
+        project,
+        revision,
+        changed: changed.has(entry.path),
+      }),
     ),
   );
 }
@@ -24,10 +32,11 @@ export function GuideList({ entries, kind, revision, changed }: ListProps) {
 function GuideRow({
   entry,
   kind,
+  project,
   revision,
   changed,
 }: Omit<ListProps, 'entries' | 'changed'> & { entry: Guide; changed: boolean }) {
-  const link = h(WorkspaceLink, { href: guideLink(kind, entry.id, revision) }, entry.id);
+  const link = h(WorkspaceLink, { href: guideLink(kind, entry.id, project, revision) }, entry.id);
   const description = entry.description ?? entry.name ?? entry.path;
   return h(
     'li',

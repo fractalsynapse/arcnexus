@@ -12,6 +12,16 @@
 .arc-platform-inline small {
   color: var(--muted);
 }
+.arc-active-project {
+  color: var(--link);
+}
+.arc-plan-run-selector {
+  min-inline-size: 0;
+}
+.arc-plan-run-selector select {
+  max-inline-size: 100%;
+  text-overflow: ellipsis;
+}
 .arc-platform-code {
   display: flex;
   flex-wrap: wrap;

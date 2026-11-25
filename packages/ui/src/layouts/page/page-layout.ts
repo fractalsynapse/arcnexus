@@ -28,6 +28,7 @@ export function PageLayout({ workspace, path, context }: PageLayoutProps) {
       gear,
       settings,
       toggle,
+      titleAction: workspace.titleAction,
       context: workspace.context ?? context,
     }),
     settings && h(PageAppearance, { page }),

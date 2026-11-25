@@ -111,18 +111,20 @@ async function append(
   sequence: number,
   message: string,
   detail?: object,
+  run = 1,
+  active = 1,
 ) {
   const writer = new Client({ connectionString: url });
   await writer.connect();
   try {
     await writer.query('BEGIN');
     await writer.query(
-      'INSERT INTO arcnexus_coordination.runs (project,id,goal_id,task_id,goal,active) VALUES ($1,$2,$3,$3,$3,1) ON CONFLICT DO NOTHING',
-      [repository, 1, execution],
+      'INSERT INTO arcnexus_coordination.runs (project,id,goal_id,task_id,goal,active) VALUES ($1,$2,$3,$3,$3,$4) ON CONFLICT DO NOTHING',
+      [repository, run, execution, active],
     );
     await writer.query(
-      'INSERT INTO arcnexus_coordination.events (project,id,run,content) VALUES ($1,$2,1,$3)',
-      [repository, sequence, JSON.stringify({ message, ...detail })],
+      'INSERT INTO arcnexus_coordination.events (project,id,run,content) VALUES ($1,$2,$3,$4)',
+      [repository, sequence, run, JSON.stringify({ message, ...detail })],
     );
     await writer.query('COMMIT');
   } finally {
@@ -221,6 +223,55 @@ test(
     await verifyPlanPanelResponses(platform.context, address, headers, execution);
   },
 );
+
+test(
+  'Plan history lists distinct project executions and recognizes older proposal markers',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    const executions = await seedPlanHistory(repository, project.revision);
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const address = 'http://arc.test/projects/' + project.id + '/plan-executions';
+    const response = await platform.context.api(new Request(address, { headers }));
+    assert.equal(response.status, 200);
+    const { entries } = await response.json();
+    assert.deepEqual(
+      entries.map((entry: { execution: string; active: boolean }) => [
+        entry.execution,
+        entry.active,
+      ]),
+      executions,
+    );
+  },
+);
+
+async function seedPlanHistory(repository: string, revision: string) {
+  const earlier = randomUUID();
+  const latest = randomUUID();
+  const marked = { planningExecution: { revision } };
+  await append(repository, earlier, 1, 'older proposal', { plannerProposal: {}, revision }, 1, 0);
+  await append(repository, latest, 2, 'started', marked, 2, 0);
+  await append(repository, latest, 3, 'resumed', {}, 3);
+  await append(repository, randomUUID(), 4, 'non-Plan journal entry', {}, 4, 0);
+  await append(
+    'https://github.com/arcnexus-fixtures/' + randomUUID() + '.git',
+    randomUUID(),
+    1,
+    'different project',
+    marked,
+  );
+  return [
+    [latest, true],
+    [earlier, false],
+  ];
+}
 
 async function verifyPlanPanelResponses(
   context: Context,

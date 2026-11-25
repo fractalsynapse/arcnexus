@@ -4,6 +4,8 @@
 
 ### Added
 
+- Browse historical executions from the Plan heading, with every panel scoped to the selected project and run (#746).
+
 - Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals. Inspect retained and live tool payloads on demand (#746).
 
 - Provision pinned Host checkouts, check gateway reachability, and support explicit provider egress and repository-scoped GitHub App publication for isolated execution (#706).
@@ -25,6 +27,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Keep Plan File links pinned to the project and captured revision (#746).
 
 - Use the mockup’s drag behavior in page settings, including a lifted row, visible insertion gap, and drop cancellation (#746).
 
