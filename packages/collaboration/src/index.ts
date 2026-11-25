@@ -3,7 +3,7 @@ import { setTimeout } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { decodeGitHubResponse, retryRead } from './read.js';
 import { GitHubCheckFailure, type ProviderCheck } from './check-failure.js';
-import { readGitHubChecks } from './github-checks.js';
+import { readGitHubChecks, readGitHubStatuses } from './github-checks.js';
 import {
   GitHubPullReadFailure,
   publishedPull,
@@ -224,19 +224,32 @@ ${marker}`,
     evidence.pull = current;
     if (current.head !== head || current.target !== base || current.state !== state.toLowerCase())
       throw new Error(`GitHub PR changed before integration: ${pr}`);
+    const checks = await this.checks(evidence);
+    const review = await this.pullRead('review decision', evidence, () => this.review(current));
+    if (review === 'CHANGES_REQUESTED' || review === 'REVIEW_REQUIRED') return { checks, review };
+    const statuses = await this.pullRead('legacy CI statuses', evidence, () =>
+      readGitHubStatuses((args) => this.query(args), this.repository, head),
+    );
+    return {
+      checks: [...checks.filter((check) => check.runId !== undefined), ...statuses],
+      review,
+    };
+  }
+
+  /** Retain each successful CI read when a later provider fact is unavailable. */
+  private async checks(evidence: GitHubPullObservation) {
     const checks = await this.pullRead('CI checks', evidence, () =>
       readGitHubChecks(
         (args) => this.query(args),
         this.repository,
-        head,
+        evidence.head,
         (partial) => {
           evidence.checks = partial;
         },
       ),
     );
     evidence.checks = checks;
-    const review = await this.pullRead('review decision', evidence, () => this.review(current));
-    return { checks, review };
+    return checks;
   }
 
   /** Preserve complete check diagnostics from the authorized repository's provider job. */

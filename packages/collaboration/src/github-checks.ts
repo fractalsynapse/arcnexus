@@ -64,7 +64,7 @@ export async function readGitHubChecks(
   const ref = `${repo}/commits/${head}`;
   const inventory = await suiteInventory(read, ref, head);
   const checks = await checkRuns(read, repo, ref, head, inventory, observe);
-  const statuses = await legacyStatuses(read, ref, head);
+  const statuses = await readGitHubStatuses(read, repository, head);
   observe([...checks, ...statuses]);
   const current = await suiteInventory(read, ref, head);
   if (suiteSnapshot(inventory) !== suiteSnapshot(current))
@@ -90,7 +90,12 @@ function normalizeRun({ id, app, name, status, conclusion, details_url }: z.outp
 }
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
-async function legacyStatuses(read: Read, ref: string, head: string) {
+export async function readGitHubStatuses(
+  read: Read,
+  repository: string,
+  head: string,
+): Promise<ProviderCheck[]> {
+  const ref = `repos/${repository}/commits/${head}`;
   const page = statusPage.refine(
     (value) => value.sha === head,
     'GitHub returned commit statuses for a different head',
@@ -127,9 +132,23 @@ async function checkRuns(
       ? await suiteRuns(read, repo, head, inventory, current, observe)
       : current;
   observe(runs.map(normalizeRun));
+  requireSuiteCoverage(inventory, runs);
   const checks = (await latestRuns(read, repo, head, runs)).map(normalizeRun);
   observe(checks);
   return checks;
+}
+
+/** Compare each suite's reported run count with the head-pinned check inventory. */
+function requireSuiteCoverage(inventory: CheckSuite[], runs: CheckRun[]) {
+  const counts = new Map<number, number>();
+  for (const run of runs) {
+    const id = run.check_suite?.id;
+    if (id !== undefined) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  for (const suite of inventory) {
+    if ((counts.get(suite.id) ?? 0) < (suite.latest_check_runs_count ?? 0))
+      throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
+  }
 }
 
 /** Enumerate the full suite inventory while preserving already read facts on a provider error. */
@@ -304,9 +323,10 @@ function latestInContext(runs: CheckRun[], attempts: Map<number, number>) {
     counts.set(attempt, (counts.get(attempt) ?? 0) + 1);
     latest = Math.max(latest, attempt);
   }
-  if (counts.size > 1 && [...counts.values()].some((count) => count > 1))
+  const current = runs.filter((item) => attempts.get(item.id) === latest);
+  if ([...counts.values()].some((count) => count > current.length))
     throw new Error(`GitHub returned ambiguous same-name jobs across attempts: ${runs[0]?.name}`);
-  return runs.filter((item) => attempts.get(item.id) === latest);
+  return current;
 }
 
 async function runsFrom(
