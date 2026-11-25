@@ -2,7 +2,13 @@ import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { z } from 'zod';
 import { dataOperation } from '../../../data/src/index.js';
-import { preferenceKey, preferencesSnapshot, preferencesUpdate, uiPreferencesResource, type UiPreference } from './schema.js';
+import {
+  preferenceKey,
+  preferencesSnapshot,
+  preferencesUpdate,
+  uiPreferencesResource,
+  type UiPreference,
+} from './schema.js';
 
 export const uiPreferencesMigration = {
   id: 'ui/preferences',
@@ -22,9 +28,15 @@ async function read(database: Client, operator: string) {
   return { entries: rows.map(({ setting }) => setting) };
 }
 
-async function save(database: Client, operator: string, entries: UiPreference[], preserveExisting?: boolean) {
-  const records = [...new Map(entries.map((setting) => [preferenceKey(setting), setting]))]
-    .map(([key, setting]) => ({ key, setting }));
+async function save(
+  database: Client,
+  operator: string,
+  entries: UiPreference[],
+  preserveExisting?: boolean,
+) {
+  const records = [...new Map(entries.map((setting) => [preferenceKey(setting), setting]))].map(
+    ([key, setting]) => ({ key, setting }),
+  );
   const onConflict = preserveExisting ? 'NOTHING' : 'UPDATE SET setting = EXCLUDED.setting';
   await database.query(
     `INSERT INTO arcnexus_platform.ui_preferences (operator, key, setting)
@@ -42,9 +54,14 @@ export function uiPreferencesDataPlugin(database: Client) {
     /** Contribute the owner schemas and PostgreSQL handlers to the Data SDK. */
     apply(context: Context) {
       const operations = {
-        read: dataOperation(z.strictObject({}), preferencesSnapshot, (scope) => read(database, scope.principal)),
-        update: dataOperation(preferencesUpdate, preferencesSnapshot, (scope, { entries, preserveExisting }) =>
-          save(database, scope.principal, entries, preserveExisting),
+        read: dataOperation(z.strictObject({}), preferencesSnapshot, (scope) =>
+          read(database, scope.principal),
+        ),
+        update: dataOperation(
+          preferencesUpdate,
+          preferencesSnapshot,
+          (scope, { entries, preserveExisting }) =>
+            save(database, scope.principal, entries, preserveExisting),
         ),
       };
       context.effect(() => context.data.register({ id: uiPreferencesResource, operations }));
