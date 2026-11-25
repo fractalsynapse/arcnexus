@@ -17,7 +17,7 @@ export function OperationRow({ entry, execution }: { entry: Operation; execution
         checkState(check.status),
       ),
     !check && state && h('small', null, state),
-    execution && tool && h(OperationDetail, { sequence, execution, operation: tool }),
+    execution && tool && h(OperationDetail, { sequence, execution, operation: tool, phase: state }),
     check &&
       h(DialogButton, {
         icon: 'info',

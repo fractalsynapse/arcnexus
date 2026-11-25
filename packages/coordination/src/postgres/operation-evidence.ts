@@ -33,13 +33,17 @@ const references = `
   ORDER BY operations.id
 `;
 
-async function readArtifact(root: string, path: string) {
+type EvidenceRoots = string | readonly string[];
+
+function contains(root: string, path: string) {
   const location = relative(root, path);
+  return location && location !== '..' && !location.startsWith('..' + sep);
+}
+
+async function readArtifact(roots: readonly string[], path: string) {
   if (
     !isAbsolute(path) ||
-    !location ||
-    location === '..' ||
-    location.startsWith('..' + sep) ||
+    !roots.some((root) => contains(root, path)) ||
     (await realpath(path)) !== path
   )
     throw new Error('Recorded operation evidence is outside the mounted Host storage');
@@ -49,13 +53,18 @@ async function readArtifact(root: string, path: string) {
   return JSON.parse(await readFile(path, 'utf8')) as unknown;
 }
 
-/** Read exact tool observations only through a recorded execution event and a trusted evidence root. */
+async function canonicalRoot(root: string) {
+  if ((await realpath(root)) !== root) throw new Error('An evidence root is an alias');
+  return root;
+}
+
+/** Read exact tool observations only through a recorded execution event and approved mounts. */
 export async function readOperationEvidence(
   database: Client,
   remote: string,
   execution: string,
   sequence: string,
-  root: string,
+  roots: EvidenceRoots,
 ) {
   const { rows } = await database.query<{ source: string }>(references, [
     remote,
@@ -63,13 +72,14 @@ export async function readOperationEvidence(
     sequence,
   ]);
   if (!rows.length) throw new Error('Operation evidence is not retained in this execution');
-  const directory = await realpath(root);
-  if (directory !== root) throw new Error('The evidence root is an alias');
-  const entries = await Promise.all(rows.map(({ source }) => readArtifact(directory, source)));
+  const directories = await Promise.all(
+    (typeof roots === 'string' ? [roots] : roots).map(canonicalRoot),
+  );
+  const entries = await Promise.all(rows.map(({ source }) => readArtifact(directories, source)));
   return { entries };
 }
 
-type Resolve = (scope: DataScope) => Promise<{ remote: string; root: string } | undefined>;
+type Resolve = (scope: DataScope) => Promise<{ remote: string; roots: EvidenceRoots } | undefined>;
 
 export function operationEvidenceDataPlugin(database: Client, resolve: Resolve) {
   return {
@@ -87,7 +97,7 @@ export function operationEvidenceDataPlugin(database: Client, resolve: Resolve) 
             project.remote,
             input.execution,
             input.sequence,
-            project.root,
+            project.roots,
           );
         },
       );

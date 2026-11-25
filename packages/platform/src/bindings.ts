@@ -11,6 +11,7 @@ import { importSchema } from '../../catalog/src/index.js';
 
 const id = z.string().min(1);
 const absoluteSecret = z.string().startsWith('/');
+const evidenceRoots = z.union([absoluteSecret, z.array(absoluteSecret).nonempty()]);
 const githubBinding = z.union([
   z.strictObject({ id, tokenFile: absoluteSecret }),
   z.strictObject({ id, appId: z.string().min(1), privateKeyFile: absoluteSecret }),
@@ -25,7 +26,7 @@ const configuration = z.strictObject({
       hosted: z.boolean().optional(),
       managed: z.boolean().optional(),
       provider: z.uuid().optional(),
-      evidence: z.string().startsWith('/').optional(),
+      evidence: evidenceRoots.optional(),
       github: githubBinding.optional(),
     }),
   ),

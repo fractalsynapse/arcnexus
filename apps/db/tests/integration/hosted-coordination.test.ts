@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -280,6 +280,45 @@ test(
     await verifyEvidenceScope(database, project, writer.taskID, call.sequence, directory);
   },
 );
+
+test(
+  'the hosted writer and the retained archive share the scoped evidence reader',
+  { skip: !url },
+  async (t) => {
+    const { directory, database, project, sqlite, setup } = await fixture(t);
+    const [archive, live] = evidenceDirectories(directory);
+    const native = sqlite.admit(project, 'Archived Plan');
+    assert.ok('record' in native);
+    const saved = recordOperation(native, archive, 'completed', { output: 'Reviewed result' });
+    native.finish({ kind: 'planned' });
+    native.close();
+    await setup.cutover(directory, project);
+    const writer = coordinated(project, 'live-evidence-host').admit(project, 'Live Plan');
+    assert.ok('record' in writer);
+    t.after(() => writer.close());
+    const call = recordOperation(writer, live, 'started', { args: { path: 'README.md' } });
+    const read = (execution: string, sequence: string) =>
+      readOperationEvidence(database, project, execution, sequence, [archive, live]);
+    assert.deepEqual((await read(writer.taskID, call.sequence)).entries, [
+      { args: { path: 'README.md' } },
+    ]);
+    recordOperation(writer, live, 'completed', { result: { content: 'Current contents' } });
+    assert.deepEqual((await read(writer.taskID, call.sequence)).entries, [
+      { args: { path: 'README.md' } },
+      { result: { content: 'Current contents' } },
+    ]);
+    assert.deepEqual((await read(native.taskID, saved.sequence)).entries, [
+      { output: 'Reviewed result' },
+    ]);
+    await assert.rejects(read(writer.taskID, saved.sequence), /not retained/);
+  },
+);
+
+function evidenceDirectories(directory: string) {
+  const paths = [join(directory, 'archive'), join(directory, 'host')] as const;
+  for (const path of paths) mkdirSync(path);
+  return paths;
+}
 
 function recordOperation(
   writer: Extract<ReturnType<Coordination['admit']>, { record: unknown }>,

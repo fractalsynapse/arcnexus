@@ -44,7 +44,9 @@ client with the same bearer credential at `/projects/{project}/mcp` on the
 MCP port.
 
 The review stack serves pinned Plan guide reads, outcome and metric projections,
-and replay and live follow of retained PostgreSQL observations. The browser uses
+and replay and live follow of retained PostgreSQL observations. A project binding’s
+`evidence` accepts an absolute mount path or a list of paths for retained and live
+Host artifacts. Mount each path read-only at its recorded location. The browser uses
 an operator credential held in memory for the review session. A registered
 launcher can use `connect` to keep its authorized presence active.
 

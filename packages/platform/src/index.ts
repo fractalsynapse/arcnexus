@@ -120,8 +120,8 @@ async function projectResources(
   await context.use(
     operationEvidenceDataPlugin(database, async (scope) => {
       const remote = await journal(scope);
-      const root = remote && configuration.evidence(remote);
-      return root && remote ? { remote, root } : undefined;
+      const roots = remote && configuration.evidence(remote);
+      return roots && remote ? { remote, roots } : undefined;
     }),
   );
   await context.use(

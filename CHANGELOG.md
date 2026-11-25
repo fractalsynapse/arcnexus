@@ -4,7 +4,7 @@
 
 ### Added
 
-- Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals (#746).
+- Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals. Inspect retained and live tool payloads on demand (#746).
 
 - Provision pinned Host checkouts, check gateway reachability, and support explicit provider egress and repository-scoped GitHub App publication for isolated execution (#706).
 

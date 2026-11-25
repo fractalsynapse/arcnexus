@@ -3,23 +3,25 @@ import { DialogButton, JsonView } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 import { usePlatformSession } from './session.js';
 
-export function OperationDetail({
-  sequence,
-  execution,
-  operation,
-}: {
+interface EvidenceLocation {
   sequence: string;
   execution: string;
-  operation: string;
-}) {
+  phase?: string;
+}
+
+/** Inspect the complete observations for one operation. */
+export function OperationDetail({
+  operation,
+  ...location
+}: EvidenceLocation & { operation: string }) {
   return h(DialogButton, {
     icon: 'info',
     title: operation + ' inputs and outputs',
-    children: h(Evidence, { sequence, execution }),
+    children: h(Evidence, location),
   });
 }
 
-function Evidence({ sequence, execution }: { sequence: string; execution: string }) {
+function Evidence({ sequence, execution, phase }: EvidenceLocation) {
   const { project, token } = usePlatformSession();
   const path = project
     ? '/projects/' +
@@ -29,12 +31,25 @@ function Evidence({ sequence, execution }: { sequence: string; execution: string
       '?execution=' +
       encodeURIComponent(execution)
     : undefined;
-  const evidence = useResource<{ entries: unknown[] }>(path, token);
+  const evidence = useResource<{ entries: unknown[] }>(path, token, phase);
   if (evidence.error) return h('p', { role: 'alert' }, evidence.error);
   if (!evidence.value) return h('p', { role: 'status' }, 'Loading recorded tool evidence…');
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    evidence.value.entries.map((entry, index) => h(JsonView, { key: index, value: entry })),
+    evidence.value.entries.map((entry, index) => h(RecordedObservation, { key: index, entry })),
   );
+}
+
+function RecordedObservation({ entry }: { entry: unknown }) {
+  const phase = entry && typeof entry === 'object' && 'phase' in entry ? entry.phase : undefined;
+  const title =
+    phase === 'started'
+      ? 'Input'
+      : phase === 'completed'
+        ? 'Output'
+        : phase === 'refused'
+          ? 'Error'
+          : 'Observation';
+  return h('section', null, h('h3', null, title), h(JsonView, { value: entry }));
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
 import { chromium, type Page } from 'playwright';
+import { serveApi } from '../../../api/src/serve.js';
 import { serveWeb } from '../../src/serve.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
@@ -34,8 +35,8 @@ test('the built Plan opens a pinned file through the shared workspace layout', a
   );
 });
 
-async function browserPage(t: TestContext) {
-  const application = await serveWeb('dist/apps/web/site');
+async function browserPage(t: TestContext, api?: URL) {
+  const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api);
   t.after(() => application.server.close());
   const browser = await chromium.launch({ executablePath: process.env.ARC_CHROMIUM_PATH });
   t.after(() => browser.close());
@@ -110,6 +111,84 @@ async function timelineResponses(page: Page, cursors: Array<string | undefined>)
         : timelineRecord('1', 'Opening café 🛠') +
           timelineFrame('2', { check: { id: 'repository-tests', status: 0 } }),
     });
+  });
+}
+
+test('an open tool inspector loads input on demand and refreshes when the live result commits', async (t) => {
+  const fixture = await liveToolFixture(t);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  await page.goto(application.url);
+  await selectProject(page);
+  const timeline = page.getByRole('log', { name: 'Planning events' });
+  await timeline.getByText('1 operation', { exact: true }).click();
+  assert.equal(fixture.reads(), 0);
+  await timeline.getByRole('button', { name: 'read-file inputs and outputs' }).click();
+  const detail = page.getByRole('dialog', { name: 'read-file inputs and outputs' });
+  await detail.getByRole('heading', { name: 'Input', exact: true }).waitFor();
+  await detail.locator('section').filter({ hasText: 'Input' }).locator('summary').nth(1).click();
+  await detail.getByText('".arc/goals/fixture-goal.md"', { exact: true }).waitFor();
+  fixture.finish();
+  await detail.getByRole('heading', { name: 'Output', exact: true }).waitFor();
+  assert.equal(fixture.reads(), 2);
+});
+
+async function liveToolFixture(t: TestContext) {
+  const args = { path: '.arc/goals/fixture-goal.md' };
+  const result = { content: [{ type: 'text', text: 'Recorded tool output' }] };
+  const input = { phase: 'started', args };
+  const output = { phase: 'completed', result };
+  let reads = 0;
+  let completed = false;
+  const updates = liveToolUpdates();
+  const application = await serveApi(async (request) =>
+    liveToolResponse(new URL(request.url).pathname, {
+      entries: () => {
+        reads += 1;
+        return completed ? [input, output] : [input];
+      },
+      events: updates.events,
+    }),
+  );
+  t.after(() => application.server.close());
+  return {
+    ...application,
+    reads: () => reads,
+    finish() {
+      completed = true;
+      updates.finish();
+    },
+  };
+}
+
+function liveToolUpdates() {
+  let stream: ReadableStreamDefaultController;
+  return {
+    events: () =>
+      new ReadableStream({
+        start(controller) {
+          stream = controller;
+          controller.enqueue(Buffer.from(toolFrame('1', 'started')));
+        },
+      }),
+    finish: () => stream.enqueue(Buffer.from(toolFrame('2', 'completed'))),
+  };
+}
+
+function liveToolResponse(
+  path: string,
+  fixture: { entries(): unknown[]; events(): ReadableStream },
+) {
+  if (path.endsWith('/plan-executions/current'))
+    return Response.json({ execution: 'live-plan', revision: project.revision, active: true });
+  if (path.endsWith('/live-plan/events'))
+    return new Response(fixture.events(), { headers: { 'content-type': 'text/event-stream' } });
+  if (path.endsWith('/operation-evidence/1')) return Response.json({ entries: fixture.entries() });
+  return Response.json(planData('/api' + path));
+}
+
+function toolFrame(sequence: string, phase: string) {
+  return timelineFrame(sequence, {
+    operation: { name: 'read-file', call: 'recorded-call', phase },
   });
 }
 
