@@ -299,21 +299,23 @@ for (const activeAt of [1, 2]) {
   });
 }
 
+function confirmedLegacyStatus(changed: boolean) {
+  const status = {
+    context: 'CI',
+    state: 'success',
+    target_url: changed ? 'https://example.com/replaced' : null,
+  };
+  return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
+}
+
 for (const coverage of ['grows', 'matches', 'unrelated status changes']) {
   test(`a suite restarts during confirmation and coverage ${coverage}`, async (t) => {
     let inventories = 0;
     let reviews = 0;
     const scenario = new ProviderResults(t, (args) => {
       if (args[1] === 'graphql') reviews++;
-      if (args[1]?.endsWith('/status')) {
-        const changed = coverage === 'unrelated status changes' && inventories >= 4;
-        const status = {
-          context: 'CI',
-          state: 'success',
-          target_url: changed ? 'https://example.com/replaced' : null,
-        };
-        return JSON.stringify({ sha: head, total_count: 1, statuses: [status] });
-      }
+      if (args[1]?.endsWith('/status'))
+        return confirmedLegacyStatus(coverage === 'unrelated status changes' && inventories >= 4);
       if (args[1]?.endsWith('/check-suites') && ++inventories === 4)
         return completedSuiteGrowth(args, true)
           .replace('"status":"completed"', '"status":"in_progress"')
