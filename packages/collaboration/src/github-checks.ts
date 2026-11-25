@@ -8,7 +8,7 @@ const suite = z.object({ id: z.int().positive(), head_sha: z.string() });
 const run = z.object({
   id: z.int().positive(),
   app: z.object({ id: z.int().positive() }).nullable(),
-  completed_at: z.iso.datetime().nullable().optional(),
+  started_at: z.iso.datetime().nullable().optional(),
   head_sha: z.string(),
   name: z.string().min(1),
   status: z.enum(['completed', 'in_progress', 'queued', 'requested', 'waiting', 'pending']),
@@ -48,17 +48,19 @@ export async function readGitHubChecks(
 ): Promise<ProviderCheck[]> {
   const repo = `repos/${repository}`;
   const ref = `${repo}/commits/${head}`;
-  const runs = await checkRuns(read, repo, ref, head);
-  const checks = runs.map(({ id, app, name, status, conclusion, details_url }) => ({
+  const checks = await checkRuns(read, repo, ref, head, observe);
+  return [...checks, ...(await legacyStatuses(read, ref, head))];
+}
+
+function normalizeRun({ id, app, name, status, conclusion, details_url }: z.output<typeof run>) {
+  return {
     runId: id,
     appId: app?.id,
     name,
     status: status.toUpperCase(),
     conclusion: conclusion?.toUpperCase(),
     detailsUrl: details_url ?? undefined,
-  }));
-  observe(checks);
-  return [...checks, ...(await legacyStatuses(read, ref, head))];
+  };
 }
 
 /** Decode the latest legacy contexts and verify every page belongs to the selected head. */
@@ -78,11 +80,25 @@ async function legacyStatuses(read: Read, ref: string, head: string) {
 }
 
 /** Use GitHub's latest view for ordinary refs and enumerate suites when its coverage is limited. */
-async function checkRuns(read: Read, repo: string, ref: string, head: string) {
-  const current = await runsFrom(read, `${ref}/check-runs?filter=latest`, head);
+async function checkRuns(
+  read: Read,
+  repo: string,
+  ref: string,
+  head: string,
+  observe: (checks: readonly ProviderCheck[]) => void,
+) {
+  const current = (await runsFrom(read, `${ref}/check-runs?filter=latest`, head)).map(normalizeRun);
+  observe(current);
   const count = total.parse(JSON.parse(await read(['api', `${ref}/check-suites`]))).total_count;
   if (count <= gitHubRefCheckSuiteCoverage) return current;
 
+  const checks = (await suiteRuns(read, repo, ref, head, count)).map(normalizeRun);
+  observe(checks);
+  return checks;
+}
+
+/** Enumerate every attempt when GitHub's ref view omitted part of the suite inventory. */
+async function suiteRuns(read: Read, repo: string, ref: string, head: string, count: number) {
   const pages = await decodePages(read, `${ref}/check-suites`, suitePage);
   const suites = complete(
     pages,
@@ -96,7 +112,7 @@ async function checkRuns(read: Read, repo: string, ref: string, head: string) {
       throw new Error('GitHub returned a check suite for a different head');
     const runs = await runsFrom(
       read,
-      `${repo}/check-suites/${suite.id}/check-runs?filter=latest`,
+      `${repo}/check-suites/${suite.id}/check-runs?filter=all`,
       head,
     );
     for (const item of runs) {
@@ -113,14 +129,12 @@ function runContext(item: z.output<typeof run>) {
   return item.app ? JSON.stringify([item.app.id, item.name]) : JSON.stringify([null, item.id]);
 }
 
-/** Compare provider completion times across suites and keep pending observations visible. */
+/** Compare starts across suites and retain attempts whose order GitHub has not exposed. */
 function latestInContext(runs: z.output<typeof run>[]) {
-  const pending = runs.filter((item) => item.status !== 'completed');
-  if (pending.length) return pending;
   const latest = runs.reduce((time, item) => {
-    return item.completed_at ? Math.max(time, Date.parse(item.completed_at)) : time;
+    return item.started_at ? Math.max(time, Date.parse(item.started_at)) : time;
   }, -Infinity);
-  return runs.filter((item) => !item.completed_at || Date.parse(item.completed_at) === latest);
+  return runs.filter((item) => !item.started_at || Date.parse(item.started_at) === latest);
 }
 
 async function runsFrom(read: Read, endpoint: string, head: string) {

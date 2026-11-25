@@ -8,13 +8,15 @@ export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery']
 class ProviderResults {
   readonly calls: string[][] = [];
   readonly cancellation = new AbortController();
-  readonly provider = new GitHub(
-    'https://github.com/example/project.git',
-    this.cancellation.signal,
-  );
+  readonly provider: GitHub;
 
   /** Retain actual command inputs and supply explicit provider-page fixtures. */
-  constructor(t: TestContext, result: (args: string[]) => string) {
+  constructor(
+    t: TestContext,
+    result: (args: string[]) => string,
+    remote = 'https://github.com/example/project.git',
+  ) {
+    this.provider = new GitHub(remote, this.cancellation.signal);
     const transport = this.provider as unknown as {
       command(args: string[], complete?: boolean): Promise<string>;
     };
@@ -106,6 +108,27 @@ test('a wrong PR branch stops before any CI or review reads', async (t) => {
   assert.deepEqual(scenario.calls, [['api', repository + '/pulls/99']]);
 });
 
+test('PR lookup accepts GitHub canonical casing for the same bound repository', async (t) => {
+  const scenario = new ProviderResults(
+    t,
+    (args) => readyResponse(args.map((arg, index) => (index === 1 ? arg.toLowerCase() : arg))),
+    'https://github.com/Example/PROJECT.git',
+  );
+  await scenario.provider.verify(pr, head, 'staging', 'OPEN', '1-task');
+});
+
+test('unavailable suite metadata retains the completed ref check read', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/check-suites')) throw new Error('Suite inventory unavailable');
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.checks?.[0]?.runId, successfulRun.id);
+    return true;
+  });
+});
+
 function paginatedStatuses(contexts: string[]) {
   return contexts
     .map((context) =>
@@ -154,7 +177,21 @@ test('incomplete check pages cannot authorize a pull request', async (t) => {
   assert.ok(scenario.calls.every((args) => args[1] !== 'graphql'));
 });
 
-test('suite pagination finds checks omitted by the ref endpoint and resolves reruns by time', async (t) => {
+function overlappingSuiteRun(id: string) {
+  const retry = {
+    ...successfulRun,
+    id: 1,
+    started_at: '2026-11-24T00:01:00Z',
+    completed_at: '2026-11-24T00:02:00Z',
+    conclusion: 'failure',
+    details_url: null,
+  };
+  const old = { ...successfulRun, id: 99, completed_at: '2026-11-24T00:03:00Z' };
+  const independent = { ...successfulRun, id: 50, app: { id: 9 }, name: 'Earlier producer' };
+  return { '1': old, '2': retry, '3': independent }[id];
+}
+
+test('suite pagination finds omitted checks and orders overlapping attempts by start time', async (t) => {
   const suites = Array.from({ length: 1001 }, (_, index) => ({ id: index + 1, head_sha: head }));
   const scenario = new ProviderResults(t, (args) => {
     if (args[1]?.endsWith('/check-suites')) {
@@ -165,13 +202,14 @@ test('suite pagination finds checks omitted by the ref endpoint and resolves rer
     }
     const id = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '')?.[1];
     if (!id) return readyResponse(args);
-    const retry = { ...successfulRun, id: 1, completed_at: '2026-11-24T00:02:00Z' };
-    const old = { ...successfulRun, id: 99, conclusion: 'failure' };
-    const independent = { ...successfulRun, id: 50, app: { id: 9 }, name: 'Earlier producer' };
-    const check = { '1': old, '2': retry, '3': independent }[id];
+    const check = overlappingSuiteRun(id);
     return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
   });
-  await scenario.provider.verify(pr, head, 'staging');
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubCheckFailure);
+    assert.equal(error.check.runId, 1);
+    return true;
+  });
   assert.equal(
     scenario.calls.filter((args) => /\/check-suites\/\d+\/check-runs/.test(args[1] ?? '')).length,
     suites.length,

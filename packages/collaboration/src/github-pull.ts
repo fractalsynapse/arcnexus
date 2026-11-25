@@ -43,9 +43,12 @@ export const pullReviewQuery = `query($owner: String!, $name: String!, $number: 
 
 /** Bind a provider read to a canonical pull request inside the configured repository. */
 export function pullNumber(pr: string, repository: string) {
-  const prefix = `https://github.com/${repository}/pull/`;
-  const number = pr.startsWith(prefix) && pr.slice(prefix.length);
-  if (!number || !/^[1-9]\d*$/.test(number) || !Number.isSafeInteger(Number(number)))
+  const match = /^https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/pull\/([1-9]\d*)$/.exec(pr);
+  const number = match?.[2];
+  if (
+    match?.[1]?.toLowerCase() !== repository.toLowerCase() ||
+    !Number.isSafeInteger(Number(number))
+  )
     throw new Error(`Invalid GitHub pull request for ${repository}: ${pr}`);
   return Number(number);
 }
@@ -57,10 +60,11 @@ export function publishedPull(
   expected: { branch?: string; number?: number },
 ): PublishedPull {
   const result = pull.parse(value);
+  const scope = repository.toLowerCase();
   if (
     pullNumber(result.html_url, repository) !== result.number ||
-    result.head.repo.full_name !== repository ||
-    result.base.repo.full_name !== repository ||
+    result.head.repo.full_name.toLowerCase() !== scope ||
+    result.base.repo.full_name.toLowerCase() !== scope ||
     (expected.branch !== undefined && result.head.ref !== expected.branch) ||
     (expected.number !== undefined && result.number !== expected.number) ||
     (result.merged_at !== null && result.state !== 'closed')
