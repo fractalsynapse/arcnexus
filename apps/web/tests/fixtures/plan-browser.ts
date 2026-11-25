@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type { TestContext } from 'node:test';
-import { chromium, type Page } from 'playwright';
+import { chromium, type BrowserContextOptions, type Page } from 'playwright';
 import { serveWeb } from '../../src/serve.js';
 import { chooseOption } from './browser-select.js';
 
@@ -17,12 +17,12 @@ export const otherProject = {
   revision: project.revision,
 };
 
-export async function browserPage(t: TestContext, api?: URL) {
+export async function browserPage(t: TestContext, api?: URL, options?: BrowserContextOptions) {
   const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api);
   t.after(() => application.server.close());
   const browser = await chromium.launch({ executablePath: process.env.ARC_CHROMIUM_PATH });
   t.after(() => browser.close());
-  const page = await browser.newPage();
+  const page = await browser.newPage(options);
   return { application, page };
 }
 

@@ -119,8 +119,38 @@ async function verifyFullWidthDiff(page: Page) {
   assert.ok(content && body && Math.abs(content.width - body.width) < 1);
 }
 
-test('a pinned Plan File can switch between its historical and latest approved revisions', async (t) => {
+test('Plan File shows numbered change hunks with three context lines on either side', async (t) => {
   const { application, page } = await browserPage(t);
+  await responses(page);
+  const before = Array.from({ length: 25 }, (_, index) => 'line ' + (index + 1));
+  const after = [...before];
+  after.splice(17, 1);
+  after.splice(5, 1, 'replacement', 'inserted');
+  await page.route('**/changes?**', (route) =>
+    route.fulfill({
+      json: {
+        path: '.arc/goals/fixture-goal.md',
+        before: before.join('\n'),
+        after: after.join('\n'),
+      },
+    }),
+  );
+  await page.goto(application.url + '/plan/files/goals/fixture-goal/');
+  const diff = filePanel(page, 'Changes').locator('pre');
+  await diff.waitFor();
+  assert.deepEqual(await diff.locator('[data-change="hunk"]').allTextContents(), [
+    '@@ -3,7 +3,8 @@',
+    '@@ -15,7 +16,6 @@',
+  ]);
+  assert.ok(!(await diff.textContent())!.match(/\bline (1|2|10|14|22|25)\b/));
+  const replacement = diff.locator('[data-change="added"]').filter({ hasText: 'replacement' });
+  const removal = diff.locator('[data-change="removed"]').filter({ hasText: /line 18\b/ });
+  assert.deepEqual(await replacement.locator('.arc-diff-number').allTextContents(), ['', '6']);
+  assert.deepEqual(await removal.locator('.arc-diff-number').allTextContents(), ['18', '']);
+});
+
+test('a pinned Plan File can switch between its historical and latest approved revisions', async (t) => {
+  const { application, page } = await browserPage(t, undefined, { hasTouch: true, isMobile: true });
   await responses(page, [project, otherProject]);
   await page.route(/\/goals\/fixture-goal(?:\/[^?]+)?\?/, historicalFile);
   const query = new URLSearchParams({ project: project.id, revision: previous.revision });
@@ -132,14 +162,52 @@ test('a pinned Plan File can switch between its historical and latest approved r
   const pinned = await revisions.innerText();
   assert.match(pinned, /2025.*\(bbbbbbbb\)$/);
   assert.equal(await edit.isDisabled(), true);
+  await verifyRevisionTooltip(page);
   await assertCompactRevisionMenu(page);
   await chooseOption(page, 'File revision', 'Latest revision (aaaaaaaa)');
   await content.getByRole('heading', { name: 'Verified goal' }).waitFor();
-  assert.equal(await edit.isEnabled(), true);
+  await verifyMobileEdit(page);
   await chooseOption(page, 'File revision', pinned);
   await content.getByRole('heading', { name: 'Captured goal' }).waitFor();
   assert.equal(await edit.isDisabled(), true);
 });
+
+async function verifyRevisionTooltip(page: Page) {
+  const anchor = page
+    .locator('.arc-icon-wrap')
+    .filter({ has: page.getByRole('checkbox', { name: 'Edit', exact: true }) });
+  const hint = page
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Historical revisions are read-only. Select Latest revision to edit.' });
+  await anchor.hover();
+  await hint.waitFor();
+  await page.mouse.move(0, 0);
+  await hint.waitFor({ state: 'hidden' });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await anchor.tap();
+  await hint.waitFor();
+}
+
+async function verifyMobileEdit(page: Page) {
+  const edit = page.getByRole('checkbox', { name: 'Edit', exact: true });
+  assert.equal(await edit.isEnabled(), true);
+  const label = edit.locator('..');
+  assert.ok((await label.boundingBox())!.height >= 44);
+  const reader = page.locator('article.arc-markdown');
+  const frame = await reader.evaluate((node) => {
+    const style = getComputedStyle(node);
+    return {
+      border: parseFloat(style.borderBlockStartWidth),
+      padding: parseFloat(style.paddingBlockStart),
+    };
+  });
+  assert.ok(frame.border > 0 && frame.padding > 0);
+  await label.tap();
+  assert.equal(await edit.isChecked(), true);
+  await page.getByRole('button', { name: 'Visual', exact: true }).waitFor();
+  await label.tap();
+  await reader.waitFor();
+}
 
 async function assertCompactRevisionMenu(page: Page) {
   await page.setViewportSize({ width: 320, height: 800 });

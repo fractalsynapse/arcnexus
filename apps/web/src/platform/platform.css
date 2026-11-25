@@ -76,15 +76,6 @@
 .arc-guide-search {
   grid-column: 1 / -1;
 }
-.arc-app .arc-guide-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.arc-app .arc-guide-checkbox input {
-  inline-size: auto;
-  min-block-size: 0;
-}
 .arc-guide-list {
   display: grid;
   gap: 5px;

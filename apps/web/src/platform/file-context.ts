@@ -1,5 +1,5 @@
 import { createElement as h } from 'react';
-import { DialogButton } from '../../../../packages/ui/src/index.js';
+import { CheckboxField, DialogButton, Tooltip } from '../../../../packages/ui/src/index.js';
 import type { WebCommands } from '../plugins/command-binding-plugin.js';
 import { ActiveProject } from './active-project.js';
 import { usePlanFile } from './plan-file-scope.js';
@@ -18,6 +18,12 @@ export function FileContext({ binding }: { binding: WebCommands }) {
 
 function FileActions({ binding }: { binding: WebCommands }) {
   const { canEdit, detail, editing, edit } = usePlanFile();
+  const checkbox = h(CheckboxField, {
+    label: 'Edit',
+    checked: editing,
+    disabled: !detail.value || !canEdit,
+    onChange: edit,
+  });
   return h(
     'div',
     { className: 'arc-platform-inline' },
@@ -26,17 +32,16 @@ function FileActions({ binding }: { binding: WebCommands }) {
       title: 'Progress',
       children: h('p', null, 'A verified measure is required to display goal progress.'),
     }),
-    h(
-      'label',
-      { className: 'arc-guide-checkbox' },
-      h('input', {
-        type: 'checkbox',
-        checked: editing,
-        disabled: !detail.value || !canEdit,
-        onChange: (event) => edit(event.currentTarget.checked),
-      }),
-      'Edit',
-    ),
+    canEdit
+      ? checkbox
+      : h(
+          Tooltip,
+          {
+            label: 'Historical revisions are read-only. Select Latest revision to edit.',
+            focusAnchor: true,
+          },
+          checkbox,
+        ),
     editing && h(SaveGoal, { binding }),
   );
 }

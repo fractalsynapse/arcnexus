@@ -34,6 +34,22 @@
   display: inline-flex;
   align-self: start;
 }
+.arc-app .arc-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.arc-app .arc-checkbox input {
+  inline-size: auto;
+  min-block-size: 0;
+}
+.arc-app .arc-checkbox input:disabled {
+  pointer-events: none;
+}
+.arc-app .arc-checkbox:has(input:disabled) {
+  cursor: default;
+}
 .arc-sr {
   position: absolute;
   inline-size: 1px;

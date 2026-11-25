@@ -25,6 +25,7 @@ import './content/markdown.css';
 export { CommandPanel } from './commands/command-panel.js';
 export { CommandQuestion } from './commands/command-question.js';
 export { Button } from './controls/button.js';
+export { CheckboxField } from './controls/checkbox-field.js';
 export { Dialog } from './controls/dialog.js';
 export { Disclosure } from './controls/disclosure.js';
 export { ExternalLink } from './controls/external-link.js';

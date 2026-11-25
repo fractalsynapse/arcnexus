@@ -142,7 +142,7 @@ test('a multi-file comparison keeps its file selector and switches the displayed
   await second.click();
   assert.equal(await second.getAttribute('aria-pressed'), 'true');
   const diff = page.locator('pre[aria-label="Changes for src/second.ts"]');
-  await diff.getByText('+ new second', { exact: true }).waitFor();
+  await diff.getByText('+new second', { exact: true }).waitFor();
   const [sidebar, content] = await Promise.all([files.boundingBox(), diff.boundingBox()]);
   assert.ok(sidebar && content && sidebar.x + sidebar.width <= content.x);
 });

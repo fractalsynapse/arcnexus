@@ -1,9 +1,10 @@
 .arc-diff-content {
   margin: 0;
-  padding: 10px;
-  overflow-x: auto;
+  min-inline-size: 0;
   background: var(--quiet);
+  border: 1px solid var(--line);
   border-radius: 6px;
+  overflow: hidden;
 }
 .arc-diff {
   display: grid;
@@ -30,9 +31,6 @@
 .arc-diff-files button[aria-pressed='true'] {
   background: var(--tint);
   border-color: var(--link);
-}
-.arc-diff-content span {
-  display: block;
 }
 .arc-json-section > div {
   padding-inline-start: 12px;

@@ -223,7 +223,7 @@ class YamlEditor {
         : diffBody({
             file: {
               path: this.file.path,
-              lines: draftDiff(this.revision.content.split('\n'), this.source.split('\n')),
+              lines: draftDiff(this.revision.content, this.source),
             },
           });
   }

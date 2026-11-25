@@ -13,3 +13,32 @@
 :is(.arc-app, #arc-preview) .arc-diff-lines [data-change='context'] {
   background: var(--quiet);
 }
+:is(.arc-app, #arc-preview) .arc-numbered-diff {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  font:
+    var(--font-small) / 1.5 ui-monospace,
+    monospace;
+}
+:is(.arc-app, #arc-preview) .arc-numbered-diff > span {
+  grid-column: 1 / -1;
+}
+:is(.arc-app, #arc-preview) .arc-numbered-diff .arc-diff-row {
+  display: grid;
+  grid-template-columns: subgrid;
+}
+:is(.arc-app, #arc-preview) .arc-numbered-diff :is(.arc-diff-code, [data-change='hunk']) {
+  padding: 2px 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+:is(.arc-app, #arc-preview) .arc-numbered-diff .arc-diff-number {
+  padding: 2px 5px;
+  border-inline-end: 1px solid var(--line);
+  text-align: end;
+  color: var(--muted);
+  user-select: none;
+}
+:is(.arc-app, #arc-preview) .arc-numbered-diff [data-change='note'] {
+  color: var(--muted);
+}

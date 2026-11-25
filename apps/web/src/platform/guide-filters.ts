@@ -1,5 +1,5 @@
 import { Fragment, createElement as h } from 'react';
-import { SelectField, TopicPicker } from '../../../../packages/ui/src/index.js';
+import { CheckboxField, SelectField, TopicPicker } from '../../../../packages/ui/src/index.js';
 import type { GuideKind } from './guide.js';
 
 export interface GuideFilter {
@@ -38,7 +38,11 @@ export function GuideFilters({ filter, topics, update }: FilterProps) {
       selected: filter.topics,
       change: (topics) => update({ ...filter, topics }),
     }),
-    h(ChangedOnly, { filter, update }),
+    h(CheckboxField, {
+      label: 'Changed only',
+      checked: filter.changed,
+      onChange: (changed) => update({ ...filter, changed }),
+    }),
   );
 }
 
@@ -65,18 +69,5 @@ function GuideSelects({ filter, update }: Omit<FilterProps, 'topics'>) {
       ],
       onChange: (order) => update({ ...filter, order }),
     }),
-  );
-}
-
-function ChangedOnly({ filter, update }: Omit<FilterProps, 'topics'>) {
-  return h(
-    'label',
-    { className: 'arc-guide-checkbox' },
-    h('input', {
-      type: 'checkbox',
-      checked: filter.changed,
-      onChange: (event) => update({ ...filter, changed: event.currentTarget.checked }),
-    }),
-    'Changed only',
   );
 }

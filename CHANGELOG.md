@@ -26,6 +26,8 @@
 
 ### Changed
 
+- Show numbered unified diffs with three lines of context, and give the read-only Markdown viewer the editor's frame and padding (#746).
+
 - Increase desktop reading sizes across the browser UI and use the ArcNexus brain logo as the favicon (#746).
 
 - Use the full Changes panel for single-file diffs and keep file tabs for release and other multi-file comparisons (#746).
@@ -33,6 +35,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Enlarge the Plan File Edit touch target and explain read-only historical revisions through the shared tooltip (#746).
 
 - Let Page Settings control File Information placement and give selector options shared theme colors in Firefox and Chromium (#746).
 

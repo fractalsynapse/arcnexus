@@ -85,7 +85,8 @@
   --accentBgActive: var(--tint);
   --accentSolid: var(--accent);
 }
-:is(.arc-app, #arc-preview) .mdxeditor.arc-mdx {
+:is(.arc-app, #arc-preview) :is(.arc-md-view, .mdxeditor.arc-mdx) {
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 7px;
   min-width: 0;
@@ -108,7 +109,9 @@
 }
 :is(.arc-app, #arc-preview) .arc-mdx-visual {
   min-block-size: 12em;
-  padding: 10px;
+}
+:is(.arc-app, #arc-preview) :is(.arc-md-view, .arc-mdx-visual) {
+  padding: var(--gap, 10px);
 }
 :is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) {
   overflow: hidden;

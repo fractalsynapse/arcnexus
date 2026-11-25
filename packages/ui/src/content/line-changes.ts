@@ -1,27 +1,40 @@
-import { diffArrays, diffLines } from 'diff';
+import { structuredPatch, type StructuredPatchHunk } from 'diff';
 
-export type DiffLine = [kind: string, text: string];
+export type DiffLine = [kind: string, text: string, before?: number, after?: number];
 
+/** Keep each change and its neighboring context in a numbered unified hunk. */
 export function textChanges(before: string, after: string) {
-  return diffLines(before, after).flatMap((part) =>
-    lines({ ...part, value: part.value.replace(/\n$/, '').split('\n') }),
+  return structuredPatch('', '', before, after, undefined, undefined, { context: 3 }).hunks.flatMap(
+    hunkChanges,
   );
 }
 
-/** Build the same annotated lines for revision comparisons and editor drafts. */
-export function lineChanges(before: string[], after: string[]): DiffLine[] {
-  const parts = diffArrays(before, after);
-  const first = parts.findIndex((part) => part.added || part.removed);
-  if (first < 0) return [];
-  const last = parts.findLastIndex((part) => part.added || part.removed);
-  const startLine = (parts[first - 1]?.count ?? 0) + 1;
+function hunkChanges(hunk: StructuredPatchHunk): DiffLine[] {
+  const oldRange = hunkRange(hunk.oldStart, hunk.oldLines);
+  const newRange = hunkRange(hunk.newStart, hunk.newLines);
   return [
-    ['hunk', '@@ Draft changes from line ' + startLine],
-    ...parts.slice(first, last + 1).flatMap(lines),
+    ['hunk', `@@ -${oldRange} +${newRange} @@`],
+    ...numberPatchLines(hunk.lines, hunk.oldStart, hunk.newStart),
   ];
 }
 
-function lines({ value, added, removed }: { value: string[]; added?: boolean; removed?: boolean }) {
-  const [kind, prefix] = added ? ['added', '+ '] : removed ? ['removed', '− '] : ['context', '  '];
-  return value.map<DiffLine>((line) => [kind, prefix + line]);
+function hunkRange(start: number, length: number) {
+  return (length ? start : start - 1) + ',' + length;
+}
+
+/** Number both sides of a hunk when its original coordinates are known. */
+export function numberPatchLines(
+  lines: readonly string[],
+  before?: number,
+  after?: number,
+): DiffLine[] {
+  return lines.map((line) => {
+    const kind = { '+': 'added', '-': 'removed', ' ': 'context' }[line.charAt(0)];
+    if (!kind) return [line.startsWith('\\') ? 'note' : 'context', line];
+    const oldLine = kind === 'added' ? undefined : before;
+    const newLine = kind === 'removed' ? undefined : after;
+    if (oldLine !== undefined) before = oldLine + 1;
+    if (newLine !== undefined) after = newLine + 1;
+    return [kind, line, oldLine, newLine];
+  });
 }

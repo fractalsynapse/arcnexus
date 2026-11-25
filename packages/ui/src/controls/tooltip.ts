@@ -1,23 +1,39 @@
-import { useRef, createElement as h, useState, useEffect } from 'react';
-import type { ReactNode, PointerEvent, FocusEvent, KeyboardEvent } from 'react';
+import { useRef, createElement as h, useState, useEffect, useId } from 'react';
+import type { ReactElement, ReactNode, PointerEvent, FocusEvent, KeyboardEvent } from 'react';
 import { trackTooltipPosition } from './tooltip-position.js';
 
+export interface TooltipProps {
+  label: string;
+  children?: ReactNode;
+  focusAnchor?: boolean;
+}
+
 /** Keep compact hints above sticky navigation and clipped panels. */
-export function Tooltip({ label, children }: { label: string; children?: ReactNode }) {
+export function Tooltip({ label, children, focusAnchor }: TooltipProps): ReactElement {
   const anchor = useRef<HTMLSpanElement>(null);
   const tooltip = useRef<HTMLSpanElement>(null);
-  const interaction = useTooltipInteraction(anchor, tooltip, label);
+  const id = useId();
+  const interaction = useTooltipInteraction(anchor, tooltip, label, focusAnchor);
   return h(
     'span',
     {
       ref: anchor,
       className: 'arc-icon-wrap',
+      tabIndex: focusAnchor ? 0 : undefined,
+      'aria-describedby': focusAnchor ? id : undefined,
       ...interaction,
     },
     children,
     h(
       'span',
-      { ref: tooltip, popover: 'manual', className: 'arc-tooltip', 'aria-hidden': true },
+      {
+        id,
+        ref: tooltip,
+        popover: 'manual',
+        className: 'arc-tooltip',
+        role: focusAnchor ? 'tooltip' : undefined,
+        'aria-hidden': !focusAnchor,
+      },
       label,
     ),
   );
@@ -27,6 +43,7 @@ function useTooltipInteraction(
   anchor: { current: HTMLElement | null },
   tooltip: { current: HTMLElement | null },
   label: string,
+  focusAnchor?: boolean,
 ) {
   const [pointer, setPointer] = useState(false);
   const [keyboard, setKeyboard] = useState(false);
@@ -37,6 +54,11 @@ function useTooltipInteraction(
   return {
     onPointerEnter: (event: PointerEvent) => setPointer(event.pointerType !== 'touch'),
     onPointerLeave: () => setPointer(false),
+    onPointerUp: (event: PointerEvent<HTMLSpanElement>) => {
+      if (!focusAnchor || event.pointerType !== 'touch') return;
+      event.currentTarget.focus({ preventScroll: true });
+      setKeyboard(true);
+    },
     onFocus: (event: FocusEvent) => setKeyboard(event.target.matches(':focus-visible')),
     onBlur: () => setKeyboard(false),
     onKeyDown: (event: KeyboardEvent) => {

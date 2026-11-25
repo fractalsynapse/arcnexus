@@ -1,4 +1,5 @@
 import { textChanges } from './line-changes.js';
+import type { DiffLine } from './line-changes.js';
 import { createElement as h, useState } from 'react';
 import { Button } from '../controls/button.js';
 import type { DiffSelection } from './diff-selection.js';
@@ -49,7 +50,26 @@ function DiffContent({ file }: { file: FileDelta }) {
   const lines = textChanges(file.before, file.after);
   return h(
     'pre',
-    { className: 'arc-diff-content arc-diff-lines', 'aria-label': 'Changes for ' + file.path },
-    lines.map(([kind, text], index) => h('span', { key: index, 'data-change': kind }, text + '\n')),
+    {
+      className: 'arc-diff-content arc-diff-lines arc-numbered-diff',
+      'aria-label': 'Changes for ' + file.path,
+    },
+    lines.map(renderLine),
   );
+}
+
+function renderLine([kind, text, before, after]: DiffLine, index: number) {
+  const props = { key: index, 'data-change': kind };
+  if (kind === 'hunk') return h('span', props, text);
+  return h(
+    'span',
+    { ...props, className: 'arc-diff-row' },
+    lineNumber(before),
+    lineNumber(after),
+    h('span', { className: 'arc-diff-code' }, text + '\n'),
+  );
+}
+
+function lineNumber(value?: number) {
+  return h('span', { className: 'arc-diff-number', 'aria-hidden': true }, value);
 }
