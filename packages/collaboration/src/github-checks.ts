@@ -98,9 +98,18 @@ async function readChecks(
   observe: CIObserver,
   previous: readonly ProviderCheck[],
 ) {
-  const { checks, runs } = await checkRuns(read, repo, ref, head, inventory, observe.checks);
+  const { checks, runs, observedRuns } = await checkRuns(
+    read,
+    repo,
+    ref,
+    head,
+    inventory,
+    observe.checks,
+  );
+  observe.observedChecks(observedRuns);
+  observe.checks(checks);
   const statuses = await readGitHubStatuses(read, ref, head);
-  const observedChecks: ProviderCheck[] = [...runs.map(normalizeRun), ...statuses];
+  const observedChecks: ProviderCheck[] = [...observedRuns, ...statuses];
   const current: ProviderCheck[] = [...checks, ...statuses];
   observe.observedChecks(observedChecks);
   observe.checks(current);
@@ -201,12 +210,12 @@ async function checkRuns(
     inventory.length > gitHubRefCheckSuiteCoverage
       ? await suiteRuns(read, repo, head, inventory, current, observe)
       : current;
-  observe(runs.map(normalizeRun));
+  const observedRuns = runs.map(normalizeRun);
+  observe(observedRuns);
   const latest = await latestRuns(read, repo, head, runs, observe);
   const checks = latest.map(normalizeRun);
-  observe(checks);
   requireSuiteCoverage(inventory, latest);
-  return { checks, runs };
+  return { checks, runs, observedRuns };
 }
 
 /** Compare each suite's reported run count with the head-pinned check inventory. */

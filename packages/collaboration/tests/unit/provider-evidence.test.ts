@@ -30,6 +30,29 @@ test('unavailable suite metadata retains the completed ref check read', async (t
   });
 });
 
+test('an unavailable legacy status read retains failed attempts excluded from the current selection', async (t) => {
+  const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+  const previous = { ...current, id: 41, conclusion: 'failure' };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.includes('/check-runs?filter=latest'))
+      return JSON.stringify({ total_count: 1, check_runs: [current] });
+    if (args[1]?.includes('/check-runs?filter=all'))
+      return JSON.stringify({ total_count: 2, check_runs: [previous, current] });
+    if (args[1]?.endsWith('/status')) throw new Error('Legacy status unavailable');
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (failure) => {
+    assert(failure instanceof GitHubPullReadFailure);
+    assert.deepEqual(
+      failure.observation.checks?.map(({ runId }) => runId),
+      [42],
+    );
+    const prior = failure.observation.observedChecks?.find(({ runId }) => runId === 41);
+    assert.equal(prior?.conclusion, 'FAILURE');
+    return true;
+  });
+});
+
 test('a failed refresh retains the completed review and the prior check snapshot', async (t) => {
   let reviewReceived = false;
   const scenario = new ProviderResults(t, (args) => {
