@@ -104,6 +104,9 @@ function suiteProgress(previous: CheckSuite[], current: CheckSuite[]) {
     return (
       after.status === 'completed' ||
       (before.status !== 'in_progress' && after.status === 'in_progress') ||
+      (after.status === 'queued' &&
+        before.status !== 'queued' &&
+        before.status !== 'in_progress') ||
       (before.status === after.status && newCount > oldCount)
     );
   });
@@ -173,9 +176,10 @@ async function checkRuns(
       ? await suiteRuns(read, repo, head, inventory, current, observe)
       : current;
   observe(runs.map(normalizeRun));
-  requireSuiteCoverage(inventory, runs);
-  const checks = (await latestRuns(read, repo, head, runs, observe)).map(normalizeRun);
+  const latest = await latestRuns(read, repo, head, runs, observe);
+  const checks = latest.map(normalizeRun);
   observe(checks);
+  requireSuiteCoverage(inventory, latest);
   return checks;
 }
 
@@ -187,7 +191,13 @@ function requireSuiteCoverage(inventory: CheckSuite[], runs: CheckRun[]) {
     if (id !== undefined) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   for (const suite of inventory) {
-    if (!suitePending(suite) && (counts.get(suite.id) ?? 0) < (suite.latest_check_runs_count ?? 0))
+    if (suitePending(suite)) continue;
+    const count = counts.get(suite.id) ?? 0;
+    const expected = suite.latest_check_runs_count;
+    if (
+      (count === 0 && (expected === undefined || suite.status === undefined)) ||
+      (expected !== undefined && count < expected)
+    )
       throw new Error(`GitHub suite ${suite.id} is missing check runs from the CI snapshot`);
   }
 }

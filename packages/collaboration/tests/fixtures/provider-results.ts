@@ -61,7 +61,10 @@ export function readyResponse(args: string[]) {
     case repository + '/pulls/99':
       return JSON.stringify(restPull);
     case repository + '/commits/' + head + '/check-suites':
-      return JSON.stringify({ total_count: 1, check_suites: [{ id: 5, head_sha: head }] });
+      return JSON.stringify({
+        total_count: 1,
+        check_suites: [{ id: 5, head_sha: head, status: 'completed', latest_check_runs_count: 0 }],
+      });
     case repository + '/commits/' + head + '/check-runs?filter=latest':
     case repository + '/commits/' + head + '/check-runs?filter=all':
       return JSON.stringify({ total_count: 1, check_runs: [successfulRun] });
@@ -122,4 +125,26 @@ function suiteState(completed: boolean) {
     updated_at: completed ? '2026-11-24T00:01:00Z' : '2026-11-24T00:00:00Z',
   };
   return JSON.stringify({ total_count: 1, check_suites: [suite] });
+}
+
+export const suites = Array.from({ length: 1001 }, (_, index) => ({
+  id: index + 1,
+  head_sha: head,
+  status: 'completed',
+  latest_check_runs_count: 0,
+}));
+
+export function suiteResponse(args: string[], resolve: (id: string) => unknown) {
+  if (args[1]?.endsWith('/check-suites')) {
+    const total_count = suites.length;
+    return args.includes('--paginate')
+      ? JSON.stringify({ total_count, check_suites: suites })
+      : JSON.stringify({ total_count });
+  }
+  if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
+    return JSON.stringify({ total_count: 0, check_runs: [] });
+  const match = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '');
+  if (!match?.[1]) return readyResponse(args);
+  const check = resolve(match[1]);
+  return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
 }

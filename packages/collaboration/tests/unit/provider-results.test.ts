@@ -10,6 +10,8 @@ import {
   successfulRun,
   readyResponse,
   workflowJobs,
+  suites,
+  suiteResponse,
 } from '../fixtures/provider-results.js';
 
 export const suite = { owner: 'collaboration', level: 'unit', tags: ['delivery'] } as const;
@@ -79,23 +81,6 @@ function overlappingSuiteRun(id: string) {
   };
   const independent = { ...successfulRun, id: 50, app: { id: 9 }, name: 'Earlier producer' };
   return { '1': old, '2': retry, '3': independent }[id];
-}
-
-const suites = Array.from({ length: 1001 }, (_, index) => ({ id: index + 1, head_sha: head }));
-
-function suiteResponse(args: string[], resolve: (id: string) => unknown) {
-  if (args[1]?.endsWith('/check-suites')) {
-    const total_count = suites.length;
-    return args.includes('--paginate')
-      ? JSON.stringify({ total_count, check_suites: suites })
-      : JSON.stringify({ total_count });
-  }
-  if (args[1]?.includes('/commits/') && args[1].includes('/check-runs?'))
-    return JSON.stringify({ total_count: 0, check_runs: [] });
-  const match = /\/check-suites\/(\d+)\/check-runs/.exec(args[1] ?? '');
-  if (!match?.[1]) return readyResponse(args);
-  const check = resolve(match[1]);
-  return JSON.stringify({ total_count: check ? 1 : 0, check_runs: check ? [check] : [] });
 }
 
 function latestFailure(error: unknown) {
@@ -336,7 +321,7 @@ test('one suite can start while another completes during the same observation', 
     const output = completing(args);
     if (!args[1]?.endsWith('/check-suites')) return output;
     const suites = JSON.parse(output).check_suites;
-    const status = ['queued', 'in_progress'][inventories++] ?? 'completed';
+    const status = ['requested', 'queued'][inventories++] ?? 'completed';
     suites.push({ id: 6, head_sha: head, status, latest_check_runs_count: 0 });
     return JSON.stringify({ total_count: suites.length, check_suites: suites });
   });
@@ -356,7 +341,7 @@ for (const reportedRuns of [0, 1]) {
       return JSON.stringify({
         total_count: 2,
         check_suites: [
-          { id: 5, head_sha: head, status: 'completed' },
+          { id: 5, head_sha: head, status: 'completed', latest_check_runs_count: 0 },
           { id: 6, head_sha: head, status: 'queued', latest_check_runs_count: reportedRuns },
         ],
       });

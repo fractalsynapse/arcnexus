@@ -204,17 +204,17 @@ ${marker}`,
         earlierChecks,
       };
       const facts = await this.verificationFacts(evidence, base, state, branch);
-      earlierChecks = evidence.earlierChecks;
       const { checks, pendingSuites, review } = facts;
       if (review === 'CHANGES_REQUESTED') throw new GitHubReviewRejection(evidence);
-      const failed = checks.find(
-        ({ suiteId, status, conclusion, state }) =>
-          (suiteId == null || !pendingSuites.includes(suiteId)) &&
-          ((status === 'COMPLETED' && conclusion !== 'SUCCESS') ||
-            ['ERROR', 'FAILURE'].includes(state ?? '')),
-      );
+      const failed = checks.find((check) => terminalCheckFailure(check, pendingSuites));
       if (failed) throw await this.failedCheck(failed, evidence);
       if (review !== 'REVIEW_REQUIRED' && successfulChecks(facts)) return;
+      recordEarlierChecks(
+        evidence,
+        evidence.confirmedChecks ? 'CI confirmation' : 'CI checks',
+        checks,
+      );
+      earlierChecks = evidence.earlierChecks;
       await setTimeout(5_000, undefined, { signal: this.signal });
     }
   }
@@ -280,7 +280,7 @@ ${marker}`,
         this.repository,
         evidence.head,
         (partial, beforeReread) => {
-          if (beforeReread) (evidence.earlierChecks ??= []).push({ phase: read, checks: partial });
+          if (beforeReread) recordEarlierChecks(evidence, read, partial);
           else evidence[slot] = partial;
         },
       ),
@@ -424,6 +424,27 @@ function successfulChecks(snapshot: Awaited<ReturnType<typeof readGitHubChecks>>
         (status === 'COMPLETED' && conclusion === 'SUCCESS') || state === 'SUCCESS',
     )
   );
+}
+
+/** Keep unresolved run associations from turning incomplete reruns into terminal failures. */
+function terminalCheckFailure(check: ProviderCheck, pendingSuites: readonly number[]) {
+  const { state, status, conclusion, suiteId } = check;
+  if (state) return ['ERROR', 'FAILURE'].includes(state);
+  const suiteKnown =
+    suiteId == null ? pendingSuites.length === 0 : !pendingSuites.includes(suiteId);
+  return suiteKnown && status === 'COMPLETED' && conclusion !== 'SUCCESS';
+}
+
+/** Retain distinct CI observations even when a later poll is unavailable. */
+function recordEarlierChecks(
+  evidence: GitHubPullObservation,
+  phase: 'CI checks' | 'CI confirmation',
+  checks: readonly ProviderCheck[],
+) {
+  const earlier = (evidence.earlierChecks ??= []);
+  const previous = earlier.findLast((item) => item.phase === phase);
+  if (!previous || checkSnapshot(previous.checks) !== checkSnapshot(checks))
+    earlier.push({ phase, checks });
 }
 
 function checkSnapshot(checks: readonly ProviderCheck[]) {

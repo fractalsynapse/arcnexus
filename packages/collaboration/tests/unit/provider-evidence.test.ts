@@ -146,6 +146,24 @@ test('a later polling attempt retains CI evidence from before the wait', async (
   });
 });
 
+test('a later unavailable read retains a stable pending observation', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99') && ++pulls === 2) throw new Error('PR read unavailable');
+    if (!args[1]?.endsWith('/status')) return readyResponse(args);
+    return JSON.stringify({
+      sha: head,
+      total_count: 1,
+      statuses: [{ context: 'lint', state: 'pending', target_url: null }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), (error) => {
+    assert.ok(error instanceof GitHubPullReadFailure);
+    assert.equal(error.observation.earlierChecks?.[0]?.checks[1]?.state, 'PENDING');
+    return true;
+  });
+});
+
 test('a suite still running does not report an earlier completed job as its final failure', async (t) => {
   const scenario = new ProviderResults(t, (args) => {
     if (args[1]?.endsWith('/check-suites'))
@@ -160,7 +178,7 @@ test('a suite still running does not report an earlier completed job as its fina
         check_runs: [
           {
             ...successfulRun,
-            check_suite: { id: 5 },
+            check_suite: null,
             conclusion: 'failure',
           },
         ],
@@ -190,6 +208,37 @@ test('an existing suite can register another check while it completes', async (t
     return JSON.stringify({ ...result, total_count: 2 });
   });
   await scenario.provider.verify(pr, head, 'staging');
+});
+
+test('historical attempts cannot count toward the completed suite’s current coverage', async (t) => {
+  const current = { ...successfulRun, app: { id: 9 }, check_suite: { id: 5 } };
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/check-suites'))
+      return JSON.stringify({
+        total_count: 1,
+        check_suites: [{ id: 5, head_sha: head, status: 'completed', latest_check_runs_count: 2 }],
+      });
+    if (args[1]?.includes('/check-runs?filter=latest'))
+      return JSON.stringify({ total_count: 1, check_runs: [current] });
+    if (args[1]?.includes('/check-runs?filter=all'))
+      return JSON.stringify({
+        total_count: 2,
+        check_runs: [{ ...current, id: 41, conclusion: 'failure' }, current],
+      });
+    return readyResponse(args);
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /missing check runs/);
+});
+
+test('suite metadata omissions cannot make an unseen suite eligible', async (t) => {
+  const scenario = new ProviderResults(t, (args) => {
+    if (!args[1]?.endsWith('/check-suites')) return readyResponse(args);
+    return JSON.stringify({
+      total_count: 1,
+      check_suites: [{ id: 6, head_sha: head, status: 'completed' }],
+    });
+  });
+  await assert.rejects(scenario.provider.verify(pr, head, 'staging'), /missing check runs/);
 });
 
 test('a malformed CI page retains the original output and the valid preceding page', async (t) => {
