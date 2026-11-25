@@ -1,28 +1,9 @@
-.arc-markdown {
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-.arc-markdown > * + * {
-  margin-block-start: 0.85em;
-}
-.arc-markdown pre,
 .arc-diff-content {
   margin: 0;
   padding: 10px;
   overflow-x: auto;
   background: var(--quiet);
   border-radius: 6px;
-}
-.arc-markdown a,
-.arc-markdown .hljs-keyword,
-.arc-markdown .hljs-title {
-  color: var(--link);
-}
-.arc-markdown :is(.hljs-string, .hljs-number, .hljs-literal) {
-  color: light-dark(#1e6a4c, #a6db9c);
-}
-.arc-markdown :is(.hljs-comment, .hljs-quote) {
-  color: var(--muted);
 }
 .arc-diff {
   display: grid;
@@ -87,20 +68,6 @@
 .arc-json-entry :is([data-json='number'], [data-json='boolean']) {
   color: light-dark(#733f13, #f6ce9a);
 }
-.arc-editor-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-.arc-app .arc-mdx,
-.arc-app .arc-mdx :is(.cm-editor, .cm-gutters, .cm-scroller, [role='toolbar']) {
-  background: var(--quiet);
-  color: var(--ink);
-}
-.arc-mdx [aria-pressed='true'] {
-  background: var(--tint);
-}
 @media (max-width: 560px) {
   .arc-diff {
     grid-template-columns: minmax(0, 1fr);
@@ -121,22 +88,4 @@
 }
 .arc-readouts dd {
   font-variant-numeric: tabular-nums;
-}
-.arc-mdx .tok-heading,
-.arc-mdx .tok-link,
-.arc-mdx .tok-url {
-  color: var(--link);
-}
-.arc-mdx .tok-heading,
-.arc-mdx .tok-strong {
-  font-weight: 700;
-}
-.arc-mdx .tok-emphasis {
-  font-style: italic;
-}
-.arc-mdx :is(.tok-meta, .tok-punctuation) {
-  color: var(--muted);
-}
-.arc-mdx .tok-literal {
-  color: light-dark(#235c48, #ade2bc);
 }

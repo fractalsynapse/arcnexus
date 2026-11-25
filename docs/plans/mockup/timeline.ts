@@ -165,7 +165,7 @@ export function metrics(name: string, values: Stats, rows: EventRow[] = [], elap
     ['State', status(values.state)],
     ['Last updated (ET)', escape(values.last)],
     ['Codex execution time', escape(values.nativeDuration)],
-    ['Reported tokens (in / out)', tokenPair(values.input, values.output)],
+    ['Reported tokens', tokenPair(values.input, values.output)],
     ['Token cache rate', cacheRate(values.input, values.cached)],
   ];
   if (elapsed) items.splice(2, 0, ['Phase elapsed time', escape(elapsed)]);

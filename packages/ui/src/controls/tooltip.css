@@ -1,0 +1,27 @@
+:is(.arc-app, #arc-preview) .arc-tooltip,
+:is(.arc-app, #arc-preview)
+  .mdxeditor-popup-container
+  [data-radix-popper-content-wrapper]
+  > [role='tooltip'] {
+  background: var(--quiet);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  max-inline-size: min(22rem, calc(100vw - 2 * var(--pad)));
+  overflow-wrap: anywhere;
+  font:
+    500 12px/1.4 'Inter',
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+  box-shadow: 0 4px 12px #0b182a26;
+  white-space: pre-wrap;
+}
+:is(.arc-app, #arc-preview) .arc-tooltip {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: max-content;
+  pointer-events: none;
+}

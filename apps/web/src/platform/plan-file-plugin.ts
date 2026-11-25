@@ -4,7 +4,9 @@ import { FileBreadcrumbs } from './file-breadcrumbs.js';
 import { FileChanges } from './file-changes.js';
 import { FileContent } from './file-content.js';
 import { FileInformation } from './file-information.js';
-import { FileToolbar } from './file-toolbar.js';
+import { FileContext } from './file-context.js';
+import { FilePath } from './file-path.js';
+import { FileRevisionSelector } from './file-revision-selector.js';
 import { guideRoute, planFilesPath } from './guide.js';
 import { PlanFileScope } from './plan-file-scope.js';
 
@@ -22,7 +24,9 @@ export const planFilePlugin = {
         title: (path) => guideRoute(path)?.id ?? 'Plan file',
         scope: PlanFileScope,
         breadcrumbs: h(FileBreadcrumbs),
-        content: h(FileToolbar, { binding: context.webCommands }),
+        titleAction: h(FileRevisionSelector),
+        context: h(FileContext, { binding: context.webCommands }),
+        content: h(FilePath),
       }),
     );
     for (const display of fileDisplays)

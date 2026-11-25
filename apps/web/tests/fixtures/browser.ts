@@ -27,7 +27,15 @@ let rejectRequest: ((error: Error) => void) | undefined;
 
 /** Publish controlled observations for the application binding's subscribers. */
 function observe(status: CommandState['status'], command = state.command) {
-  state = { ...state, status, command, metrics: [['Elapsed', '2m 31s']] };
+  state = {
+    ...state,
+    status,
+    command,
+    metrics: [
+      ['Elapsed', '2m 31s'],
+      ['Reported tokens', { input: 853600, output: 15200 }],
+    ],
+  };
   for (const listener of listeners) listener();
 }
 

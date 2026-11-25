@@ -19,6 +19,10 @@ export function pullLink(remote: string | undefined, url: string) {
     return url;
 }
 
+export function shortCommit(revision: string) {
+  return revision.slice(0, 8);
+}
+
 /** Keep an exact captured Git identity navigable with a compact label. */
 export function CommitLink({ remote, revision }: { remote?: string; revision?: string }) {
   if (!revision) return 'Unavailable';
@@ -28,7 +32,7 @@ export function CommitLink({ remote, revision }: { remote?: string; revision?: s
     ? h(
         'a',
         { href, target: '_blank', rel: 'noopener noreferrer', title: revision },
-        revision.slice(0, 8),
+        shortCommit(revision),
       )
     : h('code', null, revision);
 }

@@ -8,8 +8,7 @@ import {
   viewMode$,
 } from '@mdxeditor/editor';
 import { useCellValue, useRealm } from '@mdxeditor/gurx';
-import '@mdxeditor/editor/style.css';
-import { Fragment, createElement as h, useEffect, useState } from 'react';
+import { createElement as h, useEffect, useState } from 'react';
 import { Button } from '../controls/button.js';
 import {
   markdownDraft,
@@ -21,16 +20,32 @@ import {
 
 interface EditorProps {
   body: string;
-  edit: (body: string) => void;
+  edit?: (body: string) => void;
+  draft?: MarkdownDraft;
+  overlayContainer?: HTMLElement;
 }
 
 /** Edit prose visually or in syntax-highlighted Markdown source. */
-export function MarkdownEditor({ body, edit }: EditorProps) {
-  const [entry] = useState(() => markdownDraft(body));
-  const [markdown] = useState(body);
+export function MarkdownEditor(props: EditorProps) {
+  const [host, mount] = useState<HTMLDivElement | null>(null);
+  return h(
+    'div',
+    { className: 'arc-md-edit', ref: mount },
+    host &&
+      h(EditorSurface, {
+        ...props,
+        overlayContainer: props.overlayContainer ?? host,
+      }),
+  );
+}
+
+function EditorSurface({ body, edit, draft, overlayContainer }: EditorProps) {
+  const [entry] = useState(() => draft ?? markdownDraft(body));
+  const [markdown] = useState(entry.body);
   return h(MDXEditor, {
     className: 'arc-mdx',
-    contentEditableClassName: 'arc-markdown',
+    contentEditableClassName: 'arc-markdown arc-mdx-visual',
+    overlayContainer,
     markdown,
     trim: false,
     suppressHtmlProcessing: true,
@@ -38,7 +53,7 @@ export function MarkdownEditor({ body, edit }: EditorProps) {
     onChange: (value, initial) => {
       const previous = entry.body;
       updateMarkdownDraft(entry, value, initial);
-      if (previous !== entry.body) edit(entry.body);
+      if (previous !== entry.body) edit?.(entry.body);
     },
     plugins: markdownPlugins(entry.mode, () => h(EditorToolbar, { entry })),
   });
@@ -53,7 +68,7 @@ function EditorToolbar({ entry }: { entry: MarkdownDraft }) {
   }, [entry, error, mode, realm]);
   return h(
     'div',
-    { className: 'arc-editor-controls' },
+    { className: 'arc-mdx-tools' },
     h(EditorModes, { entry, source: mode === 'source', unavailable: !!error }),
     mode === 'rich-text' && h(VisualTools),
     error && h('small', { role: 'status' }, 'This document can be edited in Raw mode.'),
@@ -62,8 +77,8 @@ function EditorToolbar({ entry }: { entry: MarkdownDraft }) {
 
 function VisualTools() {
   return h(
-    Fragment,
-    null,
+    'div',
+    { className: 'arc-mdx-format' },
     h(UndoRedo),
     h(BlockTypeSelect),
     h(BoldItalicUnderlineToggles, { options: ['Bold', 'Italic'] }),
@@ -80,8 +95,8 @@ interface ModeProps {
 function EditorModes({ entry, source, unavailable }: ModeProps) {
   const realm = useRealm();
   return h(
-    Fragment,
-    null,
+    'div',
+    { className: 'arc-mdx-modes', role: 'group', 'aria-label': 'Markdown editing mode' },
     h(
       Button,
       {

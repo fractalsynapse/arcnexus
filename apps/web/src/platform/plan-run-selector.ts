@@ -1,8 +1,7 @@
 import { createElement as h } from 'react';
 import { SelectField } from '../../../../packages/ui/src/index.js';
 import { usePlanResource } from './plan-resource.js';
-
-const startTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' });
+import { recordedTime } from './recorded-time.js';
 
 /** Choose a retained execution without fetching any of its details in the heading. */
 export function PlanRunSelector() {
@@ -16,13 +15,10 @@ export function PlanRunSelector() {
       { value: '', label: 'Latest run' },
       ...entries.map(({ execution, startedAt }, index) => ({
         value: execution,
-        label: startedAt
-          ? startTime.format(new Date(startedAt))
-          : 'Run ' + (entries.length - index),
+        label: startedAt ? recordedTime(startedAt) : 'Run ' + (entries.length - index),
       })),
     ],
     onChange: select,
     hideLabel: true,
-    className: 'arc-plan-run-selector',
   });
 }

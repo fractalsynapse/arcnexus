@@ -28,12 +28,11 @@ const capture = gzipSync(previewCapture(readFileSync(capturePath), values.file),
 
 const script = bundle('main.ts', Boolean(values.viewer));
 
-const sortable = readFileSync(
-  resolve(source, '../../../packages/ui/src/controls/sortable.css'),
-  'utf8',
-);
+const shared = (path: string) => readFileSync(resolve(source, '../../../packages/ui/src', path), 'utf8');
 const layout = readFileSync(resolve(source, 'layout.html'), 'utf8')
-  .replace('/* shared-sortable-styles */', sortable)
+  .replace('/* shared-sortable-styles */', shared('controls/sortable.css'))
+  .replace('/* shared-tooltip-styles */', shared('controls/tooltip.css'))
+  .replace('/* shared-markdown-styles */', shared('content/markdown.css'))
   .replace(
     /(["'])brand\/([a-z-]+\.webp)\1/g,
     (_, quote: string, filename: string) => {

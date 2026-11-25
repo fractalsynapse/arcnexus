@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- Match the mockup's Markdown viewer and editor, use the shared heading selector for Plan File history, and describe token counts with a tooltip (#746).
+
 - Center text and space the arrows in shared selectors, and give the Plan run selector more room beside the title (#746).
 
 - Keep Plan File links pinned to the project and captured revision (#746).

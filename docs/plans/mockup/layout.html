@@ -93,14 +93,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview code, #arc-preview time, #arc-preview .arc-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .91em; overflow-wrap: anywhere; }
 #arc-preview code:not(pre code) { color:var(--ink); background:var(--quiet); }
 #arc-preview small, #arc-preview .arc-muted { color: var(--muted); font-size: 12px; }
-#arc-preview .arc-tooltip,
-#arc-preview .mdxeditor-popup-container [data-radix-popper-content-wrapper] > [role=tooltip] {
-  background:var(--quiet); color:var(--ink); border:1px solid var(--line); border-radius:6px;
-  padding:5px 8px; max-inline-size:min(22rem,calc(100vw - 2 * var(--pad))); overflow-wrap:anywhere;
-  font:500 12px/1.4 "Inter", "Segoe UI", system-ui, sans-serif;
-  box-shadow:0 4px 12px #0b182a26; white-space:pre-wrap;
-}
-#arc-preview .arc-tooltip { position:fixed; inset:auto; margin:0; width:max-content; pointer-events:none; }
+/* shared-tooltip-styles */
 #arc-preview :is(.arc-header,.arc-nav) {
   --ink:#fff; --muted:#e2e7ef; --line:#353b45;
   --paper:#000; --quiet:#20252d; --tint:#192433; --link:#b9d7ff;
@@ -291,56 +284,7 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview .arc-pane-expand:is(:hover,:focus-visible) { background:var(--tint); }
 #arc-preview .arc-pane-expand i::before { content:'⤢'; font:16px/1 system-ui,sans-serif; }
 #arc-preview .arc-pane-expand[aria-expanded=true] i::before { content:'⤡'; }
-#arc-preview .arc-markdown { line-height:1.6; min-width:0; overflow-wrap:anywhere; }
-#arc-preview .arc-markdown :is(h1,h2,h3,h4,h5,h6) { margin:1em 0 .4em; font-size:16px; }
-#arc-preview .arc-markdown h1 { font-size:19px; }
-#arc-preview .arc-markdown :is(p,ul,ol,blockquote,pre,table) { margin:.65em 0; }
-#arc-preview .arc-markdown > :first-child { margin-top:0; }
-#arc-preview .arc-markdown > :last-child { margin-bottom:0; }
-#arc-preview .arc-markdown :is(ul,ol) { padding-inline-start:1.6em; }
-#arc-preview .arc-markdown li > p { margin:.25em 0; }
-#arc-preview .arc-markdown blockquote { padding-inline-start:10px; border-inline-start:3px solid var(--line); color:var(--muted); }
-#arc-preview .arc-markdown table { display:block; overflow:auto; border-collapse:collapse; }
-#arc-preview .arc-markdown :is(th,td) { border:1px solid var(--line); padding:.3em .5em; }
-#arc-preview .arc-markdown hr { border:0; border-top:1px solid var(--line); margin:1em 0; }
-#arc-preview .arc-markdown pre {
-  background:var(--quiet); border:1px solid var(--line); border-radius:6px; padding:8px 10px;
-  white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.55 ui-monospace,monospace;
-}
-#arc-preview .arc-markdown :not(pre) > code { background:var(--quiet); border-radius:3px; padding:.08em .2em; color:var(--link); }
-#arc-preview .arc-markdown pre code { font:inherit; }
-#arc-preview .arc-markdown a { display:inline; padding:0; }
-#arc-preview .arc-md-edit { min-width:0; }
-#arc-preview :is(.arc-mdx,.mdxeditor-popup-container) {
-  --basePageBg:var(--paper); --baseBg:var(--quiet); --baseBgSubtle:var(--quiet);
-  --baseText:var(--muted); --baseTextContrast:var(--ink); --baseBorder:var(--line);
-  --baseBgHover:var(--tint); --baseBgActive:var(--tint); --baseLine:var(--line);
-  --accentText:var(--link); --accentBgActive:var(--tint); --accentSolid:var(--accent);
-}
-#arc-preview .mdxeditor.arc-mdx { border:1px solid var(--line); border-radius:7px; min-width:0; }
-#arc-preview .arc-mdx-tools, #arc-preview .arc-mdx-modes, #arc-preview .arc-mdx-format {
-  display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0;
-}
-#arc-preview .arc-mdx-tools { gap:7px; }
-#arc-preview .arc-mdx-modes button[aria-pressed=true] { background:var(--tint); color:var(--link); }
-#arc-preview .arc-mdx-visual { min-block-size:12em; padding:10px; }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) { overflow:hidden; }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-editor { background:var(--quiet); color:var(--ink); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) :is(.cm-gutters,.cm-panels,.cm-tooltip) {
-  background:var(--ground); color:var(--muted); border-color:var(--line);
-}
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) :is(.cm-activeLine,.cm-activeLineGutter,.cm-selectionMatch) { background:var(--tint); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-selectionBackground,
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-content ::selection {
-  background:color-mix(in srgb,var(--link) 22%,var(--quiet));
-}
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) :is(.cm-searchMatch-selected,.cm-matchingBracket) { background:var(--tint); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-content { caret-color:var(--link); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) :is(.cm-cursor,.cm-dropCursor) { border-color:var(--link); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-line span { color:inherit; }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-line :is(.tok-heading,.tok-keyword,.tok-strong,.tok-link,.tok-url,.tok-propertyName,.tok-bool) { color:var(--link); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-line :is(.tok-comment,.tok-meta,.tok-punctuation) { color:var(--muted); }
-#arc-preview :is(.mdxeditor-source-editor,.arc-yaml-raw) .cm-line :is(.tok-literal,.tok-string,.tok-number) { color:light-dark(#186640,#92ddb3); }
+/* shared-markdown-styles */
 #arc-preview .arc-yaml-edit { display:grid; gap:9px; min-width:0; }
 #arc-preview .arc-yaml-modes button[aria-pressed=true] { background:var(--tint); color:var(--link); }
 #arc-preview .arc-yaml-group { display:grid; gap:8px; min-width:0; margin:0; padding:8px 10px 10px; border:1px solid var(--line); border-radius:7px; }
@@ -406,11 +350,6 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
   #arc-preview .arc-prose-field > details > summary { padding-inline-end:54px; }
   #arc-preview .arc-prose-open { inline-size:44px; min-block-size:44px; }
 }
-#arc-preview textarea.arc-mdx-code { font-family:ui-monospace,monospace; }
-#arc-preview .arc-markdown :is(.hljs-section,.hljs-bullet,.hljs-keyword,.hljs-attr,.hljs-strong) { color:var(--link); font-weight:650; }
-#arc-preview .arc-markdown :is(.hljs-code,.hljs-string,.hljs-template-variable) { color:light-dark(#186640,#92ddb3); }
-#arc-preview .arc-markdown :is(.hljs-link,.hljs-literal,.hljs-number) { color:light-dark(#894412,#ffbe86); }
-#arc-preview .arc-markdown :is(.hljs-emphasis,.hljs-comment) { font-style:italic; color:var(--muted); }
 #arc-preview .arc-diff { padding: 0; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.55 ui-monospace,monospace; }
 #arc-preview .arc-diff span { display: block; padding-inline: 8px; }
 #arc-preview .arc-file-diff { display:grid; gap:7px; min-width:0; }
@@ -544,19 +483,16 @@ html:has(> body > #arc-preview) { scroll-padding-block:var(--arc-nav-space, 0px)
 #arc-preview :is(.arc-topic-feedback,.arc-topic-message):empty { display:none; }
 #arc-preview .arc-topic-picker .arc-chips .arc-pill { white-space:normal; overflow-wrap:anywhere; text-align:start; }
 #arc-preview .arc-form-grid .arc-topic-picker { grid-column:1/-1; }
-#arc-preview :is(.arc-topic-popup,.mdxeditor-select-content) {
+#arc-preview .arc-topic-popup {
   padding:4px; border:1px solid var(--line); border-radius:8px;
   background:var(--paper); color:var(--ink); box-shadow:var(--picker-shadow); font:inherit;
 }
 #arc-preview .arc-topic-popup { position:fixed; inset:auto; margin:0; overflow:auto; overscroll-behavior:contain; }
-#arc-preview .mdxeditor-select-content { inline-size:var(--radix-select-trigger-width); min-inline-size:0; }
-#arc-preview :is(.arc-topic-option,.mdxeditor-select-content [role=option]) {
+#arc-preview .arc-topic-option {
   padding:7px 9px; border-radius:5px; color:var(--ink); white-space:normal; overflow-wrap:anywhere;
 }
-#arc-preview .arc-topic-option,
-#arc-preview .mdxeditor-select-content [role=option] { cursor:pointer; }
-#arc-preview .arc-topic-option:is(:hover,[aria-selected=true]),
-#arc-preview .mdxeditor-select-content [role=option]:is([data-highlighted],[data-state=checked]) {
+#arc-preview .arc-topic-option { cursor:pointer; }
+#arc-preview .arc-topic-option:is(:hover,[aria-selected=true]) {
   background:var(--tint); color:var(--link);
 }
 #arc-preview .arc-topic-create { color:var(--link); }

@@ -1,5 +1,5 @@
 import { createElement as h, useState } from 'react';
-import { Readouts, Tooltip } from '../../../../packages/ui/src/index.js';
+import { Readouts, TokenPair, Tooltip } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 
 type Reported = { reported?: number | null };
@@ -25,7 +25,7 @@ export function PlannerMetrics({ value, path }: { value: PlanMetrics; path: stri
       values: [
         ['Wall time', seconds(value.wallElapsedMs)],
         ['Agent elapsed', h(AgentElapsed, { milliseconds: value.nativeElapsedMs })],
-        ['Reported tokens', thousands(input) + ' / ' + thousands(output) + ' (input / output)'],
+        ['Reported tokens', h(TokenPair, { input, output })],
         ['Token cache rate', rate],
       ],
     }),
@@ -35,10 +35,6 @@ export function PlannerMetrics({ value, path }: { value: PlanMetrics; path: stri
 
 function seconds(value?: number | null) {
   return value == null ? 'Unavailable' : (value / 1000).toFixed(1) + ' s';
-}
-
-function thousands(value?: number | null) {
-  return value == null ? 'Unavailable' : (value / 1000).toFixed(1) + 'K';
 }
 
 function ToolFrequency({ path }: { path: string }) {

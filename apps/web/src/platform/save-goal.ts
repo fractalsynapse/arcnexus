@@ -12,7 +12,7 @@ export function SaveGoal({ binding }: { binding: WebCommands }) {
   const detail = file.detail.value;
   if (file.route?.kind !== 'goals' || !detail || !file.revision || file.draft === undefined)
     return null;
-  const current = file.revision === file.project?.revision;
+  const current = file.canEdit;
   const { draft: content, revision } = file;
   const ready = binding.saveGoal && current && commands.supported.includes('plan');
   const disabled = !ready || content === detail.content || pending || submitted === content;
@@ -50,7 +50,7 @@ function SaveControls({
     'div',
     { className: 'arc-platform-inline' },
     h(Button, { disabled, onClick: submit }, pending ? 'Submitting…' : 'Save'),
-    !current && h('small', { role: 'status' }, 'Open the current capture to submit this edit.'),
+    !current && h('small', { role: 'status' }, 'Select Latest revision to submit this edit.'),
     submitted && h('small', { role: 'status' }, 'Submitted for approval.'),
     error && h('small', { role: 'alert' }, error),
   );

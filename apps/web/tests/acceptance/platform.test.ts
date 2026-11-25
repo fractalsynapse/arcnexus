@@ -1,22 +1,21 @@
 import assert from 'node:assert/strict';
 import { get } from 'node:http';
 import test, { type TestContext } from 'node:test';
-import { chromium, type Page } from 'playwright';
+import type { Page } from 'playwright';
+import {
+  browserPage,
+  fixtureGoal,
+  fixtureContent,
+  otherProject,
+  planData,
+  project,
+  responses,
+  selectProject,
+} from '../fixtures/plan-browser.js';
 import { serveApi } from '../../../api/src/serve.js';
 import { serveWeb } from '../../src/serve.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
-
-const project = {
-  id: 'bound-project',
-  remote: 'https://github.com/example/plan.git',
-  revision: 'a'.repeat(40),
-};
-const otherProject = {
-  id: 'other-project',
-  remote: 'https://github.com/example/other.git',
-  revision: project.revision,
-};
 
 test('the local Web proxy supplies the operator only for the local browser', async (t) => {
   const forwarded: (string | null)[] = [];
@@ -56,30 +55,6 @@ async function rejectForeignBrowser(route: string) {
   assert.equal(rebound, 403);
 }
 
-test('the built Plan opens a pinned file through the shared workspace layout', async (t) => {
-  const { application, page } = await browserPage(t);
-  const requests = await responses(page, [project, otherProject]);
-  await page.goto(application.url);
-  await page.reload();
-  await selectProject(page);
-  const goal = page.getByRole('link', { name: 'fixture-goal' });
-  await goal.waitFor();
-  assert.ok(
-    !requests.some((path) => path.includes('/objectives') || path.includes('/fixture-goal')),
-  );
-  await goal.click();
-  await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
-  assert.equal(new URL(page.url()).searchParams.get('project'), project.id);
-  await page.reload();
-  await page.getByRole('heading', { name: 'Verified goal', exact: true }).last().waitFor();
-  await verifySinglePanelToggle(page);
-  assert.ok(
-    requests.includes(
-      '/api/projects/' + project.id + '/goals/fixture-goal?revision=' + project.revision,
-    ),
-  );
-});
-
 test('Plan history keeps the header and all displays scoped to the selected project and run', async (t) => {
   const { application, page } = await browserPage(t);
   const requests = await responses(page, [project, otherProject]);
@@ -88,6 +63,12 @@ test('Plan history keeps the header and all displays scoped to the selected proj
   await selectProject(page);
   const selector = page.getByRole('combobox', { name: 'Plan run' });
   await page.getByText('Latest outcome', { exact: true }).waitFor();
+  const counts = page.getByText('853.6K / 15.2K', { exact: true });
+  await counts.hover();
+  await page
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Input / output tokens' })
+    .waitFor();
   assert.equal(await selector.count(), 1);
   assert.equal(await selector.inputValue(), '');
   assert.match(await selector.locator('option[value="earlier"]').innerText(), /2025/);
@@ -122,6 +103,10 @@ async function historyResponses(page: Page) {
     if (path.endsWith('/plan-executions'))
       return route.fulfill({ json: { entries: other ? [latest] : [latest, earlier] } });
     if (path.endsWith('/current')) return route.fulfill({ json: latest });
+    if (path.endsWith('/metrics'))
+      return route.fulfill({
+        json: { usage: { input_tokens: { reported: 853600 }, output_tokens: { reported: 15200 } } },
+      });
     if (path.endsWith('/events'))
       return route.fulfill({
         contentType: 'text/event-stream',
@@ -165,73 +150,6 @@ async function assertPlanHeading(page: Page, width: number) {
     assert.ok(selector.width >= 346, 'Desktop run selector should have room for dates');
   else assert.ok(context.y >= selector.y + selector.height);
   assert.ok(selector.x + selector.width <= width);
-}
-
-async function verifySinglePanelToggle(page: Page) {
-  const expand = page.getByRole('button', { name: 'Expand Content', exact: true });
-  const collapse = page.getByRole('button', { name: 'Collapse Content', exact: true });
-  const information = page.getByRole('heading', { name: 'File information', exact: true });
-  const changes = page.getByRole('heading', { name: 'Changes', exact: true });
-  assert.equal(
-    await page.getByRole('button', { name: 'Minimize Content', exact: true }).count(),
-    0,
-  );
-  for (const width of [1180, 390]) {
-    await page.setViewportSize({ width, height: 800 });
-    assert.equal(await expand.getAttribute('aria-expanded'), 'false');
-    await expand.click();
-    assert.equal(await collapse.getAttribute('aria-expanded'), 'true');
-    assert.equal(await information.isVisible(), false);
-    assert.equal(await changes.isVisible(), false);
-    await collapse.click();
-    await information.waitFor();
-    await changes.waitFor();
-  }
-}
-
-async function browserPage(t: TestContext, api?: URL) {
-  const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api);
-  t.after(() => application.server.close());
-  const browser = await chromium.launch({ executablePath: process.env.ARC_CHROMIUM_PATH });
-  t.after(() => browser.close());
-  const page = await browser.newPage();
-  return { application, page };
-}
-
-async function responses(page: Page, projects = [project]) {
-  const requests: string[] = [];
-  await page.route('**/api/**', (route) => {
-    const url = new URL(route.request().url());
-    requests.push(url.pathname + url.search);
-    if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
-    return route.fulfill({ json: planData(url.pathname, projects) });
-  });
-  return requests;
-}
-
-const fixtureGoal = { id: 'fixture-goal', path: '.arc/goals/fixture-goal.md', priority: 1 };
-const fixtureContent = '---\npriority: 1\n---\n\n# Verified goal';
-
-function planData(path: string, projects = [project]) {
-  if (path === '/api/projects') return { entries: projects };
-  if (path === '/api/projects/' + project.id) return project;
-  if (path === '/api/projects/' + otherProject.id) return otherProject;
-  if (path.endsWith('/plan-executions')) return { entries: [] };
-  if (path.endsWith('/current'))
-    return { revision: project.revision, execution: null, active: false };
-  if (path.endsWith('/goals')) return { revision: project.revision, entries: [fixtureGoal] };
-  if (path.endsWith('/objectives')) return { entries: [] };
-  if (path.endsWith('/revisions')) return { revisions: [] };
-  if (path.endsWith('/changes'))
-    return { path: fixtureGoal.path, before: '# Previous', after: '# Verified goal' };
-  return { revision: project.revision, entry: fixtureGoal, content: fixtureContent };
-}
-
-async function selectProject(page: Page, id = project.id) {
-  await page.getByRole('button', { name: 'Project manager' }).click();
-  assert.equal(await page.getByLabel('Operator credential', { exact: true }).count(), 0);
-  await page.getByLabel('Active project').selectOption(id);
-  await page.getByRole('button', { name: 'Close' }).click();
 }
 
 test('the browser keeps native messages and resumes an interrupted event log', async (t) => {

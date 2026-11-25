@@ -15,13 +15,6 @@
 .arc-active-project {
   color: var(--link);
 }
-.arc-plan-run-selector {
-  inline-size: 22rem;
-  max-inline-size: 100%;
-}
-.arc-plan-run-selector select {
-  text-overflow: ellipsis;
-}
 .arc-platform-code {
   display: flex;
   flex-wrap: wrap;
@@ -55,22 +48,20 @@
   padding-block-end: 6px;
   border-block-end: 1px solid var(--line);
 }
-.arc-file-toolbar {
-  display: grid;
-  gap: var(--gap);
+.arc-file-path-row:not(:empty) {
+  margin-block-start: var(--gap);
+  padding-block-end: var(--gap);
+  border-block-end: 1px solid var(--line);
 }
 .arc-file-path {
   color: var(--ink);
   overflow-wrap: anywhere;
-}
-.arc-file-revision {
-  align-items: end;
-  flex-wrap: wrap;
-  padding-block-start: var(--gap);
-  border-block-start: 1px solid var(--line);
-}
-.arc-file-revision > .arc-field {
-  flex: 1 1 20rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 600;
+  box-decoration-break: clone;
 }
 .arc-file-breadcrumbs a,
 .arc-guide-list a,

@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import { TokenPair } from '../content/token-pair.js';
 import type { CommandState } from './command-binding.js';
 
 export function RoundValues({
@@ -19,7 +20,13 @@ export function RoundValues({
       'div',
       { id: details, className: 'arc-round-details', hidden: collapsed },
       state.metrics?.map(([label, value]) =>
-        h('span', { key: label }, label, ' ', h('strong', null, value)),
+        h(
+          'span',
+          { key: label },
+          label,
+          ' ',
+          h('strong', null, typeof value === 'string' ? value : h(TokenPair, value)),
+        ),
       ),
     ),
   );

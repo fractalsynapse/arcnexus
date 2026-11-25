@@ -34,19 +34,6 @@
   display: inline-flex;
   align-self: start;
 }
-.arc-tooltip {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  max-inline-size: calc(100vw - 2 * var(--pad));
-  pointer-events: none;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--quiet);
-  color: var(--ink);
-  padding: 4px 7px;
-  font-size: 12px;
-}
 .arc-sr {
   position: absolute;
   inline-size: 1px;

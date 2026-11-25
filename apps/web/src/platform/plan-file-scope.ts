@@ -1,7 +1,8 @@
 import { createContext, createElement as h, useContext, useEffect, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { useWorkspaceRoute } from '../../../../packages/ui/src/index.js';
-import { guideRoute, type GuideFile, type GuideHistory } from './guide.js';
+import { capturedVersion, useFileRevisions } from './file-revisions.js';
+import { guideRoute, type GuideFile } from './guide.js';
 import { activeSession, setSession, usePlatformSession, type Project } from './session.js';
 import { api, useResource } from './resource.js';
 import { draftContent, type GuideFields } from './goal-content.js';
@@ -24,18 +25,23 @@ function usePlanFileState() {
   const { path } = useWorkspaceRoute();
   const route = guideRoute(path);
   const project = useLinkedProject(path, route?.project);
-  const { collection, base, revision } = fileAddress(route, project);
-  const identity = JSON.stringify([base, revision]);
-  const state = useFileDraft(identity);
+  const { collection, base } = fileAddress(route, project);
+  const pinned = route?.revision ?? project?.revision;
+  const revisions = useFileRevisions(base, pinned, project?.revision);
+  const state = useFileDraft(JSON.stringify([base, pinned, project?.revision]), revisions.initial);
+  const { revision, fileRevision } = revisions.address(state.version);
   const query = new URLSearchParams({ revision: revision ?? '' });
-  const revisions = useResource<GuideHistory>(base && base + '/revisions?' + query);
-  if (state.version) query.set('fileRevision', state.version);
+  if (fileRevision && state.version && state.version !== capturedVersion)
+    query.set('fileRevision', fileRevision);
   const detail = useResource<GuideFile>(base && base + '?' + query);
   return {
     ...state,
     project,
     route,
     revision,
+    fileRevision,
+    pinned,
+    canEdit: !state.version && revision === project?.revision,
     base,
     collection,
     query: query.toString(),
@@ -64,8 +70,8 @@ function useLinkedProject(path: string, id?: string) {
   return id && id !== project?.id ? undefined : project;
 }
 
-function useFileDraft(identity: string) {
-  const fresh = (version = '') => ({
+function useFileDraft(identity: string, initial: string) {
+  const fresh = (version = initial) => ({
     identity,
     version,
     editing: false,
@@ -91,9 +97,8 @@ function fileAddress(
   route: ReturnType<typeof guideRoute>,
   project: ReturnType<typeof usePlatformSession>['project'],
 ) {
-  const revision = route?.revision ?? project?.revision;
   const collection =
     project && route ? '/projects/' + encodeURIComponent(project.id) + '/' + route.kind : undefined;
   const base = collection && route ? collection + '/' + encodeURIComponent(route.id) : undefined;
-  return { collection, base, revision };
+  return { collection, base };
 }

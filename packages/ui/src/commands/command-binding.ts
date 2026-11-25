@@ -1,3 +1,5 @@
+import type { TokenUsage } from '../content/token-pair.js';
+
 export const operations = {
   plan: 'Plan',
   architect: 'Architect',
@@ -23,7 +25,7 @@ export interface CommandState {
   supported: readonly Operation[];
   command?: string;
   execution?: string;
-  metrics?: ReadonlyArray<readonly [label: string, value: string]>;
+  metrics?: ReadonlyArray<readonly [label: string, value: string | TokenUsage]>;
 }
 
 export interface CommandBinding {

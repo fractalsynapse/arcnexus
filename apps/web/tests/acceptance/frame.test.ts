@@ -160,6 +160,12 @@ test('desktop stays docked and reports controlled active, waiting and failed com
   await view(page, 'Architect');
   assert.equal(await page.evaluate(() => scrollY), 0);
   await submitFixtureCommand(page);
+  const footer = page.getByRole('contentinfo', { name: 'Command controls' });
+  await footer.getByText('853.6K / 15.2K', { exact: true }).hover();
+  await footer
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Input / output tokens' })
+    .waitFor();
   await button(page, 'Round metrics').click();
   await page
     .getByRole('dialog', { name: 'End-to-end refinement metrics' })

@@ -6,8 +6,7 @@ import { usePlanFile } from './plan-file-scope.js';
 
 /** Identify the file route and expose recorded Git information on demand. */
 export function FileBreadcrumbs() {
-  const { route, revision, version, revisions, project } = usePlanFile();
-  const fileRevision = version || revisions.value?.revisions[0]?.revision;
+  const { route, revision, fileRevision, project } = usePlanFile();
   if (!route) return null;
   return h(
     'div',
