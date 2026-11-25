@@ -8,6 +8,7 @@ const glyphs = {
   metrics: 'M5 19v-5m7 5V5m7 14v-9',
   send: 'M7 4l13 8-13 8z',
   down: 'm5 9 7 7 7-7',
+  back: 'M20 12H4m7-7-7 7 7 7',
   up: 'm5 15 7-7 7 7',
   close: 'm6 6 12 12M18 6 6 18',
   refine: 'M20 10a8 8 0 1 0-2 8M20 5v5h-5',

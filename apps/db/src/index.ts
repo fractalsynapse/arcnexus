@@ -2,6 +2,7 @@ import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { capacityMigration } from '../../../packages/capacity/src/index.js';
 import { catalogMigration } from '../../../packages/catalog/src/index.js';
+import { uiPreferencesMigration } from '../../../packages/ui/src/preferences/server.js';
 import {
   coordinationMigration,
   importSqliteJournal,
@@ -25,6 +26,7 @@ const modelMigrations = [
   workflowRuntimeMigration,
   capacityMigration,
   catalogMigration,
+  uiPreferencesMigration,
 ];
 
 /** Refuse runtime schema mismatches before admitting requests. */

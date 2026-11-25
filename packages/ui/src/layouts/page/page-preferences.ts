@@ -1,38 +1,26 @@
-import { z } from 'zod';
 import type { Workspace, DisplayRegistration } from '../../registry/workspace.js';
-import { columnCounts, fullWidthRegions } from '../panels/presets/index.js';
+import { useUiPreferences } from '../../preferences/browser.js';
+import type { PagePreferences } from '../../preferences/schema.js';
+export type { PagePreferences } from '../../preferences/schema.js';
 
-const stored = z.object({
-  columns: z.literal(columnCounts),
-  order: z.array(z.string()),
-  hidden: z.array(z.string()),
-  regions: z.record(
-    z.string(),
-    z.union([z.number().int().nonnegative(), z.enum(fullWidthRegions)]),
-  ),
-  widths: z.array(z.number().positive()),
-});
-
-export type PagePreferences = z.infer<typeof stored>;
-
-function key(path: string) {
-  return 'arcnexus.web.layout:' + path;
-}
-
-/** Read the per-workspace layout without trusting values stored in the browser. */
-export function loadLayout(workspace: Workspace): PagePreferences {
-  try {
-    const prefs = stored.safeParse(JSON.parse(localStorage.getItem(key(workspace.path)) ?? 'null'));
-    if (prefs.success) return prefs.data;
-  } catch {}
-  return { columns: workspace.defaultColumns ?? 1, order: [], hidden: [], regions: {}, widths: [] };
-}
-
-/** Save choices independently of the global site theme. */
-export function saveLayout(path: string, layout: PagePreferences) {
-  try {
-    localStorage.setItem(key(path), JSON.stringify(layout));
-  } catch {}
+/** Use the saved workspace arrangement and fall back to the registered layout. */
+export function useLayoutPreference(workspace: Workspace) {
+  const { entries, ready, save } = useUiPreferences();
+  const current = entries.find(
+    (entry) => entry.kind === 'layout' && entry.workspace === workspace.path,
+  );
+  const defaults: PagePreferences = {
+    columns: workspace.defaultColumns ?? 1,
+    order: [],
+    hidden: [],
+    regions: {},
+    widths: [],
+  };
+  return {
+    ready,
+    preferences: current?.kind === 'layout' ? current.layout : defaults,
+    save: (layout: PagePreferences) => save({ kind: 'layout', workspace: workspace.path, layout }),
+  };
 }
 
 /** Keep registered defaults and saved order in one list, including newly installed displays. */

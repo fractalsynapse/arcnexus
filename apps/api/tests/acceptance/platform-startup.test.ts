@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Client } from 'pg';
 import { openPlatform } from '../../../../packages/platform/src/index.js';
+import { uiPreferencesDataPlugin } from '../../../../packages/ui/src/preferences/server.js';
 import { databaseSetupPlugin } from '../../../db/src/index.js';
 import { Context } from 'cordis';
 import { createProject } from '../fixtures/project.js';
@@ -68,7 +69,57 @@ async function fixture(t: TestContext, withAgent = false) {
   await setup.use(databaseSetupPlugin(database));
   await setup.databaseSetup.migrate();
   const platform = await openPlatform({ database, file, token });
-  return { token, platform, repository, directory, root };
+  return { token, platform, repository, directory, root, database, file };
+}
+
+test(
+  'operator preferences persist across gateway connections and keep independent settings',
+  { skip: !url },
+  async (t) => {
+    const first = await fixture(t);
+    const left = await preferenceRequests(first);
+    const right = await preferenceRequests({ ...first, database: await separateConnection(t) });
+    const site = { kind: 'site', selected: 'midnight' };
+    const display = {
+      kind: 'display',
+      workspace: '/plan/',
+      panel: 'metrics',
+      selected: 'midnight',
+    };
+    assert.equal((await left({ entries: [site] })).status, 200);
+    assert.equal((await right({ entries: [display] })).status, 200);
+    await left({ entries: [{ ...site, selected: 'older browser' }], preserveExisting: true });
+    const restored = await right();
+    assert.equal(restored.headers.get('cache-control'), 'no-store');
+    assert.deepEqual((await restored.json()).entries, [display, site]);
+    assert.equal((await right({ entries: [{ ...site, selected: false }] })).status, 400);
+    const other = await preferenceRequests(await fixture(t));
+    assert.deepEqual(await (await other()).json(), { entries: [] });
+    assert.equal((await right(undefined, '')).status, 401);
+    const description = await right(undefined, undefined, '/projects/platform/openapi.json');
+    assert.ok((await description.json()).paths['/ui-preferences'].patch.requestBody.required);
+  },
+);
+
+async function separateConnection(t: TestContext) {
+  const database = new Client({ connectionString: url });
+  await database.connect();
+  t.after(() => database.end());
+  return database;
+}
+
+async function preferenceRequests({ database, token, file }: Awaited<ReturnType<typeof fixture>>) {
+  const platform = await openPlatform({ database, token, file });
+  await platform.context.use(uiPreferencesDataPlugin(database));
+  await platform.context.use(apiPlugin(platform.authenticate));
+  return (body?: unknown, credential: string = token, path = '/ui-preferences') =>
+    platform.context.api(
+      new Request('http://arc.test' + path, {
+        method: body ? 'PATCH' : 'GET',
+        headers: { authorization: 'Bearer ' + credential },
+        body: body ? JSON.stringify(body) : undefined,
+      }),
+    );
 }
 
 test(

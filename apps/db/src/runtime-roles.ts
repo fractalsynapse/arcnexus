@@ -7,6 +7,7 @@ const roles = {
     grants: `
       GRANT USAGE ON SCHEMA arcnexus_platform TO arc_api;
       GRANT SELECT ON arcnexus_platform.migrations TO arc_api;
+      GRANT SELECT, INSERT, UPDATE ON arcnexus_platform.ui_preferences TO arc_api;
       GRANT USAGE ON SCHEMA arcnexus_capacity, arcnexus_catalog, arcnexus_coordination TO arc_api;
       GRANT SELECT, INSERT, UPDATE ON arcnexus_catalog.projects TO arc_api;
       GRANT SELECT, INSERT, DELETE ON arcnexus_capacity.registration_codes TO arc_api;

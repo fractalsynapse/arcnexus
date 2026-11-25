@@ -8,6 +8,8 @@ import { bundleWeb } from '../../src/bundle.js';
 import { serveWeb } from '../../src/serve.js';
 import type {} from '../fixtures/browser.js';
 import { chooseOption, openSelect } from '../fixtures/browser-select.js';
+import { preferenceRoutes } from '../fixtures/preferences.js';
+import { fixturePreferences } from '../../previews/platform/fixture-preferences.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 
@@ -154,9 +156,11 @@ async function assertUnavailableMetrics(page: Page) {
   assert.equal(await metrics.getByText('Unavailable', { exact: true }).count(), 3);
 }
 
-test('site schemes can be created, selected and reloaded across workspaces', async (t) => {
+test('site schemes can be created, selected and restored across browsers', async (t) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   t.after(() => page.close());
+  const preferences = fixturePreferences();
+  await preferenceRoutes(page, preferences);
   await page.goto(application.url);
   await makeSiteScheme(page);
   await button(page, 'Close').click();
@@ -164,13 +168,14 @@ test('site schemes can be created, selected and reloaded across workspaces', asy
     await button(page, 'Color schemes').evaluate((element) => document.activeElement === element),
     true,
   );
-  await view(page, 'Run');
-  await page.reload();
-  await page.getByRole('heading', { name: 'Run', level: 1 }).waitFor();
-  assert.equal(
-    await page.locator('.arc-app').evaluate((element) => getComputedStyle(element).backgroundColor),
-    'rgb(20, 19, 42)',
-  );
+  const other = await browser.newPage({ colorScheme: 'dark' });
+  t.after(() => other.close());
+  await preferenceRoutes(other, preferences);
+  await other.goto(application.url + '/run/');
+  await other.waitForFunction(() => {
+    const frame = document.querySelector('.arc-app');
+    return frame && getComputedStyle(frame).backgroundColor === 'rgb(20, 19, 42)';
+  });
 });
 
 async function makeSiteScheme(page: Page) {
@@ -182,6 +187,7 @@ async function makeSiteScheme(page: Page) {
   await picker.getByRole('button', { name: 'Indigo #14132a for background' }).click();
   assert.equal(await picker.isVisible(), false);
   await button(page, 'Save scheme').click();
+  await dialog.getByText('Saved Midnight.', { exact: true }).waitFor();
   await chooseOption(page, 'Site background and default scheme', 'Midnight');
   await dialog.getByLabel('Scheme name').fill('Midnight revised');
   await button(page, 'Text color').click();
@@ -189,10 +195,52 @@ async function makeSiteScheme(page: Page) {
   await custom.fill('#edf4ff');
   await custom.press('Enter');
   await button(page, 'Save scheme').click();
+  await dialog.getByText('Saved Midnight revised.', { exact: true }).waitFor();
   assert.equal(
     await dialog.getByLabel('Site background and default scheme').textContent(),
     'Midnight revised',
   );
+}
+
+test('a clean browser restores imported layout, visibility and display appearance', async (t) => {
+  const source = await browser.newPage();
+  const reader = await browser.newPage();
+  t.after(() => Promise.all([source.close(), reader.close()]));
+  const preferences = fixturePreferences();
+  await preferenceRoutes(source, preferences);
+  await preferenceRoutes(reader, preferences);
+  await source.addInitScript(legacyBrowserSettings);
+  await source.goto(fixture.url);
+  await source.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
+  await reader.goto(fixture.url);
+  await reader.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
+  const metrics = reader.getByRole('region', { name: 'Planning data' });
+  assert.equal(await metrics.evaluate((node) => node.parentElement?.dataset.region), 'bottom');
+  assert.equal(
+    await metrics.evaluate((node) => getComputedStyle(node).backgroundColor),
+    'rgb(20, 19, 42)',
+  );
+  assert.equal(await reader.getByRole('heading', { name: 'Planner outcome' }).count(), 0);
+});
+
+function legacyBrowserSettings() {
+  const scheme = {
+    id: 'legacy-scheme',
+    name: 'Legacy scheme',
+    colors: { background: '#14132a', text: '#edf4ff', accent: '#aabbcc' },
+  };
+  localStorage.setItem('arcnexus.web.theme', JSON.stringify({ selected: '', schemes: [scheme] }));
+  localStorage.setItem(
+    'arcnexus.web.layout:/plan/',
+    JSON.stringify({
+      columns: 3,
+      hidden: ['outcome'],
+      order: [],
+      regions: { metrics: 'bottom' },
+      widths: [1, 2, 1],
+    }),
+  );
+  localStorage.setItem('arcnexus.web.panel:["/plan/","metrics"]', scheme.id);
 }
 
 test('desktop stays docked and reports controlled active, waiting and failed command states', async (t) => {
@@ -317,6 +365,7 @@ function fieldPalette(element: Element) {
 test('page settings save layout and panel placement, while plugin contributions update mounted pages', async (t) => {
   const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
   t.after(() => page.close());
+  await preferenceRoutes(page);
   await page.goto(fixture.url);
   await page.getByRole('heading', { name: 'Planning data' }).waitFor();
   await page.evaluate(() => window.frameFixture.toggleDisplay?.());
@@ -343,6 +392,7 @@ test('page settings save layout and panel placement, while plugin contributions 
 test('panel drag lifts the row and previews the insertion gap before saving', async (t) => {
   const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
   t.after(() => page.close());
+  await preferenceRoutes(page);
   await page.goto(fixture.url);
   await button(page, 'Plan page settings').click();
   const source = button(page, 'Reorder Planning data');
@@ -359,6 +409,7 @@ test('panel drag lifts the row and previews the insertion gap before saving', as
   assert.deepEqual(await labels(), ['Planner outcome', 'Planning data']);
   assert.equal(await source.evaluate((element) => document.activeElement === element), true);
   await button(page, 'Save').click();
+  await page.getByRole('region', { name: 'Plan page settings' }).waitFor({ state: 'hidden' });
   await assertMobilePanelOrder(page);
 });
 
@@ -404,6 +455,7 @@ async function configureLayout(page: Page) {
   await chooseOption(page, 'Planner outcome region', 'Right');
   await button(page, 'Reorder Planner outcome').press('ArrowUp');
   await button(page, 'Save').click();
+  await page.getByRole('region', { name: 'Plan page settings' }).waitFor({ state: 'hidden' });
   assert.equal(await settings.evaluate((element) => document.activeElement === element), true);
   await settings.click();
   await page.getByRole('radio', { name: 'One column' }).check();
@@ -424,8 +476,17 @@ async function assertResize(page: Page) {
   await page.mouse.down();
   await page.mouse.move(bounds.x + bounds.width / 2 + 42, bounds.y + 40);
   await page.mouse.up();
+  const selector = '[aria-label="Resize columns 1 and 2"]';
+  const changed = (value: string | null) =>
+    page.waitForFunction(
+      ({ selector, value }) =>
+        document.querySelector(selector)?.getAttribute('aria-valuenow') !== value,
+      { selector, value },
+    );
+  await changed(before);
   const afterDrag = await splitter.getAttribute('aria-valuenow');
   assert.notEqual(afterDrag, before);
   await splitter.press('ArrowRight');
+  await changed(afterDrag);
   assert.notEqual(await splitter.getAttribute('aria-valuenow'), afterDrag);
 }

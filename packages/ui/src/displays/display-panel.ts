@@ -2,6 +2,7 @@ import { createElement as h, useContext, useId, useState } from 'react';
 import type { DisplayRegistration } from '../registry/workspace.js';
 import { themeScope } from '../theme/theme-scope.js';
 import { themeStyle } from '../theme/theme-colors.js';
+import { useUiPreferences } from '../preferences/browser.js';
 import { DisplayAppearance } from './display-appearance.js';
 import { displayFocus } from './display-focus.js';
 import { DisplayHeading } from './display-heading.js';
@@ -30,26 +31,18 @@ export function DisplayPanel({ panel, order, workspace }: PanelProps) {
 }
 
 function useAppearance(workspace: string, panel: string) {
-  const key = 'arcnexus.web.panel:' + JSON.stringify([workspace, panel]);
+  const { entries, save } = useUiPreferences();
+  const value = entries.find(
+    (entry) => entry.kind === 'display' && entry.workspace === workspace && entry.panel === panel,
+  );
   const [open, setOpen] = useState(false);
-  const [selected, select] = useState(() => {
-    try {
-      return localStorage.getItem(key) ?? '';
-    } catch {
-      return '';
-    }
-  });
   return {
     open,
-    selected,
+    selected: value?.kind === 'display' ? value.selected : '',
     toggle: () => setOpen(!open),
     close: () => setOpen(false),
-    save: (next: string) => {
-      try {
-        localStorage.setItem(key, next);
-      } catch {}
-      select(next);
-      setOpen(false);
+    save: async (selected: string) => {
+      if (await save({ kind: 'display', workspace, panel, selected })) setOpen(false);
     },
   };
 }

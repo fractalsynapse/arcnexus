@@ -3,6 +3,7 @@ import type { TestContext } from 'node:test';
 import { chromium, type BrowserContextOptions, type Page } from 'playwright';
 import { serveWeb } from '../../src/serve.js';
 import { chooseOption } from './browser-select.js';
+import { preferenceRoutes } from './preferences.js';
 
 export const project = {
   id: 'bound-project',
@@ -34,6 +35,7 @@ export async function responses(page: Page, projects = [project]) {
     if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
     return route.fulfill({ json: planData(url.pathname, projects) });
   });
+  await preferenceRoutes(page);
   return requests;
 }
 

@@ -12,8 +12,11 @@ the registry for changes.
 
 A command binding supplies stable snapshots, subscription, and an optional
 structured submission function. The frame uses the binding for status,
-measurements and availability. It owns visual state, local theme preferences
-and an unsent instruction. The generic page settings editor saves a workspace's
+measurements and availability. It owns transient visual state and an unsent
+instruction. A preferences binding supplies the operator's named site schemes,
+workspace layouts and display appearance. The browser package consumes that
+binding and the server preferences entry registers the same schemas in Data.
+The generic page settings editor saves a workspace's
 desktop columns and display arrangement. The panel layout uses the same display
 order for its mobile stack. Host admission and task lifecycle belong to the
 application's future trusted transport.

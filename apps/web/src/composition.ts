@@ -7,6 +7,7 @@ import {
 import { commandBindingPlugin } from './plugins/command-binding-plugin.js';
 import { framePlugin } from './plugins/frame-plugin.js';
 import { workspacePlugin } from './plugins/workspace-plugin.js';
+import { preferencesPlugin } from './plugins/preferences-plugin.js';
 
 const unavailable: CommandState = { status: 'Unavailable', supported: [] };
 const unavailableCommands: CommandBinding = {
@@ -26,6 +27,7 @@ export async function mountWeb(
   if (commands || !context.webCommands)
     await context.use(commandBindingPlugin(commands ?? unavailableCommands));
   await context.use(workspacePlugin());
+  await context.use(preferencesPlugin);
   await context.use(framePlugin(element));
   return context;
 }

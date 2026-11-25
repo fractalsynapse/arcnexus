@@ -4,6 +4,8 @@
 
 ### Added
 
+- Save site schemes, page layouts and per-display color choices in PostgreSQL for the platform operator (#746).
+
 - Offer optional full-width Top and Bottom display regions in every desktop workspace layout (#746).
 
 - Browse historical executions from the Plan heading, with every panel scoped to the selected project and run (#746).
@@ -35,6 +37,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Show Back on inner workspaces and keep Refine on the root workspaces (#746).
 
 - Enlarge the Plan File Edit touch target and explain read-only historical revisions through the shared tooltip (#746).
 

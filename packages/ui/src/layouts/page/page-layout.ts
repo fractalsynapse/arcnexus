@@ -4,8 +4,7 @@ import type { Workspace } from '../../registry/workspace.js';
 import { PageSettings } from '../../settings/page/page-settings.js';
 import { PanelLayout } from '../panels/panel-layout.js';
 import { PageHeading } from './page-heading.js';
-import { loadLayout, saveLayout } from './page-preferences.js';
-import type { PagePreferences } from './page-preferences.js';
+import { useLayoutPreference } from './page-preferences.js';
 
 interface PageLayoutProps {
   workspace: Workspace;
@@ -43,9 +42,8 @@ function PageAppearance({ page }: { page: ReturnType<typeof usePageLayout> }) {
     panels,
     preferences,
     close,
-    save: (value) => {
-      save(value);
-      close();
+    save: async (value) => {
+      if (await save(value)) close();
     },
   });
 }
@@ -54,16 +52,12 @@ function usePageLayout(workspace: Workspace, path: string) {
   const heading = useRef<HTMLHeadingElement>(null);
   const gear = useRef<HTMLButtonElement>(null);
   const [settings, open] = useState(false);
-  const [preferences, update] = useState(() => loadLayout(workspace));
+  const { ready, preferences, save } = useLayoutPreference(workspace);
   const label = workspace.title?.(path) ?? workspace.label;
   usePageFocus(heading, label, path);
   const close = () => {
     open(false);
     gear.current?.focus({ preventScroll: true });
-  };
-  const save = (value: PagePreferences) => {
-    update(value);
-    saveLayout(workspace.path, value);
   };
   return {
     title: workspace.label + ' page settings',
@@ -72,7 +66,8 @@ function usePageLayout(workspace: Workspace, path: string) {
     heading,
     gear,
     settings,
-    toggle: () => open(!settings),
+    toggle: () => ready && open(!settings),
+    ready,
     preferences,
     close,
     save,
@@ -103,11 +98,12 @@ function PageDisplays({
     'div',
     { hidden: settings },
     workspace.content,
-    h(PanelLayout, {
-      workspace: workspace.path,
-      panels,
-      preferences,
-      resize: (widths) => save({ ...preferences, widths }),
-    }),
+    page.ready &&
+      h(PanelLayout, {
+        workspace: workspace.path,
+        panels,
+        preferences,
+        resize: (widths) => save({ ...preferences, widths }),
+      }),
   );
 }

@@ -2,7 +2,7 @@ import type { TimelineChanges } from '../../../packages/coordination/src/index.j
 import type { Context } from 'cordis';
 import { ZodError } from 'zod';
 import type { Data, DataScope, ResolveDataScope } from '../../../packages/data/src/index.js';
-import { catalogRequest, matchCatalog } from './catalog-routes.js';
+import { matchPlatform, platformRequest } from './platform-routes.js';
 import { openApi } from './openapi.js';
 import { matchRoute, routeInput } from './routes.js';
 import { scopedEventStream, acceptsEvents } from './scoped-event-stream.js';
@@ -34,13 +34,13 @@ function handler(data: Data, authenticate: AuthenticateRequest, live: LiveResour
   return async (request: Request) => {
     const url = new URL(request.url);
     const projectRoute = /^\/projects\/([^/]+)(\/.*)$/.exec(url.pathname);
-    const catalog = matchCatalog(request.method, url.pathname);
-    if (!catalog && !projectRoute) return problem(404, 'Resource unavailable');
+    const platform = matchPlatform(request.method, url.pathname);
+    if (!platform && !projectRoute) return problem(404, 'Resource unavailable');
     try {
-      const project = catalog ? 'platform' : decodeURIComponent(projectRoute![1]!);
+      const project = platform ? 'platform' : decodeURIComponent(projectRoute![1]!);
       const scope = await authenticate(request, project);
       if (!scope || scope.project !== project) return problem(401, 'Project access unavailable');
-      if (catalog) return await catalogRequest(data, scope, request, catalog);
+      if (platform) return await platformRequest(data, scope, request, platform);
       return await projectResource(data, request, scope, projectRoute![2]!, url, live);
     } catch (error) {
       return apiError(error);

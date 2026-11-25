@@ -1,4 +1,4 @@
-import { catalogPaths } from './catalog-routes.js';
+import { platformPaths } from './platform-routes.js';
 import type { Data, DataScope } from '../../../packages/data/src/index.js';
 import { routes } from './routes.js';
 
@@ -19,7 +19,7 @@ function parametersFor(route: Route) {
 
 /** Use authorization and schemas from the Data registration for each scoped REST operation. */
 export async function openApi(data: Data, scope: DataScope) {
-  if (scope.project === 'platform') return document(await catalogPaths(data, scope));
+  if (scope.project === 'platform') return document(await platformPaths(data, scope));
   const operations = await data.describe(scope);
   const paths: Record<string, Record<string, object>> = {};
   for (const route of routes) {

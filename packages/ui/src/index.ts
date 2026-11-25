@@ -50,6 +50,7 @@ export { WebFrame } from './layouts/frame/web-frame.js';
 export { PageLayout } from './layouts/page/page-layout.js';
 export { PanelLayout } from './layouts/panels/panel-layout.js';
 export { PageSettings } from './settings/page/page-settings.js';
+export { UiPreferences, type UiPreferencesBinding } from './preferences/browser.js';
 export { ColorSchemes } from './theme/schemes/color-schemes.js';
 export { SchemeSelect } from './theme/schemes/scheme-select.js';
 export { UiRegistry } from './registry/ui-registry.js';

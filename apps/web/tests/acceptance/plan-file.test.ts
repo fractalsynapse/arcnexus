@@ -14,6 +14,24 @@ import {
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 const previous = { revision: 'b'.repeat(40), updated: '2025-11-24T17:01:23.000Z' };
 
+test('inner workspace Back follows in-app history and deep links fall back to Plan', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page, [project]);
+  await page.goto(application.url + '/plan/?view=history');
+  const header = page.getByRole('banner');
+  const refine = header.getByRole('button', { name: 'Refine', exact: true });
+  const back = header.getByRole('button', { name: 'Back', exact: true });
+  await refine.waitFor();
+  await page.getByRole('link', { name: 'fixture-goal' }).click();
+  assert.equal(await refine.count(), 0);
+  await back.click();
+  await page.waitForURL('**/plan/?view=history');
+  await refine.waitFor();
+  await page.goto(application.url + '/plan/files/goals/fixture-goal/');
+  await back.click();
+  await page.waitForURL('**/plan/');
+});
+
 test('the built Plan opens a pinned file through the shared workspace layout', async (t) => {
   const { application, page } = await browserPage(t);
   const requests = await responses(page, [project, otherProject]);
@@ -82,6 +100,7 @@ async function placeFileInformation(page: Page, from: string, to: string) {
   assert.equal(await placement.textContent(), from);
   await chooseOption(page, 'File information region', to);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('region', { name: 'Plan file page settings' }).waitFor({ state: 'hidden' });
 }
 
 async function verifyHeadingSpacing(page: Page) {

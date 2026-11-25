@@ -24,6 +24,7 @@ import {
 import { dataPlugin, type DataAccess, type DataScope } from '../../data/src/index.js';
 import { textDigest } from '../../foundation/src/index.js';
 import { plannerDataPlugin } from '../../planner/src/index.js';
+import { uiPreferencesResource } from '../../ui/src/preferences/schema.js';
 import { hostAssignments } from './host-assignments.js';
 import { bindings } from './bindings.js';
 import { connectDatabase, readSecret } from './database.js';
@@ -93,8 +94,9 @@ async function authorized(
   database: Client,
 ) {
   if (scope.principal !== configuration.operator) return false;
-  if (scope.project === 'platform') return resource === 'projects';
-  if (resource === 'projects') return false;
+  const platformResource = resource === 'projects' || resource === uiPreferencesResource;
+  if (scope.project === 'platform' || platformResource)
+    return scope.project === 'platform' && platformResource;
   if (resource !== 'workflow-requests' && resource !== 'operation-evidence') return true;
   const resolved = await project(scope);
   if (!resolved) return false;

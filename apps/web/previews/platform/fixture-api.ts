@@ -1,4 +1,6 @@
 import type { Project } from '../../src/platform/session.js';
+import { uiPreferencesResource } from '../../../../packages/ui/src/preferences/schema.js';
+import { fixturePreferences } from './fixture-preferences.js';
 
 export const project: Project = {
   id: 'arcnexus',
@@ -17,7 +19,10 @@ const fixtureProviders = [
 export function fixtureTransport(showProviders: boolean) {
   const projects = new Map([[project.id, project]]);
   const providers = showProviders ? fixtureProviders.map((provider) => ({ ...provider })) : [];
+  const preferences = fixturePreferences();
   return async (path: string, request: RequestInit) => {
+    if (path === '/' + uiPreferencesResource)
+      return Response.json(preferences(request.method ?? 'GET', String(request.body)));
     if (path === '/capacity-providers/codes') return Response.json({ code: 'PREVIEW-SETUP' });
     if (path === '/capacity-providers') return Response.json(providers);
     if (path.startsWith('/capacity-providers/')) {
