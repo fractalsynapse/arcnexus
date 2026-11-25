@@ -140,6 +140,40 @@ for (const change of ['missing status', 'new suite']) {
   });
 }
 
+test('an observed legacy status pins the empty suite scope across polls', async (t) => {
+  let pulls = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/pulls/99')) pulls++;
+    if (args[1]?.endsWith('/status'))
+      return JSON.stringify({
+        sha: head,
+        total_count: 1,
+        statuses: [{ context: 'CI', state: pulls === 1 ? 'pending' : 'success', target_url: null }],
+      });
+    if (pulls === 1 && args[1]?.endsWith('/check-suites'))
+      return JSON.stringify({ total_count: 0, check_suites: [] });
+    if (pulls === 1 && args[1]?.includes('/check-runs?'))
+      return JSON.stringify({ total_count: 0, check_runs: [] });
+    return readyResponse(args);
+  });
+  await assert.rejects(
+    scenario.provider.verify(pr, head, 'staging'),
+    /check suite inventory changed/,
+  );
+});
+
+test('the first suite can appear before any CI facts have been observed', async (t) => {
+  let inventories = 0;
+  const scenario = new ProviderResults(t, (args) => {
+    if (args[1]?.endsWith('/check-suites') && ++inventories === 1)
+      return JSON.stringify({ total_count: 0, check_suites: [] });
+    if (inventories === 1 && args[1]?.includes('/check-runs?'))
+      return JSON.stringify({ total_count: 0, check_runs: [] });
+    return readyResponse(args);
+  });
+  await scenario.provider.verify(pr, head, 'staging');
+});
+
 test('a later poll cannot authorize a completed suite if its expected run count decreased', async (t) => {
   let pulls = 0;
   const scenario = new ProviderResults(t, (args) => {

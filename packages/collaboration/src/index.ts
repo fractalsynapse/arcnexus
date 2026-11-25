@@ -304,7 +304,7 @@ ${marker}`,
           },
           suites: (observed) => {
             evidence[suites] = observed;
-            requireRetainedSuites(observed, prior?.suites);
+            requireRetainedSuites(observed, prior);
           },
           earlier: (checks, inventory) => recordEarlierChecks(evidence, read, checks, inventory),
         },

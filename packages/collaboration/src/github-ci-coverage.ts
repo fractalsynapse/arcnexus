@@ -14,6 +14,50 @@ export interface CIObserver {
   earlier(checks: readonly ProviderCheck[], suites: readonly ProviderCheckSuite[]): void;
 }
 
+export const pendingCheckStatuses = [
+  'in_progress',
+  'queued',
+  'requested',
+  'waiting',
+  'pending',
+] as const;
+
+function hasCIObservations(scope: ProviderCISnapshot) {
+  return scope.suites.length > 0 || scope.checks.length > 0;
+}
+
+export function suitePending({ status }: ProviderCheckSuite) {
+  return pendingCheckStatuses.some((pending) => pending === status);
+}
+
+/** Reread when an existing active suite advances or registers more expected runs. */
+export function suiteProgress(
+  previous: ProviderCheckSuite[],
+  current: ProviderCheckSuite[],
+  checks: readonly ProviderCheck[],
+) {
+  if (!hasCIObservations({ checks, suites: previous })) return true;
+  if (previous.length !== current.length) return false;
+  const byId = new Map(current.map((item) => [item.id, item]));
+  return previous.every((before) => {
+    const after = byId.get(before.id);
+    if (!after) return false;
+    if (JSON.stringify(before) === JSON.stringify(after)) return true;
+    if (!suitePending(before)) return false;
+    const oldCount = before.latest_check_runs_count ?? 0;
+    const newCount = after.latest_check_runs_count ?? 0;
+    if (newCount < oldCount) return false;
+    return (
+      after.status === 'completed' ||
+      (before.status !== 'in_progress' && after.status === 'in_progress') ||
+      (after.status === 'queued' &&
+        before.status !== 'queued' &&
+        before.status !== 'in_progress') ||
+      (before.status === after.status && newCount > oldCount)
+    );
+  });
+}
+
 export function suiteSnapshot(suites: readonly ProviderCheckSuite[]) {
   return JSON.stringify(suites.toSorted((a, b) => a.id - b.id));
 }
@@ -39,16 +83,17 @@ export function recordEarlierChecks(
 /** Retain each observed suite and its expected run coverage across separate reads. */
 export function requireRetainedSuites(
   observed: readonly ProviderCheckSuite[],
-  previous: readonly ProviderCheckSuite[] = [],
+  previous?: ProviderCISnapshot,
 ) {
+  if (!previous || !hasCIObservations(previous)) return;
   const current = new Map(observed.map((suite) => [suite.id, suite]));
-  for (const suite of previous) {
+  for (const suite of previous.suites) {
     const retained = current.get(suite.id);
     if (!retained) throw new Error('GitHub omitted a previously observed check suite');
     if ((retained.latest_check_runs_count ?? 0) < (suite.latest_check_runs_count ?? 0))
       throw new Error(`GitHub suite ${suite.id} lost previously observed check run coverage`);
   }
-  if (previous.length && current.size !== previous.length)
+  if (current.size !== previous.suites.length)
     throw new Error('GitHub check suite inventory changed between observations');
 }
 

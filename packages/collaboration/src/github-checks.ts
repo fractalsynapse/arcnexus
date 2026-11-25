@@ -1,11 +1,17 @@
 import { z } from 'zod';
 import type { ProviderCheck } from './check-failure.js';
-import { requireRetainedChecks, suiteSnapshot, type CIObserver } from './github-ci-coverage.js';
+import {
+  pendingCheckStatuses,
+  requireRetainedChecks,
+  suitePending,
+  suiteProgress,
+  suiteSnapshot,
+  type CIObserver,
+} from './github-ci-coverage.js';
 import { decodeGitHubResponse } from './read.js';
 
 type Read = (args: string[]) => Promise<string>;
 
-const pendingCheckStatuses = ['in_progress', 'queued', 'requested', 'waiting', 'pending'] as const;
 const total = z.object({ total_count: z.int().nonnegative() });
 const suite = z.object({
   id: z.int().positive(),
@@ -83,7 +89,7 @@ export async function readGitHubChecks(
         suites: current,
         pendingSuites: current.filter(suitePending).map(({ id }) => id),
       };
-    if (!suiteProgress(inventory, current))
+    if (!suiteProgress(inventory, current, snapshot.observedChecks))
       throw new Error('GitHub check suite inventory changed during CI observation');
     inventory = current;
     previous = snapshot.observedChecks;
@@ -115,33 +121,6 @@ async function readChecks(
   observe.checks(current);
   requireRetainedChecks(runs, statuses, previous);
   return { checks: current, observedChecks };
-}
-
-function suitePending({ status }: ProviderCheckSuite) {
-  return pendingCheckStatuses.some((pending) => pending === status);
-}
-
-/** Reread when an existing active suite advances or registers more expected runs. */
-function suiteProgress(previous: ProviderCheckSuite[], current: ProviderCheckSuite[]) {
-  if (previous.length !== current.length) return false;
-  const byId = new Map(current.map((item) => [item.id, item]));
-  return previous.every((before) => {
-    const after = byId.get(before.id);
-    if (!after) return false;
-    if (JSON.stringify(before) === JSON.stringify(after)) return true;
-    if (!suitePending(before)) return false;
-    const oldCount = before.latest_check_runs_count ?? 0;
-    const newCount = after.latest_check_runs_count ?? 0;
-    if (newCount < oldCount) return false;
-    return (
-      after.status === 'completed' ||
-      (before.status !== 'in_progress' && after.status === 'in_progress') ||
-      (after.status === 'queued' &&
-        before.status !== 'queued' &&
-        before.status !== 'in_progress') ||
-      (before.status === after.status && newCount > oldCount)
-    );
-  });
 }
 
 /** Identify an explicit provider suite failure even when no job was created. */
