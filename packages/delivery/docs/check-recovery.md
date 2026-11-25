@@ -295,3 +295,88 @@ Later host assessment and delivery must identify the reviewed final tree, recove
 parent, capture, acceptance, required evidence, independent
 verdict, single PR and confirmed provider merge. Only the host performs assembled
 verification and delivery.
+
+## Executed recovered commands: issue #730, run 194
+
+This section supersedes the pending executed-check description above for
+`recovered-publication-executed-checks`. The issue #720 and run 145 sections
+remain historical observations with their original controlled-process scope.
+
+Completed Testing secured the fixture correction: the prepared recovery journey
+now calls unmodified `HostTask.check` through production Verification, using the
+compiled [TypeScript command](../tests/fixtures/recovery-check.ts).
+[Process assertions](../tests/fixtures/recovery-evidence.ts) inspect executable,
+complete argv, cwd, numeric status, exact log and journal input fingerprint before
+the controlled reviewer responds. No production defect required a further code
+change in Implementation.
+
+The native suite runs from the trusted Host caller boundary using the established
+native opt-in. Ordinary mapped checks cannot launch the nested namespace; their
+12 native skips supply no native proof. The earlier Bubblewrap setup failure
+occurred before payload execution and remains historical setup evidence, not
+behavioral red. Execution's prerequisite retained ordinary confinement without
+a new delegation endpoint, permission, limit or acceptance change.
+
+### Recorded source and runtime
+
+The complete mapped operator answer `194-1767-clarification.json` identifies
+checkpoint `fca20ef95768d504bd9dd2c67e30315a19197fb3`, tree
+`d5323ebafb01026fbd96fcf9a30464b911370e3d` and original engineering base
+`650b1a356e1525862717cff8f194ff99e628f214`.
+Implementation read that answer and these complete current sources; their SHA-256
+identities match the recorded native inputs:
+
+| Source | SHA-256 |
+| --- | --- |
+| retained-publication.test.ts | `3e9cd7eaaef25a628edbdde4614c65297bc2511c5b07f1b2bb8dc4d9953b3c8d` |
+| prepared-publication.ts | `ce32b34098248d9eb84b4594e2375135f6592767d4def8cfc762b11b02789b58` |
+| publication-provider.ts | `6cc64981cb1fb6690543c028c855c2107ddaa38a43d7c5d8b01e07dd874ffb75` |
+| recovery-check.ts | `5e337f5024c48d2b54c4faf23bbda4692a074de7c46d1917c92171cd0a89718c` |
+| recovery-evidence.ts | `3c363f48b54f411e7a7b8f99b929061ce37d1856a53c09fe55fd98a261e70cc5` |
+
+The operator recorded a Delivery-only native invocation at `/verify/checkout`,
+status 0, 12 passes and no skips. A combined Execution/Delivery invocation on the
+same clean checkpoint recorded 18 passes and no skips. Both used approved AMD64
+image `sha256:7c86d9082d15632c0e2a811bd5318b457b223776509718078eac75d9322491ce`,
+the existing Host profile, dropped capabilities, no-new-privileges and offline
+networking. The earlier Execution runtime answer `194-1153-clarification.json`
+and reproduced diagnostic `194-1435-clarification.json` retain its separate
+production-check characterization; they do not replace the later Delivery record.
+
+The complete external combined TAP has SHA-256
+`3664c4e48303727030e3ab0d16d318d7656f293d03f6db7c938ab32d98ee874c`.
+Delivery-only TAP has SHA-256
+`ee8b40eb72a0b47596d4020fed057809cfbfd77d0b80e96113fe9d716b5c4e55`;
+the fixture-journal archive has SHA-256
+`c49e69b902c44993381a46beb1eb5bb7488556191e03c55e8d3348259a7063d0`.
+These external artifacts were not directly inspected through mapped reads.
+The readable operator answer reproduces all 12 verdicts and the deciding complete
+process logs, answer, receipt, verification and local merge records for the
+outdated-PR and failed-command journeys. Journal records marked `reusedFrom`
+are reused observations, not additional executions.
+
+### Acceptance and inspected observations
+
+| Measure | Assertions and recorded result |
+| --- | --- |
+| `recovered-check-process-evidence` | `assertExecutedChecks` validates real command records before assessment. After staging moves, the outdated-PR journal records original/current argv, recovered cwd, exits 0 and distinct input fingerprints. Final tree `1da50cb33ee912b187b84054f123615adc5f9a0b` binds reviewed parent `e6546efc5e5d4b489210e675e45d5d1a11dc8c5f` and local merge `a194f76203080ab9f8d1c50fc404e46e89542d04`. |
+| `recovered-check-failure-refusal` | The current command exits 1 and preserves the exact multiline diagnostic including café. Production Verification blocks the favorable controlled response. Accountable checked baseline correction obtains both exits 0 and fresh assessment. Tree `0a6abaff5e880999c0937cb245662df0f128e11f`, parent `319b664efc853e18d60b98c9f65878095f1db241`, accepted identity and local merge `e78b4e0f2a63da935a4e8436740bae65a6866bcc` retain the same fixture issue and PR. |
+| `recovered-publication-continuity` | `preserved`, `recoveredAcceptance`, `historicalMerge` and `retainedHold` retain bytes, answer whitespace, original history and checkpoint ancestry; enforce observation before effects, one PR, conflict/unavailable refusal and renewed reconciliation after further movement. The unchanged identity suite refuses earlier tree/base/capture/acceptance/input approval. Execution's separately retained prepared-recovery characterization covers changed ownership, receipt replay and checked conflicts. |
+| `recovered-evidence-scope` | The recorded Host execution supplies native evidence; ordinary owner results remain separate. Provider and reviewer responses are controlled, while command processes, SQLite/Git state and local squash commits are real. No result here establishes live independent inference, GitHub CI/review or upstream staging integration. |
+
+Applicable retained quality logs `194-1742-owner-format.log`,
+`194-1745-owner-lint.log`, `194-1748-repository-types.log`,
+`194-1751-repository-build.log` and `194-1754-owner-tests.log` returned status 0.
+The ordinary suite reports 38 passes and 12 explicit native skips. The run 194
+retained evidence index and timeline locate complete observations. This
+Implementation reconciliation changes only this engineering record and preserves
+the native source inputs; applicable mapped quality observations are refreshed or
+reused by their captured input identity.
+
+Retain issue 730, branch 730-task, all checked receipts, exact human answers,
+original requirements and failed observations. This contribution changes no
+runtime authority or publication identity. The final candidate includes this
+record change and still requires host assembled verification and independent
+acceptance, followed by actual hosted gates and confirmed staging delivery.
+Refresh affected native evidence if executable sources or relevant runtime inputs
+change; documentation alone does not renew approval for an earlier candidate.
