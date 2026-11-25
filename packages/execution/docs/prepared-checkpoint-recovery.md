@@ -7,7 +7,73 @@ behavioral correction. The governing obligations are
 [Execution EX-11, EX-17, EX-22 and EX-25](../contract.md#acceptance-scenarios).
 This document changes no contract, ownership or acceptance.
 
-## Current characterization scope: issue #720
+## Current assessment: issue #744, run 213
+
+This assessment supports Execution maintainers deciding whether to retain existing
+behavior or correct a demonstrated recovery defect. The engineering base and
+active capture are `945d4546ace2a55670020d8dd37de3b0d1500eed`; the task retains
+issue #744 and branch `744-task`. Run 213's external
+`213-1-run-timeline.jsonl` records the base at sequence 160468, the accepted
+plan at 160770 and issue/branch preparation at 160772–160773. These references
+resolve under evidence invocation
+`e7c8da2bb34e41d070391587635cb32e4bc1cf816b025ae70e900f1ca2811620`
+through the supplied complete retained-evidence index
+`213-101-retained-evidence-3f0b655af2c253191d391c461b86d95ab134fe8baf7afb8b3749282c409b1dc9.json`.
+
+The documentation assessment establishes source coverage, not a current execution
+result. The prepared scenarios, shared fixture, caller-consumer scenarios and
+caller-authority scenario still match the hashes recorded for run 145 below.
+The explicit [provider executable](../tests/fixtures/prepared-recovery-provider.ts)
+has SHA-256
+`c2f44defc070bef57594b1fef4f05ca0b82f91b06749f237647c654b72b4cc83`.
+Matching these files does not establish that all relevant implementation,
+captured bindings, dependencies and runtime inputs match an earlier observation.
+Run 145's passing results and the later checkpoint observations remain historical;
+this activity has not validated their reuse for the present criteria.
+
+| Accepted criterion | Current source coverage and observation needed |
+| --- | --- |
+| `prepared-continuity` | The prepared scenarios compare task, issue, branch contents, checked blob, original receipt, original base and plan criterion. They compare the complete multiline answer and its artifact, require one original prompt, replay an identical edit to obtain its original receipt, and retain both answers for a distinct recovered question. Caller-consumer scenarios compare public and actual MCP conversation identities and complete recovered knowledge. Obtain applicable execution or validated reuse of these assertions. |
+| `prepared-authority-conflicts` | The same scenarios inspect the new capture, owner roots, discovered operations and original plus newly declared acceptance checks. Changed ownership and missing pending activity refuse before another activation or checkpoint movement. A real add/add merge conflict preserves both Git byte versions and the secured checkpoint, comparing the complete merge-tree output; a further staging advance requires another recovery. Obtain applicable execution or validated reuse, retaining exact refusal and conflict diagnostics. |
+
+Current [workspace setup](../src/index.ts) observes publication before checkpoint
+and abandoned-workspace reconciliation, then invokes
+[prepared recovery](../src/prepared-recovery.ts). Recovery validates the secured
+local and remote checkpoint and observed staging, calls
+[retained-work validation](../src/architecture-adoption.ts), and computes the
+merge tree before recording a recovered checkpoint. Retained-work validation
+resolves checked owners and pending activities through Team. The public inbox
+uses the original caller revision for ordinary knowledge continuity; independent
+review and exact host decisions retain their separate current identity bindings.
+This explains the intended refusal and continuity boundaries without establishing
+an executed result.
+
+The evidence correction intent is to characterize these existing public scenarios
+as expected pass, preserving the original requirements and all prior failures.
+No new behavioral defect or red is established by this inspection. If
+characterization reveals a gap, retain its exact diagnostic and observe a
+distinguishing public regression before changing behavior. Otherwise retain the
+implementation and reconcile this account with actual candidate, source,
+operation, environment and complete external-log identities. Reuse the existing
+journal, checked receipts, Workflow cursor and recovery path.
+
+The fixture uses real admission, Architecture, Agent, Git, reopened SQLite and an
+explicit deterministic executable using LocalMcp. Its interruption follows normal
+cleanup. Hosted provider facts and final Verification/Delivery are controlled:
+declaring newly applicable checks is not executing them, and differing review
+scopes are not independent verdicts. This does not establish abrupt process
+recovery, native command confinement, live inference, hosted CI or a staging merge.
+
+The accepted next milestone is `retained-publication-evidence`, owned by Delivery,
+covering recovered command execution, stale acceptance refusal, publication
+reconciliation and explicit prerequisite holds. References below to earlier
+Verification and Delivery milestone names belong to their historical plans.
+The current contributions feed one later host assessment and delivery; they
+create no separate publication. Final acceptance must identify the recovered
+reviewed tree, staging parent, captured acceptance, required checks and independent
+verdict before the host can claim confirmed staging integration.
+
+## Historical characterization scope: issue #720
 
 This assessment characterizes the existing behavior at captured revision
 `fef60bb8d6aec3c2dcbedb06cac13c2cc3ee79b8` for
