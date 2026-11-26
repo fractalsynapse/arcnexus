@@ -200,6 +200,12 @@ ol.arc-report-list {
   color: var(--muted);
   font-size: var(--font-label);
 }
+.arc-message-timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
 .arc-message-timeline > li > p {
   padding: 9px var(--gap);
   border: 1px solid var(--line);

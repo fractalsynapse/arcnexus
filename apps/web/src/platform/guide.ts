@@ -42,9 +42,19 @@ export function guideType(kind: GuideKind) {
   return kind === 'goals' ? 'Goal' : 'Objective';
 }
 
+/** Use the captured category and basename to show the path within the guide collection. */
+export function guideRelativePath({ path, category }: Guide) {
+  const filename = guideFilename(path);
+  return category ? `${category}/${filename}` : filename;
+}
+
 /** Present the file name while links retain the guide's stable record ID. */
 export function guideName({ path, name }: Guide) {
-  const basename = path.split('/').at(-1)?.replace(/\.md$/, '') ?? '';
+  const basename = guideFilename(path).replace(/\.md$/, '');
   if (/^[a-f0-9]{64}$/.test(basename)) return name ?? 'Untitled guide';
   return basename || name || 'Untitled guide';
+}
+
+function guideFilename(path: string) {
+  return path.slice(path.lastIndexOf('/') + 1);
 }

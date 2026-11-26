@@ -6,17 +6,13 @@ import {
   type CommandState,
 } from '../../../../packages/ui/src/index.js';
 import { EventQuestion } from './event-question.js';
+import { EventActivity } from './event-activity.js';
 import { OperationRow } from './operation-row.js';
 import { TimelineMessage } from './timeline-message.js';
-import type { Operation, Question } from './timeline-groups.js';
+import type { Operation, TimelineEntry } from './timeline-groups.js';
 
 interface EntryProps {
-  entry: {
-    timestamp: string | null;
-    message?: string;
-    question?: Question;
-    operations: Operation[];
-  };
+  entry: TimelineEntry;
   execution?: string;
   command: CommandState;
   binding: CommandBinding;
@@ -24,11 +20,17 @@ interface EntryProps {
 
 /** Keep the status message and its expandable tool calls together. */
 export function EventEntry({ entry, execution, command, binding }: EntryProps) {
-  const { timestamp, message, question, operations } = entry;
+  const { timestamp, message, question, operations, actor } = entry;
   return h(
     'article',
     { className: 'arc-plan-event' },
-    h(LocalTime, { timestamp }),
+    (timestamp || actor) &&
+      h(
+        'header',
+        { className: 'arc-platform-inline' },
+        h(LocalTime, { timestamp }),
+        actor && h(EventActivity, { actor }),
+      ),
     message && h(TimelineMessage, { message }),
     question && h(EventQuestion, { question, command, binding, execution }),
     !!operations.length && h(OperationGroup, { operations, execution }),

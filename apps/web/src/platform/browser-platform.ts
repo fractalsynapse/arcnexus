@@ -40,7 +40,7 @@ export function browserPlatformPlugin({ transport, project }: PlatformOptions = 
     /** Isolate gateway access, project selection and replay state to a mounted application. */
     apply(context: Context) {
       context.provide('webPlatform', {
-        gateway: new GatewayClient(transport ?? ((path, request) => fetch('/api' + path, request))),
+        gateway: new GatewayClient(transport),
         session: new ProjectSession(project),
         timelines: new Map(),
       } satisfies BrowserPlatform);

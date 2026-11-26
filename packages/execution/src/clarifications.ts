@@ -45,7 +45,11 @@ export class Clarifications {
       if (answers.has(question))
         throw new InvalidCodexResponse(`Clarification already answered: ${question}`);
       const clarification = this.openQuestion({ scope, question, review: options.review });
-      this.task.note({ clarification, ...verificationContext(this.task, this.selection, data) });
+      this.task.note({
+        clarification,
+        actor: this.selection,
+        ...verificationContext(this.task, this.selection, data),
+      });
       answers.set(question, clarification);
     }
   }
@@ -92,7 +96,7 @@ export class Clarifications {
     this.signal.throwIfAborted();
     if (!answer?.trim()) {
       const retained = gate.evidence ? gate : this.openQuestion(gate);
-      if (retained !== gate) this.task.note({ clarification: retained });
+      if (retained !== gate) this.task.note({ clarification: retained, actor: this.selection });
       throw new ClarificationRequired(gate.review ? objectiveReviewLabel + '.' : question, [
         retained.evidence!,
       ]);
@@ -102,7 +106,7 @@ export class Clarifications {
       JSON.stringify({ ...this.selection, question, answer }, null, 2),
     );
     const clarification = { ...gate, answer, evidence };
-    this.task.note({ clarification });
+    this.task.note({ clarification, actor: this.selection });
     return clarification;
   }
 

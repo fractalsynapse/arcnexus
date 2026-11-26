@@ -34,6 +34,10 @@
 
 ### Changed
 
+- Keep Plan objective batches evidence-driven, show the recorded actor and activity in both timelines, and label Explorer entries with their relative file paths (#746).
+
+- Reconnect live Plan metrics after a dropped change stream and keep elapsed time scoped to the selected run (#746).
+
 - Carry retained objective approvals straight into goal alignment with instructions scoped to standing goals (#746).
 
 - Save Plan documentation directories directly in Project Settings and show readable labels for older objective files (#746).

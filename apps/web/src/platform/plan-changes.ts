@@ -40,6 +40,12 @@ function followPlanChanges(
   receive: () => void,
   failed: () => void,
 ) {
+  const source = gateway.noticeSource(path);
+  if (source) {
+    source.addEventListener('plan-change', receive);
+    source.addEventListener('error', failed);
+    return () => source.close();
+  }
   const lifetime = new AbortController();
   const disconnected = () => {
     if (!lifetime.signal.aborted) failed();

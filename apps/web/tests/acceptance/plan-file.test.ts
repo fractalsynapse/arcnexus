@@ -14,6 +14,35 @@ import {
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 const previous = { revision: 'b'.repeat(40), updated: '2025-11-24T17:01:23.000Z' };
 
+test('File Explorer labels both guide types with paths relative to their collection', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page, [project]);
+  await page.route('**/objectives?**', (route) =>
+    route.fulfill({
+      json: {
+        revision: project.revision,
+        entries: [
+          {
+            id: 'design-rules',
+            path: 'knowledge/objectives/design/api/design-rules.md',
+            category: 'design/api',
+          },
+          {
+            id: 'legacy',
+            path: 'knowledge/objectives/' + 'a'.repeat(64) + '.md',
+            name: 'Legacy objective',
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto(application.url);
+  await page.getByRole('link', { name: 'fixture-goal.md', exact: true }).waitFor();
+  await chooseOption(page, 'File type', 'Objectives');
+  await page.getByRole('link', { name: 'design/api/design-rules.md', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'a'.repeat(64) + '.md', exact: true }).waitFor();
+});
+
 test('inner workspace Back follows in-app history and deep links fall back to Plan', async (t) => {
   const { application, page } = await browserPage(t);
   await responses(page, [project]);

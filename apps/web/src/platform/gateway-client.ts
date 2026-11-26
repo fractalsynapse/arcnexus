@@ -2,6 +2,8 @@ export type GatewayTransport = (path: string, request: RequestInit) => Promise<R
 
 type Pending = { controller: AbortController; value: Promise<unknown>; users: number };
 
+const browserTransport: GatewayTransport = (path, request) => fetch('/api' + path, request);
+
 /** Preserve HTTP status for callers that can recover from a refused request. */
 export class GatewayFailure extends Error {
   /** Keep the gateway status and optionally an actionable input validation message. */
@@ -27,7 +29,12 @@ export class GatewayClient {
   private readonly reads = new Map<string, Pending>();
 
   /** Take a scoped transport so the fixture and live gateway use the same client. */
-  constructor(private readonly transport: GatewayTransport) {}
+  constructor(private readonly transport: GatewayTransport = browserTransport) {}
+
+  /** Use the browser's reconnecting SSE transport for same-origin change notices. */
+  noticeSource(path: string) {
+    if (this.transport === browserTransport) return new EventSource('/api' + path);
+  }
 
   /** Apply the common gateway request and error handling. */
   async request(path: string, init: RequestInit = {}) {

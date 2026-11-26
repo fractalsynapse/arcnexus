@@ -28,13 +28,15 @@ const report = {
 test('Plan can switch from a messages-only timeline to its full log and startup context', async (t) => {
   const opening =
     messageFrame(1) +
-    messageFrame(2, undefined, { message: undefined, operation: { name: 'list-files' } });
+    messageFrame(2, undefined, { message: undefined, operation: { name: 'list-files' } }) +
+    reviewerFrames();
   const fixture = await gateway(t, opening);
   const { application, page } = await browserPage(t, new URL(fixture.url));
   await preferenceRoutes(page);
   await page.goto(application.url);
   const log = page.getByRole('log', { name: 'Planning events' });
   await log.getByText('Message 1', { exact: true }).waitFor();
+  await log.getByText('Reviewer · Assessment', { exact: true }).waitFor();
   const tabs = page.getByRole('tablist', { name: 'Event log' });
   assert.equal(await tabs.evaluate((list) => getComputedStyle(list).justifyContent), 'center');
   assert.equal(
@@ -43,10 +45,30 @@ test('Plan can switch from a messages-only timeline to its full log and startup 
   );
   assert.equal(await log.getByText('1 operation', { exact: true }).count(), 0);
   await tabs.getByRole('tab', { name: 'Full log' }).click();
+  await log.getByText('Reviewer · Assessment', { exact: true }).waitFor();
   await log.getByText('1 operation', { exact: true }).click();
   await log.getByText('list-files', { exact: true }).waitFor();
   await verifyContextFormatting(page);
 });
+
+function reviewerFrames() {
+  const activation = 'reviewer-capture';
+  return (
+    messageFrame(3, 201, {
+      message: undefined,
+      nativeStarted: { activation, component: 'reviewer', activity: 'assessment' },
+    }) +
+    messageFrame(4, 201, {
+      message: undefined,
+      nativeEvent: {
+        activation,
+        event: {
+          item: { id: 'status', type: 'agent_message', text: 'Reviewing staged work.' },
+        },
+      },
+    })
+  );
+}
 
 async function verifyContextFormatting(page: Page) {
   await page.getByRole('tab', { name: 'Context', exact: true }).click();
@@ -114,6 +136,19 @@ test('elapsed clocks advance locally and token history uses recorded reports', a
   assert.equal(await metrics.getByText('Token history', { exact: true }).count(), 0);
   const { table } = await openPlanTokenHistory(page);
   await table.getByRole('row', { name: /Run 1.*1\.0K \/ 0\.0K/ }).waitFor();
+});
+
+test('live measurements catch up when the notice connection closes during a handoff', async (t) => {
+  const fixture = await gateway(t);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  await preferenceRoutes(page);
+  await page.goto(application.url);
+  const metrics = page.getByRole('region', { name: 'Planner metrics' });
+  await metrics.getByText('1.0K / 0.0K', { exact: true }).waitFor();
+  fixture.finish(true);
+  await metrics.getByText('2.0K / 0.0K', { exact: true }).waitFor();
+  await metrics.getByText('00:00:45', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Reconnect live updates' }).count(), 0);
 });
 
 async function verifyReportTabs(page: Page, outcome: Locator) {
@@ -237,9 +272,10 @@ async function gateway(t: TestContext, opening = '') {
   return {
     url: application.url,
     event: activity.send,
-    finish() {
+    finish(disconnect = false) {
       finished = true;
-      notices.send(notice);
+      if (disconnect) notices.close();
+      else notices.send(notice);
     },
   };
 }
@@ -249,6 +285,7 @@ function liveFeed(opening: string) {
   const send = (frame: string) => changes?.enqueue(new TextEncoder().encode(frame));
   return {
     send,
+    close: () => changes?.close(),
     response: () =>
       new Response(
         new ReadableStream<Uint8Array>({
@@ -280,8 +317,8 @@ function planFixture(path: string, finished: boolean) {
     return {
       wallElapsedMs: 3600000,
       processingElapsedMs: 60000,
-      nativeElapsedMs: 15000,
-      profiles: [{ activeActivations: 1 }],
+      nativeElapsedMs: finished ? 45000 : 15000,
+      profiles: [{ activeActivations: finished ? 0 : 1 }],
       usage: { input_tokens: { reported: finished ? 2000 : 1000 }, output_tokens: { reported: 0 } },
     };
   if (path.endsWith('/token-history'))

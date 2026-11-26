@@ -1,7 +1,7 @@
 import { createElement as h, useDeferredValue, useState } from 'react';
 import { GuideFilters, type GuideFilter } from './guide-filters.js';
 import { GuideList } from './guide-list.js';
-import { guideName, type Guide, type GuideCollection } from './guide.js';
+import { guideRelativePath, type Guide, type GuideCollection } from './guide.js';
 import { usePlanResource, type PlanOutcome } from './plan-resource.js';
 import { useResource } from './resource.js';
 
@@ -53,7 +53,7 @@ function visibleGuides(entries: Guide[], filter: GuideFilter, changed: ReadonlyS
 }
 
 function compare(left: Guide, right: Guide, order: GuideFilter['order']) {
-  const alphabetical = guideName(left).localeCompare(guideName(right));
+  const alphabetical = guideRelativePath(left).localeCompare(guideRelativePath(right));
   if (order === 'name') return alphabetical;
   if (order === 'updated')
     return (right.updated ?? '').localeCompare(left.updated ?? '') || alphabetical;

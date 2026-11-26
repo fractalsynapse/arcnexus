@@ -5,6 +5,7 @@ import {
   type CommandState,
 } from '../../../../packages/ui/src/index.js';
 import { EventQuestion } from './event-question.js';
+import { EventActivity } from './event-activity.js';
 import { EventEntry } from './event-entry.js';
 import type { TimelineEntry } from './timeline-groups.js';
 import { plainTimelineMessage } from './timeline-message.js';
@@ -49,11 +50,13 @@ export function EventTimeline({
 }
 
 function messagePoint(
-  { key, timestamp, message, question }: TimelineEntry,
+  { key, timestamp, message, question, actor }: TimelineEntry,
   scope: Pick<TimelineProps, 'execution' | 'command' | 'binding'>,
 ) {
   const content = question
     ? h(EventQuestion, { ...scope, question })
     : plainTimelineMessage(message);
-  return content ? [{ key, timestamp, content }] : [];
+  return content
+    ? [{ key, timestamp, metadata: actor && h(EventActivity, { actor }), content }]
+    : [];
 }

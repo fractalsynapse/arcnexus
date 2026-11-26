@@ -19,8 +19,17 @@ export type TimelineEntry = {
   timestamp: string | null;
   message?: string;
   question?: Question;
+  actor?: ActivityAttribution;
   operations: Operation[];
 };
+
+export interface ActivityAttribution {
+  component: string;
+  activity: string;
+}
+
+type ObservedActor = Partial<ActivityAttribution>;
+type MessageOrQuestion = Pick<TimelineEntry, 'message' | 'question' | 'actor'>;
 
 export interface Operation {
   key: string;
@@ -29,12 +38,14 @@ export interface Operation {
   state?: string;
   tool?: string;
   check?: CheckResult;
+  actor?: ActivityAttribution;
 }
 
 type Observation = {
   phase?: string;
   message?: string;
   onboardingSelection?: { drafts: { title: string }[] };
+  nativeStarted?: ObservedActor & { activation: string };
   nativeEvent?: {
     activation?: string;
     event?: {
@@ -48,7 +59,9 @@ type Observation = {
       };
     };
   };
-  operation?: { name?: string; call?: string; phase?: string };
+  operation?: ObservedActor & { name?: string; call?: string; phase?: string };
+  scope?: { owner?: string; activity?: string };
+  actor?: ObservedActor;
   check?: CheckResult;
   clarification?: Question;
   outcome?: { kind?: string; reason?: string; summary?: string };
@@ -60,6 +73,7 @@ class TimelineProjection {
   private readonly calls = new Map<string, Operation>();
   private readonly questions = new Map<string, TimelineEntry>();
   private readonly messages = new Map<string, TimelineEntry>();
+  private readonly activations = new Map<string, ActivityAttribution>();
   private count = 0;
   private retainedDrafts?: { title: string }[];
   private readonly window = new AttemptWindow();
@@ -81,47 +95,76 @@ class TimelineProjection {
     this.questions.clear();
     this.retainedDrafts = undefined;
     this.messages.clear();
+    this.activations.clear();
   }
 
   /** Route status messages, questions and check results to their shared timeline. */
   private append(frame: TimelineFrame) {
     const observation = frame.observation as Observation | null;
     if (!observation || objectiveReviewNotice(observation)) return;
-    const { clarification, message, nativeEvent, outcome, onboardingSelection } = observation;
-    if (clarification?.question) return this.addQuestion(frame, clarification);
+    const { clarification, message, outcome, onboardingSelection, nativeStarted } = observation;
+    if (nativeStarted) {
+      const actor = observedActor(nativeStarted);
+      if (actor) this.activations.set(nativeStarted.activation, actor);
+    }
+    const actor = this.attribution(observation);
+    if (clarification?.question) return this.addQuestion(frame, clarification, actor);
     if (onboardingSelection?.drafts?.length) {
       this.retainedDrafts = onboardingSelection.drafts;
       return;
     }
+    if (this.addNativeMessage(frame, observation.nativeEvent, actor)) return;
+    if (message || outcome) {
+      this.add(frame, { actor, message: message ?? outcomeMessage(outcome, this.retainedDrafts) });
+      return;
+    }
+    this.addOperation(frame, observation, actor);
+  }
+
+  /** Attribute observations from the captured activation or the operation's explicit scope. */
+  private attribution({ nativeEvent, nativeStarted, operation, scope, actor }: Observation) {
+    if (nativeEvent?.activation) return this.activations.get(nativeEvent.activation);
+    return observedActor(
+      actor ?? operation ?? nativeStarted ?? { component: scope?.owner, activity: scope?.activity },
+    );
+  }
+
+  /** Update streaming text without moving it out of its original activation and timeline group. */
+  private addNativeMessage(
+    frame: TimelineFrame,
+    nativeEvent: Observation['nativeEvent'],
+    actor?: ActivityAttribution,
+  ) {
     const item = nativeEvent?.event?.item;
     const text = item?.type === 'agent_message' ? item.text : undefined;
-    if (text) {
-      const identity = item?.id && JSON.stringify([nativeEvent?.activation, item.id]);
-      const entry = identity && this.messages.get(identity);
-      if (entry) entry.message = text;
-      else {
-        const message = this.add(frame, { message: text });
-        if (identity) this.messages.set(identity, message);
-      }
-      return;
+    if (!text) return false;
+    const identity = item?.id && JSON.stringify([frame.run, nativeEvent?.activation, item.id]);
+    const entry = identity && this.messages.get(identity);
+    if (entry) entry.message = text;
+    else {
+      const message = this.add(frame, { message: text, actor });
+      if (identity) this.messages.set(identity, message);
     }
-    if (message || outcome) {
-      this.add(frame, { message: message ?? outcomeMessage(outcome, this.retainedDrafts) });
-      return;
-    }
-    this.addOperation(frame, observation);
+    return true;
   }
 
   /** Update a question in place when its journaled decision arrives. */
-  private addQuestion(frame: TimelineFrame, clarification: Question) {
-    const id = JSON.stringify([clarification.scope, clarification.question]);
+  private addQuestion(frame: TimelineFrame, clarification: Question, actor?: ActivityAttribution) {
+    const id =
+      clarification.review?.id ?? JSON.stringify([clarification.scope, clarification.question]);
     const entry = this.questions.get(id);
-    if (entry) entry.question = clarification;
-    else this.questions.set(id, this.add(frame, { question: clarification }));
+    if (entry) {
+      entry.question = clarification;
+      entry.actor ??= actor;
+    } else this.questions.set(id, this.add(frame, { question: clarification, actor }));
   }
 
   /** Keep a tool's final state at the position where it first appeared. */
-  private addOperation(frame: TimelineFrame, observation: Observation) {
+  private addOperation(
+    frame: TimelineFrame,
+    observation: Observation,
+    actor?: ActivityAttribution,
+  ) {
     const { operation, check, nativeEvent } = observation;
     const item = nativeEvent?.event?.item;
     const builtin = item?.type === 'command_execution' || item?.type === 'web_search';
@@ -141,17 +184,24 @@ class TimelineProjection {
       state,
       tool: operation?.name,
       check,
+      actor,
     };
     this.calls.set(key, entry);
     (this.entries.at(-1) ?? this.add(frame)).operations.push(entry);
   }
 
   /** Start one status group at the original observation time. */
-  private add(frame: TimelineFrame, value: { message?: string; question?: Question } = {}) {
+  private add(frame: TimelineFrame, value: MessageOrQuestion = {}) {
     const entry = { key: frame.sequence, timestamp: frame.timestamp, operations: [], ...value };
     this.entries.push(entry);
     return entry;
   }
+}
+
+function observedActor(actor: ObservedActor): ActivityAttribution | undefined {
+  return actor.component && actor.activity
+    ? { component: actor.component, activity: actor.activity }
+    : undefined;
 }
 
 function objectiveReviewNotice({ phase, message, outcome }: Observation) {

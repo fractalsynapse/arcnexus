@@ -100,6 +100,9 @@
 .arc-guide-row[data-changed] a {
   font-weight: 700;
 }
+.arc-guide-row a {
+  overflow-wrap: anywhere;
+}
 .arc-guide-changed {
   color: var(--link);
   grid-column: 1 / -1;
@@ -146,6 +149,11 @@
 .arc-plan-event time,
 .arc-plan-event small {
   color: var(--muted);
+}
+.arc-event-activity {
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: 600;
 }
 .arc-plan-timeline .arc-disclosure ul {
   list-style: none;

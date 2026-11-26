@@ -1,16 +1,18 @@
 import { createElement as h } from 'react';
 import { DialogButton, JsonView } from '../../../../packages/ui/src/index.js';
 import { OperationDetail } from './operation-detail.js';
+import { EventActivity } from './event-activity.js';
 import type { Operation } from './timeline-groups.js';
 
 /** Show the recorded result inline and leave the complete payload on demand. */
 export function OperationRow({ entry, execution }: { entry: Operation; execution?: string }) {
-  const { check, state, tool, label, sequence } = entry;
+  const { check, state, tool, label, sequence, actor } = entry;
   const result = operationState(entry);
   return h(
     'li',
     { className: 'arc-timeline-operation', 'data-operation-state': result.tone },
     h('code', null, label),
+    actor && h(EventActivity, { actor }),
     h('small', null, result.label),
     execution && tool && h(OperationDetail, { sequence, execution, operation: tool, phase: state }),
     check &&

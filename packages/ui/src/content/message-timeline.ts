@@ -4,6 +4,7 @@ import { LocalTime } from './local-time.js';
 export interface MessagePoint {
   key: string;
   timestamp: string | null;
+  metadata?: ReactNode;
   content: ReactNode;
 }
 
@@ -13,11 +14,17 @@ export function MessageTimeline({ messages }: { messages: readonly MessagePoint[
   return h(
     'ol',
     { className: 'arc-message-timeline' },
-    messages.map(({ key, timestamp, content }) =>
+    messages.map(({ key, timestamp, metadata, content }) =>
       h(
         'li',
         { key },
-        h(LocalTime, { timestamp }),
+        (timestamp || metadata) &&
+          h(
+            'header',
+            { className: 'arc-message-timeline-meta' },
+            h(LocalTime, { timestamp }),
+            metadata,
+          ),
         typeof content === 'string' ? h('p', null, content) : content,
       ),
     ),
