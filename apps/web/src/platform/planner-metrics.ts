@@ -10,7 +10,15 @@ export interface PlanMetrics {
 }
 
 /** Render the measured values and fetch tool counts only when requested. */
-export function PlannerMetrics({ value, path }: { value: PlanMetrics; path: string }) {
+export function PlannerMetrics({
+  value,
+  path,
+  refresh,
+}: {
+  value: PlanMetrics;
+  path: string;
+  refresh?: string;
+}) {
   const input = value.usage?.input_tokens?.reported;
   const output = value.usage?.output_tokens?.reported;
   const cached = value.usage?.cached_input_tokens?.reported;
@@ -29,7 +37,7 @@ export function PlannerMetrics({ value, path }: { value: PlanMetrics; path: stri
         ['Token cache rate', rate],
       ],
     }),
-    h(Disclosure, { label: 'Tools by frequency' }, h(ToolFrequency, { path })),
+    h(Disclosure, { label: 'Tools by frequency' }, h(ToolFrequency, { path, refresh })),
   );
 }
 
@@ -37,8 +45,8 @@ function seconds(value?: number | null) {
   return value == null ? 'Unavailable' : (value / 1000).toFixed(1) + ' s';
 }
 
-function ToolFrequency({ path }: { path: string }) {
-  const result = useResource<{ entries: Array<{ name: string; calls: number }> }>(path);
+function ToolFrequency({ path, refresh }: { path: string; refresh?: string }) {
+  const result = useResource<{ entries: Array<{ name: string; calls: number }> }>(path, refresh);
   if (result.error) return h('p', { role: 'alert' }, result.error);
   if (!result.value) return null;
   return result.value.entries.length

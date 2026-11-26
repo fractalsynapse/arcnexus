@@ -207,6 +207,10 @@ test('an open tool inspector loads input on demand and refreshes when the live r
   await detail.getByText('".arc/goals/fixture-goal.md"', { exact: true }).waitFor();
   fixture.finish();
   await detail.getByRole('heading', { name: 'Output', exact: true }).waitFor();
+  assert.equal(
+    await timeline.locator('[data-operation-state="passed"]').getByText('Completed').count(),
+    1,
+  );
   assert.equal(fixture.reads(), 2);
 });
 

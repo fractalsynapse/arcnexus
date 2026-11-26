@@ -25,7 +25,14 @@ type Observation = {
   nativeEvent?: {
     activation?: string;
     event?: {
-      item?: { id?: string; type?: string; tool?: string; text?: string; status?: string };
+      item?: {
+        id?: string;
+        type?: string;
+        tool?: string;
+        text?: string;
+        status?: string;
+        exit_code?: number;
+      };
     };
   };
   operation?: { name?: string; call?: string; phase?: string };
@@ -89,7 +96,7 @@ class TimelineProjection {
     const call = operation?.call ?? (builtin ? item?.id : undefined);
     const key = call ? JSON.stringify([frame.run, call, nativeEvent?.activation]) : frame.sequence;
     const prior = this.calls.get(key);
-    const state = operation?.phase ?? item?.status;
+    const state = operation?.phase ?? (item?.exit_code ? 'failed' : item?.status);
     if (prior) {
       prior.state = state;
       return;

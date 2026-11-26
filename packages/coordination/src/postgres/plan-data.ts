@@ -16,6 +16,7 @@ const currentSchema = planReference.extend({
 });
 const outcomeSchema = planReference.extend({
   outcome: z.unknown().nullable(),
+  report: z.unknown().optional(),
   changedPaths: z.array(z.string()),
   issue: z.string().optional(),
   pull: z.object({ url: z.string(), state: z.string().optional() }).optional(),
@@ -42,8 +43,7 @@ function projections(database: Client, resolve: ResolveJournalProject) {
     ),
     outcome: dataOperation(selection, outcomeSchema, async (scope, { execution }) => {
       const { task, events } = await load(scope, execution);
-      const outcome = lastOutcome(events, execution);
-      return { ...task, outcome, ...guideChanges(events) };
+      return { ...task, ...planResult(events, execution), ...guideChanges(events) };
     }),
     'tool-counts': dataOperation(selection, toolCountsSchema, async (scope, { execution }) =>
       frequencies((await load(scope, execution)).events),
@@ -99,13 +99,19 @@ async function planEvents(
   return { task, events: (await readImportedTimeline(database, remote, execution)).events };
 }
 
-function lastOutcome(events: JournalEvent[], execution: string) {
-  return (
-    events
-      .filter((event) => event.taskID === execution)
-      .map((event) => (event.observation as { outcome?: unknown } | null)?.outcome)
-      .findLast((item) => item !== undefined) ?? null
-  );
+function planResult(events: JournalEvent[], execution: string) {
+  let outcome: unknown = null;
+  let report: unknown;
+  for (const frame of events) {
+    if (frame.taskID !== execution) continue;
+    const event = frame.observation as {
+      outcome?: unknown;
+      plannerProposal?: { proposal?: unknown };
+    } | null;
+    if (event?.outcome !== undefined) outcome = event.outcome;
+    if (event?.plannerProposal?.proposal !== undefined) report = event.plannerProposal.proposal;
+  }
+  return { outcome, report };
 }
 
 function measured(events: JournalEvent[], execution: string) {

@@ -43,6 +43,7 @@ export { WorkspaceLink } from './controls/workspace-link.js';
 export { useWorkspaceRoute } from './layouts/frame/workspace-route.js';
 export { DiffView, type FileDelta } from './content/diff-view.js';
 export { JsonView } from './content/json-view.js';
+export { AgentReport } from './content/agent-report.js';
 export { MarkdownView } from './content/markdown-view.js';
 export { MarkdownEditor } from './content/markdown-editor.js';
 export { Readouts } from './content/readouts.js';

@@ -2,17 +2,28 @@ import { createElement as h } from 'react';
 import { ExternalLink } from '../../../../packages/ui/src/index.js';
 import { CommitLink, issueLink, pullLink } from './github-links.js';
 import type { PlanOutcome } from './plan-resource.js';
+import { PlannerReport } from './planner-report.js';
 
 /** Present the recorded Plan disposition and its GitHub references. */
-export function PlannerOutcome({ value, remote }: { value: PlanOutcome; remote?: string }) {
-  const { active, outcome, changedPaths } = value;
+export function PlannerOutcome({
+  value,
+  remote,
+  project,
+  revision,
+}: {
+  value: PlanOutcome;
+  remote?: string;
+  project: string;
+  revision?: string;
+}) {
+  const { active, outcome, changedPaths, report } = value;
   const merged = outcome?.kind === 'merged';
   return h(
     'div',
     { className: 'arc-platform-stack' },
     h('strong', null, active ? 'Active' : (outcome?.kind ?? 'Recorded')),
     h(OutcomeLinks, { value, remote }),
-    outcome?.summary && h('p', null, outcome.summary),
+    outcome?.summary && outcome.summary !== report?.summary && h('p', null, outcome.summary),
     outcome?.reason && h('p', null, outcome.reason),
     merged && h('p', null, 'Merged ', h(CommitLink, { remote, revision: outcome.commit })),
     !!changedPaths?.length &&
@@ -21,6 +32,7 @@ export function PlannerOutcome({ value, remote }: { value: PlanOutcome; remote?:
         null,
         changedPaths.length + (changedPaths.length === 1 ? ' file changed' : ' files changed'),
       ),
+    report && h(PlannerReport, { report, project, revision }),
   );
 }
 

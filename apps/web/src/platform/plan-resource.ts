@@ -7,12 +7,15 @@ import {
 } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { PlanReference } from '../../../../packages/coordination/src/postgres/plan-records.js';
+import type { Proposal } from '../../../../packages/planner/src/proposal.js';
 import type { CommandBinding, CommandState } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 import { usePlatformSession } from './session.js';
+import { usePlanChanges } from './plan-changes.js';
 
 export interface PlanOutcome {
   active: boolean;
+  report?: Proposal;
   changedPaths?: readonly string[];
   issue?: string;
   pull?: { url: string; state?: string } | null;
@@ -42,16 +45,15 @@ function usePlanSelection(binding: CommandBinding) {
   const { project } = usePlatformSession();
   const command = useSyncExternalStore(binding.subscribe, binding.getSnapshot);
   const [selected, select] = useState('');
-  const refresh = command.command === 'Plan' ? [command.execution, command.status].join(':') : '';
   const root = project && '/projects/' + encodeURIComponent(project.id);
   const plans = root && root + '/plan-executions';
-  const history = useResource<{ entries: PlanReference[] }>(plans, refresh);
+  const { history, updates, refresh } = usePlanHistory(plans, command);
   const entries = history.value?.entries;
-  const live = selected ? undefined : runningPlan(command);
-  const execution = selected || live || entries?.[0]?.execution;
+  const running = runningPlan(command);
+  const execution = selected || running || entries?.[0]?.execution;
   const recorded = entries?.find((entry) => entry.execution === execution);
-  const plan = plans && recorded ? plans + '/' + encodeURIComponent(recorded.execution) : undefined;
-  const events = plan ?? (root && live && root + '/executions/' + encodeURIComponent(live));
+  const active = Boolean(recorded?.active || (execution && execution === running));
+  const events = plans && execution ? plans + '/' + encodeURIComponent(execution) : undefined;
   return {
     project,
     root,
@@ -60,12 +62,21 @@ function usePlanSelection(binding: CommandBinding) {
     selected,
     select,
     execution,
+    active,
     recorded,
-    plan,
+    plan: recorded ? events : undefined,
     events,
     command,
-    refresh: !selected || selected === command.execution ? refresh : undefined,
+    updates,
+    refresh: active ? refresh : (recorded?.updatedAt ?? undefined),
   };
+}
+
+function usePlanHistory(plans: string | undefined, command: CommandState) {
+  const updates = usePlanChanges(plans);
+  const receipt = command.command === 'Plan' ? [command.execution, command.status].join(':') : '';
+  const refresh = receipt + ':' + updates.epoch;
+  return { history: useResource<{ entries: PlanReference[] }>(plans, refresh), updates, refresh };
 }
 
 function runningPlan(command: CommandState) {

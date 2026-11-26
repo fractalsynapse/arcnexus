@@ -134,6 +134,11 @@
   min-inline-size: 0;
   gap: 8px;
 }
+.arc-plan-timeline {
+  max-block-size: calc(100dvh - var(--nav-height) - var(--pad));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 .arc-plan-event {
   padding: 9px;
   background: var(--quiet);
@@ -155,13 +160,15 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 7px;
-  padding-block: 4px;
+  padding: 4px 7px;
+  border-inline-start: 2px solid var(--operation-accent, var(--line));
+  background: color-mix(in srgb, var(--quiet), var(--operation-accent, var(--quiet)) 13%);
 }
-.arc-timeline-operation [data-check-state='passed'] {
-  color: light-dark(#186044, #a2e7bd);
+.arc-timeline-operation[data-operation-state='passed'] {
+  --operation-accent: light-dark(#186044, #a2e7bd);
 }
-.arc-timeline-operation [data-check-state='other'] {
-  color: var(--muted);
+.arc-timeline-operation[data-operation-state='failed'] {
+  --operation-accent: light-dark(#a13843, #ffabb3);
 }
 .arc-github-record {
   display: grid;

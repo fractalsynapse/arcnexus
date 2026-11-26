@@ -73,13 +73,23 @@ async function projectStream(
   data: Data,
   scope: DataScope,
   request: Request,
-  kind: keyof LiveResources,
+  kind: keyof LiveResources | 'plan-changes',
   input: Record<string, unknown>,
   live: LiveResources,
 ) {
-  const changes = live[kind];
+  const changes = kind === 'commands' ? live.commands : live.timeline;
   if (!changes) return problem(406, 'Live resource unavailable');
   if (kind === 'timeline') return streamTimeline(data, scope, input, request, changes);
+  if (kind === 'plan-changes') {
+    if (!(await data.allows(scope, 'plan-executions', 'list')))
+      return problem(403, 'Operation unavailable');
+    return scopedEventStream(
+      request,
+      scope,
+      changes,
+      async () => 'event: plan-change\ndata: null\n\n',
+    );
+  }
   return scopedEventStream(request, scope, changes, async () => {
     const result = await data.invoke(scope, 'workflow-requests', 'current', input);
     return 'event: command\ndata: ' + JSON.stringify(result) + '\n\n';

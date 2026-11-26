@@ -6,6 +6,32 @@
   border-radius: 6px;
   overflow: hidden;
 }
+.arc-agent-report,
+.arc-agent-report > section {
+  display: grid;
+  gap: var(--gap);
+}
+.arc-agent-report > section {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--gap);
+}
+.arc-agent-report :is(ol, ul) {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 1.4em;
+}
+.arc-agent-report :is(blockquote, pre) {
+  margin: 0;
+  padding: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--quiet);
+  border-inline-start: 2px solid var(--line);
+}
+.arc-agent-summary {
+  font-weight: 640;
+}
 .arc-diff {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);

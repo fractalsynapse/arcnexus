@@ -4,7 +4,7 @@ type Route = {
   operation: string;
   method?: 'POST';
   parameter?: string;
-  stream?: 'timeline' | 'commands';
+  stream?: 'timeline' | 'commands' | 'plan-changes';
   query?: readonly string[];
 };
 
@@ -60,6 +60,7 @@ export const routes: readonly Route[] = [
     resource: 'plan-executions',
     operation: 'list',
     query: [],
+    stream: 'plan-changes',
   },
   {
     path: '/plan-executions/current',

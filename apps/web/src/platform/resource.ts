@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Resource<T> = { path?: string; value?: T; error?: string };
 
@@ -59,22 +59,59 @@ function sharedRead(path: string) {
 /** Fetch only while a visible consumer holds this project-scoped resource. */
 export function useResource<T>(path: string | undefined, refresh?: unknown) {
   const [state, setState] = useState<Resource<T>>({});
+  const reader = useRef<ResourceReader<T> | undefined>(undefined);
   useEffect(() => {
     if (!path) return;
-    let mounted = true;
-    const read = sharedRead(path);
-    void read.value.then(
-      (value) => {
-        if (mounted) setState({ path, value: value as T });
-      },
-      (error: Error) => {
-        if (mounted) setState({ path, error: error.message });
-      },
-    );
+    const observe = new ResourceReader<T>(path, setState);
+    reader.current = observe;
     return () => {
-      mounted = false;
-      read.release();
+      reader.current = undefined;
+      observe.close();
     };
-  }, [path, refresh]);
+  }, [path]);
+  useEffect(() => reader.current?.reload(), [path, refresh]);
   return state.path === path ? state : {};
+}
+
+/** Coalesce notices during a read and fetch again afterwards so bursts cannot starve updates. */
+class ResourceReader<T> {
+  private pending?: ReturnType<typeof sharedRead>;
+  private dirty = false;
+  private closed = false;
+
+  /** Publish only snapshots for the path this consumer mounted. */
+  constructor(
+    private readonly path: string,
+    private readonly publish: (state: Resource<T>) => void,
+  ) {}
+
+  /** Keep the in-flight request and remember whether it needs one trailing refresh. */
+  reload() {
+    if (this.pending) {
+      this.dirty = true;
+      return;
+    }
+    const read = sharedRead(this.path);
+    this.pending = read;
+    this.dirty = false;
+    void read.value.then(
+      (value) => this.complete({ path: this.path, value: value as T }),
+      (error: Error) => this.complete({ path: this.path, error: error.message }),
+    );
+  }
+
+  /** Release this consumer only, cancelling the shared request when it was the last. */
+  close() {
+    this.closed = true;
+    this.pending?.release();
+  }
+
+  /** Publish the returned snapshot before issuing any queued read. */
+  private complete(state: Resource<T>) {
+    if (this.closed) return;
+    this.pending?.release();
+    this.pending = undefined;
+    this.publish(state);
+    if (this.dirty) this.reload();
+  }
 }

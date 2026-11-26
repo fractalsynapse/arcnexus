@@ -183,6 +183,32 @@ async function append(
   }
 }
 
+test(
+  'Plan change notices follow committed journal writes without sending the journal',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token, accept: 'text/event-stream' };
+    const scope = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(scope);
+    const record = await platform.context.catalog.add(scope.principal, { remote: repository });
+    const url = 'http://arc.test/projects/' + record.id + '/plan-executions';
+    await platform.context.use(apiPlugin(platform.authenticate, platform.followTimeline));
+    const response = await platform.context.api(new Request(url, { headers }));
+    assert.equal(response.headers.get('content-type'), 'text/event-stream');
+    const reader = response.body!.getReader();
+    const notice = 'event: plan-change\ndata: null\n\n';
+    const decode = () => reader.read().then(({ value }) => new TextDecoder().decode(value));
+    assert.equal(await decode(), notice);
+    await append(repository, randomUUID(), 1, 'A private journal message');
+    assert.equal(await decode(), notice);
+    await reader.cancel();
+  },
+);
+
 async function frame(reader: ReadableStreamDefaultReader<Uint8Array>) {
   const result = await reader.read();
   assert.equal(result.done, false);
@@ -268,6 +294,7 @@ test(
     });
     await append(repository, execution, 2, 'finished', {
       outcome: { kind: 'planned', summary: 'Targets mapped' },
+      plannerProposal: { proposal: { summary: 'Compared the accepted goals.' } },
     });
     await platform.context.use(apiPlugin(platform.authenticate));
     const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
@@ -334,7 +361,9 @@ async function verifyPlanPanelResponses(
   assert.equal(current.status, 200);
   assert.equal((await current.json()).execution, execution);
   const outcome = await context.api(new Request(address + execution + '/outcome', { headers }));
-  assert.equal((await outcome.json()).outcome.summary, 'Targets mapped');
+  const plan = await outcome.json();
+  assert.equal(plan.outcome.summary, 'Targets mapped');
+  assert.equal(plan.report.summary, 'Compared the accepted goals.');
   const metrics = await context.api(new Request(address + execution + '/metrics', { headers }));
   assert.equal(metrics.status, 200);
   assert.ok('wallElapsedMs' in (await metrics.json()));

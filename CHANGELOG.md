@@ -4,6 +4,8 @@
 
 ### Added
 
+- Refresh mounted Plan panels on committed journal changes and show the retained Planner assessment in the outcome panel (#746).
+
 - Save site schemes, page layouts and per-display color choices in PostgreSQL for the platform operator (#746).
 
 - Offer optional full-width Top and Bottom display regions in every desktop workspace layout (#746).
@@ -27,6 +29,8 @@
 - Let isolated gateways obtain repository-scoped read tokens from a GitHub App and provision HTTPS checkouts with the system CA bundle (#706).
 
 ### Changed
+
+- Follow new Plan events while the reader is at the bottom, and color operation rows by recorded status (#746).
 
 - Restore full-width header dividers and content spacing on shared display panels (#746).
 

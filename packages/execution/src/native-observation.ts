@@ -87,7 +87,7 @@ function eventMetadata(event: unknown) {
   const value = event as {
     type?: unknown;
     usage?: unknown;
-    item?: { id?: unknown; type?: unknown; text?: unknown; tool?: unknown };
+    item?: NativeItem;
   };
   return {
     type: value.type,
@@ -96,12 +96,23 @@ function eventMetadata(event: unknown) {
   };
 }
 
-function itemMetadata(item: { id?: unknown; type?: unknown; text?: unknown; tool?: unknown }) {
+interface NativeItem {
+  id?: unknown;
+  type?: unknown;
+  text?: unknown;
+  tool?: unknown;
+  status?: unknown;
+  exit_code?: unknown;
+}
+
+function itemMetadata(item: NativeItem) {
   return {
     id: item.id,
     type: item.type,
     ...(item.type === 'agent_message' && typeof item.text === 'string' && { text: item.text }),
     ...(item.type === 'mcp_tool_call' && typeof item.tool === 'string' && { tool: item.tool }),
+    ...(typeof item.status === 'string' && { status: item.status }),
+    ...(typeof item.exit_code === 'number' && { exit_code: item.exit_code }),
   };
 }
 
