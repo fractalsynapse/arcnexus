@@ -2,6 +2,8 @@
 
 **Implementation checkpoint.** The exact contract amendment is applied. The Plan recommendation and onboarding flow is implemented on the issue branch.
 
+[Proposed follow-up](unified-plan-documentation.md) removes the draft-only path and adds documentation directories to project settings.
+
 ## Exact amendment for approval
 
 Review the [exact patch](../../../../packages/architecture/docs/proposals/plan-objective-recommendations.patch) and its [manifest](../../../../packages/architecture/docs/proposals/plan-objective-recommendations.json). The manifest records the Git baseline and the before and after SHA-256 digests for every file.
