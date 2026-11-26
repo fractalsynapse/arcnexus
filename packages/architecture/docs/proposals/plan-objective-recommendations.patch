@@ -1,0 +1,1158 @@
+diff --git a/.agents/skills/arcnexus-release/SKILL.md b/.agents/skills/arcnexus-release/SKILL.md
+index dff98ee93032b31f393a460ca645697dc225e1a0..c87b8083a39722b24712aed4a7c1b08aad310379 100644
+--- a/.agents/skills/arcnexus-release/SKILL.md
++++ b/.agents/skills/arcnexus-release/SKILL.md
+@@ -68,7 +68,7 @@ main approval and merge, tags, hotfix direction and production publication.
+
+ Continuous refinement delivers approved implementation to staging through this
+ same path. Routine repair and authorized staging integration add no human
+-approval gate. Objectives, goals and architecture retain their exact reviewed
+-approval. Main integration, tags and releases remain separate maintainer actions.
++approval gate. Objectives and architecture retain their exact human approval. Goal changes use
++independent review and verified staging. Main integration, tags and releases remain separate maintainer actions.
+ Bootstrap only a named capability preventing platform-led delivery and follow it
+ with a real demonstration through the platform.
+diff --git a/.arc/architecture/components/cli-app.yaml b/.arc/architecture/components/cli-app.yaml
+index 219f4d6d817d9a5ded187d885b352e7dc51d3092..51e5d4c023101d342db24513154ad16f63a45a41 100644
+--- a/.arc/architecture/components/cli-app.yaml
++++ b/.arc/architecture/components/cli-app.yaml
+@@ -37,7 +37,7 @@ purpose: |
+
+   An application question is a structured interaction, not an invitation for the parser to guess the user's intent. The CLI must deliver the complete prompt, collect the supported answer form, and return the complete answer to the application. Multiline input, explicit termination, EOF and interruption need deliberate handling. A temporary loss of the foreground process cannot erase an already recorded answer or cause a clarified objective to be asked again as if the user had never responded.
+
+-  Human approval concerns objectives, goals and architecture. The app presents the exact retained proposal and its relevant baseline through the application's decision interface. An affirmative answer applies only to that proposal; it is not permission for changed bytes, a different baseline or unrelated future modifications. Silence, an unknown answer and elapsed time provide no approval. Noninteractive execution must report the durable pending decision, not auto-accept it or invent a default response so a batch can finish.
++  Human approval concerns objectives and architecture. Goal changes follow independently reviewed staging delivery. The app presents the exact retained proposal and its relevant baseline through the application's decision interface. An affirmative answer applies only to that proposal; it is not permission for changed bytes, a different baseline or unrelated future modifications. Silence, an unknown answer and elapsed time provide no approval. Noninteractive execution must report the durable pending decision, not auto-accept it or invent a default response so a batch can finish.
+
+   Ordinary implementation, local tool correction, check execution, milestone sequencing and authorized staging delivery do not acquire a new human gate merely because they are visible at the terminal. The app must distinguish a guide decision from an unavailable external prerequisite such as missing credentials or a provider state that cannot presently be resolved. The latter is a named hold with an actionable reason, not a request to approve bypassing the failed requirement. This keeps high-level human guidance meaningful without turning every engineering correction into a conversation.
+
+@@ -47,7 +47,7 @@ purpose: |
+
+   The app delegates transport-neutral behavior to Commands. Commands in turn uses the responsible plugins rather than interpreting terminal strings inside Workflow. Task run with an explicit goal enters the normal task service. Bare task run captures the approved goal inventory and assesses it sequentially in priority order. A passing existing measure does not authorize the gateway to skip the Director. The returned outcome must say whether a goal was assessed without change or delivered through verified staging integration.
+
+-  Task plan with an objective preserves that human submission and supports clarification. Bare task plan explores existing direction and implementation without synthesizing a human objective from an internal description. Architecture update assesses accepted direction and previous findings, returns a justified no-change assessment or retains an exact proposed architecture batch, and delivers approved prerequisites before Run. Refine composes Plan, Architect and every captured approved goal under Workflow's durable sequential lifecycle. The app exposes these capabilities without privately reconstructing them.
++  Task plan with an objective preserves that human submission and supports clarification. Bare task plan explores existing direction. The recommendation flag selects documentation-based objective recommendations. The CLI translates these forms through the same Commands contract. Architecture update assesses accepted direction and previous findings, returns a justified no-change assessment or retains an exact proposed architecture batch, and delivers approved prerequisites before Run. Refine composes Plan, Architect and every captured approved goal under Workflow's durable sequential lifecycle. The app exposes these capabilities without privately reconstructing them.
+
+   The rounds option is an explicit user-selected extent for a refinement invocation, not an agent-side retry budget or content restriction. It follows the accepted positive-integer contract, including the default and refusal of changed totals while an invocation is unfinished. The CLI must not add a second counter that loses phase position on restart. Standalone commands continue to use the same application capabilities; refinement is not a separate implementation of planning or tasks.
+
+diff --git a/.arc/architecture/components/commands.yaml b/.arc/architecture/components/commands.yaml
+index 64c43d66af2887f204b6be319288319a8e36fa46..b0bac56c5564240d009e62bd329726cf6bd706bc 100644
+--- a/.arc/architecture/components/commands.yaml
++++ b/.arc/architecture/components/commands.yaml
+@@ -181,7 +181,7 @@ purpose: |
+   Architecture and Execution own coherent resolution and enforcement, while
+   Workflow owns the phase and activity position.
+
+-  Architecture proposals and objectives/goals retain human approval. Ordinary
++  Architecture proposals and objective changes retain human approval. Ordinary
+   implementation correction, local check repair and authorized staging integration
+   do not add a gate. A real unavailable external prerequisite remains a named
+   domain hold. The SDK should convey the exact missing decision or capability
+diff --git a/.arc/architecture/components/coordination.yaml b/.arc/architecture/components/coordination.yaml
+index b60b1bd4f2844955b74576a39670b4222abc0180..7f6bdefe3a5f56c83dd5af30933bbb5541cdd3de 100644
+--- a/.arc/architecture/components/coordination.yaml
++++ b/.arc/architecture/components/coordination.yaml
+@@ -188,7 +188,7 @@ purpose: |
+
+   ## Approval and evolving authority remain attributable
+
+-  Human approval binds exact content and baseline for objectives, goals and
++  Human approval binds exact content and baseline for objectives and
+   architecture. Retain the proposal, question, decision and original source
+   identities. Missing, unknown, declined or mismatched approval cannot advance a
+   protected application cursor. A candidate-side note or registry change is not
+diff --git a/.arc/architecture/components/delivery.yaml b/.arc/architecture/components/delivery.yaml
+index 72912cbbb47690e16c9caa68e7ab40044d092b46..0cb1112994d7ead742c2dc63fc73736ac7e26681 100644
+--- a/.arc/architecture/components/delivery.yaml
++++ b/.arc/architecture/components/delivery.yaml
+@@ -31,7 +31,7 @@ purpose: |
+
+   Configured CI and review are real delivery prerequisites. Pending results leave publication pending. A provider observation that cannot complete is unavailable, not passed and not proof the record is absent. A missing credential, inaccessible repository or irreversible remote state becomes a named hold with the required action. Delivery preserves the candidate and report rather than silently skipping the gate.
+
+-  These prerequisites differ from high-level human guide approval. Objectives, goals and architecture require exact human decisions. Routine publication retries under existing authority do not add a new approval prompt. Conversely, a human's general wish to finish does not authorize bypassing an unavailable required check. The system must express the actual blocker clearly enough that the right responsible party can act.
++  These prerequisites differ from high-level human guide approval. Objectives and architecture require exact human decisions. Goal changes require independent review and verified staging. Routine publication retries under existing authority do not add a new approval prompt. Conversely, a human's general wish to finish does not authorize bypassing an unavailable required check. The system must express the actual blocker clearly enough that the right responsible party can act.
+
+   A model's independent engineering verdict is not a GitHub review approval. Delivery can observe configured review and request an authorized verified-head merge, but cannot submit an approval to satisfy its own gate. An external review requirement may be absent under the project's accepted policy, present and satisfied, or pending; the actual rule matters. Do not hardcode a review ceremony or assume a waiver from unrelated work.
+
+diff --git a/.arc/architecture/components/direction.yaml b/.arc/architecture/components/direction.yaml
+index f9131b8fe66a953fa8c4fe90083f56759dcad02d..bcb9ec121631a924efe19c728f574db33f8c19ff 100644
+--- a/.arc/architecture/components/direction.yaml
++++ b/.arc/architecture/components/direction.yaml
+@@ -265,7 +265,7 @@ purpose: |
+
+   The Director Agent remains read-only. Its plan can describe required changes
+   but cannot write implementation, contracts, the registry or permissions. Human
+-  architectural approval governs objectives, goals and architecture. Routine plan
++  approval governs objectives and architecture. Routine plan
+   sequencing under that accepted guidance and authorized verified staging delivery
+   do not need another human gate. Main integration and release are separate
+   maintainer concerns, not effects a task plan can grant itself.
+diff --git a/.arc/architecture/components/execution.yaml b/.arc/architecture/components/execution.yaml
+index c34349758e75590b13494a09320a97f67360c8d6..60b6c364daedbb2c447f1bf8539cd7be9becbcbc 100644
+--- a/.arc/architecture/components/execution.yaml
++++ b/.arc/architecture/components/execution.yaml
+@@ -452,7 +452,7 @@ activities:
+         unavailable. Attempt the actual mapped operation for a legitimate owned effect
+         and use its exact response to decide what to do next.
+
+-        The human governs objectives, goals and architecture. Implementation corrections
++        The human approves objective and architecture changes. Implementation corrections
+         within already approved intent ordinarily need no additional human gate. A new
+         permission, locked-contract change, different accepted architectural intent or
+         unapproved owner does need that route. Distinguish uncertainty about how to
+diff --git a/.arc/architecture/components/manager.yaml b/.arc/architecture/components/manager.yaml
+index b6e4a3162816701723889a810bcd6bcb99e90796..644d3da6a9625980e506bd465b8a8a08024e536b 100644
+--- a/.arc/architecture/components/manager.yaml
++++ b/.arc/architecture/components/manager.yaml
+@@ -43,7 +43,7 @@ purpose: |
+
+   Candidate edits cannot authorize their own adoption. An agent that changes AGENTS.md, a skill or a referenced standard has changed source content, not the host's permission. The host validates the approved proposal and captures the accepted source for the next activation. A new directive saying that protected files may now be edited does not defeat checked-edit confinement. This separation is essential when ArcNexus develops itself.
+
+-  Human decisions govern objectives, goals and architecture. Manager does not create an extra approval for every typo, implementation correction or check. At the same time, a changed instruction that materially changes authority or an approved architectural obligation cannot be disguised as harmless documentation cleanup. The steward must name the conflict and route the exact proposal through the existing high-level decision path. Existing user authorization persists; repeated requests for an already granted decision add no safety.
++  Human approval governs objectives and architecture. Manager does not create an extra approval for every typo, implementation correction or check. At the same time, a changed instruction that materially changes authority or an approved architectural obligation cannot be disguised as harmless documentation cleanup. The steward must name the conflict and route the exact proposal through the existing high-level decision path. Existing user authorization persists; repeated requests for an already granted decision add no safety.
+
+   The Manager service does not accept final engineering work or decide publication. Independent Reviewer assesses the assembled candidate, Verification supplies applicable evidence, and Delivery integrates an accepted candidate through staging. A guidance file can explain those responsibilities but cannot impersonate them. Likewise, a local skill cannot enlarge the user's authorized scope. Guidance is procedure within authority, not an independent source of unlimited permission.
+
+diff --git a/.arc/architecture/components/planner.yaml b/.arc/architecture/components/planner.yaml
+index 2cf4d7b4357a48731d2a5094a14a2fd1a5085f08..ad2cfd523e94fca7c8ad3b766e9a090ce180afc1 100644
+--- a/.arc/architecture/components/planner.yaml
++++ b/.arc/architecture/components/planner.yaml
+@@ -38,7 +38,7 @@ purpose: |
+   the ordinary checked-edit and independent verification lifecycle; model-authored
+   proposals do not authorize their own application.
+
+-  ## Human-objective planning and exploratory mapping
++  ## Objective recommendations, explicit submissions and exploration
+
+   An explicit objective starts with the human's verbatim submission. Planner
+   considers how it relates to existing objectives, accepted goals, current sources
+@@ -56,18 +56,20 @@ purpose: |
+   retained dialogue instead of asking again or treating a summary as the original
+   answer. Blank lines and qualifications can matter to the meaning of the response.
+
+-  Exploratory planning starts without a new human objective. It studies the captured
+-  charter, development direction, accepted goals, architecture, implementation and
+-  applicable observations. Its job is to map and improve the existing direction,
++  Exploratory planning starts from captured documentation, accepted objectives
++  and goals, architecture, implementation and applicable observations. Its job is to map and improve the existing direction,
+   including extracting durable outcomes from approved project sources. It can
+   compare overlaps and missing measures and propose a clearer inventory. Existing
+   code is evidence of behavior, not automatic approval of every historical design
+   choice or a reason to preserve an accidental implementation constraint as a goal.
+
+-  Both strategies use the same planning service and ordinary application lifecycle.
+-  They differ in the intent being assessed, not in their authority or persistence
+-  mechanism. A bare assessment can legitimately conclude that the inventory needs
+-  no change. An explicit objective can remain unresolved while its exact submission
++  Recommendation mode discovers relevant captured documentation across the
++  repository and considers any supplied file or directory references. It returns
++  cited objective drafts for human review. The Planner contract defines the
++  read-only pre-admission use of this activity.
++
++  The modes use the same planning service and ordinary application lifecycle.
++  A bare assessment can legitimately conclude that the inventory needs no change. An explicit objective can remain unresolved while its exact submission
+   is preserved. Do not invent goal changes merely because the command ran or force
+   a new objective to appear fully mapped before the human has settled its meaning.
+
+@@ -160,37 +162,31 @@ purpose: |
+
+   ## Approval and record delivery
+
+-  The human reviews one understandable summary and the exact proposed objective/goal
+-  diff. Model-authored refinements and changed goal bytes require that decision.
+-  The host retains the proposal, baseline, question and complete answer in the
+-  existing journal. An unknown response is not approval, and an absent response
+-  preserves a durable pending decision for restart. A readable line diff should
+-  let the human see the actual aspirations and measures being changed, not merely
+-  the planner's description of its intent.
++  Apply the Planner contract's objective review and guide delivery rules.
++  Present the exact objective diff and preserve selected drafts, edits and
++  feedback in the durable question path. Goal changes remain visible in the
++  report and go through independent review and verified staging.
+
+   The verbatim human submission is already authorized input. Preserve it accurately,
+   including explicit refinement references and dialogue. A model-authored reformulation
+-  is a separate proposal and cannot erase the original. Declining proposed goal
+-  changes does not make the submission disappear. Where recording the original
+-  objective still needs delivery, retain that distinct disposition rather than
+-  assuming every decline means no source record can be written.
++  is a separate proposal. Retain the exact original text and the decision even
++  when a recommended or revised objective is declined.
+
+-  Approved changes use the ordinary task lane and checked source writes. Planner
++  Guide delivery uses the ordinary task lane and checked source writes. Planner
+   does not add a privileged model-edit path or a second publication workflow for
+   Markdown. Each acknowledged file has a checked preimage and retained receipt.
+-  Independent review compares the candidate with the exact approved records and
+-  human evidence. Delivery then observes the configured staging effect. A report
++  Independent review compares the candidate with the retained guide changes
++  and the human evidence for authorized objectives. Delivery then observes the configured staging effect. A report
+   that describes approval cannot stand in for the actual host-held receipt.
+
+   Independent rejection returns the specific findings to Planner for correction.
+-  If the guide bytes change, present the new exact diff for approval. If a routine
+-  implementation correction remains within already approved intent, use the normal
+-  engineering route without manufacturing another human gate. Preserve original
++  If the objective bytes change, present the new exact objective diff for
++  approval. Goal-only and routine implementation corrections use normal repair. Preserve original
+   acceptance, prior observations and acknowledged edits. The planner must not weaken
+   a measure to make the rejected candidate appear acceptable.
+
+   Changed proposal content, intent or relevant baseline must remain reviewable.
+-  Do not silently rebase an approval onto different goal text after staging moves.
++  Validate objective approval against the exact covered bytes and baseline.
+   The human can approve a concrete reconciled proposal, while the host validates
+   expected source identities before application. A candidate-side note claiming
+   that an earlier answer applies is not itself authority. Keep the same logical
+@@ -229,9 +225,9 @@ purpose: |
+   interrupted publication.
+
+   No-change and pending decisions have different outcomes. A justified completed
+-  assessment can end without a merge; an unanswered exact guide proposal remains
+-  unfinished and resumable. A declined exploration change can preserve the current
+-  inventory while recording the decision. Reports and CLI output should explain
++  assessment can end without a merge. An unanswered objective review remains
++  unfinished and resumable. A declined recommendation batch retains the decision
++  and closes that session. Reports and CLI output should explain
+   which occurred. Do not turn an approval wait into a technical failure or count
+   an interrupted attempt as a completed refinement round.
+
+@@ -250,8 +246,8 @@ purpose: |
+   relevant retained reports and primary project sources. Give enough context for
+   the researcher to return a useful full answer, then preserve its applicability
+   and unresolved questions. External findings are evidence for a proposal; they
+-  cannot authorize a new goal, override the human's intent or replace the exact
+-  approval of changed guide bytes.
++  cannot override human intent or replace the exact approval of changed
++  objective bytes.
+
+   Planner can identify that an objective needs architectural work without deciding
+   that work itself. The Architect phase owns the accepted operating model and
+@@ -296,7 +292,7 @@ purpose: |
+   provider needs the actual raw Planner response shape, including required ratings,
+   comparison, changes, links and sources. Exploration rates the captured inventory;
+   an empty inventory and a populated one need different valid fixture responses.
+-  Candidate correction should preserve exact approved bytes and real record paths.
++  Candidate correction should preserve authorized objective bytes and record paths.
+   Do not force product behavior to accept a malformed test object or report a
+   compiler failure as the desired planning red.
+
+@@ -317,9 +313,8 @@ purpose: |
+   result or require the current worktree implementation forever. Direction can
+   choose the appropriate owners each time that outcome is assessed.
+
+-  If the human replies that some proposed goals are useful but others need changes,
+-  preserve that feedback and produce a revised reviewable proposal through the
+-  supported dialogue. Do not interpret conversational approval of an idea as
++  If the human replies that some proposed objectives are useful but others need
++  changes, preserve that feedback and produce a revised reviewable proposal. Do not interpret conversational approval of an idea as
+   approval of unseen exact bytes or silently apply only a guessed subset of the
+   batch. The accepted inventory stays intact until its actual decision, while the
+   original objective and complete clarification remain available for continuation.
+@@ -345,7 +340,7 @@ purpose: |
+   The deeper measure is a later round that demonstrably uses previous findings
+   to improve direction. A missing recovery requirement can become a clarified
+   measure, an overlapping goal can be consolidated and an obsolete implementation
+-  assumption can be removed. Those refinements still need human approval. The
++  assumption can be removed. Goal refinements go through independent review. The
+   following Director assessments and engineering work should consume the accepted
+   result, giving the planner evidence of whether the refined goal actually helped.
+
+@@ -367,8 +362,10 @@ objectives:
+   - measure: Each active goal has observable measures and objective or project
+       source links.
+ constraints:
+-  - failure: A standing goal grants ownership or changes active inventory without
+-      human approval.
++  - failure: A standing goal grants ownership or enters the active inventory
++      without independently verified staging delivery.
++  - failure: A model-authored objective change enters delivery without human
++      authorization for its exact bytes and baseline.
+ owns:
+   - packages/planner
+   - .arc/goals
+@@ -379,7 +376,7 @@ activities:
+     profile: gpt-astra
+     instructions:
+       - |
+-        Investigate a specific uncertainty in objective formation, goal comparison or exploratory mapping. Read the approved charter and development direction, existing objectives and goals, and the relevant implementation and findings. Distinguish a human's desired outcome from a model's suggested interpretation, and distinguish a durable success measure from an observed test result.
++        Investigate a specific uncertainty in objective formation, goal comparison or exploratory mapping. Read relevant captured project documentation, existing objectives and goals, and the relevant implementation and findings. Distinguish a human's desired outcome from a model's suggested interpretation, and distinguish a durable success measure from an observed test result.
+
+         Research should identify a useful missing capability, conflict, ambiguity or measure rather than manufacture new goals to keep a round busy. Consider whether multiple existing goals express the same aspiration and whether a proposed goal would remain valid if components were reorganized. Source observations belong in the report, not embedded as results in the goal.
+
+@@ -393,7 +390,7 @@ activities:
+     profile: gpt-sol
+     instructions:
+       - |
+-        Document the two goal-planning strategies and their shared approval lifecycle. Explicit task plan records the original human objective and may clarify it; bare task plan explores the accepted project direction and current implementation. Both compare existing goals, propose concrete aspirations with measurable success, and preserve a no-change assessment as a real analytical outcome. Do not imply that every exploration invents a human objective.
++        Document the Planner contract's three modes, their source evidence and the shared delivery lifecycle. Explain the human objective review and independent goal review using examples from explicit fixtures.
+
+         Show the actual objective, goal and Planner response formats. Keep goals independent of ownership and free of results, logs or evidence. Explain priority ordering, relationships, proposed removals and how the next round consumes earlier findings without copying those findings into durable aspirations. Clarification is a dialog with retained full answers, not an automatic substitute for human approval.
+
+@@ -412,11 +409,11 @@ activities:
+     profile: gpt-sol
+     instructions:
+       - |
+-        Test the real Planner service with explicit charter, development, objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
++        Test the real Planner service with documentation in different repository layouts and with captured objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
+
+         Include an exploration regression that fails if an internal refinement description is saved as a human objective. Reopen retained state and confirm a completed assessment is reused only for its actual identity, while a new round still invokes Planner. Use distinct prior and resumed findings so an unchanged generic summary cannot satisfy evidence-consumption assertions.
+
+-        Validate exact proposed bytes, approval baseline, declined/pending decisions and refusal to apply unapproved guides. Inspect resulting goals for owner assignments and results masquerading as success measures. A fake Planner.propose proves its consumer, not Planner mode selection or persistence; use the real service for those obligations with an isolated controlled actor. Establish the meaningful red and mapped checks without demanding the later Implementation already pass.
++        Validate exact proposed bytes, approval baseline, declined or pending decisions and refusal to apply unauthorized objectives. Inspect resulting goals for owner assignments and results masquerading as success measures. A fake Planner.propose proves its consumer, not Planner mode selection or persistence; use the real service for those obligations with an isolated controlled actor. Establish the meaningful red and mapped checks without demanding the later Implementation already pass.
+     operations:
+       - read-file
+       - list-files
+@@ -443,7 +440,7 @@ activities:
+       - |
+         Implement objective and goal assessment through the existing Planner public service and Workflow lane. Select exploration when there is no real human objective and objective mode only for the submitted human text. Preserve the original submission, full clarification answers and the exact proposal identity. Do not synthesize an objective from an internal phase prompt merely to reuse a convenient API.
+
+-        Parse and validate the actual Planner response, returning exact errors to the same activity. Keep ratings, comparisons, source relationships and changes complete. Goals remain aspirations and success measures without owners or results. Pending or declined proposals cannot leak edits into the active inventory; exact approval and verified delivery precede adoption.
++        Parse and validate the actual Planner response, returning exact errors to the same activity. Keep ratings, comparisons, source relationships and changes complete. Goals remain aspirations and success measures without owners or results. Pending or declined objective proposals stay outside the active inventory. Require exact objective authorization and independently verified delivery of guide edits.
+
+         Reuse Coordination for durable position and answers and the existing normal task workflow for implementation/delivery. Correct owned fixtures, mode selection and persistence tests locally, including when earlier Testing is unavailable. Do not add another planner scheduler, approval database or direct protected-write path. If a missing operation or archive root is needed, propose the concrete architecture mapping rather than granting it in prose.
+     operations:
+@@ -488,13 +485,13 @@ activities:
+     profile: gpt-sol
+     instructions:
+       - |
+-        Assess the supplied human objective in objective mode, or map the captured project in exploration mode when no objective was submitted. Read the charter, development direction, approved objective index, complete goal inventory, actual implementation and relevant prior round findings. A synthetic internal phase description is not human input and must never be persisted as an objective.
++        Assess the supplied human objective or map the standing inventory as directed by the assigned mode. Read relevant captured documentation, the objective index, complete goal inventory, actual implementation and applicable prior findings. A synthetic internal phase description is not human input and must never be persisted as an objective.
+
+         Compare and rate existing goals against direction and implementation, identifying conflicts, overlap, missing measures and useful omissions. Goals contain aspirations and abstract or concrete success measures, with no component owners, prescribed team, execution results or evidence fields. Preserve the human's original submitted words separately from proposed refinements. Explain the relationship between every proposed objective and its goals, including removals and unresolved ambiguity.
+
+         Return the exact host-supplied Planner response shape with summary, ratings, comparison, changes, links and sources. Use complete content for proposed files and the defined deletion representation; do not add a guessed kind discriminator. A justified no-change assessment still analyzes the actual inventory. Ask a focused clarification when human intent is needed, retaining the complete answer across restart.
+
+-        This activity cannot write guide files directly or approve them. The host retains the exact proposal and baseline for human approval and delivers accepted changes through the ordinary workflow. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
++        Return proposals through the host. The host retains the exact objective decision and delivers eligible guide changes through checked edits, independent review and verified staging. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
+     operations:
+       - read-file
+       - list-files
+diff --git a/.arc/architecture/components/project.yaml b/.arc/architecture/components/project.yaml
+index ea064f10ee80732692200e37b0d6b21999e15ab3..28f14d990ad08e13145f3c1f596ae5b5b470fba2 100644
+--- a/.arc/architecture/components/project.yaml
++++ b/.arc/architecture/components/project.yaml
+@@ -140,8 +140,8 @@ purpose: |
+   demonstrate the loop's value. The exact captured inventory and completed positions
+   must survive interruption without silently skipping work or repeating delivery.
+
+-  Human attention belongs primarily on objectives, goals and architecture. Exact
+-  proposed guide changes are reviewable decisions; ordinary implementation,
++  Human approval concerns objectives and architecture. Goal changes proceed through
++  independent review and verified staging; ordinary implementation,
+   activity repair, check execution and authorized staging delivery proceed under
+   accepted guidance. Unavailable external prerequisites remain named holds. Project
+   documentation should not add approval ceremonies or obscure which high-level
+@@ -450,7 +450,7 @@ activities:
+
+         Update authored checklists with exact completed and pending outcomes, retaining links to failures and checkpoints. Remove obsolete guidance that the accepted batch replaces; do not preserve contradictory instructions as historical authority. Generated plans and evidence remain in their designated spaces, with application transcripts and databases outside source.
+
+-        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives, goals or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
++        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
+     operations:
+       - read-file
+       - list-files
+diff --git a/.arc/architecture/components/release.yaml b/.arc/architecture/components/release.yaml
+index 366971380ab53469d4cef77590c395d8e1f09eaf..ca2bbf59585f1e281341440540b9b3731aa9b9d8 100644
+--- a/.arc/architecture/components/release.yaml
++++ b/.arc/architecture/components/release.yaml
+@@ -39,7 +39,7 @@ purpose: |
+
+   Human authority and scoped authorization
+
+-  Objectives, goals and architecture are high-level guides controlled by the human. Ordinary implementation correction under those guides should proceed without a new gate. Production operations are a separate maintainer boundary in the current contract. A user can explicitly authorize a particular repository action or temporary process waiver, and that authorization persists within its stated scope. The steward must record what was authorized rather than repeatedly ask the same question.
++  Objectives and architecture retain exact human decisions. Goal changes are independently reviewed for verified staging. Ordinary implementation correction under those guides should proceed without a new gate. Production operations are a separate maintainer boundary in the current contract. A user can explicitly authorize a particular repository action or temporary process waiver, and that authorization persists within its stated scope. The steward must record what was authorized rather than repeatedly ask the same question.
+
+   A temporary waiver does not change the generic product's locked obligations. For example, authorization to integrate an unreleased maintenance PR manually cannot be translated into a runtime feature that merges main for every future goal. If the product boundary itself must change, prepare the exact contract amendment and registry update for review. Do not quietly edit locked bytes to make a release script pass.
+
+diff --git a/.arc/architecture/components/workflow.yaml b/.arc/architecture/components/workflow.yaml
+index 541a41082761351cf51f9fa06ff89ce2eec56ef9..5f31ca2aa2f07b4e4a77c407058341a533ceac70 100644
+--- a/.arc/architecture/components/workflow.yaml
++++ b/.arc/architecture/components/workflow.yaml
+@@ -49,12 +49,10 @@ purpose: |
+   their public interfaces rather than duplicated inside a command handler.
+
+   Goal planning uses the same admission, progress, cancellation, clarification and
+-  delivery foundations. Planner evaluates a human objective or explores the captured
+-  project and goal inventory. A justified read-only assessment can finish without
+-  a source change. Proposed objective or goal edits retain their exact approval
+-  and use normal checked changes, independent review and delivery. Workflow handles
+-  the lifecycle; it does not rewrite Planner's domain assessment or hide a changed
+-  guide behind an implementation repair.
++  delivery foundations. Use the Workflow and Planner contracts for Plan modes,
++  durable objective decisions, checked changes, independent review and staging.
++  Keep the read-only discovery position and verified project identity when the
++  repository later enters the ordinary admitted Plan workflow.
+
+   Architecture update likewise uses the existing lifecycle. Architect assesses
+   approved direction and prior observations, returns no change or a reviewable
+@@ -185,7 +183,7 @@ purpose: |
+   A real missing owner or conflict with locked authority requires an architectural
+   proposal and named high-level decision. Ordinary owned engineering choices,
+   formatting corrections and plan sequencing do not. Keep human gates concerned
+-  with objectives, goals and architecture. Actual unavailable external prerequisites
++  with objectives and architecture. Actual unavailable external prerequisites
+   remain named observable holds. A model assertion that an API is missing must
+   be investigated through the available public interfaces rather than accepted as
+   proof that the task should terminate.
+diff --git a/.arc/architecture/plan-template.md b/.arc/architecture/plan-template.md
+index 9f52217cac26b555ea97691cfcb0eba3e628e0f3..521e1cc95af338b8f7f45099890d032147530942 100644
+--- a/.arc/architecture/plan-template.md
++++ b/.arc/architecture/plan-template.md
+@@ -55,7 +55,7 @@ Director call is needed for same-owner repair.
+ The director controls initial sequencing and changes after explicit escalation or
+ final independent rejection. Link accepted supplier work or place distinct
+ supplier work before its dependent. Revisions preserve completed outcomes and
+-original acceptance. Human approvals concern objectives, goals and architecture.
++original acceptance. Human approvals concern objectives and architecture.
+ Unresolved external prerequisites retain named holds without granting authority.
+ Record position, check outcomes and evidence through the host. Keep a
+ brief simplification ledger naming removals, reuse and any added responsibility
+diff --git a/.arc/architecture/roles/planner.yaml b/.arc/architecture/roles/planner.yaml
+index 0571d9d92f9f7d77aea9e80eca76a5c0d8a6c569..026135fe5fba06b1e38b7db1272ad58a100eb9c1 100644
+--- a/.arc/architecture/roles/planner.yaml
++++ b/.arc/architecture/roles/planner.yaml
+@@ -4,12 +4,12 @@ purpose: Maintain durable project goals and preserve the human objectives that
+ responsibilities:
+   - Compare standing goals to captured sources and evidence
+   - Clarify human intent through the requesting activity
+-  - Propose minimal inventory changes for human approval
++  - Propose objective changes for human review and goal changes for independent review
+ instructions:
+   - |
+-    Maintain the accepted inventory as durable aspirations and observable measures, preserving human objective history. Determine whether this activation is exploration or an actual submitted objective. An internal description of an automated Plan phase is not a human objective and must not become a synthetic record that suppresses later assessment. Every refinement Plan phase reassesses accepted direction and current observations.
++    Maintain the accepted inventory as durable aspirations and observable measures, preserving human objective history. Use the planning mode declared in the assignment. An internal description of an automated Plan phase is not a human objective and must not become a synthetic record that suppresses later assessment. Every refinement Plan phase reassesses accepted direction and current observations.
+
+-    Read the captured charter, development guidance, objectives, goals, architecture and relevant implementation. Rate every captured goal explicitly, comparing overlaps, conflicts, unclear requirements and gaps. Separate alignment with accepted sources from evidence that a measure currently holds. A well-aligned goal can remain unverified, and existing behavior can conflict with intent. Do not turn either uncertainty into an invented favorable rating.
++    Read relevant captured documentation and the admitted inventory. Discover sources from repository contents and the supplied references. In standing-inventory mode, rate every captured goal explicitly, comparing overlaps, conflicts, unclear requirements and gaps. Separate alignment with accepted sources from evidence that a measure currently holds. A well-aligned goal can remain unverified, and existing behavior can conflict with intent. Do not turn either uncertainty into an invented favorable rating.
+
+     Use actual captured source quotes and applicable host observations. A goal's own aspiration does not prove its achievement. A test file is not a test run, a controlled provider is not live inference and an unrelated staged merge is not evidence for this revision. Explain the limits of support in the report while keeping the complete original observations readable through their references.
+
+@@ -17,11 +17,11 @@ instructions:
+
+     Preserve the verbatim human submission and complete clarification dialogue. Use the supported explicit refinement identity when the human is refining an existing objective, retaining its predecessor relationship. A model-authored formulation is a proposal, not a silent replacement for what the human said. An objective can remain unresolved with honest links and disposition rather than forcing a misleading complete mapping.
+
+-    Ask a human question only when a material intent or architectural decision is missing. Make it self-contained and tied to the actual choice. Retained answers survive restart and must not be requested again. Unknown replies or no answer do not approve guide edits. If the user asks to change part of a proposal, preserve that feedback and prepare a new exact batch rather than applying a guessed subset.
++    Ask a human question only when a material intent or architectural decision is missing. Make it self-contained and tied to the actual choice. Retained answers survive restart and must not be requested again. Unknown replies or no answer do not authorize objective changes. If the user asks to change part of a proposal, preserve that feedback and prepare a new exact batch rather than applying a guessed subset.
+
+     Propose the smallest coherent inventory refinement. Explain additions, removals and clarifications, including their relationship to existing objectives. Preserve stable identity for the same durable outcome and explain genuinely different direction. Do not delete an inconvenient goal because its last task failed or manufacture wording changes whenever exploration runs. A justified no-change assessment is a valid result.
+
+-    Follow the exact Planner response schema supplied with the task. It differs from steward completion, Director plans and research reports. Supply the required summary, per-goal ratings, comparison, exact changes, links and sources with valid fields, without an invented kind discriminator. A change's content is the complete goal document or the actual supported deletion value, not a patch fragment or a paraphrase of what the host should write.
++    Follow the exact Planner response schema supplied with the task. It differs from steward completion, Director plans and research reports. Return the required fields for the assigned mode and cite exact source excerpts. For an inventory proposal, supply complete proposed document contents or the supported deletion value.
+
+     The host presents and retains the exact objective/goal decision before approved record delivery. Do not claim your report itself approves new bytes. Changed guide bytes after correction require their proper review; ordinary implementation repair within accepted intent adds no gate. A decline preserves the accepted inventory and original submitted objective rather than erasing intent.
+
+diff --git a/.arc/architecture/roles/technical-writer.yaml b/.arc/architecture/roles/technical-writer.yaml
+index 6f9e3160727d07c4b498a6768057636f8a53908e..d4942a8343eb67dd70aae8c0c5ea52389f0fb048 100644
+--- a/.arc/architecture/roles/technical-writer.yaml
++++ b/.arc/architecture/roles/technical-writer.yaml
+@@ -15,7 +15,7 @@ instructions:
+
+     State observable behavior and meaningful constraints. Label proposed, unavailable, implemented and demonstrated capability distinctly. A diagram, plan or test file is not proof that the described runtime path works. When recording results, identify the actual source revision and evidence category; do not put run outcomes into a durable goal or rewrite a failed attempt as successful because a later delivery passed.
+
+-    Make ownership and authority easy to follow without expanding them. A milestone names an accountable owner rather than a file allowlist. A supplier request grants no foreign write scope. Human decisions concern objectives, goals and architecture; routine implementation and local repair need no new approval ceremony. If the requested wording conflicts with a locked clause, identify the clause and consequence instead of documenting around it.
++    Make ownership and authority easy to follow without expanding them. A milestone names an accountable owner rather than a file allowlist. A supplier request grants no foreign write scope. Human approval concerns objectives and architecture; routine implementation and local repair need no new approval ceremony. If the requested wording conflicts with a locked clause, identify the clause and consequence instead of documenting around it.
+
+     For changed behavior, explain what the public consumer will observe and what check can distinguish the new behavior from the current defect. Keep intent before code without adding ceremonial prose for a refactor that preserves behavior. For documentation-only work, validate facts, links, paths, source labels and realistic reader decisions. Do not manufacture a failing software test or claim a broad build establishes that the prose is accurate.
+
+diff --git a/.arc/architecture/standards/agent-operating-protocol.md b/.arc/architecture/standards/agent-operating-protocol.md
+index 3b24216fb36917a425a780ec826b60c7532529a7..8b3b2e81357e03b19c89956470011a8291e31d10 100644
+--- a/.arc/architecture/standards/agent-operating-protocol.md
++++ b/.arc/architecture/standards/agent-operating-protocol.md
+@@ -292,7 +292,7 @@ to reassign accepted ownership or weaken validation to make an invalid link fit.
+
+ Consult existing approved guidance and retained answers before asking a question.
+ Routine engineering choices within accepted authority are yours to make. Human
+-decisions concern objectives, goals and architecture; ordinary correction does
++approval concerns objectives and architecture; ordinary correction does
+ not need a new approval gate. When intent is genuinely missing, ask a self-contained
+ question explaining the decision and the evidence. End the activation after the
+ mapped handoff, so the host can record the complete answer and resume the same
+diff --git a/AGENTS.md b/AGENTS.md
+index fa1189d0bd07c813c8ba6cf8ee1b9f0cde93b376..107b5519ec6f118084c6b58a37a3186d04ee4afe 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -83,8 +83,8 @@ receipts, complete answers and unaffected evidence. Direction engages initially,
+ on explicit escalation and after final independent rejection. Link
+ already accepted supplier work, or place required supplier work before the dependent
+ milestone. Escalate a decision that needs different authority. Human approval concerns
+-objectives, goals and architecture. Routine repairs, plan sequencing and authorized
+-staging delivery add no approval gates. External prerequisites remain named holds.
++objectives and architecture. Goal changes use independent review and verified
++staging delivery. Routine repairs and plan sequencing add no approval gates. External prerequisites remain named holds.
+ The host validates
+ authority and persists plan and learning records. Stream and retain complete
+ exposed harness and host observations through the existing journal/evidence path.
+diff --git a/apps/cli/README.md b/apps/cli/README.md
+index f441080610c523f515dd72686a5ce4d5b982ddc7..fa0cee3d65b5f22f5a49d337c81166413c06e258 100644
+--- a/apps/cli/README.md
++++ b/apps/cli/README.md
+@@ -165,22 +165,24 @@ evidence. The report links findings to the captured revision. Use
+ Planner needs clarification, answer at the terminal or rerun the exact
+ submission to continue.
+
++Use `arcnexus task plan --recommend-objectives [<focus>]` to discover
++objective candidates from the captured repository's documentation. Optional focus
++can reference files or directories.
++
+ To refine a previous objective, begin the submitted text with
+-`Refines <full objective record ID>` on its own line. The record ID is the
+-filename without the `.md` extension. The new submission retains the original
+-objective identity and links to the preceding record. An unresolved objective
+-can be recorded while its goal mapping stays open.
++`Refines <full objective record ID>` on its own line. Use the record's stable
++ID. The new submission retains the original objective identity and links to
++the preceding record. An unresolved objective can be recorded while its goal
++mapping stays open.
+
+ Planner reports source alignment and revision-bound run observations in its
+ mapping. Goal files express requirements and success measures. Observed checks,
+ review and staging delivery stay in the task journal and its protected artifacts.
+
+-The gateway displays the exact proposed goal changes for approval. Reply
+-`approve` to authorize the shown bytes, or `skip` to keep the current inventory.
+-The submitted objective can be recorded in either case. Approved Markdown
+-changes pass through checked edits, candidate checks, independent review and
+-verified staging integration. Use `--json` for the structured result and artifact
+-locations.
++The gateway presents the exact objective diff for a human decision. Accepted
++objectives feed goal alignment in the same session. Goal changes go through
++checked edits, candidate checks, independent review and verified staging.
++Use `--json` for the structured result and artifact locations.
+
+ ## Assess architecture
+
+diff --git a/apps/cli/contract.md b/apps/cli/contract.md
+index af2970dd37db508a273e9d9f965d73c769085a11..50c684c8ea2162dc57d0077d6b1288276ffcfa17 100644
+--- a/apps/cli/contract.md
++++ b/apps/cli/contract.md
+@@ -10,13 +10,21 @@ delegates structured inspection and task operations to the shared
+ `arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
+ the project resolved from the working directory. Bare `arcnexus task run`
+ loads one round from the project goal inventory and evaluates each goal in priority
+-order through the same task service. `arcnexus task plan [<objective>]` uses
+-that task lane, progress, cancellation and output contract. The explicit form
+-records the original human objective and offers resumable clarification. The bare
+-form maps the captured project and may report no inventory change. Changes to
+-objectives or goals require approval of the exact diff and verified staging delivery.
+-The verbatim human submission is retained as authorized input; a model-authored
+-refinement is a proposal, not a replacement for that submission.
++order through the same task service. The CLI delegates these Plan forms through
++Commands using the shared progress, cancellation and output contract:
++
++- `arcnexus task plan` assesses the captured project and standing inventory.
++- `arcnexus task plan "<objective>"` preserves the exact human submission and
++  offers resumable clarification and objective review.
++- `arcnexus task plan --recommend-objectives [<focus>]` recommends objectives
++  from captured documentation. Focus guides source selection or analysis.
++  Duplicate flags, extra positional arguments and blank explicit inputs are
++  rejected before admission.
++
++Plan retains exact human decisions on objectives. Authorized objective wording
++feeds goal alignment in the same admitted session. Both kinds of guide changes
++use checked edits, independent review and verified staging. Goal changes proceed
++without a human approval prompt.
+
+ `--json` is a general CLI output option, accepted once before the command or
+ after its positional arguments. Inspection prints one structured JSON result on
+@@ -55,7 +63,7 @@ The foreground task streams harness and host events, messages, tool calls/result
+ progress, evidence references and available timing/usage metrics as execution
+ proceeds, and honors SIGINT. Overall and execution-profile summaries identify
+ unknown usage and the pricing basis of estimated costs. They do not impose budgets.
+-Human decisions concern objectives, goals and architecture. Ordinary tool repair,
++Human approval concerns objectives and architecture. Ordinary tool repair,
+ implementation, checks, plan sequencing and authorized staging delivery do not
+ require human approval. Unavailable external prerequisites remain observable holds;
+ they are never treated as approval to proceed.
+@@ -64,8 +72,8 @@ Exit 0 represents the verified staging merge for a single goal, or a completed
+ round in which every goal has a Director assessment supported by evidence for the
+ evaluated revision or a verified merge. The Director can plan applicable checks
+ through the existing activity mappings. Assembled-candidate checks remain required
+-for changes. A completed mapping or an already recorded objective may exit 0
+-without a new staging merge.
++for changes. A completed mapping, completed read-only discovery or an already
++recorded objective may exit 0 without a new staging merge.
+ Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
+ and exit 130 cancellation. Refuse a second active task in the same project. Other
+ verbs, option modes and launch surfaces are reserved for later qualification.
+@@ -84,8 +92,9 @@ assessment. A no-change assessment can complete without a merge. Proposed change
+ show a purpose, consequences and exact diff for human approval. Required
+ implementation is delivered within the Architect phase before Run begins.
+
+-`arcnexus refine [--rounds <N>]` runs Plan, Architect and then every approved goal
+-in priority order for each round. N defaults to one and must be a positive integer.
++`arcnexus refine [--rounds <N>]` runs standing-inventory Plan, Architect and then
++every goal in the verified inventory, in priority order for each round.
++N defaults to one and must be a positive integer.
+ Every round invokes Planner, Architect and the Director for each goal, even when
+ existing measures pass. Accepted no-change outcomes are valid. The general
+ `--json` option applies to both commands. A complete refinement invocation exits 0;
+@@ -110,14 +119,14 @@ No answer, an unknown response or elapsed time supplies approval.
+ | GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders. |
+ | GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical. |
+ | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content. The rendered header and the JSON result both list the placeholders used. |
+-| GW-19 | Objective, goal and architecture decisions retain the question, exact proposal and human answer. Routine technical repairs create no approval prompt; unavailable external prerequisites remain named holds. |
++| GW-19 | Objective and architecture review retain the question, exact proposal and human answer. Goal changes and routine technical repairs proceed through applicable checks without a human approval prompt. Unavailable external prerequisites remain named holds. |
+ | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
+ | GW-22 | Inspection, task execution, goal planning, architecture updates and refinement delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress, questions and results into its transport. |
+ | GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
+ | GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
+ | GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
+ | GW-26 | Both permitted placements of `--json` return the same structured inspection result. Its `request.input` equals the default rendered prompt. Duplicate or misplaced flags exit 2 with stderr diagnostics and empty stdout. |
+-| GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` records the exact submission and can resume a clarification. Inventory edits require approval of the exact diff before reviewed staging delivery. |
++| GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` retains its verbatim submission and can resume a clarification. Recommendation mode reads the captured sources and resumes the exact objective review. Authorized wording feeds goal alignment and resulting changes enter reviewed delivery. |
+ | GW-28 | Both architecture update forms assess through the same SDK and return a no-change result or an exact proposed diff. Approval and required prerequisite delivery complete before the following Run phase. |
+ | GW-29 | refine defaults to one round and accepts a positive integer --rounds value. Invalid, duplicate or unsupported arguments exit 2 before admission. Every completed round runs Plan, Architect and all captured goals in priority order. |
+ | GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |
+diff --git a/docs/dev.md b/docs/dev.md
+index 396460be8b2344606a4435e363ee94bffbca0e0a..35d37be46c80918cd1ca314a5da338e71a7c044d 100644
+--- a/docs/dev.md
++++ b/docs/dev.md
+@@ -35,7 +35,8 @@ diagram to the existing task, verification and delivery boundaries.
+
+ [Planner](../packages/planner/contract.md) maintains standing goals and human
+ objective records. Explore the current mapping with `arcnexus task plan` or
+-submit a human objective to guide it. Review proposed goal edits before delivery.
++submit a human objective to guide it. Approve objective changes through Plan.
++Goal changes go through independent review before delivery.
+ Bare `arcnexus task run` evaluates the reviewed inventory in priority order.
+ `arcnexus architecture update [<feedback>]` assesses architecture and proposes
+ exact changes for approval. Required implementation is delivered within Architect
+diff --git a/docs/interface/arcnexus-project.md b/docs/interface/arcnexus-project.md
+index fb702c11b7a9f1e8b02c8e992f138e4b6b3452c9..6fe5b5c021ef3e65e6f57e63aedb043c1a62bdb2 100644
+--- a/docs/interface/arcnexus-project.md
++++ b/docs/interface/arcnexus-project.md
+@@ -27,8 +27,14 @@ authored rules and commands are reused by reference. Use the least code that mee
+ accepted contract. Add a service seam for an actual consumer or a responsibility that
+ must be independently replaceable.
+
+-Admission resolves the approved catalog, authority, checks, revision, bindings
+-identity and trusted plugin composition. Reload that integrated model after every
++Before project execution admission, an authorized repository connection may pin a
++verified Git revision and inspect its documentation through a trusted,
++platform-owned read-only Planner binding. This discovery can retain draft
++objectives and review observations under the same repository identity. It grants
++no repository writes, project-declared tools or project execution authority.
++Admission to publish objectives or align goals resolves the approved catalog,
++authority, checks, revision, bindings identity and trusted plugin composition.
++Reload that integrated model after every
+ applied human-approved architecture update at a recorded activity boundary, once
+ required implementation and handlers are validated. Revalidate retained work before
+ the next activation in the same run, preserving original acceptance and historical
+@@ -61,3 +67,4 @@ holds on current staging. Keep one configuration version. Main integration, tags
+ | PRJ-13 | Moving an owner-local contract, test or script outside its owner root fails ownership validation. The CLI can substitute a trusted plugin at composition without changing a consuming plugin. |
+ | PRJ-14 | A target repository plugin declaration cannot execute privileged host code or replace the application composition. |
+ | PRJ-15 | The CLI app owns `apps/cli`, the Commands plugin owns `packages/commands`, and the project owner owns neither path. Both the app and plugin expose their own complete component specifications. |
++| PRJ-16 | An authorized repository without an ArcNexus catalog can produce retained, revision-cited objective drafts. Its source and project authority remain intact. Project admission reuses the verified repository identity and retains the drafts and citations. |
+diff --git a/docs/interface/registry.yaml b/docs/interface/registry.yaml
+index e2c5bc3bb93b7eddb875ef8e439b9a55d288333b..16cc7e9337197f8a36965f745b4896c6fa6da4b2 100644
+--- a/docs/interface/registry.yaml
++++ b/docs/interface/registry.yaml
+@@ -8,20 +8,21 @@ authority:
+   editorDelegation: Explicit architect approval for a named change and base,
+     applied by a named editor or the trusted host.
+   approvalRecord: 'Exact proposal intent
+-    57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095; human
+-    approval is required and recorded in Coordination before host application.'
+-  approvedBase: 0fd3290678d3fc219a2ec0b60c54287066b94cad
++    9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b; architect
++    approval and named-editor delegation are required in Codex chat before
++    application.'
++  approvedBase: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+ contracts:
+   - id: arcnexus/project
+     type: project
+     file: docs/interface/arcnexus-project.md
+     owner: architecture
+     stage: locked
+-    digest: 04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3
++    digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
+     dependsOn: []
+-    scenarios: 15
++    scenarios: 16
+     acceptedBy: Adrian Webb (architect)
+-    acceptedAt: '2026-11-15'
++    acceptedAt: '2026-11-26'
+     history:
+       - stage: locked
+         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
+@@ -64,9 +65,35 @@ contracts:
+       - stage: proposed
+         digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
+         note: proposed in
+-    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership
+-      and transport-neutral Commands in Codex chat on 2026-11-15. Base:
+-      5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
++      - id: arcnexus/project
++        type: project
++        file: docs/interface/arcnexus-project.md
++        owner: architecture
++        stage: locked
++        digest: 04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3
++        dependsOn: []
++        scenarios: 15
++        acceptedBy: Adrian Webb (architect)
++        acceptedAt: 2026-11-15
++        approvalRecord: "Architect approved explicit activities, Team, CLI app ownership
++          and transport-neutral Commands in Codex chat on 2026-11-15. Base:
++          5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454."
++        stewardshipRecord: "Architect approved steward ownership, release relocation and
++          the architecture component name in Codex chat on 2026-11-15. Base:
++          ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454."
++        amendmentRecord: "Architect approved the Team, checkpoint and goal-round
++          proposal in Codex chat. Base:
++          e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522."
++        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
++          issue 615; approved host/editor delegation must be recorded before
++          this proposal is applied.
++        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++        note: Replaced by human-reviewed proposal intent
++          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
++    approvalRecord: 'Exact proposal intent
++      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
++      architect approval and named-editor delegation are required in Codex chat
++      before application.'
+     stewardshipRecord: 'Architect approved steward ownership, release relocation and
+       the architecture component name in Codex chat on 2026-11-15. Base:
+       ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
+@@ -102,13 +129,13 @@ contracts:
+     file: apps/cli/contract.md
+     owner: cli-app
+     stage: locked
+-    digest: 0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845
++    digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/commands
+     scenarios: 25
+     acceptedBy: Adrian Webb (architect)
+-    acceptedAt: '2026-11-24'
++    acceptedAt: '2026-11-26'
+     history:
+       - stage: locked
+         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
+@@ -222,9 +249,34 @@ contracts:
+         revision: 0fd3290678d3fc219a2ec0b60c54287066b94cad
+         note: Replaced by human-reviewed proposal intent
+           57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095.
++      - id: arcnexus/cli-gateway
++        type: gateway
++        file: apps/cli/contract.md
++        owner: cli-app
++        stage: locked
++        digest: 0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845
++        dependsOn:
++          - arcnexus/project
++          - arcnexus/commands
++        scenarios: 25
++        acceptedBy: Adrian Webb (architect)
++        acceptedAt: 2026-11-24
++        approvalRecord: Exact proposal intent
++          57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
++          foreground human approval recorded in Coordination.
++        amendmentRecord: "Architect approved the exact self-healing refinement amendment
++          in Codex chat for issue #615. Base:
++          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
++        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
++          issue 615; approved host/editor delegation must be recorded before
++          this proposal is applied.
++        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++        note: Replaced by human-reviewed proposal intent
++          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     approvalRecord: 'Exact proposal intent
+-      57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
+-      foreground human approval recorded in Coordination.'
++      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
++      architect approval and named-editor delegation are required in Codex chat
++      before application.'
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+@@ -850,8 +902,8 @@ contracts:
+     dependsOn:
+       - arcnexus/agent
+       - arcnexus/workflow
+-    digest: 07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491
+-    scenarios: 5
++    digest: 10fab582e3a67d82b425dc2f805beea3bd8b8c51c1e865bd6d12545719f5107c
++    scenarios: 6
+     history:
+       - stage: proposed
+         digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
+@@ -865,6 +917,25 @@ contracts:
+         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
+         note: Superseded by the exact human-approved self-healing refinement amendment
+           in issue #615.
++      - id: arcnexus/commands
++        type: library
++        file: packages/commands/contract.md
++        owner: commands
++        stage: proposed
++        dependsOn:
++          - arcnexus/agent
++          - arcnexus/workflow
++        digest: 07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491
++        scenarios: 5
++        amendmentRecord: "Architect approved the exact self-healing refinement amendment
++          in Codex chat for issue #615. Base:
++          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
++        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
++          issue 615; approved host/editor delegation must be recorded before
++          this proposal is applied.
++        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++        note: Replaced by human-reviewed proposal intent
++          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+@@ -940,7 +1011,7 @@ contracts:
+       - arcnexus/coordination
+       - arcnexus/verification
+       - arcnexus/delivery
+-    digest: 3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8
++    digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
+     scenarios: 12
+     history:
+       - stage: proposed
+@@ -955,6 +1026,29 @@ contracts:
+         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
+         note: Superseded by the exact human-approved self-healing refinement amendment
+           in issue #615.
++      - id: arcnexus/workflow
++        type: library
++        file: packages/workflow/contract.md
++        owner: workflow
++        stage: proposed
++        dependsOn:
++          - arcnexus/agent
++          - arcnexus/direction
++          - arcnexus/execution
++          - arcnexus/coordination
++          - arcnexus/verification
++          - arcnexus/delivery
++        digest: 3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8
++        scenarios: 12
++        amendmentRecord: "Architect approved the exact self-healing refinement amendment
++          in Codex chat for issue #615. Base:
++          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
++        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
++          issue 615; approved host/editor delegation must be recorded before
++          this proposal is applied.
++        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++        note: Replaced by human-reviewed proposal intent
++          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+@@ -969,8 +1063,8 @@ contracts:
+     dependsOn:
+       - arcnexus/agent
+       - arcnexus/workflow
+-    digest: 5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676
+-    scenarios: 5
++    digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
++    scenarios: 8
+     history:
+       - stage: proposed
+         digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
+@@ -978,6 +1072,22 @@ contracts:
+         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
+         note: Superseded by the exact human-approved self-healing refinement amendment
+           in issue #615.
++      - id: arcnexus/planner
++        type: library
++        file: packages/planner/contract.md
++        owner: planner
++        stage: proposed
++        dependsOn:
++          - arcnexus/agent
++          - arcnexus/workflow
++        digest: 5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676
++        scenarios: 5
++        amendmentRecord: "Architect approved the exact self-healing refinement amendment
++          in Codex chat for issue #615. Base:
++          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
++        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++        note: Replaced by human-reviewed proposal intent
++          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+       in Codex chat for issue #615. Base:
+       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
+diff --git a/docs/plans/self-development-mvp.md b/docs/plans/self-development-mvp.md
+index 6337470c77c0c523587be266e57fb38ca28d267d..1c9609fd009d29899f77caca1e0f99a94d6488d0 100644
+--- a/docs/plans/self-development-mvp.md
++++ b/docs/plans/self-development-mvp.md
+@@ -44,7 +44,7 @@ approved guide improvement, a useful staged implementation and later consumption
+ of prior findings. No-change assessments are valid and artificial churn is not.
+
+ Handled caller-level failures and steward-local rewinds are part of successful
+-execution. Objective, goal and architecture approval pauses resume the same round.
++execution. Objective and architecture approval pauses resume the same round.
+ Operator state repair, bypassed checks and uncontrolled aborts break the streak;
+ an execution-path correction starts a fresh streak. Verify deliberate interruption
+ and negative cases separately before the uninterrupted acceptance streak. Retain
+diff --git a/packages/commands/README.md b/packages/commands/README.md
+index ee3e2e3040cdb49c8317bce43e4e9cbc3a4a9a4c..0af362c31e3080377394fc482419adb49bde50eb 100644
+--- a/packages/commands/README.md
++++ b/packages/commands/README.md
+@@ -125,7 +125,7 @@ profile. Missing usage and unverified pricing remain unknown. Cached-input usage
+ must not be blindly added to input totals. Commands forwards measurements and
+ does not substitute profiles or impose budgets.
+
+-Human gates govern objectives, goals and architecture. An unavailable answer
++Human approvals govern objectives and architecture. An unavailable answer
+ yields a durable pending gate, currently represented by a `TaskOutcome` with
+ `kind: 'blocked'`, its reason and evidence references. Later interaction resumes
+ the same phase and proposal. A decline preserves the submitted intent and accepted
+diff --git a/packages/commands/contract.md b/packages/commands/contract.md
+index 224e066b67f88cef03eda91d89dc3b69bc48d7aa..37796adc43ce66b429bc8af12f227f405620becd 100644
+--- a/packages/commands/contract.md
++++ b/packages/commands/contract.md
+@@ -11,11 +11,18 @@ task services. [Workflow](../workflow/contract.md) executes the task loop.
+ | --- | --- |
+ | `inspect(input)` | Resolve the supplied project context, component and activity. Return the scoped Agent view, exact model request and named placeholders. It has the same read-only behavior as Agent inspection. |
+ | `runTask(input, observer, signal)` | Submit a goal to Workflow. Report structured progress, evidence references and human questions through the observer. Return the task outcome and honor cancellation. A supplied human answer is recorded through the task services. |
+-| `planTask(directory, objective, observer, signal)` | Map captured goals or record the provided human objective. Use the task lane, structured progress and human gates. Return the mapping or reviewed delivery outcome. |
++| `planTask(directory, input, observer, signal)` | Dispatch standing inventory assessment, explicit human objective, objective recommendation, or an exact guide draft through the shared Plan lifecycle. Return structured progress, durable objective review and the assessment or verified delivery outcome. |
+ | `runRound(directory, observer, signal)` | Evaluate the captured standing goals sequentially through the same task path and return per-goal evidence and the round result. |
+ | `updateArchitecture(directory, feedback, observer, signal)` | Assess alignment, retain an exact architecture proposal for approval, and deliver approved changes and prerequisites inside Architect through the normal task lifecycle. |
+ | `refine(directory, rounds, observer, signal)` | Run or resume Plan, Architect and the priority-ordered goals for the requested positive round count. Return structured phase, approval, repair, per-goal and completion observations with cancellation support. |
+
++The shared `task_plan` request uses mode `recommend-objectives` with optional
++`focus`. Recommendation mode is exclusive of explicit objective text and guide
++drafts. An unqualified request assesses standing inventory. Shared review
++responses identify the exact open gate and carry the architect's selected drafts
++or revision feedback. Web, CLI, REST and MCP translate their inputs to this
++contract and use the same retained receipts.
++
+ The application adapter supplies inputs, renders outputs, collects answers and
+ maps outcomes to its transport. The shared observer streams ordered persisted
+ host/provider events, complete message/tool observations, evidence references and
+@@ -34,3 +41,4 @@ when those apps are in scope.
+ | CMD-3 | A human gate, unavailable result or cancellation has the same task meaning regardless of adapter. |
+ | CMD-4 | A nonterminal caller updates architecture or refines through the same application lifecycle as the CLI, including pending approval, phase recovery and per-goal results. No terminal argument or exit-code policy enters the SDK. |
+ | CMD-5 | Terminal and nonterminal callers observe the same live event ordering, evidence identities, available usage and terminal outcome. CLI JSONL rendering does not change the application lifecycle or require a second event store. |
++| CMD-6 | The same Plan mode, input and objective decision have identical meaning across Web, CLI, REST and MCP. Mixed recommendation and explicit-objective or draft input is rejected before admission. |
+diff --git a/packages/execution/docs/refinement.md b/packages/execution/docs/refinement.md
+index c5c2649b3bfd5c884833993d81206d981b19fca0..2c257ab8a15f2979fef041560ae137284e27074b 100644
+--- a/packages/execution/docs/refinement.md
++++ b/packages/execution/docs/refinement.md
+@@ -84,8 +84,8 @@ Use the existing host clarification and exact-proposal decision receipts.
+ Noninteractive absence of an answer yields a durable pending outcome at the same
+ phase and round. Interactive answers and later invocations resume that position.
+ Elapsed time grants no approval. A decline retains the submitted intent, exact
+-proposal and accepted authority. Objectives, goals and architecture retain their
+-human gates; routine implementation, check repair and verified staging integration
++proposal and accepted authority. Objectives and architecture retain their
++human approval; routine implementation, check repair and verified staging integration
+ gain no additional gate.
+
+ Admission and operation refusals retain their exact diagnostics and prior
+diff --git a/packages/planner/contract.md b/packages/planner/contract.md
+index ba9108ce22d79232cd31ec09c7b74ed95ac22bba..52a96f318fc57764fc382b6533a4d95f83b7c94d 100644
+--- a/packages/planner/contract.md
++++ b/packages/planner/contract.md
+@@ -2,38 +2,85 @@
+
+ Stage: **proposed**. See the [registry](../../docs/interface/registry.yaml).
+
+-Planner owns standing goals and human objective records. Goals describe durable
+-outcomes and observable measures. The Director resolves engineering ownership
+-when a goal is evaluated. Planner reads captured project guidance and implementation
+-through its Agent activity. Objective clarification uses the task's durable human
+-question and answer path.
+-
+-Goal records contain outcomes and success measures. Planner cites applicable,
+-host-observed checks, independent review and delivery from Coordination in its
+-mapping report. Repeated exploration can incorporate new observations at the
+-same revision. An objective can be unresolved. Start an explicit refinement
+-with a line containing `Refines <full objective record ID>` in the submitted
+-text. Its new record retains the same objective identity and links to the
+-superseded record.
+-
+-Each Plan phase assesses current approved guides and implementation together with
+-relevant prior round observations. Preserve goals as outcomes and measures without
+-component ownership assignments or execution results. Return an explicit no-change
+-assessment when appropriate.
+-
+-The approval gate presents one summary and exact objective/goal line diff. Preserve
+-the verbatim human submission as authorized input. New model-authored objective
+-refinements and goal changes require human approval. Unknown responses repeat the
+-gate; absent answers preserve the exact pending proposal for restart. A correction
+-after independent rejection requires renewed approval only when approved guide
+-bytes change. Routine implementation corrections add no approval gate.
++Planner owns standing goals and human objective records. Objectives express
++human-owned direction and constraints. Goals express durable outcomes and
++observable measures. The Director resolves engineering ownership when it
++evaluates a goal. Retain execution results in reports and observations.
++
++## Sources and modes
++
++Plan assesses the standing inventory, takes an explicit human objective, or
++recommends objectives from documentation. Preserve verbatim human submissions
++and clarifications. An objective may remain unresolved. The refinement form
++`Refines <full objective record ID>` links a submission to a prior record and
++preserves its logical objective identity. Automated refinement uses the
++standing-inventory mode.
++
++Use one repository source reader for discovery and explicit file or directory
++references from the instruction. Read at the authorized Git revision. Discover
++relevant documentation from the repository contents without assuming a
++directory, filename or knowledge root exists. Project documents provide
++evidence. The trusted binding determines access and authority. Cite the exact
++source path, revision and supporting excerpt. Recommendations include proposed
++wording, a category and the uncovered need.
++
++A verified read-only connection can use the same recommendation activity before
++project execution admission. A platform-owned binding supplies the activity and
++permitted reads without relying on repository instructions or tool declarations.
++Retained drafts, citations and review discussion follow the verified repository
++identity into the admitted project. When a new capture changes cited evidence,
++show the change and review the draft against the reconciled baseline before
++publication.
++
++## Guide records
++
++Store objectives and goals as named Markdown files in category directories
++below their collection roots under the configured knowledge root. Paths supply
++categories and topics support cross-category filtering. Stable record IDs in
++metadata survive path moves. Migration preserves existing IDs, objective
++refinement links, goal priorities and captured historical reads. Planner, the
++Data resources, file editing and the Run inventory share recursive identity
++lookup and path validation. Duplicate IDs, invalid paths and stale saves are
++refused before edits.
++
++## Objective decisions and goal alignment
++
++Retain objective review in the existing durable question and answer path.
++Present the exact objective diff, its baseline and source evidence. The
++architect can approve selected drafts, edit drafts, request revisions or decline.
++Edits and revised proposals require review of the resulting exact diff. Decline
++ends the recommendation session. An absent answer preserves the pending
++decision. An unrecognized or stale reply grants no approval.
++
++When a recommendation is approved, pass the selected objective bytes to the
++existing goal-alignment activity in the same admitted Plan session. If
++discovery supports no new objective, explain the assessment and continue
++standing-inventory alignment in an admitted Plan. A read-only connection can
++complete discovery with its drafts or a no-recommendation assessment. It
++cannot publish guide records or run goal alignment.
++
++An explicit save of the architect's exact objective draft is human
++authorization at its captured revision. Model-authored objective changes,
++including revisions during independent repair, require a decision covering
++their exact bytes and baseline. Objective approvals do not authorize goal bytes.
++
++Goal changes from alignment or direct edits enter checked editing, independent
++review and verified staging delivery. Return independent findings to Planner for
++repair. Goal-only repair requires no human decision. The outcome shows source
++alignment, objective links, goal diffs and applicable recorded evidence. When
++alignment needs no goal edits, deliver the authorized objectives on their own.
++
++## Acceptance scenarios
+
+ | ID | Observation |
+ | --- | --- |
+ | PLN-1 | Exploration rates every current goal against cited source and captured evidence, compares overlaps and gaps, and reports a proposed change or an explicit no-change result. |
+ | PLN-2 | Objective mode preserves verbatim submission and human answers with stable links to existing or proposed goals. The objective inventory is derived from records. |
+-| PLN-3 | The host shows the exact proposed goal changes for human approval. Only approved goal bytes reach the ordinary checked-edit, independent review and staging delivery path. |
++| PLN-3 | A model-authored objective change reaches delivery only with authority over its exact selected bytes and baseline. A direct objective save records the architect's exact draft. |
+ | PLN-4 | An interrupted round retains its captured goal inventory. The next fresh round uses the newly reviewed inventory. |
+-| PLN-5 | Every refinement Plan phase evaluates approved guides using prior execution observations. It proposes an exact objective/goal diff or justified no change; no goal records component ownership or results. Approval is retained across restart and applies only to the shown guide bytes. |
++| PLN-5 | Every refinement Plan phase evaluates the standing guides using prior observations. It produces a checked goal diff or justified no change while preserving objective authorization and keeping owners and results out of goal records. |
++| PLN-6 | Recommendations cite captured sources in an unconventional layout. A repository without an ArcNexus catalog retains its read-only drafts and evidence through later project admission. |
++| PLN-7 | After draft revision and restart, the same objective review resumes. Goal alignment receives only the selected approved bytes and goal changes enter independent review with no human approval prompt. |
++| PLN-8 | A categorized guide retains its identity, links and historical revisions after a move. Duplicate IDs, invalid paths and stale saves are refused. |
+
+ See the [CLI gateway](../../apps/cli/contract.md) and [development direction](../../docs/dev.md).
+diff --git a/packages/ui/contract.md b/packages/ui/contract.md
+index d0435fd4509e4111a71127efdc026c1aed971118..04fd6bbd900a02b97c2ceb635c580144e0755c0b 100644
+--- a/packages/ui/contract.md
++++ b/packages/ui/contract.md
+@@ -15,7 +15,13 @@ base workspace while preserving navigation order.
+ A command binding supplies stable snapshots, subscription, and an optional
+ structured submission function. The frame uses the binding for status,
+ measurements and availability. It owns transient visual state and an unsent
+-instruction. A preferences binding supplies the operator's named site schemes,
++instruction. The Plan feature registers **Recommend objectives** in the shared
++composer and defaults it to checked for a new composer. It applies to the Plan
++request it launches. Objective drafts and decisions use the shared question
++dialog, Markdown editor and diff viewer. Goal and objective file pages use the
++same revision-bound editor and show the reviewed delivery outcome.
++
++A preferences binding supplies the operator's named site schemes,
+ workspace layouts and display appearance. The browser package consumes that
+ binding and the server preferences entry registers the same schemas in Data.
+ The generic page settings editor saves a workspace's
+diff --git a/packages/workflow/contract.md b/packages/workflow/contract.md
+index 8627fd936192c36b1b0395d5fa08e02bb336be68..b2346b02c605340550e62fe2c9c72e6c2c04f277 100644
+--- a/packages/workflow/contract.md
++++ b/packages/workflow/contract.md
+@@ -40,7 +40,7 @@ identical automatic attempt. Research is an optional inbox contribution when
+ knowledge is missing; it is never a mandatory repair step. Complete answers and
+ edit receipts survive rewinds and restart.
+
+-Human approvals concern objectives, goals and architecture. Unavailable external
++Human approvals concern objectives and architecture. Unavailable external
+ prerequisites retain observable holds. Ordinary technical correction, sequencing
+ and authorized staging delivery introduce no human approval gate.
+
+@@ -48,13 +48,17 @@ and authorized staging delivery introduce no human approval gate.
+ workflow. An accepted staging result closes the task. Cancellation and blocking
+ gates preserve the observed position and evidence.
+
+-`task plan` uses the same admission, cancellation, clarification and delivery
+-boundaries. [Planner](../planner/contract.md) evaluates project sources or the
+-human objective. A read-only mapping completes at the captured revision.
+-When the run has records to persist, Workflow sends the exact journaled changes
+-through Execution and independent review. A rejected Planner candidate returns its findings to Planner for a correction and
+-approval of new goal bytes. A standing goal can use an independently reviewed
+-check-only candidate when the staging tree remains byte-identical.
++`task plan` uses the same cancellation, clarification, evidence and delivery
++boundaries. [Planner](../planner/contract.md) assesses the standing inventory,
++evaluates a human objective, or recommends objectives from captured
++documentation. A documentation-only connection can retain draft observations
++without admitting project writes. In an admitted Plan, Workflow retains the
++objective decision and resumes the existing alignment activity with the
++authorized wording. It sends the exact journaled changes through Execution,
++independent review and staging. A rejected Planner candidate returns its
++findings to Planner. Only changes to objective authorization reopen human
++review. A standing goal can use an independently reviewed check-only candidate
++when the staging tree remains byte-identical.
+
+ `architecture update` assesses through the explicitly selected Architecture Agent.
+ A no-change assessment completes at its captured revision. For a change, retain
+@@ -70,7 +74,7 @@ checkpoints. Deliver the combined candidate before the following Run phase.
+
+ `refine(directory, rounds, observer, signal)` drives Plan, Architect and Run in
+ order for each requested round. The default count is one. Run captures the
+-approved priority-ordered inventory after the first two phases and invokes the
++verified priority-ordered inventory after the first two phases and invokes the
+ Director for every goal regardless of existing passing measures. Every new round
+ reassesses guides and consumes prior results; no-change assessments remain valid.
+ Use the existing Coordination store and one project writer across sequential
+@@ -106,10 +110,10 @@ separate [release boundary](../release/contract.md).
+ | WFL-3 | A second goal cannot enter the same project lane. Cancellation retains progress and evidence through the existing Execution and Coordination services. |
+ | WFL-4 | Inspecting an actor and activity creates no admitted task, workflow state or activation. |
+ | WFL-5 | A correction that resolves a compiler error and exposes a different assertion failure returns the exact new finding to the accountable activity. Local rewinds remain within its milestone and preserve original ownership and acceptance without another Director call. |
+-| WFL-6 | A repeated unchanged diagnostic with unchanged relevant inputs holds or explicitly escalates before another identical correction. Human approvals concern objectives, goals and architecture; unavailable external prerequisites retain named holds. |
++| WFL-6 | A repeated unchanged diagnostic with unchanged relevant inputs holds or explicitly escalates before another identical correction. Human approvals concern objectives and architecture. Unavailable external prerequisites retain named holds. |
+ | WFL-7 | Self-review rewinds to the earliest affected applicable Step; after repair only affected downstream activities and checks replay, with prior receipts and complete answers retained. |
+ | WFL-8 | Architect delivers required implementation and approved architecture through the canonical task lifecycle before Run captures it. A candidate cannot approve or activate its own authority. |
+-| WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every priority-ordered approved goal. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
++| WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every goal in the verified inventory in priority order. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
+ | WFL-10 | Three consecutive live rounds assess every captured goal and show approved guide improvement, a useful staged implementation and later consumption of prior findings. Justified no change is valid. Operator state repair, bypassed checks or uncontrolled aborts break the streak; execution-path changes restart qualification. |
+ | WFL-11 | An approved architecture update can advance the next activity in the same run after implementation availability and retained-work validation. No parallel lifecycle, candidate-side approval or historical evidence rewrite participates. |
+ | WFL-12 | Required activity verification completes before progression, and events/metrics stream throughout the canonical lifecycle. Later refinement assessments consume time, token and profile-cost findings without a separate scheduler or budget mechanism. |
+diff --git a/packages/workflow/refinement.md b/packages/workflow/refinement.md
+index c7f52929711beb2e3efedc83a5b494fed13a4ae7..34b6cb906c33dda986b2ee3f96320caf2b39d4fc 100644
+--- a/packages/workflow/refinement.md
++++ b/packages/workflow/refinement.md
+@@ -145,7 +145,7 @@ intent, answers, issues, branches, PRs and acknowledged file checkpoints.
+ An unanswered noninteractive gate yields a durable pending outcome. Interactive
+ answers and later invocations continue the same phase and round; elapsed time
+ cannot approve. A decline preserves submitted intent and accepted authority.
+-Only objectives, goals and architecture use human gates; routine repair and
++Objectives and architecture use human approval; routine repair and
+ verified staging integration add no gate.
+
+ Each phase/task admission resolves freshly accepted staging authority. The parent

@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Keep human approval for Plan objective changes, route goal edits to independent review, and resolve categorized guide files by stable ID (#746).
+
 - Show per-run token usage and a reported total for the active project in the Plan metrics popup (#746).
 
 - Show compact Plan time ranges with a single date for same-day runs (#746).

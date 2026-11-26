@@ -16,7 +16,7 @@ import { dataPlugin } from '../../../../packages/data/src/index.js';
 import { plannerDataPlugin } from '../../../../packages/planner/src/index.js';
 import { operatorMcpHttp, operatorMcpPlugin } from '../../../mcp/src/index.js';
 import { apiPlugin, serveApi } from '../../src/index.js';
-import { createProject, remote } from '../fixtures/project.js';
+import { createProject, firstGoal, moveFirstGoal, remote } from '../fixtures/project.js';
 
 export const suite = { owner: 'api-app', level: 'acceptance', tags: ['gateway'] } as const;
 
@@ -29,13 +29,8 @@ function authenticate(request: Request, project: string) {
     : undefined;
 }
 
-async function gateway(t: TestContext) {
-  const root = mkdtempSync(join(tmpdir(), 'arcnexus-gateways-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
-  const repository = join(root, 'repo');
-  mkdirSync(repository);
-  createProject(repository);
-  const capture = new Architecture().capture(repository);
+async function gateway(t: TestContext, moved?: string) {
+  const { root, original, capture } = captureFixture(t, moved);
   const context = new Context();
   await context.use(
     dataPlugin(
@@ -46,7 +41,11 @@ async function gateway(t: TestContext) {
   const storage = join(root, 'state');
   await context.use(coordinationPlugin(storage));
   await context.use(coordinationDataPlugin(() => remote));
-  await context.use(plannerDataPlugin(() => capture));
+  await context.use(
+    plannerDataPlugin((_scope, expected) =>
+      expected === original.source.revision ? original : capture,
+    ),
+  );
   await context.use(
     apiPlugin(
       authenticate,
@@ -54,7 +53,20 @@ async function gateway(t: TestContext) {
     ),
   );
   await context.use(operatorMcpPlugin);
-  return { context, revision: capture.source.revision };
+  return { context, revision: capture.source.revision, original: original.source.revision };
+}
+
+function captureFixture(t: TestContext, moved?: string) {
+  const root = mkdtempSync(join(tmpdir(), 'arcnexus-gateways-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const repository = join(root, 'repo');
+  mkdirSync(repository);
+  createProject(repository);
+  const architecture = new Architecture();
+  const original = architecture.capture(repository);
+  if (moved) moveFirstGoal(repository, moved);
+  const capture = moved ? architecture.capture(repository) : original;
+  return { root, original, capture };
 }
 
 async function mcp(context: Context, t: TestContext) {
@@ -114,10 +126,25 @@ test('a Plan file exposes only revisions from the captured guide history', async
   assert.deepEqual(await changes.json(), {
     path: '.arc/goals/first.md',
     before: '',
-    after: '---\npriority: 1\n---\n# First goal\n',
+    after: firstGoal,
   });
   const refused = await context.api(new Request(base + '?fileRevision=HEAD', { headers }));
   assert.equal(refused.status, 409);
+});
+
+test('a moved categorized guide keeps its stable endpoint and its original pinned path', async (t) => {
+  const path = '.arc/goals/quality/reliable-reviews.md';
+  const { context, revision, original } = await gateway(t, path);
+  const address = 'http://arc.test/projects/fixture/goals/first?revision=';
+  const current = await context.api(new Request(address + revision, { headers }));
+  assert.equal(current.status, 200);
+  const { entry } = await current.json();
+  assert.deepEqual(entry, { id: 'first', path, category: 'quality', priority: 1 });
+  const pinned = await context.api(new Request(address + original, { headers }));
+  assert.equal(pinned.status, 200);
+  const result = await pinned.json();
+  assert.equal(result.entry.path, '.arc/goals/first.md');
+  assert.equal(result.content, firstGoal);
 });
 
 test('a REST cursor replays the same committed timeline through MCP', async (t) => {

@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { Capture } from '../../architecture/src/index.js';
 import { dataOperation, type DataScope } from '../../data/src/index.js';
 import { guideMetadata } from './guide-metadata.js';
-import { goalDirectory, readGoal } from './inventory.js';
+import { readGoal } from './inventory.js';
+import { guideDirectory, guideIndex } from './guide-index.js';
 import {
   guideDifference,
   guideFile,
@@ -22,26 +23,14 @@ export type ResolvePlanCapture = (
   revision?: string,
 ) => Capture | undefined | Promise<Capture | undefined>;
 
-/** Resolve guide identities inside the Planner's captured collection. */
-function guideDirectory(kind: GuideKind, capture: Capture) {
-  return kind === 'goals'
-    ? goalDirectory(capture)
-    : (capture.project.knowledgeRoot ?? '.arc') + '/objectives';
-}
-
-function entries(kind: GuideKind, capture: Capture) {
-  const prefix = guideDirectory(kind, capture) + '/';
-  return capture.source.paths.flatMap((path) => {
-    if (!path.startsWith(prefix) || !path.endsWith('.md')) return [];
-    const id = path.slice(prefix.length, -3);
-    return id && !id.includes('/') ? [{ id, path }] : [];
-  });
-}
-
-function describe(kind: GuideKind, entry: { id: string; path: string }, content: string) {
+function describe(
+  kind: GuideKind,
+  { id, path, category }: { id: string; path: string; category?: string },
+  content: string,
+) {
   const fields = guideMetadata(content);
-  if (kind === 'goals') fields.priority = readGoal(entry.id, content).priority;
-  return { ...entry, ...fields };
+  if (kind === 'goals') fields.priority = readGoal(id, content).priority;
+  return { id, path, category, ...fields };
 }
 
 function fileAt(
@@ -66,7 +55,7 @@ function guideResources(kind: GuideKind, resolve: ResolvePlanCapture) {
   };
   const locate = async (scope: DataScope, input: z.output<typeof item>) => {
     const capture = await open(scope, input.revision);
-    const entry = entries(kind, capture).find(({ id }) => id === input.id);
+    const entry = guideIndex(capture, kind).get(input.id);
     if (!entry) throw new Error('Plan file unavailable');
     return { capture, entry };
   };
@@ -75,12 +64,13 @@ function guideResources(kind: GuideKind, resolve: ResolvePlanCapture) {
 
 function listEntries(kind: GuideKind, capture: Capture, search = '') {
   const query = search.trim().toLocaleLowerCase();
-  const dates = capture.source.fileDates?.(guideDirectory(kind, capture));
-  return entries(kind, capture).flatMap((entry) => {
-    const content = capture.source.read(entry.path);
+  const dates = capture.source.fileDates?.(guideDirectory(capture, kind));
+  return [...guideIndex(capture, kind).values()].flatMap((entry) => {
+    const { content } = entry;
     if (
       query &&
       !entry.id.toLocaleLowerCase().includes(query) &&
+      !entry.path.toLocaleLowerCase().includes(query) &&
       !content.toLocaleLowerCase().includes(query)
     )
       return [];
@@ -108,7 +98,9 @@ function guides(kind: GuideKind, resolve: ResolvePlanCapture) {
       list: guideList(kind, open),
       read: dataOperation(readInput, guideFile, async (scope, input) => {
         const { capture, entry } = await locate(scope, input);
-        const content = fileAt(capture, entry.path, input.fileRevision);
+        const content = input.fileRevision
+          ? fileAt(capture, entry.path, input.fileRevision)
+          : entry.content;
         return {
           revision: capture.source.revision,
           entry: describe(kind, entry, content),

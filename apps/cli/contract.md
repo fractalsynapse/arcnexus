@@ -10,13 +10,21 @@ delegates structured inspection and task operations to the shared
 `arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
 the project resolved from the working directory. Bare `arcnexus task run`
 loads one round from the project goal inventory and evaluates each goal in priority
-order through the same task service. `arcnexus task plan [<objective>]` uses
-that task lane, progress, cancellation and output contract. The explicit form
-records the original human objective and offers resumable clarification. The bare
-form maps the captured project and may report no inventory change. Changes to
-objectives or goals require approval of the exact diff and verified staging delivery.
-The verbatim human submission is retained as authorized input; a model-authored
-refinement is a proposal, not a replacement for that submission.
+order through the same task service. The CLI delegates these Plan forms through
+Commands using the shared progress, cancellation and output contract:
+
+- `arcnexus task plan` assesses the captured project and standing inventory.
+- `arcnexus task plan "<objective>"` preserves the exact human submission and
+  offers resumable clarification and objective review.
+- `arcnexus task plan --recommend-objectives [<focus>]` recommends objectives
+  from captured documentation. Focus guides source selection or analysis.
+  Duplicate flags, extra positional arguments and blank explicit inputs are
+  rejected before admission.
+
+Plan retains exact human decisions on objectives. Authorized objective wording
+feeds goal alignment in the same admitted session. Both kinds of guide changes
+use checked edits, independent review and verified staging. Goal changes proceed
+without a human approval prompt.
 
 `--json` is a general CLI output option, accepted once before the command or
 after its positional arguments. Inspection prints one structured JSON result on
@@ -55,7 +63,7 @@ The foreground task streams harness and host events, messages, tool calls/result
 progress, evidence references and available timing/usage metrics as execution
 proceeds, and honors SIGINT. Overall and execution-profile summaries identify
 unknown usage and the pricing basis of estimated costs. They do not impose budgets.
-Human decisions concern objectives, goals and architecture. Ordinary tool repair,
+Human approval concerns objectives and architecture. Ordinary tool repair,
 implementation, checks, plan sequencing and authorized staging delivery do not
 require human approval. Unavailable external prerequisites remain observable holds;
 they are never treated as approval to proceed.
@@ -64,8 +72,8 @@ Exit 0 represents the verified staging merge for a single goal, or a completed
 round in which every goal has a Director assessment supported by evidence for the
 evaluated revision or a verified merge. The Director can plan applicable checks
 through the existing activity mappings. Assembled-candidate checks remain required
-for changes. A completed mapping or an already recorded objective may exit 0
-without a new staging merge.
+for changes. A completed mapping, completed read-only discovery or an already
+recorded objective may exit 0 without a new staging merge.
 Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
 and exit 130 cancellation. Refuse a second active task in the same project. Other
 verbs, option modes and launch surfaces are reserved for later qualification.
@@ -84,8 +92,9 @@ assessment. A no-change assessment can complete without a merge. Proposed change
 show a purpose, consequences and exact diff for human approval. Required
 implementation is delivered within the Architect phase before Run begins.
 
-`arcnexus refine [--rounds <N>]` runs Plan, Architect and then every approved goal
-in priority order for each round. N defaults to one and must be a positive integer.
+`arcnexus refine [--rounds <N>]` runs standing-inventory Plan, Architect and then
+every goal in the verified inventory, in priority order for each round.
+N defaults to one and must be a positive integer.
 Every round invokes Planner, Architect and the Director for each goal, even when
 existing measures pass. Accepted no-change outcomes are valid. The general
 `--json` option applies to both commands. A complete refinement invocation exits 0;
@@ -110,14 +119,14 @@ No answer, an unknown response or elapsed time supplies approval.
 | GW-16 | `inspect` output equals a live activation's context for the same revision, component, activity and milestone, differing only in the declared placeholders. |
 | GW-17 | `inspect` writes no state, starts no host, calls no model and creates no workspace; repeated runs on an unchanged revision are byte-identical. |
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content. The rendered header and the JSON result both list the placeholders used. |
-| GW-19 | Objective, goal and architecture decisions retain the question, exact proposal and human answer. Routine technical repairs create no approval prompt; unavailable external prerequisites remain named holds. |
+| GW-19 | Objective and architecture review retain the question, exact proposal and human answer. Goal changes and routine technical repairs proceed through applicable checks without a human approval prompt. Unavailable external prerequisites remain named holds. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
 | GW-22 | Inspection, task execution, goal planning, architecture updates and refinement delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress, questions and results into its transport. |
 | GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
 | GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
 | GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
 | GW-26 | Both permitted placements of `--json` return the same structured inspection result. Its `request.input` equals the default rendered prompt. Duplicate or misplaced flags exit 2 with stderr diagnostics and empty stdout. |
-| GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` records the exact submission and can resume a clarification. Inventory edits require approval of the exact diff before reviewed staging delivery. |
+| GW-27 | Bare `task plan` maps the captured project. Explicit `task plan "<objective>"` retains its verbatim submission and can resume a clarification. Recommendation mode reads the captured sources and resumes the exact objective review. Authorized wording feeds goal alignment and resulting changes enter reviewed delivery. |
 | GW-28 | Both architecture update forms assess through the same SDK and return a no-change result or an exact proposed diff. Approval and required prerequisite delivery complete before the following Run phase. |
 | GW-29 | refine defaults to one round and accepts a positive integer --rounds value. Invalid, duplicate or unsupported arguments exit 2 before admission. Every completed round runs Plan, Architect and all captured goals in priority order. |
 | GW-30 | Interrupting a refinement phase or awaiting approval retains its identity and cursor. The same invocation resumes without replaying completed phases, losing answers, repeating edits or creating a duplicate PR. Changed round totals are refused while it is unfinished. |

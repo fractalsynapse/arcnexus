@@ -85,10 +85,10 @@ export async function plannerCorrection(
   evidence: readonly string[],
 ) {
   if (!proposal)
-    return stopped('blocked', 'Independent review rejected the exact goal edit.', evidence);
+    return stopped('blocked', 'Independent review rejected the exact guide edit.', evidence);
   const decision = await proposal;
   if ('kind' in decision)
-    return stopped('blocked', 'Planner correction needs an approved goal change', evidence);
+    return stopped('blocked', 'Planner correction has no eligible guide change', evidence);
   const correction = {
     ...decision.milestones[0]!,
     id: `planner-correction-${prior.milestones.length}`,
@@ -103,7 +103,7 @@ interface PlanInput {
   mode: NonNullable<TaskInput['planning']>;
   progress: TaskObserver['progress'];
   signal: AbortSignal;
-  draft?: TaskInput['goalDraft'];
+  draft?: TaskInput['guideDraft'];
 }
 
 /** Prepare either a mapping or an exact human-authored draft through Planner. */
@@ -114,7 +114,7 @@ export async function requestPlan(
 ) {
   if (!planner) return stopped('invalid', 'Planner is unavailable in this build');
   if (draft && !planner.proposeDraft)
-    return stopped('invalid', 'Goal draft delivery is unavailable');
+    return stopped('invalid', 'Guide draft delivery is unavailable');
   const decision = draft
     ? await planner.proposeDraft!(session, draft, progress, signal)
     : await planner.propose(session, mode, progress, signal);

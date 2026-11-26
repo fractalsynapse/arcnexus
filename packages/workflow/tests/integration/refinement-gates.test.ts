@@ -15,15 +15,13 @@ class Gates implements TaskObserver {
   readonly rounds: CompletedRefinementRound[] = [];
   readonly invocations = new Set<string>();
 
-  /** Choose which exact host gate has an interactive decline available in this invocation. */
-  constructor(private readonly decline?: 'goals' | 'all') {}
+  /** Simulate an interactive decline or an unavailable operator. */
+  constructor(private readonly decline = false) {}
 
   /** Leave unanswered gates pending and preserve the complete exact proposal shown to the human. */
   async answer(question: string) {
     this.questions.push(question);
-    return this.decline === 'all' || (this.decline === 'goals' && question.includes('goal changes'))
-      ? 'skip'
-      : undefined;
+    return this.decline ? 'skip' : undefined;
   }
 
   /** Progress remains persisted by the real Workflow observer. */
@@ -68,26 +66,22 @@ function assertUnchanged(fixture: RoundConsumptionFixture, revision: string) {
   );
 }
 
-test('pending real guide gates reopen the same round and exact proposals without reassessment', async (t) => {
+test('the pending architecture gate reopens the same round without repeating Plan', async (t) => {
   const fixture = new RoundConsumptionFixture(t);
   provider(fixture);
   const revision = fixture.git('rev-parse', 'HEAD');
-  const plan = new Gates();
-  const first = await refine(fixture, plan);
+  const waiting = new Gates();
+  const first = await refine(fixture, waiting);
   assert.equal(first.kind, 'blocked', JSON.stringify(first));
-  assert.deepEqual(plan.actors, ['planner']);
-  assert.equal(plan.rounds.length, 0);
-  const architect = new Gates('goals');
-  const second = await refine(fixture, architect);
-  assert.equal(second.kind, 'blocked', JSON.stringify(second));
-  assert.deepEqual(architect.actors, ['architecture']);
-  assert.equal(architect.questions[0], plan.questions[0]);
-  const run = new Gates('all');
-  const third = await refine(fixture, run);
-  assert.equal(third.kind, 'planned', JSON.stringify(third));
+  assert.deepEqual(waiting.actors, ['planner', 'architecture']);
+  assert.equal(waiting.questions.length, 1);
+  assert.equal(waiting.rounds.length, 0);
+  const run = new Gates(true);
+  const resumed = await refine(fixture, run);
+  assert.equal(resumed.kind, 'planned', JSON.stringify(resumed));
   assert.deepEqual(run.actors, ['direction']);
-  assert.equal(run.questions[0], architect.questions[1]);
-  assert.deepEqual([...run.invocations], [...plan.invocations]);
+  assert.deepEqual(run.questions, waiting.questions);
+  assert.deepEqual([...run.invocations], [...waiting.invocations]);
   assert.equal(run.rounds.length, 1);
   assertUnchanged(fixture, revision);
   assertReport(run.rounds[0]!);
@@ -96,22 +90,22 @@ test('pending real guide gates reopen the same round and exact proposals without
 /** Resolve the report to the actual declined decisions and retained original proposal intent. */
 function assertReport(completion: CompletedRefinementRound) {
   const report = readFileSync(completion.report, 'utf8');
-  assert.match(report, /Goal inventory unchanged/);
+  assert.match(report, /Goal mapping completed with no inventory changes/);
   assert.match(report, /architectureDecision/);
   assert.match(report, /declined/);
   assert.match(report, /Explain evidence retention in the accepted plan template/);
   assert.match(report, /Direction assessed the retained baseline/);
 }
 
-test('interactive guide declines continue Plan then Architect then the retained goal', async (t) => {
+test('an interactive architecture decline proceeds to the retained goal', async (t) => {
   const fixture = new RoundConsumptionFixture(t);
   provider(fixture);
   const revision = fixture.git('rev-parse', 'HEAD');
-  const observed = new Gates('all');
+  const observed = new Gates(true);
   const outcome = await refine(fixture, observed);
   assert.equal(outcome.kind, 'planned', JSON.stringify(outcome));
   assert.deepEqual(observed.actors, ['planner', 'architecture', 'direction']);
-  assert.equal(observed.questions.length, 2);
+  assert.equal(observed.questions.length, 1);
   assert.equal(observed.rounds.length, 1);
   assertUnchanged(fixture, revision);
   assertReport(observed.rounds[0]!);

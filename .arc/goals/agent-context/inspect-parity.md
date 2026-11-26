@@ -1,4 +1,5 @@
 ---
+id: inspect-parity
 priority: 30
 ---
 

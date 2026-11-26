@@ -1,6 +1,6 @@
 import { createElement as h } from 'react';
 import { Tooltip, WorkspaceLink } from '../../../../packages/ui/src/index.js';
-import { guideLink, type Guide, type GuideKind } from './guide.js';
+import { guideLink, guideName, type Guide, type GuideKind } from './guide.js';
 
 interface ListProps {
   entries: readonly Guide[];
@@ -36,7 +36,8 @@ function GuideRow({
   revision,
   changed,
 }: Omit<ListProps, 'entries' | 'changed'> & { entry: Guide; changed: boolean }) {
-  const link = h(WorkspaceLink, { href: guideLink(kind, entry.id, project, revision) }, entry.id);
+  const href = guideLink(kind, entry.id, project, revision);
+  const link = h(WorkspaceLink, { href }, guideName(entry));
   const description = entry.description ?? entry.name ?? entry.path;
   return h(
     'li',

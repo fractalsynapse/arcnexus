@@ -127,13 +127,13 @@ export class TaskRun {
     );
   }
 
-  /** Admit the exact approved Planner edit set or record its read-only result. */
+  /** Admit exact Planner edits or record its read-only result. */
   private async startPlanner(mode: NonNullable<TaskInput['planning']>) {
     const decision = await requestPlan(this.services.planner, this.session, {
       mode,
       progress: this.report.bind(this),
       signal: this.signal,
-      draft: this.input.goalDraft,
+      draft: this.input.guideDraft,
     });
     return 'kind' in decision ? decision : this.commitPlan(decision);
   }
@@ -471,7 +471,7 @@ export class TaskRun {
   /** Get a corrected proposal and retain earlier checkpoints before reviewing it again. */
   private async correctPlanner(findings: Extract<Feedback, { kind: 'rejection' }>['findings']) {
     const decision = await plannerCorrection(
-      this.input.goalDraft
+      this.input.guideDraft
         ? undefined
         : this.services.planner!.propose(
             this.session,

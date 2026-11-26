@@ -56,10 +56,10 @@ class PlannerRepairScenario {
   }
 
   /** Exercise generation, validation and ordinary no-change reporting through the public capability. */
-  run() {
+  run(mode: 'exploration' | 'objective' = 'exploration') {
     return new Planner({} as Agent).propose(
       this.task,
-      'exploration',
+      mode,
       () => {},
       new AbortController().signal,
     );
@@ -104,7 +104,7 @@ test('Planner holds an unchanged finding despite new transcript filenames', asyn
   assert.equal(scenario.requests.length, 2);
 });
 
-test('Planner records the exact goal draft only after the retained approval', async (t) => {
+test('Planner records the exact goal draft for independent review without a human gate', async (t) => {
   const { task, draft } = draftFixture(t);
   const planner = new Planner({} as Agent);
   const signal = new AbortController().signal;
@@ -112,24 +112,81 @@ test('Planner records the exact goal draft only after the retained approval', as
     planner.proposeDraft(task, { ...draft, revision: 'stale' }, () => {}, signal),
     /revision is stale/,
   );
-  task.ask = async (question) => {
-    assert.match(question, /-Previous outcome/);
-    assert.match(question, /\+Updated outcome/);
-    return undefined;
-  };
-  const propose = () => planner.proposeDraft(task, draft, () => {}, signal);
-  await assert.rejects(propose(), /Review these exact goal changes/);
-  assert.equal(
-    task.observations<{ plannerEdits?: unknown }>().some((event) => event.plannerEdits),
-    false,
-  );
-  task.ask = async () => 'approve';
-  const approved = await propose();
-  assert.ok('milestones' in approved);
+  task.ask = async (question) => assert.fail('Unexpected goal approval: ' + question);
+  const candidate = await planner.proposeDraft(task, draft, () => {}, signal);
+  assert.ok('milestones' in candidate);
   const observation = task
     .observations<{ plannerEdits?: { edits: { path: string; content: string }[] } }>()
     .find((event) => event.plannerEdits);
   assert.equal(observation?.plannerEdits?.edits[0]?.content, draft.content);
+});
+
+test('a model-proposed goal change reaches a delivery plan without a human gate', async (t) => {
+  const scenario = new PlannerRepairScenario(t, [
+    {
+      ...valid,
+      changes: [
+        {
+          id: 'reliable-checks',
+          content: '---\npriority: 1\n---\n# Checks\n\n## Success measures\nChecks can be rerun.\n',
+        },
+      ],
+    },
+  ]);
+  scenario.task.ask = async (question) => assert.fail('Unexpected goal approval: ' + question);
+  const outcome = await scenario.run();
+  assert.ok('milestones' in outcome);
+  assert.equal(outcome.milestones[0]?.owner, 'planner');
+});
+
+test('an explicit objective resumes the exact review before retaining guide edits', async (t) => {
+  const source = { path: 'engineering/intent.txt', quote: 'Keep reliable checks.' };
+  const scenario = new PlannerRepairScenario(t, [{ ...valid, sources: [source] }]);
+  Object.assign(scenario.task.capture.source, { paths: [source.path], read: () => source.quote });
+  const questions: string[] = [];
+  scenario.task.ask = async (question) => {
+    questions.push(question);
+    return questions.length === 1 ? undefined : 'approve';
+  };
+  await assert.rejects(scenario.run('objective'), /Review this exact objective change/);
+  const edits = () =>
+    scenario.task
+      .observations<{ plannerEdits?: unknown }>()
+      .filter(({ plannerEdits }) => plannerEdits);
+  assert.equal(edits().length, 0);
+  assert.ok('milestones' in (await scenario.run('objective')));
+  assert.equal(edits().length, 1);
+  assert.equal(scenario.requests.length, 1);
+  assert.match(questions[0]!, /\+Assess goals/);
+  assert.equal(questions[0], questions[1]);
+});
+
+test('saving an exact human objective draft records its authorization without asking again', async (t) => {
+  const scenario = new PlannerRepairScenario(t, []);
+  const { task } = scenario;
+  const path = '.arc/objectives/reliability/preserve-evidence.md';
+  const before = '---\nid: preserve-evidence\n---\n# Preserve evidence\n';
+  Object.assign(task.capture.source, { paths: [path], read: () => before });
+  task.ask = async (question) => assert.fail('Unexpected second objective decision: ' + question);
+  const draft = {
+    kind: 'objectives' as const,
+    id: 'preserve-evidence',
+    revision: task.capture.source.revision,
+    content: before + '\nRetain the exact evidence.\n',
+  };
+  const result = await new Planner({} as Agent).proposeDraft(
+    task,
+    draft,
+    () => {},
+    new AbortController().signal,
+  );
+  assert.ok('milestones' in result);
+  const authorization = task
+    .observations<{ objectiveDraftAuthorization?: { revision: string } }>()
+    .find(
+      ({ objectiveDraftAuthorization }) => objectiveDraftAuthorization,
+    )?.objectiveDraftAuthorization;
+  assert.equal(authorization?.revision, draft.revision);
 });
 
 function draftFixture(t: TestContext) {

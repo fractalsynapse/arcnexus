@@ -22,7 +22,7 @@ export interface TaskInput {
   scope?: string;
   standing?: boolean;
   planning?: 'exploration' | 'objective';
-  goalDraft?: import('../../planner/src/goal-draft.js').GoalDraft;
+  guideDraft?: import('../../planner/src/guide-draft.js').GuideDraft;
   architecture?: boolean;
   guide?: string;
   inbox?: { owner: string; question: string };

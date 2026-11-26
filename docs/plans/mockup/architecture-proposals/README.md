@@ -4,6 +4,7 @@ These drafts record architecture decisions surfaced while reviewing the [ArcNexu
 
 | Proposal | Status | Preview |
 | --- | --- | --- |
+| [Recommend objectives from existing project documentation](plan-objective-recommendations.md) | Exact amendment approved and applied, implementation started | Plan command panel and objective review |
 | [Remove operation applicability](remove-operation-applicability.md) | Draft for design review | Architect operation editor |
 | [Remove operation categories](remove-operation-categories.md) | Direction agreed, exact amendment pending | Architect operation editor |
 | [Describe operations in MCP discovery](operation-purpose.md) | Draft for design review | Purpose field in the Architect operation editor |

@@ -44,7 +44,7 @@ approved guide improvement, a useful staged implementation and later consumption
 of prior findings. No-change assessments are valid and artificial churn is not.
 
 Handled caller-level failures and steward-local rewinds are part of successful
-execution. Objective, goal and architecture approval pauses resume the same round.
+execution. Objective and architecture approval pauses resume the same round.
 Operator state repair, bypassed checks and uncontrolled aborts break the streak;
 an execution-path correction starts a fresh streak. Verify deliberate interruption
 and negative cases separately before the uninterrupted acceptance streak. Retain

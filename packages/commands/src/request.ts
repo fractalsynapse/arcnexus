@@ -1,7 +1,7 @@
 import type { Context } from 'cordis';
 import { z } from 'zod';
 import type { TaskObserver } from '../../workflow/src/index.js';
-import { goalDraft, type GoalDraft } from '../../planner/src/goal-draft.js';
+import { guideDraft, type GuideDraft } from '../../planner/src/guide-draft.js';
 
 const text = z
   .string()
@@ -12,11 +12,11 @@ export const workflowRequest = z.discriminatedUnion('command', [
     .strictObject({
       command: z.literal('task_plan'),
       objective: text.optional(),
-      draft: goalDraft.optional(),
+      draft: guideDraft.optional(),
     })
     .refine(
       ({ objective, draft }) => !objective || !draft,
-      'Submit an objective or one exact goal edit',
+      'Submit an objective or one exact guide edit',
     ),
   z.strictObject({ command: z.literal('task_run'), goal: text.optional() }),
   z.strictObject({ command: z.literal('architecture_update'), feedback: text.optional() }),
@@ -37,7 +37,7 @@ export async function dispatchWorkflow(
   switch (selection.command) {
     case 'task_plan':
       if (selection.draft) {
-        return dispatchGoalDraft(commands, directory, selection.draft, observer, signal);
+        return dispatchGuideDraft(commands, directory, selection.draft, observer, signal);
       }
       return commands.planTask(directory, selection.objective, observer, signal);
     case 'task_run':
@@ -51,23 +51,24 @@ export async function dispatchWorkflow(
   }
 }
 
-async function dispatchGoalDraft(
+async function dispatchGuideDraft(
   commands: Context['commands'],
   directory: string,
-  draft: GoalDraft,
+  draft: GuideDraft,
   observer: TaskObserver,
   signal: AbortSignal,
 ) {
   const bytes = new TextEncoder().encode(JSON.stringify(draft));
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
   const identity = Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const kind = draft.kind === 'objectives' ? 'objective' : 'goal';
   return commands.runTask(
     {
       directory,
-      goal: 'Edit goal ' + draft.id,
-      scope: 'plan:goal-edit:' + identity,
+      goal: `Edit ${kind} ${draft.id}`,
+      scope: `plan:${kind}-edit:${identity}`,
       planning: 'objective',
-      goalDraft: draft,
+      guideDraft: draft,
     },
     observer,
     signal,

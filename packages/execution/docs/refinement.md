@@ -84,8 +84,8 @@ Use the existing host clarification and exact-proposal decision receipts.
 Noninteractive absence of an answer yields a durable pending outcome at the same
 phase and round. Interactive answers and later invocations resume that position.
 Elapsed time grants no approval. A decline retains the submitted intent, exact
-proposal and accepted authority. Objectives, goals and architecture retain their
-human gates; routine implementation, check repair and verified staging integration
+proposal and accepted authority. Objectives and architecture retain their
+human approval; routine implementation, check repair and verified staging integration
 gain no additional gate.
 
 Admission and operation refusals retain their exact diagnostics and prior

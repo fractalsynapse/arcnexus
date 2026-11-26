@@ -1,4 +1,4 @@
-import type { GuideKind } from '../../../../packages/planner/src/guide-data.js';
+import type { Guide, GuideKind } from '../../../../packages/planner/src/guide-data.js';
 export type {
   Guide,
   GuideCollection,
@@ -40,4 +40,9 @@ export function guideLink(kind: GuideKind, id: string, project: string, revision
 
 export function guideType(kind: GuideKind) {
   return kind === 'goals' ? 'Goal' : 'Objective';
+}
+
+/** Present the file name while links retain the guide's stable record ID. */
+export function guideName({ id, path }: Guide) {
+  return path.split('/').at(-1)?.replace(/\.md$/, '') || id;
 }

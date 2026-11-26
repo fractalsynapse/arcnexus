@@ -4,7 +4,9 @@ import {
   type RevisionCitation,
 } from '../../architecture/src/index.js';
 import { citesVerifiedRun, type VerifiedGoalRun } from '../../execution/src/index.js';
-import { readGoal, recordID } from './inventory.js';
+import { readGoal } from './inventory.js';
+import { recordID } from './guide-data.js';
+import { guideCategory } from './guide-index.js';
 
 const alignments = ['strong', 'partial', 'unmapped'] as const;
 const evidenceLevels = ['demonstrated', 'partial', 'unverified'] as const;
@@ -23,6 +25,7 @@ type RunSelection = { operation: string } | { criterion: string } | { delivery: 
 
 export interface GoalChange {
   id: string;
+  category?: string;
   content: string | null;
 }
 
@@ -33,6 +36,12 @@ export interface Proposal {
   changes: GoalChange[];
   links: string[];
   sources: RevisionCitation[];
+  objectiveFile?: ObjectiveFile;
+}
+
+export interface ObjectiveFile {
+  name: string;
+  category: string;
 }
 
 /** Check the complete model proposal against the inventory captured for this task. */
@@ -47,23 +56,40 @@ export function decodeProposal(
   const ratings = list(value.ratings, 'ratings').map((entry) => rating(entry, capture, run));
   checkRatings(ratings, ids, objective);
   const changes = goalChanges(value.changes, ids);
-  const available = new Set([...ids, ...changes.map(({ id }) => id)]);
-  const links = list(value.links, 'links').map((entry) => word(entry, 'goal link'));
-  if (new Set(links).size !== links.length || links.some((id) => !available.has(id)))
-    throw new Error('Objective links must name distinct existing or proposed goals');
   const comparison = list(value.comparison, 'comparison').map((entry) => word(entry, 'comparison'));
   if (!comparison.length) throw new Error('Compare goal gaps, overlap and conflicts explicitly');
   const sources = citations(value.sources, capture, 'sources');
   if (objective && !sources.length)
     throw new Error('An objective needs at least one source citation for its proposed mapping');
+  const objectiveFile =
+    objective && value.objectiveFile !== undefined
+      ? decodeObjectiveFile(value.objectiveFile)
+      : undefined;
   return {
     summary: word(value.summary, 'summary'),
     ratings,
     comparison,
     changes,
-    links,
+    links: goalLinks(value.links, ids, changes),
     sources,
+    ...(objectiveFile && { objectiveFile }),
   };
+}
+
+/** Resolve stable links against the captured and proposed inventories. */
+function goalLinks(input: unknown, ids: readonly string[], changes: readonly GoalChange[]) {
+  const available = new Set([...ids, ...changes.map(({ id }) => id)]);
+  const links = list(input, 'links').map((entry) => word(entry, 'goal link'));
+  if (new Set(links).size !== links.length || links.some((id) => !available.has(id)))
+    throw new Error('Objective links must name distinct existing or proposed goals');
+  return links;
+}
+
+function decodeObjectiveFile(input: unknown): ObjectiveFile {
+  const { name, category } = mapping(input);
+  if (typeof name !== 'string' || !recordID.test(name) || !guideCategory(category))
+    throw new Error('An objective file needs a plain filename and a valid category');
+  return { name, category };
 }
 
 /** Require exploration to cover the full inventory and forbid foreign or duplicate IDs. */
@@ -114,17 +140,19 @@ function selectedObservation(input: unknown): RunSelection {
 function goalChanges(input: unknown, ids: readonly string[]) {
   const seen = new Set<string>();
   return list(input, 'changes').map((entry): GoalChange => {
-    const { id, content } = mapping(entry);
+    const { id, content, category } = mapping(entry);
     if (typeof id !== 'string' || !recordID.test(id) || seen.has(id))
       throw new Error('Goal changes must use unique Markdown record IDs');
     seen.add(id);
+    if (category !== undefined && !guideCategory(category))
+      throw new Error(`Invalid goal category: ${id}`);
     if (content === null && ids.includes(id)) return { id, content };
     if (typeof content !== 'string')
       throw new Error(`Goal ${id} needs a complete Markdown document or valid removal`);
     const { body } = readGoal(id, content);
     if (!/(?:\*\*Success measures\.\*\*|^#{1,6} Success measures)\s+\S/im.test(body))
       throw new Error(`Goal ${id} needs an explicit Success measures section`);
-    return { id, content };
+    return { id, content, ...(category !== undefined && { category }) };
   });
 }
 

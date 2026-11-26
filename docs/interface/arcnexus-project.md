@@ -27,8 +27,14 @@ authored rules and commands are reused by reference. Use the least code that mee
 accepted contract. Add a service seam for an actual consumer or a responsibility that
 must be independently replaceable.
 
-Admission resolves the approved catalog, authority, checks, revision, bindings
-identity and trusted plugin composition. Reload that integrated model after every
+Before project execution admission, an authorized repository connection may pin a
+verified Git revision and inspect its documentation through a trusted,
+platform-owned read-only Planner binding. This discovery can retain draft
+objectives and review observations under the same repository identity. It grants
+no repository writes, project-declared tools or project execution authority.
+Admission to publish objectives or align goals resolves the approved catalog,
+authority, checks, revision, bindings identity and trusted plugin composition.
+Reload that integrated model after every
 applied human-approved architecture update at a recorded activity boundary, once
 required implementation and handlers are validated. Revalidate retained work before
 the next activation in the same run, preserving original acceptance and historical
@@ -61,3 +67,4 @@ holds on current staging. Keep one configuration version. Main integration, tags
 | PRJ-13 | Moving an owner-local contract, test or script outside its owner root fails ownership validation. The CLI can substitute a trusted plugin at composition without changing a consuming plugin. |
 | PRJ-14 | A target repository plugin declaration cannot execute privileged host code or replace the application composition. |
 | PRJ-15 | The CLI app owns `apps/cli`, the Commands plugin owns `packages/commands`, and the project owner owns neither path. Both the app and plugin expose their own complete component specifications. |
+| PRJ-16 | An authorized repository without an ArcNexus catalog can produce retained, revision-cited objective drafts. Its source and project authority remain intact. Project admission reuses the verified repository identity and retains the drafts and citations. |

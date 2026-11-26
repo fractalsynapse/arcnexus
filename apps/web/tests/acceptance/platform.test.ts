@@ -353,7 +353,7 @@ test('the built command dock submits Plan and answers only the retained question
   );
 });
 
-test('Save submits the selected goal revision and exact draft for approval', async (t) => {
+test('Save submits the selected goal revision and exact draft for review', async (t) => {
   const { application, page } = await browserPage(t);
   const actions = await commandResponses(page);
   await page.goto(application.url);
@@ -363,7 +363,7 @@ test('Save submits the selected goal revision and exact draft for approval', asy
   await page.getByRole('button', { name: 'Raw', exact: true }).click();
   await page.locator('.arc-mdx .cm-content').fill('# Updated measure');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await page.getByText('Submitted for approval.').waitFor();
+  await page.getByText('Submitted for review.').waitFor();
   assert.deepEqual(
     actions.map((action) => action.body),
     [

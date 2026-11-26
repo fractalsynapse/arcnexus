@@ -145,7 +145,7 @@ intent, answers, issues, branches, PRs and acknowledged file checkpoints.
 An unanswered noninteractive gate yields a durable pending outcome. Interactive
 answers and later invocations continue the same phase and round; elapsed time
 cannot approve. A decline preserves submitted intent and accepted authority.
-Only objectives, goals and architecture use human gates; routine repair and
+Objectives and architecture use human approval; routine repair and
 verified staging integration add no gate.
 
 Each phase/task admission resolves freshly accepted staging authority. The parent

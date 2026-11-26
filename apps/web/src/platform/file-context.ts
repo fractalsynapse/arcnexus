@@ -3,7 +3,7 @@ import { CheckboxField, DialogButton, Tooltip } from '../../../../packages/ui/sr
 import type { WebCommands } from '../plugins/command-binding-plugin.js';
 import { ActiveProject } from './active-project.js';
 import { usePlanFile } from './plan-file-scope.js';
-import { SaveGoal } from './save-goal.js';
+import { SaveGuide } from './save-guide.js';
 
 /** Keep file actions in the same heading area as the active project. */
 export function FileContext({ binding }: { binding: WebCommands }) {
@@ -12,12 +12,12 @@ export function FileContext({ binding }: { binding: WebCommands }) {
     'div',
     { className: 'arc-platform-inline' },
     h(ActiveProject),
-    file.project && file.route?.kind === 'goals' && h(FileActions, { binding }),
+    file.project && file.route && h(FileActions, { binding }),
   );
 }
 
 function FileActions({ binding }: { binding: WebCommands }) {
-  const { canEdit, detail, editing, edit } = usePlanFile();
+  const { canEdit, detail, editing, edit, route } = usePlanFile();
   const checkbox = h(CheckboxField, {
     label: 'Edit',
     checked: editing,
@@ -27,11 +27,12 @@ function FileActions({ binding }: { binding: WebCommands }) {
   return h(
     'div',
     { className: 'arc-platform-inline' },
-    h(DialogButton, {
-      icon: 'metrics',
-      title: 'Progress',
-      children: h('p', null, 'A verified measure is required to display goal progress.'),
-    }),
+    route?.kind === 'goals' &&
+      h(DialogButton, {
+        icon: 'metrics',
+        title: 'Progress',
+        children: h('p', null, 'A verified measure is required to display goal progress.'),
+      }),
     canEdit
       ? checkbox
       : h(
@@ -42,6 +43,6 @@ function FileActions({ binding }: { binding: WebCommands }) {
           },
           checkbox,
         ),
-    editing && h(SaveGoal, { binding }),
+    editing && h(SaveGuide, { binding }),
   );
 }

@@ -12,9 +12,11 @@ import {
   type VerifiedGoalRun,
 } from '../../execution/src/index.js';
 import type { TaskInput, TaskObserver, TaskSession } from '../../workflow/src/index.js';
-import { goalInventory, readGoal } from './inventory.js';
-import type { GoalDraft } from './goal-draft.js';
-import { plannerAssignment, pathForGoal } from './assignment.js';
+import { splitMarkdown } from '../../foundation/src/markdown-document.js';
+import { readGoal } from './inventory.js';
+import { guideDirectory, guideIndex, guideRecord, withGuideID } from './guide-index.js';
+import type { GuideDraft } from './guide-draft.js';
+import { plannerAssignment } from './assignment.js';
 import { decodeProposal, type Proposal } from './proposal.js';
 import {
   objectivePath,
@@ -42,43 +44,46 @@ interface PendingProposal {
   report: string;
   feedback?: string;
 }
-interface ApprovedEdits {
+interface RetainedEdits {
   edits: CheckedEdit[];
   report: string;
 }
 
-/** Map captured goals, preserve the objective dialogue and prepare an exact approved edit set. */
+/** Map captured goals and prepare exact records for reviewed delivery. */
 export class Planner {
   /** Use the application's Agent service for every Planner proposal and refinement. */
   constructor(private readonly agent: Context['agent']) {}
 
-  /** Submit the operator's exact goal bytes through the existing approval and delivery path. */
+  /** Retain the exact operator draft and bind the checked edit to its captured revision. */
   async proposeDraft(
     session: TaskSession,
-    draft: GoalDraft,
+    draft: GuideDraft,
     progress: TaskObserver['progress'],
     signal: AbortSignal,
   ) {
     const task = hostTask(session);
     const { source } = task.capture;
-    if (source.revision !== draft.revision) throw new Error('The selected goal revision is stale');
-    readGoal(draft.id, draft.content);
-    const path = pathForGoal(task, draft.id);
-    const before = source.read(path);
-    if (before === draft.content) return planned(task, 'The goal is unchanged.', []);
-    const proposed = [{ path, before, content: draft.content }];
-    const edits = await this.approve(
-      task,
-      new Clarifications(task, selection, signal),
-      proposed,
-      progress,
-    );
-    if (!edits.length) return planned(task, 'The goal edit was declined.', []);
-    const report = task.store('goal-draft.diff', showPatch(edits));
-    task.note({
-      plannerEdits: { edits: edits.map(toCheckedEdit), report } satisfies ApprovedEdits,
-    });
-    return deliveryPlan(task, edits, report);
+    if (source.revision !== draft.revision) throw new Error('The selected guide revision is stale');
+    const kind = draft.kind ?? 'goals';
+    const existing = guideIndex(task.capture, kind).get(draft.id);
+    if (!existing) throw new Error('The selected guide is unavailable');
+    const { path, content: before } = existing;
+    validateDraft(task, path, draft);
+    if (before === draft.content) return planned(task, 'The guide is unchanged.', []);
+    signal.throwIfAborted();
+    const edits = [{ path, before, content: draft.content }];
+    const report = task.store('guide-draft.diff', showPatch(edits));
+    if (kind === 'objectives') {
+      const authorization = {
+        id: draft.id,
+        revision: draft.revision,
+        ...toCheckedEdit(edits[0]!),
+        report,
+      };
+      task.note({ objectiveDraftAuthorization: authorization });
+    }
+    progress({ phase: 'planning', message: 'Guide draft prepared for review', evidence: [report] });
+    return retainEdits(task, edits, report);
   }
 
   /** Report a mapping, or use the shared task lane to deliver its approved records. */
@@ -103,51 +108,24 @@ export class Planner {
       message: 'Planner mapped the captured project',
       evidence: [report],
     });
-    const edits = await this.approve(
-      task,
-      new Clarifications(task, selection, signal),
-      goalPatches(task, proposal, previous),
-      progress,
-    );
-    return this.admitEdits(task, { objective, proposal, report, edits }, previous, data, signal);
-  }
-
-  /** Preserve approved edits and objective dialogue as the single preparation checkpoint. */
-  private admitEdits(
-    task: HostTask,
-    {
-      objective,
-      proposal,
-      report,
-      edits,
-    }: { objective: boolean; proposal: Proposal; report: string; edits: GoalPatch[] },
-    previous: Map<string, string | null> | undefined,
-    data: ReturnType<typeof assignment>,
-    signal: AbortSignal,
-  ) {
-    const answers = new Clarifications(task, selection, signal).answers(data);
-    if (objective) {
-      const record = objectiveEdit(task, proposal, answers, edits, previous);
-      record.before = previous?.get(record.path) ?? null;
-      if (record.before !== record.content) edits.push(record);
-    }
-    if (!edits.length)
-      return planned(task, 'Goal mapping completed with no approved inventory changes.', [report]);
-    task.note({
-      plannerEdits: { edits: edits.map(toCheckedEdit), report } satisfies ApprovedEdits,
-    });
-    return deliveryPlan(task, edits, report);
+    const edits = goalPatches(task, proposal, previous);
+    if (
+      objective &&
+      !(await includeObjective(task, { proposal, edits, previous, data, signal, progress }))
+    )
+      return planned(task, 'The objective change was declined.', [report]);
+    return retainEdits(task, edits, report);
   }
 
   /** Apply exactly the journaled edits, skipping files already recovered from checkpoints. */
   async apply(session: TaskSession, signal: AbortSignal) {
     const task = hostTask(session);
-    const approval = task
-      .observations<{ plannerEdits?: ApprovedEdits }>()
+    const result = task
+      .observations<{ plannerEdits?: RetainedEdits }>()
       .findLast(({ plannerEdits }) => plannerEdits)?.plannerEdits;
-    if (!task.worktree || !task.branch || !approval)
+    if (!task.worktree || !task.branch || !result)
       throw new Error('Planner requires journaled edits and a prepared issue branch');
-    for (const edit of approval.edits) {
+    for (const edit of result.edits) {
       signal.throwIfAborted();
       const target = edit.content === null ? null : textDigest(edit.content);
       if (editFingerprint(task.worktree, task.capture, selection.component, edit.path) === target)
@@ -156,7 +134,7 @@ export class Planner {
       saveCheckpoint(task);
       await reconcileCheckpoint(task, signal);
     }
-    return { kind: 'completed' as const, evidence: [approval.report] };
+    return { kind: 'completed' as const, evidence: [result.report] };
   }
 
   /** Keep the same proposal and exact bytes on a restart at the approval gate. */
@@ -195,7 +173,7 @@ export class Planner {
     signal: AbortSignal,
     previous?: Map<string, string | null>,
   ) {
-    const ids = [...projectedGoalIDs(task, previous)];
+    const ids = [...guideIndex(task.capture, 'goals', previous).keys()];
     const seen = new Set<string>();
     let diagnostic: string | undefined;
     while (true) {
@@ -218,38 +196,68 @@ export class Planner {
       }
     }
   }
+}
 
-  /** Limit the human gate to changes to active goals, leaving submitted records durable. */
-  private async approve(
-    task: HostTask,
-    clarifications: Clarifications,
-    edits: GoalPatch[],
-    progress: TaskObserver['progress'],
-  ) {
-    if (!edits.length) return edits.slice();
-    const patch = showPatch(edits);
-    const answer = await clarifications.decide(
-      {
-        milestone: `Goal approval ${textDigest(JSON.stringify(edits))}`,
-        assignment: '',
-        acceptance: [],
-        evidence: [],
-      },
-      `Review these exact goal changes. Reply approve to apply them, or skip to leave the inventory as it is.\n\n${patch}`,
-      (reply) => /^(approve|skip)$/i.test(reply.trim()),
-    );
-    const approved = answer.trim().toLowerCase() === 'approve';
-    const evidence = task.store(
-      'inventory-decision.md',
-      `Decision: ${approved ? 'approved' : 'declined'}\n\n${patch}\n`,
-    );
-    progress({
-      phase: 'planning',
-      message: approved ? 'Goal changes approved' : 'Goal inventory unchanged',
-      evidence: [evidence],
-    });
-    return approved ? edits.slice() : [];
-  }
+/** Keep identity stable across an edit and enforce the selected collection's document rules. */
+function validateDraft(task: HostTask, path: string, { kind = 'goals', id, content }: GuideDraft) {
+  if (guideRecord(task.capture, kind, path, content).id !== id)
+    throw new Error('A guide edit must preserve its record ID');
+  if (kind === 'goals') readGoal(id, content);
+  else if (!splitMarkdown(content).body.trim()) throw new Error('An objective needs text');
+}
+
+/** Keep model-authored objective bytes out of the checked batch until authorized. */
+async function includeObjective(
+  task: HostTask,
+  input: {
+    proposal: Proposal;
+    edits: GoalPatch[];
+    previous?: Map<string, string | null>;
+    data: ReturnType<typeof assignment>;
+    signal: AbortSignal;
+    progress: TaskObserver['progress'];
+  },
+) {
+  const { proposal, edits, previous, data, signal, progress } = input;
+  const dialogue = new Clarifications(task, selection, signal);
+  const record = objectiveEdit(task, proposal, dialogue.answers(data), edits, previous);
+  record.before = previous?.get(record.path) ?? null;
+  if (record.before === record.content) return true;
+  if (!(await reviewObjective(task, dialogue, record, progress))) return false;
+  edits.push(record);
+  return true;
+}
+
+/** Retain a human decision against the exact objective patch and captured baseline. */
+async function reviewObjective(
+  task: HostTask,
+  dialogue: Clarifications,
+  edit: GoalPatch,
+  progress: TaskObserver['progress'],
+) {
+  const patch = showPatch([edit]);
+  const key = textDigest(JSON.stringify([task.capture.source.revision, edit]));
+  const answer = await dialogue.decide(
+    { milestone: `Objective review ${key}`, assignment: '', acceptance: [], evidence: [] },
+    `Review this exact objective change. Reply approve to authorize it, or skip to decline.\n\n${patch}`,
+    (reply) => /^(approve|skip)$/i.test(reply.trim()),
+  );
+  const approved = answer.trim().toLowerCase() === 'approve';
+  const evidence = task.store('objective-decision.md', `Decision: ${answer}\n\n${patch}\n`);
+  progress({
+    phase: 'planning',
+    message: approved ? 'Objective change approved' : 'Objective change declined',
+    evidence: [evidence],
+  });
+  return approved;
+}
+
+/** Keep one exact edit receipt for review, checkpointing and delivery. */
+function retainEdits(task: HostTask, edits: GoalPatch[], report: string) {
+  if (!edits.length)
+    return planned(task, 'Goal mapping completed with no inventory changes.', [report]);
+  task.note({ plannerEdits: { edits: edits.map(toCheckedEdit), report } satisfies RetainedEdits });
+  return deliveryPlan(task, edits, report);
 }
 
 /** Distinguish a repairable proposal from an execution or human gate failure. */
@@ -290,24 +298,25 @@ function assignment(
   };
 }
 
-/** Translate approved inventory IDs into exact captured file changes. */
+/** Resolve the current path for each stable goal ID before binding checked preimages. */
 function goalPatches(task: TaskSession, proposal: Proposal, previous?: Map<string, string | null>) {
-  const { source } = task.capture;
-  return proposal.changes.flatMap(({ id, content }) => {
-    const path = pathForGoal(task, id);
-    const before = previous?.has(path)
-      ? previous.get(path)!
-      : source.paths.includes(path)
-        ? source.read(path)
-        : null;
-    return before === content ? [] : [{ path, before, content }];
+  const current = guideIndex(task.capture, 'goals', previous);
+  const captured = previous && guideIndex(task.capture, 'goals');
+  const root = guideDirectory(task.capture, 'goals');
+  return proposal.changes.flatMap(({ id, content, category = 'general' }) => {
+    const existing = current.get(id);
+    const path = existing?.path ?? captured?.get(id)?.path ?? `${root}/${category}/${id}.md`;
+    const before = existing?.content ?? null;
+    const after =
+      content === null || (existing && !existing.category) ? content : withGuideID(content, id);
+    return before === after ? [] : [{ path, before, content: after }];
   });
 }
 
 /** Derive the current candidate bytes from successful earlier Planner writes. */
 function appliedEdits(task: HostTask) {
   const edits = task
-    .observations<{ plannerEdits?: ApprovedEdits }>()
+    .observations<{ plannerEdits?: RetainedEdits }>()
     .flatMap((event) => event.plannerEdits?.edits ?? []);
   const observed = new Map<string, string | null>();
   for (const { path, content } of edits.reverse()) {
@@ -319,19 +328,7 @@ function appliedEdits(task: HostTask) {
   return observed;
 }
 
-/** Keep prior approved additions and removals visible during candidate correction. */
-function projectedGoalIDs(task: TaskSession, previous?: Map<string, string | null>) {
-  const ids = new Set(goalInventory(task.capture).map(({ id }) => id));
-  for (const [path, content] of previous ?? []) {
-    const name = path.split('/').at(-1)!.slice(0, -3);
-    if (path !== pathForGoal(task, name)) continue;
-    if (content === null) ids.delete(name);
-    else ids.add(name);
-  }
-  return ids;
-}
-
-/** Record the exact submission with each linked goal's disposition after approved edits. */
+/** Record the submission with the expected disposition of each linked stable goal. */
 function objectiveEdit(
   task: TaskSession,
   proposal: Proposal,
@@ -339,14 +336,11 @@ function objectiveEdit(
   edits: readonly GoalPatch[],
   previous?: Map<string, string | null>,
 ): GoalPatch {
-  const goals = projectedGoalIDs(task, previous);
-  for (const { path, content } of edits) {
-    const id = path.split('/').at(-1)!.slice(0, -3);
-    if (content === null) goals.delete(id);
-    else goals.add(id);
-  }
+  const candidate = new Map(previous);
+  for (const { path, content } of edits) candidate.set(path, content);
+  const goals = new Set(guideIndex(task.capture, 'goals', candidate).keys());
   return {
-    path: objectivePath(task),
+    path: objectivePath(task, proposal.objectiveFile, previous),
     before: null,
     content: objectiveRecord(task, proposal, replies, goals),
   };
@@ -369,15 +363,23 @@ function deliveryPlan(task: TaskSession, edits: readonly GoalPatch[], report: st
   const focus = {
     purpose: 'Preserve scoped Planner records from the captured project',
     objectives: [task.goal],
-    constraints: ['Publish only journaled objective records and exactly approved goal bytes'],
+    constraints: [
+      'Review exact journaled guide bytes and retain human authorization for objectives',
+    ],
   };
   const criteria = [
     {
       id,
-      description: `The captured objective or approved inventory disposition is reflected in ${paths}; compare with ${report} and the retained human evidence.`,
+      description: `The exact guide changes are reflected in ${paths}; compare with ${report} and any retained objective decision.`,
     },
   ];
-  const steps = activities.map((activity) => {
+  const steps = guideDeliverySteps(id);
+  return { focus, milestones: [{ id, owner: selection.component, criteria, steps }] };
+}
+
+/** Use the ordinary checked-edit and release activities for Markdown-only delivery. */
+function guideDeliverySteps(id: string) {
+  return activities.map((activity) => {
     if (activity !== 'documentation' && activity !== 'release')
       return {
         activity,
@@ -390,7 +392,6 @@ function deliveryPlan(task: TaskSession, edits: readonly GoalPatch[], report: st
         : 'Verified staging integration';
     return { activity, checklist: [{ id: activity, criteria: [id], expected }] };
   });
-  return { focus, milestones: [{ id, owner: selection.component, criteria, steps }] };
 }
 
 export const plannerPlugin = {

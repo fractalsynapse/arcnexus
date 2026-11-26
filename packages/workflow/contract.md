@@ -40,7 +40,7 @@ identical automatic attempt. Research is an optional inbox contribution when
 knowledge is missing; it is never a mandatory repair step. Complete answers and
 edit receipts survive rewinds and restart.
 
-Human approvals concern objectives, goals and architecture. Unavailable external
+Human approvals concern objectives and architecture. Unavailable external
 prerequisites retain observable holds. Ordinary technical correction, sequencing
 and authorized staging delivery introduce no human approval gate.
 
@@ -48,13 +48,17 @@ and authorized staging delivery introduce no human approval gate.
 workflow. An accepted staging result closes the task. Cancellation and blocking
 gates preserve the observed position and evidence.
 
-`task plan` uses the same admission, cancellation, clarification and delivery
-boundaries. [Planner](../planner/contract.md) evaluates project sources or the
-human objective. A read-only mapping completes at the captured revision.
-When the run has records to persist, Workflow sends the exact journaled changes
-through Execution and independent review. A rejected Planner candidate returns its findings to Planner for a correction and
-approval of new goal bytes. A standing goal can use an independently reviewed
-check-only candidate when the staging tree remains byte-identical.
+`task plan` uses the same cancellation, clarification, evidence and delivery
+boundaries. [Planner](../planner/contract.md) assesses the standing inventory,
+evaluates a human objective, or recommends objectives from captured
+documentation. A documentation-only connection can retain draft observations
+without admitting project writes. In an admitted Plan, Workflow retains the
+objective decision and resumes the existing alignment activity with the
+authorized wording. It sends the exact journaled changes through Execution,
+independent review and staging. A rejected Planner candidate returns its
+findings to Planner. Only changes to objective authorization reopen human
+review. A standing goal can use an independently reviewed check-only candidate
+when the staging tree remains byte-identical.
 
 `architecture update` assesses through the explicitly selected Architecture Agent.
 A no-change assessment completes at its captured revision. For a change, retain
@@ -70,7 +74,7 @@ checkpoints. Deliver the combined candidate before the following Run phase.
 
 `refine(directory, rounds, observer, signal)` drives Plan, Architect and Run in
 order for each requested round. The default count is one. Run captures the
-approved priority-ordered inventory after the first two phases and invokes the
+verified priority-ordered inventory after the first two phases and invokes the
 Director for every goal regardless of existing passing measures. Every new round
 reassesses guides and consumes prior results; no-change assessments remain valid.
 Use the existing Coordination store and one project writer across sequential
@@ -106,10 +110,10 @@ separate [release boundary](../release/contract.md).
 | WFL-3 | A second goal cannot enter the same project lane. Cancellation retains progress and evidence through the existing Execution and Coordination services. |
 | WFL-4 | Inspecting an actor and activity creates no admitted task, workflow state or activation. |
 | WFL-5 | A correction that resolves a compiler error and exposes a different assertion failure returns the exact new finding to the accountable activity. Local rewinds remain within its milestone and preserve original ownership and acceptance without another Director call. |
-| WFL-6 | A repeated unchanged diagnostic with unchanged relevant inputs holds or explicitly escalates before another identical correction. Human approvals concern objectives, goals and architecture; unavailable external prerequisites retain named holds. |
+| WFL-6 | A repeated unchanged diagnostic with unchanged relevant inputs holds or explicitly escalates before another identical correction. Human approvals concern objectives and architecture. Unavailable external prerequisites retain named holds. |
 | WFL-7 | Self-review rewinds to the earliest affected applicable Step; after repair only affected downstream activities and checks replay, with prior receipts and complete answers retained. |
 | WFL-8 | Architect delivers required implementation and approved architecture through the canonical task lifecycle before Run captures it. A candidate cannot approve or activate its own authority. |
-| WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every priority-ordered approved goal. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
+| WFL-9 | Each refinement round assesses Plan and Architect and invokes Direction for every goal in the verified inventory in priority order. A restarted phase or approval pause resumes the same invocation without repeating completed outcomes. |
 | WFL-10 | Three consecutive live rounds assess every captured goal and show approved guide improvement, a useful staged implementation and later consumption of prior findings. Justified no change is valid. Operator state repair, bypassed checks or uncontrolled aborts break the streak; execution-path changes restart qualification. |
 | WFL-11 | An approved architecture update can advance the next activity in the same run after implementation availability and retained-work validation. No parallel lifecycle, candidate-side approval or historical evidence rewrite participates. |
 | WFL-12 | Required activity verification completes before progression, and events/metrics stream throughout the canonical lifecycle. Later refinement assessments consume time, token and profile-cost findings without a separate scheduler or budget mechanism. |

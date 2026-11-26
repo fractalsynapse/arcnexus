@@ -39,7 +39,7 @@ purpose: |
 
   Human authority and scoped authorization
 
-  Objectives, goals and architecture are high-level guides controlled by the human. Ordinary implementation correction under those guides should proceed without a new gate. Production operations are a separate maintainer boundary in the current contract. A user can explicitly authorize a particular repository action or temporary process waiver, and that authorization persists within its stated scope. The steward must record what was authorized rather than repeatedly ask the same question.
+  Objectives and architecture retain exact human decisions. Goal changes are independently reviewed for verified staging. Ordinary implementation correction under those guides should proceed without a new gate. Production operations are a separate maintainer boundary in the current contract. A user can explicitly authorize a particular repository action or temporary process waiver, and that authorization persists within its stated scope. The steward must record what was authorized rather than repeatedly ask the same question.
 
   A temporary waiver does not change the generic product's locked obligations. For example, authorization to integrate an unreleased maintenance PR manually cannot be translated into a runtime feature that merges main for every future goal. If the product boundary itself must change, prepare the exact contract amendment and registry update for review. Do not quietly edit locked bytes to make a release script pass.
 

@@ -83,8 +83,8 @@ receipts, complete answers and unaffected evidence. Direction engages initially,
 on explicit escalation and after final independent rejection. Link
 already accepted supplier work, or place required supplier work before the dependent
 milestone. Escalate a decision that needs different authority. Human approval concerns
-objectives, goals and architecture. Routine repairs, plan sequencing and authorized
-staging delivery add no approval gates. External prerequisites remain named holds.
+objectives and architecture. Goal changes use independent review and verified
+staging delivery. Routine repairs and plan sequencing add no approval gates. External prerequisites remain named holds.
 The host validates
 authority and persists plan and learning records. Stream and retain complete
 exposed harness and host observations through the existing journal/evidence path.

@@ -15,7 +15,13 @@ base workspace while preserving navigation order.
 A command binding supplies stable snapshots, subscription, and an optional
 structured submission function. The frame uses the binding for status,
 measurements and availability. It owns transient visual state and an unsent
-instruction. A preferences binding supplies the operator's named site schemes,
+instruction. The Plan feature registers **Recommend objectives** in the shared
+composer and defaults it to checked for a new composer. It applies to the Plan
+request it launches. Objective drafts and decisions use the shared question
+dialog, Markdown editor and diff viewer. Goal and objective file pages use the
+same revision-bound editor and show the reviewed delivery outcome.
+
+A preferences binding supplies the operator's named site schemes,
 workspace layouts and display appearance. The browser package consumes that
 binding and the server preferences entry registers the same schemas in Data.
 The generic page settings editor saves a workspace's

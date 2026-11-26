@@ -1,4 +1,5 @@
 ---
+id: recover-steward-checkpoints
 priority: 10
 ---
 

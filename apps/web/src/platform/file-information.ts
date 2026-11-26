@@ -1,6 +1,6 @@
 import { Fragment, createElement as h } from 'react';
 import { TopicPicker } from '../../../../packages/ui/src/index.js';
-import type { Guide, GuideCollection } from './guide.js';
+import { guideName, type Guide, type GuideCollection } from './guide.js';
 import { usePlanFile } from './plan-file-scope.js';
 import { useResource } from './resource.js';
 
@@ -38,7 +38,7 @@ function MetadataInputs({ entry, file }: { entry: Guide; file: FileState }) {
       null,
       'Name',
       h('input', {
-        value: fields.name ?? entry.name ?? entry.id,
+        value: fields.name ?? entry.name ?? guideName(entry),
         readOnly: !editing,
         onChange: (event) => setFields({ name: event.currentTarget.value }),
       }),

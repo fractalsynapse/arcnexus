@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
+export const recordID = /^[a-z0-9][a-z0-9-]*$/;
+
 const entrySchema = z.strictObject({
   id: z.string(),
   priority: z.number().int().optional(),
   path: z.string(),
+  category: z.string().optional(),
   name: z.string().optional(),
   description: z.string().optional(),
   topics: z.array(z.string()).optional(),
