@@ -1,11 +1,11 @@
-import { useState, createElement as h } from 'react';
+import { createElement as h } from 'react';
+import { Tabs } from '../../controls/tabs.js';
 import { orderedDisplays } from '../../layouts/page/page-preferences.js';
 import type { PagePreferences } from '../../layouts/page/page-preferences.js';
 import type { PanelRegion } from '../../layouts/panels/presets/index.js';
 import type { DisplayRegistration } from '../../registry/workspace.js';
 import { ActivePanels } from './active-panels.js';
 import { AvailablePanels } from './available-panels.js';
-import { PanelTabs } from './panel-tabs.js';
 
 interface DisplaySettingsProps {
   panels: readonly DisplayRegistration[];
@@ -14,7 +14,6 @@ interface DisplaySettingsProps {
 }
 
 export function DisplaySettings({ panels, draft, update }: DisplaySettingsProps) {
-  const [available, setAvailable] = useState(false);
   const ordered = orderedDisplays(panels, draft.order);
   const visible = ordered.filter(({ id }) => !draft.hidden.includes(id));
   const place = (id: string, region: PanelRegion) =>
@@ -24,18 +23,23 @@ export function DisplaySettings({ panels, draft, update }: DisplaySettingsProps)
       ...draft,
       hidden: showPanel ? draft.hidden.filter((item) => item !== id) : [...draft.hidden, id],
     });
-  return h(
-    'div',
-    { className: 'arc-display-settings' },
-    h(PanelTabs, { available, setAvailable }),
-    available
-      ? h(AvailablePanels, { ordered, hidden: draft.hidden, show })
-      : h(ActivePanels, {
+  return h(Tabs, {
+    label: 'Page panels',
+    sections: [
+      {
+        title: 'Active panels',
+        content: h(ActivePanels, {
           visible,
           draft,
           place,
           show,
           reorder: (order) => update({ ...draft, order }),
         }),
-  );
+      },
+      {
+        title: 'Available panels',
+        content: h(AvailablePanels, { ordered, hidden: draft.hidden, show }),
+      },
+    ],
+  });
 }

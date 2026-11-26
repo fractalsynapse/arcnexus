@@ -36,6 +36,7 @@ test('Plan can switch from a messages-only timeline to its full log and startup 
   const log = page.getByRole('log', { name: 'Planning events' });
   await log.getByText('Message 1', { exact: true }).waitFor();
   const tabs = page.getByRole('tablist', { name: 'Event log' });
+  assert.equal(await tabs.evaluate((list) => getComputedStyle(list).justifyContent), 'center');
   assert.equal(
     await tabs.getByRole('tab', { name: 'Messages' }).getAttribute('aria-selected'),
     'true',
@@ -44,11 +45,22 @@ test('Plan can switch from a messages-only timeline to its full log and startup 
   await tabs.getByRole('tab', { name: 'Full log' }).click();
   await log.getByText('1 operation', { exact: true }).click();
   await log.getByText('list-files', { exact: true }).waitFor();
+  await verifyContextFormatting(page);
+});
+
+async function verifyContextFormatting(page: Page) {
   await page.getByRole('tab', { name: 'Context', exact: true }).click();
   await page.getByText('Captured model request', { exact: true }).waitFor();
   await page.getByRole('tab', { name: 'Task', exact: true }).click();
   await page.getByText('Recorded Planner instruction.', { exact: true }).waitFor();
-});
+  await page.getByRole('tab', { name: 'Activity', exact: true }).click();
+  await page
+    .locator('code.language-yaml .hljs-attr')
+    .filter({ hasText: /^component:$/ })
+    .waitFor();
+  await page.getByRole('tab', { name: 'Standards', exact: true }).click();
+  await page.getByRole('heading', { name: 'Recorded quality standard', exact: true }).waitFor();
+}
 
 test('live metrics and the complete Planner report update with Event log disabled', async (t) => {
   const fixture = await gateway(t);
@@ -264,7 +276,11 @@ function planFixture(path: string, finished: boolean) {
 
 const capturedContext = {
   request: {
-    input: '## Task\nSource: Task inputs supplied at activation\n\nRecorded Planner instruction.',
+    input: [
+      '## Task\nSource: Task inputs supplied at activation\n\nRecorded Planner instruction.',
+      '## Activity\nSource: planner.yaml (activities.planning)\n\ncomponent: planner\nactivity: planning',
+      '## Standards\nSource: planner.yaml\n\nSource: docs/quality.md\n--- BEGIN docs/quality.md ---\n# Recorded quality standard\n--- END docs/quality.md ---',
+    ].join('\n\n'),
     options: { model: 'fixture-model' },
   },
 };

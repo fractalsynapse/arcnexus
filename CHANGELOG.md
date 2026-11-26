@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Center shared sub-tabs and use syntax-highlighted YAML and rendered Markdown in the Plan context view (#746).
+
 - Open the timestamped token breakdown from the Reported tokens value in Planner metrics (#746).
 
 - Let live Plan events grow with the page, put Stop in the command composer during execution, and move reconnect into the compact round controls (#746).

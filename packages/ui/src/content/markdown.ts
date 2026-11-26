@@ -49,14 +49,7 @@ const parser = new Marked({
       return link(href, escape(text), title);
     },
     code({ text, lang }) {
-      const language = lang?.trim().split(/\s+/)[0] ?? '';
-      return (
-        '<pre><code class="language-' +
-        escape(language) +
-        '">' +
-        (highlightCode(text, language) ?? escape(text)) +
-        '</code></pre>\n'
-      );
+      return renderCodeBlock(text, lang?.trim().split(/\s+/)[0] ?? '');
     },
   },
 });
@@ -71,4 +64,15 @@ export function highlightCode(text: string, language: string) {
   return language && highlight.getLanguage(language)
     ? highlight.highlight(text, { language }).value
     : undefined;
+}
+
+/** Render a syntax-highlighted source block with the same escaping as Markdown. */
+export function renderCodeBlock(text: string, language: string) {
+  return (
+    '<pre><code class="language-' +
+    escape(language) +
+    '">' +
+    (highlightCode(text, language) ?? escape(text)) +
+    '</code></pre>\n'
+  );
 }

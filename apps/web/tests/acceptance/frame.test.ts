@@ -449,9 +449,9 @@ async function configureLayout(page: Page) {
   assert.equal(await page.getByRole('heading', { name: 'Planning data' }).count(), 0);
   await page.getByRole('radio', { name: 'Three columns' }).check();
   await button(page, 'Remove Planner outcome').click();
-  await button(page, 'Available panels').click();
+  await page.getByRole('tab', { name: 'Available panels', exact: true }).click();
   await button(page, 'Add Planner outcome').click();
-  await button(page, 'Active panels').click();
+  await page.getByRole('tab', { name: 'Active panels', exact: true }).click();
   await assertStyledMenu(page, 'Planner outcome region');
   await chooseOption(page, 'Planner outcome region', 'Right');
   await button(page, 'Reorder Planner outcome').press('ArrowUp');

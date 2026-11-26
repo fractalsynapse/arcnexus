@@ -11,11 +11,6 @@
   inline-size: min(100%, 20rem);
   gap: 8px;
 }
-.arc-settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 .arc-layout-choices label {
   position: relative;
   justify-items: center;
@@ -25,8 +20,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
 }
-.arc-layout-choices label:has(:checked),
-.arc-settings-tabs button[aria-pressed='true'] {
+.arc-layout-choices label:has(:checked) {
   background: var(--tint);
   border-color: var(--link);
   color: var(--link);
