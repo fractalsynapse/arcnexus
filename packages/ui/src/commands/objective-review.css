@@ -1,5 +1,4 @@
 .arc-objective-review,
-.arc-review-drafts,
 .arc-review-draft,
 .arc-review-context,
 .arc-review-feedback,
@@ -11,14 +10,24 @@
 .arc-objective-review {
   gap: calc(1.5 * var(--gap));
 }
-.arc-review-draft > .arc-checkbox {
-  justify-self: end;
-}
-.arc-review-selection-count {
+.arc-review-selections {
   margin: 0;
-  text-align: center;
+  min-inline-size: 0;
+  padding: var(--gap);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.arc-review-selections legend {
+  padding-inline: 5px;
+  font-weight: 650;
+}
+.arc-review-selections small {
   color: var(--muted);
-  font-size: var(--font-label);
+}
+.arc-review-selection-list {
+  display: grid;
+  margin-block-start: 4px;
+  overflow-wrap: anywhere;
 }
 .arc-objective-review .arc-tab {
   max-inline-size: 100%;

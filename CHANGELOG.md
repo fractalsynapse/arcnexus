@@ -34,7 +34,7 @@
 
 ### Changed
 
-- Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog (#746).
+- Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog. Select multiple drafts together beside the decision actions (#746).
 
 - Keep human approval for Plan objective changes, route goal edits to independent review, and resolve categorized guide files by stable ID (#746).
 

@@ -39,7 +39,8 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
     h(ReviewDrafts, { review, ...draftState }),
     h(ReviewContext, { review }),
     h(RevisionFeedback, draftState),
-    review.readOnly && h('small', null, 'Selected drafts are retained for onboarding.'),
+    review.readOnly && h('small', null, 'Retained drafts are available after project admission.'),
+    review.drafts.length > 1 && h(DraftSelections, { review, ...draftState }),
     h(ReviewActions, { review, input, pending, submit }),
     error && h('p', { role: 'alert' }, error),
   );
@@ -48,23 +49,14 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
 function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveReview }) {
   const drafts = review.drafts;
   if (drafts.length === 1) return h(DraftReview, { draft: drafts[0]!, ...state });
-  return h(
-    'section',
-    { className: 'arc-review-drafts', 'aria-label': 'Objective drafts' },
-    h(
-      'p',
-      { className: 'arc-review-selection-count' },
-      `${state.input.selected.length} of ${drafts.length} selected`,
-    ),
-    h(Tabs, {
-      label: 'Objective drafts',
-      sections: drafts.map((draft) => ({
-        id: draft.id,
-        title: draft.title,
-        content: h(DraftReview, { draft, ...state }),
-      })),
-    }),
-  );
+  return h(Tabs, {
+    label: 'Objective drafts',
+    sections: drafts.map((draft) => ({
+      id: draft.id,
+      title: draft.title,
+      content: h(DraftReview, { draft, ...state }),
+    })),
+  });
 }
 
 function ReviewContext({ review }: Pick<ReviewProps, 'review'>) {
@@ -129,9 +121,25 @@ type ReviewActionProps = Pick<DraftState, 'input' | 'pending'> & {
   submit(decision: ObjectiveDecision): void;
 };
 
+function DraftSelections({ review, ...state }: DraftState & { review: ObjectiveReview }) {
+  const { drafts, readOnly } = review;
+  return h(
+    'fieldset',
+    { className: 'arc-review-selections' },
+    h('legend', null, readOnly ? 'Drafts to retain' : 'Drafts to approve'),
+    h('small', null, `${state.input.selected.length} of ${drafts.length} selected`),
+    h(
+      'div',
+      { className: 'arc-review-selection-list' },
+      drafts.map((draft) => h(DraftSelection, { key: draft.id, draft, ...state })),
+    ),
+  );
+}
+
 function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
   const feedback = input.feedback.trim() ? input.feedback : undefined;
   const revised = !!feedback || Object.keys(input.edits).length > 0;
+  const singleDraft = review.drafts.length === 1;
   return h(
     'div',
     { className: 'arc-command-actions' },
@@ -141,7 +149,7 @@ function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
         disabled: pending || revised || !input.selected.length,
         onClick: () => submit({ action: 'approve', selected: input.selected }),
       },
-      review.readOnly ? 'Retain selected drafts' : 'Approve selected',
+      approvalLabel(review.readOnly, singleDraft),
     ),
     h(
       Button,
@@ -151,8 +159,17 @@ function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
       },
       'Review revisions',
     ),
-    h(Button, { disabled: pending, onClick: () => submit({ action: 'decline' }) }, 'Decline batch'),
+    h(
+      Button,
+      { disabled: pending, onClick: () => submit({ action: 'decline' }) },
+      singleDraft ? 'Decline draft' : 'Decline batch',
+    ),
   );
+}
+
+function approvalLabel(readOnly: boolean, single: boolean) {
+  if (readOnly) return single ? 'Retain draft' : 'Retain selected drafts';
+  return single ? 'Approve draft' : 'Approve selected';
 }
 
 type DraftProps = DraftState & { draft: ObjectiveDraft };
@@ -162,7 +179,6 @@ function DraftReview(props: DraftProps) {
     'section',
     { className: 'arc-review-draft' },
     h(DraftWording, props),
-    h(DraftSelection, props),
     h(DraftContext, { draft: props.draft }),
   );
 }
@@ -195,7 +211,7 @@ function DraftContext({ draft }: { draft: ObjectiveDraft }) {
 
 function DraftSelection({ draft, input, change, pending }: DraftProps) {
   return h(CheckboxField, {
-    label: 'Select ' + draft.title,
+    label: draft.title,
     checked: input.selected.includes(draft.id),
     disabled: pending,
     onChange: (checked) =>

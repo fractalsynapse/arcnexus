@@ -121,6 +121,28 @@ test('Plan defaults to recommendations and reviews selected source-backed drafts
   });
 });
 
+test('a single read-only objective uses direct retain and decline actions', async (t) => {
+  const { application, page } = await browserPage(t);
+  const actions = await commandResponses(page, {
+    ...objectiveReviewFixture,
+    readOnly: true,
+    drafts: [objectiveReviewFixture.drafts[0]!],
+  });
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await (await timelineReview(page)).click();
+  const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
+  await dialog.getByRole('button', { name: 'Decline draft' }).waitFor();
+  assert.equal(await dialog.getByRole('checkbox').count(), 0);
+  await dialog.getByRole('button', { name: 'Retain draft' }).click();
+  await dialog.waitFor({ state: 'hidden' });
+  assert.deepEqual(actions[1]?.body, {
+    gate: 'exact-gate',
+    answer: JSON.stringify({ action: 'approve', selected: ['measure-recovery'] }),
+  });
+});
+
 const objectiveReviewFixture: ObjectiveReview = {
   id: 'review',
   summary: 'Documented recovery requirements.',
@@ -158,13 +180,19 @@ async function selectObjectiveSubset(page: Page) {
   await review.click();
   const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
   await assertObjectiveWording(dialog);
-  await dialog.getByRole('tab', { name: 'rehearse-recovery' }).click();
-  await dialog.getByRole('checkbox', { name: 'Select rehearse-recovery' }).uncheck();
+  const selection = dialog.getByRole('group', { name: 'Drafts to approve' });
+  assert.equal(await selection.getByRole('checkbox').count(), 2);
+  assert.equal(
+    await dialog.getByRole('tabpanel', { name: 'measure-recovery' }).getByRole('checkbox').count(),
+    0,
+  );
+  await selection.getByRole('checkbox', { name: 'rehearse-recovery' }).uncheck();
+  await selection.getByText('1 of 2 selected').waitFor();
   await dialog.getByRole('button', { name: 'Close' }).click();
   await review.click();
   await dialog.getByRole('tab', { name: 'rehearse-recovery' }).click();
   assert.equal(
-    await dialog.getByRole('checkbox', { name: 'Select rehearse-recovery' }).isChecked(),
+    await selection.getByRole('checkbox', { name: 'rehearse-recovery' }).isChecked(),
     false,
   );
   await dialog.getByRole('button', { name: 'Approve selected' }).click();
