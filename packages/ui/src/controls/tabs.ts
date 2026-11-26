@@ -10,7 +10,15 @@ export interface TabSection {
 }
 
 /** Render one section at a time while exposing standard accessible tab navigation. */
-export function Tabs({ label, sections }: { label: string; sections: readonly TabSection[] }) {
+export function Tabs({
+  label,
+  sections,
+  className,
+}: {
+  label: string;
+  sections: readonly TabSection[];
+  className?: string;
+}) {
   const id = useId();
   const [selected, select] = useState(sections[0]?.title);
   const current = Math.max(
@@ -19,7 +27,7 @@ export function Tabs({ label, sections }: { label: string; sections: readonly Ta
   );
   return h(
     'div',
-    { className: 'arc-tabs' },
+    { className: className ? 'arc-tabs ' + className : 'arc-tabs' },
     h(
       'div',
       { role: 'tablist', 'aria-label': label, className: 'arc-tab-list', onKeyDown: moveTab },

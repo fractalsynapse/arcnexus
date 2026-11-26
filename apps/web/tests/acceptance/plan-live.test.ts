@@ -51,6 +51,8 @@ test('Plan can switch from a messages-only timeline to its full log and startup 
 async function verifyContextFormatting(page: Page) {
   await page.getByRole('tab', { name: 'Context', exact: true }).click();
   await page.getByText('Captured model request', { exact: true }).waitFor();
+  const tabs = page.getByRole('tablist', { name: 'Model request sections' });
+  assert.equal(await tabs.evaluate((list) => getComputedStyle(list).borderBottomStyle), 'solid');
   await page.getByRole('tab', { name: 'Task', exact: true }).click();
   await page.getByText('Recorded Planner instruction.', { exact: true }).waitFor();
   await page.getByRole('tab', { name: 'Activity', exact: true }).click();
@@ -61,6 +63,7 @@ async function verifyContextFormatting(page: Page) {
 
 async function verifyYamlDisclosure(page: Page) {
   const yaml = page.getByRole('tabpanel', { name: 'Activity', exact: true });
+  assert.equal(await yaml.evaluate((panel) => getComputedStyle(panel).borderTopStyle), 'solid');
   const settings = yaml.locator('summary').filter({ hasText: 'settings' });
   assert.equal(await settings.count(), 1);
   assert.equal(await yaml.getByText('Verify rubric', { exact: true }).count(), 0);

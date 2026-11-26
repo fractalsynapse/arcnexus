@@ -9,6 +9,7 @@ import { ModelSection } from './model-section.js';
 export function ModelRequestView({ request }: { request: ModelRequest }) {
   return h(Tabs, {
     label: 'Model request sections',
+    className: 'arc-model-request-view',
     sections: [
       ...inputSections(request.input),
       { title: 'Model options', content: h(JsonView, { value: request.options }) },
