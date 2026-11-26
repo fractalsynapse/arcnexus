@@ -17,7 +17,8 @@ Commands using the shared progress, cancellation and output contract:
 - `arcnexus task plan "<objective>"` preserves the exact human submission and
   offers resumable clarification and objective review.
 - `arcnexus task plan --recommend-objectives [<focus>]` recommends objectives
-  from captured documentation. Focus guides source selection or analysis.
+  from captured documentation. Project documentation directories guide default
+  discovery. Focus can select other authorized sources at that same revision.
   Duplicate flags, extra positional arguments and blank explicit inputs are
   rejected before admission.
 
@@ -72,8 +73,8 @@ Exit 0 represents the verified staging merge for a single goal, or a completed
 round in which every goal has a Director assessment supported by evidence for the
 evaluated revision or a verified merge. The Director can plan applicable checks
 through the existing activity mappings. Assembled-candidate checks remain required
-for changes. A completed mapping, completed read-only discovery or an already
-recorded objective may exit 0 without a new staging merge.
+for changes. A completed mapping or an already recorded objective may exit 0
+without a new staging merge. Missing project setup is reported as a prerequisite.
 Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
 and exit 130 cancellation. Refuse a second active task in the same project. Other
 verbs, option modes and launch surfaces are reserved for later qualification.

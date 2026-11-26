@@ -8,7 +8,6 @@ export type SessionRequest =
       connectionString: string;
       project: string;
       worker: string;
-      documentationOnly?: boolean;
     }
   | { kind: 'query'; sql: string; values: Array<string | number | null> }
   | { kind: 'close' };

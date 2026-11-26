@@ -37,10 +37,6 @@ export const objectiveDecision = z.discriminatedUnion('action', [
 ]);
 
 export type ObjectiveReview = z.output<typeof objectiveReview>;
-export const onboardingSelection = z.strictObject({
-  revision: prose,
-  drafts: z.array(objectiveDraft).nonempty(),
-});
 export type ObjectiveDraft = z.output<typeof objectiveDraft>;
 export const recommendationAssessment = z.strictObject({
   revision: prose,

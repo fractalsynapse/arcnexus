@@ -2,6 +2,7 @@ import type { Context } from 'cordis';
 import { z } from 'zod';
 import type { TaskObserver } from '../../workflow/src/index.js';
 import { guideDraft, type GuideDraft } from '../../planner/src/guide-draft.js';
+import { documentationSettings } from '../../architecture/src/documentation-settings.js';
 
 const text = z
   .string()
@@ -22,7 +23,16 @@ export const workflowRequest = z.discriminatedUnion('command', [
       'Submit a recommendation focus, objective, or exact guide edit',
     ),
   z.strictObject({ command: z.literal('task_run'), goal: text.optional() }),
-  z.strictObject({ command: z.literal('architecture_update'), feedback: text.optional() }),
+  z
+    .strictObject({
+      command: z.literal('architecture_update'),
+      feedback: text.optional(),
+      documentation: documentationSettings.optional(),
+    })
+    .refine(
+      ({ feedback, documentation }) => !(feedback && documentation),
+      'Submit feedback or exact documentation settings',
+    ),
   z.strictObject({ command: z.literal('refine'), rounds: z.string().regex(/^[0-9]*[1-9][0-9]*$/) }),
 ]);
 
@@ -47,7 +57,12 @@ export async function dispatchWorkflow(
         ? commands.runRound(directory, observer, signal)
         : commands.runTask({ directory, goal: selection.goal }, observer, signal);
     case 'architecture_update':
-      return commands.updateArchitecture(directory, selection.feedback, observer, signal);
+      return commands.updateArchitecture(
+        directory,
+        selection.documentation ?? selection.feedback,
+        observer,
+        signal,
+      );
     case 'refine':
       return commands.refine(directory, selection.rounds, observer, signal);
   }

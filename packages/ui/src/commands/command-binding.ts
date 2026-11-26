@@ -22,7 +22,6 @@ export interface CommandState {
   scope?: string;
   gate?: { id: string; key: string; question: string; review?: ObjectiveReview };
   canRecommendObjectives?: boolean;
-  recommendationOnly?: boolean;
   canReconnect?: boolean;
   canCancel?: boolean;
   supported: readonly Operation[];

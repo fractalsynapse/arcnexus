@@ -6,9 +6,9 @@ import { buildCodexRequest, type TaskContext } from './request.js';
 import type { Agent } from '../../agent/src/index.js';
 import type { HostTask } from '../../execution/src/index.js';
 import { ArchitectureAssessment } from './assessment.js';
+import type { DocumentationSettings } from './documentation-settings.js';
 
 export { projectCatalogPath } from './catalog.js';
-export { documentationCapture } from './documentation-capture.js';
 export { openProject, type ProjectSource } from './source.js';
 
 export type { ActivitySelection, Capture, TaskContext };
@@ -31,8 +31,14 @@ declare module 'cordis' {
 /** Read the captured model and prepare its Codex request. */
 export class Architecture {
   /** Assess accepted guides through the real Agent and durable host approval path. */
-  propose(agent: Agent, task: HostTask, feedback: string | undefined, signal: AbortSignal) {
-    return new ArchitectureAssessment(agent, task, feedback, signal).propose();
+  propose(
+    agent: Agent,
+    task: HostTask,
+    feedback: string | undefined,
+    signal: AbortSignal,
+    documentation?: DocumentationSettings,
+  ) {
+    return new ArchitectureAssessment(agent, task, feedback, signal).propose(documentation);
   }
 
   /** Capture the committed project resolved from a working directory. */
@@ -59,5 +65,7 @@ export const architecturePlugin = {
 };
 
 export { prepareArchitectureProposal } from './decode-proposal.js';
+export { documentationSettings, type DocumentationSettings } from './documentation-settings.js';
+export { validateDocumentationDirectories } from './documentation-proposal.js';
 export { operationID, resolveOperation } from './operation.js';
 export { validateCapture } from './validation.js';

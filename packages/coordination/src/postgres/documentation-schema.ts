@@ -19,3 +19,16 @@ export const documentationDiscoveryMigration = {
         DEFAULT COALESCE(current_setting('arcnexus.documentation_only', true), 'off') = 'on';
   `,
 };
+
+/** Retire abandoned draft-only requests while keeping their recorded decisions and observations. */
+export const retireDocumentationDiscoveryMigration = {
+  id: 'coordination/retire-documentation-discovery',
+  sql: `
+    UPDATE arcnexus_coordination.workflow_requests
+    SET state='finished', cancellation=true,
+        outcome='{"kind":"cancelled","reason":"Draft-only Plan was retired.","evidence":[]}'::jsonb
+    WHERE documentation_only AND state <> 'finished';
+    UPDATE arcnexus_coordination.runs SET active=0
+    WHERE documentation_only AND active=1;
+  `,
+};

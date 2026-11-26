@@ -4,11 +4,7 @@ import { Context } from 'cordis';
 import { Client } from 'pg';
 import { z } from 'zod';
 import { agentPlugin } from '../../../packages/agent/src/index.js';
-import {
-  Architecture,
-  architecturePlugin,
-  openProject,
-} from '../../../packages/architecture/src/index.js';
+import { Architecture, architecturePlugin } from '../../../packages/architecture/src/index.js';
 import { commandsPlugin } from '../../../packages/commands/src/index.js';
 import { WorkflowRequests } from '../../../packages/coordination/src/index.js';
 import { verifyCheckSandbox } from '../../../packages/execution/src/index.js';
@@ -26,7 +22,6 @@ const assignmentSchema = z.strictObject({
   directory: path,
   storage: path,
   runtime: runtimeImageSchema,
-  documentationOnly: z.literal(true).optional(),
   githubAppId: z.string().min(1).optional(),
   revision: z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/),
 });
@@ -38,18 +33,14 @@ function assignedProject() {
   if (process.env.ARC_ISOLATED_REVIEW !== '1' || !file || !secret || !worker)
     throw new Error('Hosted execution requires a trusted isolated assignment');
   const assignment = assignmentSchema.parse(JSON.parse(readFileSync(file, 'utf8')) as unknown);
-  const captured = assignment.documentationOnly
-    ? undefined
-    : new Architecture().capture(assignment.directory);
-  const source = captured?.source ?? openProject(assignment.directory);
+  const captured = new Architecture().capture(assignment.directory);
+  const source = captured.source;
   if (source.remote !== assignment.remote || source.revision !== assignment.revision)
     throw new Error('Hosted checkout differs from its captured assignment');
-  if (assignment.documentationOnly && assignment.githubAppId)
-    throw new Error('Documentation discovery does not accept GitHub write credentials');
   return {
     ...assignment,
     worker,
-    binding: captured?.project.bindings,
+    binding: captured.project.bindings,
     connectionString: readSecret(secret),
   };
 }
@@ -58,10 +49,8 @@ async function main() {
   if (process.getuid?.() === 0)
     throw new Error('The execution Host must run as a dedicated non-root user');
   const assignment = assignedProject();
-  if (!assignment.documentationOnly) {
-    verifyCheckSandbox(assignment.storage);
-    prepareCodexBinding(assignment.directory, assignment.binding);
-  }
+  verifyCheckSandbox(assignment.storage);
+  prepareCodexBinding(assignment.directory, assignment.binding);
   const context = await hostContext(assignment);
   await serve(assignment, context.commands);
 }
@@ -70,18 +59,13 @@ async function hostContext(assignment: ReturnType<typeof assignedProject>) {
   const context = new Context();
   for (const dependency of [teamPlugin, architecturePlugin, agentPlugin])
     await context.use(dependency);
-  const { remote, revision, storage, worker, runtime, connectionString, documentationOnly } =
-    assignment;
+  const { remote, storage, worker, runtime, connectionString } = assignment;
   await context.use(
     hostedHostPlugin(storage, {
       project: remote,
       worker,
       runtime,
       connectionString,
-      documentationOnly,
-      discovery: documentationOnly
-        ? { remote, revision, executable: '/usr/local/bin/codex' }
-        : undefined,
       github: assignment.githubAppId ? configureGitHub(assignment.directory, remote) : undefined,
     }),
   );

@@ -33,7 +33,6 @@ type Worker = {
   remote: string;
   worker: string;
   runtime?: RuntimeImage;
-  documentationOnly?: boolean;
 };
 
 /** Persist one authorized command position and its operator answer per project. */
@@ -54,7 +53,7 @@ export class WorkflowRequests {
   /** Recover the operator's active command or their most recently submitted result. */
   async current(caller: Caller) {
     const { rows } = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND NOT documentation_only
        ORDER BY (state <> 'finished') DESC, ordinal DESC FETCH FIRST ROW ONLY`,
       [caller.remote, caller.principal],
     );
@@ -62,22 +61,16 @@ export class WorkflowRequests {
   }
 
   /** Admit one request and return exact duplicate submissions idempotently. */
-  async submit(
-    caller: Caller,
-    id: string,
-    request: unknown,
-    revision: string,
-    documentationOnly = false,
-  ) {
+  async submit(caller: Caller, id: string, request: unknown, revision: string) {
     const content = JSON.stringify(request);
-    const values = [caller.remote, caller.principal, id, content, revision, documentationOnly];
+    const values = [caller.remote, caller.principal, id, content, revision];
     const entered = await this.database.query<WorkflowReceipt>(
       `
-      INSERT INTO ${store} (project,principal,id,request,revision,state,documentation_only)
-      SELECT $1,$2,$3,$4::jsonb,$5,'queued',$6
-      WHERE ($6 OR EXISTS (SELECT 1 FROM arcnexus_coordination.hosted_projects WHERE project=$1))
+      INSERT INTO ${store} (project,principal,id,request,revision,state)
+      SELECT $1,$2,$3,$4::jsonb,$5,'queued'
+      WHERE EXISTS (SELECT 1 FROM arcnexus_coordination.hosted_projects WHERE project=$1)
         AND NOT EXISTS (
-          SELECT 1 FROM arcnexus_coordination.runs WHERE project=$1 AND active=1
+          SELECT 1 FROM arcnexus_coordination.runs WHERE project=$1 AND active=1 AND NOT documentation_only
         )
       ON CONFLICT DO NOTHING RETURNING ${columns}
       `,
@@ -85,8 +78,8 @@ export class WorkflowRequests {
     );
     if (entered.rows[0]) return entered.rows[0];
     const existing = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND id=$3 AND request=$4::jsonb AND documentation_only=$5`,
-      [...values.slice(0, 4), documentationOnly],
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND id=$3 AND request=$4::jsonb AND NOT documentation_only`,
+      values.slice(0, 4),
     );
     if (!existing.rows[0])
       throw new Error('Workflow request is unavailable or the project is busy');
@@ -107,7 +100,7 @@ export class WorkflowRequests {
   async answer(caller: Caller, id: string, gate: string, answer: string) {
     const { rows } = await this.database.query<WorkflowReceipt>(
       `UPDATE ${store} SET state='queued', reply=$5
-       WHERE project=$1 AND principal=$2 AND id=$3 AND state='waiting' AND gate->>'id'=$4
+       WHERE project=$1 AND principal=$2 AND id=$3 AND state='waiting' AND NOT documentation_only AND gate->>'id'=$4
        RETURNING ${columns}`,
       [caller.remote, caller.principal, id, gate, answer],
     );
@@ -117,18 +110,12 @@ export class WorkflowRequests {
 
   /** Return the pinned revision only when a project needs an assigned Host. */
   async loadAssignment(remote: string) {
-    const { rows } = await this.database.query<{ revision: string; documentationOnly: boolean }>(
-      `SELECT revision, documentation_only AS "documentationOnly" FROM ${store}
-       WHERE project=$1 AND state IN ('queued','running')`,
+    const { rows } = await this.database.query<{ revision: string }>(
+      `SELECT revision FROM ${store}
+       WHERE project=$1 AND NOT documentation_only AND state IN ('queued','running')`,
       [remote],
     );
-    const assignment = rows[0];
-    return (
-      assignment && {
-        revision: assignment.revision,
-        ...(assignment.documentationOnly && { documentationOnly: true as const }),
-      }
-    );
+    return rows[0];
   }
 
   /** Transfer the pending request to a Host with the verified revision and retained image. */
@@ -137,8 +124,8 @@ export class WorkflowRequests {
     const { rows } = await this.database.query<WorkflowReceipt & { reply: string | null }>(
       `UPDATE ${store} SET state='running',worker=$2,runtime=COALESCE(runtime,$4::jsonb)
        WHERE project=$1 AND revision=$3 AND state='queued' AND NOT cancellation
-         AND documentation_only=$5 AND (runtime IS NULL OR runtime=$4::jsonb) RETURNING ${columns},reply`,
-      [owner.remote, owner.worker, owner.revision, runtime, owner.documentationOnly ?? false],
+         AND NOT documentation_only AND (runtime IS NULL OR runtime=$4::jsonb) RETURNING ${columns},reply`,
+      [owner.remote, owner.worker, owner.revision, runtime],
     );
     if (!rows[0]) await this.verifyQueuedImage(owner, runtime);
     return rows[0];
@@ -148,8 +135,8 @@ export class WorkflowRequests {
   private async verifyQueuedImage(owner: Worker & { revision: string }, runtime: string | null) {
     const { rows } = await this.database.query<{ runtime: RuntimeImage }>(
       `SELECT runtime FROM ${store} WHERE project=$1 AND revision=$2 AND state='queued'
-         AND documentation_only=$4 AND runtime IS NOT NULL AND runtime IS DISTINCT FROM $3::jsonb`,
-      [owner.remote, owner.revision, runtime, owner.documentationOnly ?? false],
+         AND NOT documentation_only AND runtime IS NOT NULL AND runtime IS DISTINCT FROM $3::jsonb`,
+      [owner.remote, owner.revision, runtime],
     );
     if (rows[0]) throw imageUnavailable(rows[0].runtime);
   }
@@ -181,8 +168,8 @@ export class WorkflowRequests {
   /** Reconcile the departed assigned worker before consuming its retained command. */
   async recover(owner: Worker, confirmStopped: (worker: string) => boolean | Promise<boolean>) {
     const { rows } = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND worker=$2 AND state='running' AND documentation_only=$3`,
-      [owner.remote, owner.worker, owner.documentationOnly ?? false],
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND worker=$2 AND state='running' AND NOT documentation_only`,
+      [owner.remote, owner.worker],
     );
     const request = rows[0];
     if (!request || !(await confirmStopped(owner.worker))) return false;
@@ -196,7 +183,6 @@ export class WorkflowRequests {
       this.database,
       owner.remote,
       (worker) => worker === owner.worker,
-      owner.documentationOnly,
     );
     if (!retired && (await finishRetainedRound(this.database, owner, request.id))) return true;
     const terminal = !retired && (await this.recoveredOutcome(owner, request));

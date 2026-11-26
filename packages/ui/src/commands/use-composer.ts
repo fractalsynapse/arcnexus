@@ -47,7 +47,7 @@ function selectOperation(options: readonly Operation[], selection?: Operation): 
 
 function commandOptions(state: CommandState): readonly Operation[] {
   if (state.supported.length) return state.supported;
-  return state.recommendationOnly ? ['plan'] : launchOperations;
+  return launchOperations;
 }
 
 function useRecommendation(operation: Operation, state: CommandState) {
@@ -55,8 +55,7 @@ function useRecommendation(operation: Operation, state: CommandState) {
   if (operation !== 'plan' || !state.canRecommendObjectives || !state.supported.includes(operation))
     return;
   return {
-    checked: recommend || !!state.recommendationOnly,
-    disabled: state.recommendationOnly,
+    checked: recommend,
     onChange: setRecommend,
   };
 }

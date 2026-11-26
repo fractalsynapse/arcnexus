@@ -108,7 +108,6 @@ export class Planner {
     findings?: readonly Rejection[],
   ) {
     const task = hostTask(session);
-    if (task.documentationOnly) return this.discover(task, progress, signal);
     if (mode === 'objective' && session.capture.source.paths.includes(objectivePath(session)))
       return planned(task, 'The exact objective is already recorded.', [objectivePath(session)]);
     const recommendations =
@@ -153,32 +152,6 @@ export class Planner {
       ),
     );
     return retainEdits(task, edits, report);
-  }
-
-  /** Retain selected onboarding drafts at their original source without starting delivery. */
-  private async discover(task: HostTask, progress: TaskObserver['progress'], signal: AbortSignal) {
-    const { batch, selected, declined } = await new ObjectiveRecommendations(
-      task,
-      this.agent,
-      signal,
-      true,
-    ).review();
-    const evidence = task.store(
-      'objective-discovery.json',
-      JSON.stringify({ ...batch, selected }, null, 2),
-    );
-    if (
-      selected.length &&
-      !task
-        .observations<{ onboardingSelection?: unknown }>()
-        .some((event) => event.onboardingSelection)
-    )
-      task.note({
-        onboardingSelection: { revision: task.capture.source.revision, drafts: selected },
-      });
-    recordRecommendations(task, batch, selected, progress);
-    const summary = declined ? 'Objective recommendations were declined.' : batch.summary;
-    return planned(task, summary, [evidence]);
   }
 
   /** Apply exactly the journaled edits, skipping files already recovered from checkpoints. */

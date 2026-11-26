@@ -11,6 +11,7 @@ import { projectName, usePlatformSession } from './session.js';
 import { useBrowserPlatform } from './browser-platform.js';
 import { useResource } from './resource.js';
 import { ImportProject } from './project-import.js';
+import { ProjectSettingsButton } from './project-settings.js';
 
 export function ProjectManager() {
   return h(DialogButton, {
@@ -134,7 +135,12 @@ function ProjectRow({ project, remove }: ProjectRowProps) {
       },
       checking ? 'Checking…' : 'Check reachability',
     ),
-    action: h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
+    action: h(
+      'div',
+      { className: 'arc-platform-inline' },
+      h(ProjectSettingsButton, { project }),
+      h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
+    ),
   });
 }
 

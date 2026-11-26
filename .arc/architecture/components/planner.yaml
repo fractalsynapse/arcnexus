@@ -63,10 +63,10 @@ purpose: |
   code is evidence of behavior, not automatic approval of every historical design
   choice or a reason to preserve an accidental implementation constraint as a goal.
 
-  Recommendation mode discovers relevant captured documentation across the
-  repository and considers any supplied file or directory references. It returns
-  cited objective drafts for human review. The Planner contract defines the
-  read-only pre-admission use of this activity.
+  Recommendation mode uses the project's configured documentation directories
+  for discovery. An empty list permits repository-wide discovery. Consider explicit
+  file or directory references in the instruction and return cited objective drafts
+  for human review. Approved drafts enter goal alignment in the same Plan run.
 
   The modes use the same planning service and ordinary application lifecycle.
   A bare assessment can legitimately conclude that the inventory needs no change. An explicit objective can remain unresolved while its exact submission

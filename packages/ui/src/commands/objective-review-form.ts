@@ -44,18 +44,11 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
     h(ReviewDrafts, { review, ...draftState }),
     h(ObjectiveReviewSummary, review),
     h(RevisionFeedback, draftState),
-    h('small', null, reviewConsequence(review)),
+    h('small', null, 'Approving continues this run into goal refinement.'),
     review.drafts.length > 1 && h(DraftSelections, { review, ...draftState }),
     h(ReviewActions, { review, input, pending, submit }),
     error && h('p', { role: 'alert' }, error),
   );
-}
-
-function reviewConsequence({ readOnly, drafts }: ObjectiveReview) {
-  if (!readOnly) return 'Approving continues this run into goal refinement.';
-  return drafts.length === 1
-    ? 'This preview ends after retaining the draft.'
-    : 'This preview ends after retaining the selected drafts.';
 }
 
 function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveReview }) {
@@ -116,11 +109,11 @@ type ReviewActionProps = Pick<DraftState, 'input' | 'pending'> & {
 };
 
 function DraftSelections({ review, ...state }: DraftState & { review: ObjectiveReview }) {
-  const { drafts, readOnly } = review;
+  const { drafts } = review;
   return h(
     'fieldset',
     { className: 'arc-review-selections' },
-    h('legend', null, readOnly ? 'Drafts to retain' : 'Drafts to approve'),
+    h('legend', null, 'Drafts to approve'),
     h('small', null, `${state.input.selected.length} of ${drafts.length} selected`),
     h(
       'div',
@@ -143,7 +136,7 @@ function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
         disabled: pending || revised || !input.selected.length,
         onClick: () => submit({ action: 'approve', selected: input.selected }),
       },
-      approvalLabel(review.readOnly, singleDraft),
+      singleDraft ? 'Approve draft' : 'Approve selected',
     ),
     h(
       Button,
@@ -159,11 +152,6 @@ function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
       singleDraft ? 'Decline draft' : 'Decline batch',
     ),
   );
-}
-
-function approvalLabel(readOnly: boolean, single: boolean) {
-  if (readOnly) return single ? 'Retain draft' : 'Retain selected drafts';
-  return single ? 'Approve draft' : 'Approve selected';
 }
 
 type DraftProps = DraftState & { draft: ObjectiveDraft };

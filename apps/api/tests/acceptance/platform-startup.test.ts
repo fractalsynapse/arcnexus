@@ -43,6 +43,10 @@ test(
         .revision,
       record.revision,
     );
+    assert.deepEqual(await platform.context.data.invoke(project, 'project-settings', 'read', {}), {
+      revision: record.revision,
+      directories: [],
+    });
   },
 );
 

@@ -1,5 +1,6 @@
 import { architectInbox } from './architect-inbox.js';
 import { hostTask } from '../../execution/src/index.js';
+import type { DocumentationSettings } from '../../architecture/src/index.js';
 import type {
   TaskInput,
   TaskObserver,
@@ -20,7 +21,7 @@ export class ArchitectRun {
   ) {}
 
   /** Reconcile interrupted delivery first, otherwise assess and retain one exact human-reviewed batch. */
-  async execute(feedback?: string): Promise<TaskOutcome> {
+  async execute(feedback?: string, documentation?: DocumentationSettings): Promise<TaskOutcome> {
     const task = hostTask(this.session);
     const pending = task
       .observations<{ architectureDelivery?: string }>()
@@ -29,13 +30,18 @@ export class ArchitectRun {
     if (!this.services.architecture) throw new Error('Architecture assessment is unavailable');
     this.observer.progress({
       phase: 'planning',
-      message: 'Architect is assessing accepted direction and prior findings',
+      message: documentation
+        ? 'Preparing project documentation settings for review'
+        : 'Architect is assessing accepted direction and prior findings',
     });
-    return this.assess(feedback);
+    return this.assess(feedback, documentation);
   }
 
   /** Resume the same Architect with complete supplier answers before reaching a guide decision. */
-  private async assess(feedback?: string): Promise<TaskOutcome> {
+  private async assess(
+    feedback?: string,
+    documentation?: DocumentationSettings,
+  ): Promise<TaskOutcome> {
     const task = hostTask(this.session);
     while (true) {
       this.signal.throwIfAborted();
@@ -43,6 +49,7 @@ export class ArchitectRun {
         this.session,
         feedback,
         this.signal,
+        documentation,
       );
       if (decision.kind === 'supplier') {
         const stopped = await architectInbox(this.session, decision, this.run);

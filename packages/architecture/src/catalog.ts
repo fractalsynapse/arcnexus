@@ -17,6 +17,7 @@ interface Binding {
 
 export interface Project {
   knowledgeRoot?: string;
+  documentationDirectories?: string[];
   id: string;
   remote: string;
   contractRegistry: string;
@@ -110,7 +111,6 @@ interface Contract {
 }
 
 export interface Capture {
-  readonly documentationOnly?: boolean;
   readonly source: ProjectSource;
   readonly project: Readonly<Project>;
   readonly components: Readonly<Record<string, Component>>;

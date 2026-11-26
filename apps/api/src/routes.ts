@@ -9,6 +9,7 @@ type Route = {
 };
 
 export const routes: readonly Route[] = [
+  { path: '/settings', resource: 'project-settings', operation: 'read', query: [] },
   {
     path: '/operation-evidence/{sequence}',
     resource: 'operation-evidence',

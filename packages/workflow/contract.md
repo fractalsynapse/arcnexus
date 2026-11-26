@@ -51,9 +51,8 @@ gates preserve the observed position and evidence.
 `task plan` uses the same cancellation, clarification, evidence and delivery
 boundaries. [Planner](../planner/contract.md) assesses the standing inventory,
 evaluates a human objective, or recommends objectives from captured
-documentation. A documentation-only connection can retain draft observations
-without admitting project writes. In an admitted Plan, Workflow retains the
-objective decision and resumes the existing alignment activity with the
+documentation. Surface missing project setup before starting Plan. Workflow
+retains the objective decision and resumes the same Plan's alignment activity with the
 authorized wording. It sends the exact journaled changes through Execution,
 independent review and staging. A rejected Planner candidate returns its
 findings to Planner. Only changes to objective authorization reopen human

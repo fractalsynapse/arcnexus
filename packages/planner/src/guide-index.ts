@@ -3,7 +3,7 @@ import type { Capture } from '../../architecture/src/index.js';
 import { splitMarkdown } from '../../foundation/src/markdown-document.js';
 import { recordID, type GuideKind } from './guide-data.js';
 
-type GuideCapture = Pick<Capture, 'project' | 'source' | 'documentationOnly'>;
+type GuideCapture = Pick<Capture, 'project' | 'source'>;
 type GuideRecord = { id: string; path: string; category?: string; content: string };
 
 /** Use the project's configured knowledge root for either guide collection. */
@@ -20,7 +20,6 @@ export function guideIndex(
   const prefix = guideDirectory(capture, kind) + '/';
   const paths = new Set([...capture.source.paths, ...(changes?.keys() ?? [])]);
   const entries = new Map<string, GuideRecord>();
-  if (capture.documentationOnly) return entries;
   for (const path of paths) {
     if (!path.startsWith(prefix) || !path.endsWith('.md')) continue;
     const content = changes?.has(path) ? changes.get(path)! : capture.source.read(path);

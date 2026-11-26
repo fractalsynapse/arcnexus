@@ -48,18 +48,14 @@ function status(receipt: Receipt | null, canSubmit: boolean): CommandState['stat
   return canSubmit ? 'Idle' : 'Unavailable';
 }
 
-export function dockState(
-  { receipt, canSubmit, recommendationOnly }: CurrentWorkflow,
-  scope: string,
-): CommandState {
+export function dockState({ receipt, canSubmit }: CurrentWorkflow, scope: string): CommandState {
   const busy = receipt && receipt.state !== 'finished';
   return {
     scope,
     canRecommendObjectives: true,
-    recommendationOnly,
     status: status(receipt, canSubmit),
     requestId: receipt?.id,
-    supported: canSubmit && !busy ? (recommendationOnly ? ['plan'] : supported) : [],
+    supported: canSubmit && !busy ? supported : [],
     canCancel: Boolean(busy),
     command: receipt ? labels[receipt.request.command] : undefined,
     execution: receipt?.execution ?? undefined,

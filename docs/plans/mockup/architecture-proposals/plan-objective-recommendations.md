@@ -2,7 +2,7 @@
 
 **Implementation checkpoint.** The exact contract amendment is applied. The Plan recommendation and onboarding flow is implemented on the issue branch.
 
-[Proposed follow-up](unified-plan-documentation.md) removes the draft-only path and adds documentation directories to project settings.
+[Approved follow-up](unified-plan-documentation.md) supersedes the draft-only design recorded here and adds documentation directories to project settings.
 
 ## Exact amendment for approval
 
@@ -57,5 +57,5 @@ On November 26, 2026, Adrian Webb recorded the approval and delegated applicatio
 - Planner, Data, and the Run inventory share categorized guide lookup. The eight goals and four objectives retain their original IDs, priorities, refinement links, and body bytes. The API checks stable links at both the current and earlier captured revisions.
 - Plan sends proposed and directly edited goals to independent review without a human approval prompt. Explicit submissions wait for exact objective review, and a direct objective save retains the operator's revision-bound bytes as authorization. Plan File uses one save component for both kinds of guide.
 - Plan's checked-by-default control and the CLI `--recommend-objectives` option use the shared command request. The Planner reads committed Git objects through the read-only list and read tools. Review retains exact diffs, selections, edited text, feedback and citations in the existing approval path. Goals proceed to independent review after objective approval.
-- Documentation-only projects use the same catalog identity and PostgreSQL journal. Their Host runs the discovery activity in a neutral workspace and cannot acquire the ordinary delivery lane. After normal admission, Plan can re-review drafts against the new revision and identify changed citations. See the [Host setup](../../../../apps/host/README.md#read-only-plan-onboarding).
+- The original implementation retained documentation-only drafts in the PostgreSQL journal. Those records remain historical evidence under the [approved follow-up](unified-plan-documentation.md).
 - An isolated live Codex run on the ArcNexus project produced three source-cited proposals and paused for human review. No objectives were approved or published in that check. The cases for edited wording, resumed approvals, selected drafts, changed citations, and a repository without a catalog are covered by the relevant Planner, browser, and PostgreSQL suites. Candidate CI, independent review, and deployment remain separate.

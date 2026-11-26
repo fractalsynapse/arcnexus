@@ -1,10 +1,6 @@
 import type { RuntimeImage } from '../../foundation/src/runtime-image.js';
 import type { GitHubCredential } from '../../collaboration/src/index.js';
-import {
-  documentationCapture,
-  openProject,
-  type Architecture,
-} from '../../architecture/src/index.js';
+import type { Architecture } from '../../architecture/src/index.js';
 import type { Coordination } from '../../coordination/src/index.js';
 import type { Candidate } from '../../verification/src/index.js';
 import type {
@@ -30,7 +26,6 @@ export class Execution {
     private readonly storage: string,
     private readonly runtime?: RuntimeImage,
     private readonly github?: GitHubCredential,
-    private readonly discovery?: { remote: string; revision: string; executable: string },
   ) {}
 
   /** Resolve the binding and capture the repository before claiming the project lane. */
@@ -54,9 +49,7 @@ export class Execution {
     const scope =
       input.planning === 'exploration' && !parent
         ? `plan:exploration:${config.capture.source.revision}`
-        : config.documentationOnly
-          ? `documentation:${config.capture.source.revision}:${input.scope}`
-          : input.scope;
+        : input.scope;
     const journal = ancestor
       ? ancestor.journal.child(input.goal, scope ?? input.goal, config.fresh)
       : this.coordination.admit(
@@ -79,7 +72,6 @@ export class Execution {
 
   /** Capture current staging for assessments while retaining ordinary task admission checks. */
   private configuration(input: TaskInput, parent?: TaskSession) {
-    if (this.discovery) return this.documentationConfiguration(input, parent);
     const capture = this.architecture.capture(input.directory);
     const fresh = Boolean(
       parent || input.standing || input.planning || input.architecture || input.scope === 'refine',
@@ -89,26 +81,6 @@ export class Execution {
       ...preflight(selected, this.storage, fresh),
       runtime: this.runtime,
       github: this.github,
-    };
-  }
-
-  /** Resolve the platform binding without loading repository policy or preparing a worktree. */
-  private documentationConfiguration(input: TaskInput, parent?: TaskSession): HostConfig {
-    const { remote, revision, executable } = this.discovery!;
-    if (parent || input.planning !== 'recommendation' || input.architecture || input.guideDraft)
-      throw new Error('This connection only supports objective recommendations');
-    const source = openProject(input.directory, revision);
-    if (source.remote !== remote || source.revision !== revision)
-      throw new Error('Documentation source differs from the trusted binding');
-    return {
-      capture: documentationCapture(source),
-      executable,
-      storage: this.storage,
-      fresh: true,
-      base: revision,
-      common: this.storage,
-      runtime: this.runtime,
-      documentationOnly: true,
     };
   }
 

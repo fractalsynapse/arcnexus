@@ -25,7 +25,6 @@ export const workflowAnswer = workflowSelection.extend({
 
 export const currentWorkflow = z.strictObject({
   canSubmit: z.boolean(),
-  recommendationOnly: z.literal(true).optional(),
   receipt: workflowReceipt.nullable(),
 });
 

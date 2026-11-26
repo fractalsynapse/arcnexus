@@ -32,8 +32,6 @@ export function activateActor(
     return activateCapturedDocuments(task, agent, selection, data, signal);
   const { capture } = task;
   const worktree = task.worktree ?? capture.source.root;
-  if (task.documentationOnly)
-    throw new Error('Documentation discovery only permits captured source reads');
   verifyNativeGuidance(capture, worktree);
   const diff =
     task.branch && selection.activity === 'review'

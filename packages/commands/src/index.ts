@@ -1,6 +1,7 @@
 import type { Context } from 'cordis';
 import type { InspectionInput } from '../../agent/src/index.js';
 import type { TaskInput, TaskObserver } from '../../workflow/src/index.js';
+import type { DocumentationSettings } from '../../architecture/src/index.js';
 export { dispatchWorkflow, workflowRequest, type WorkflowRequest } from './request.js';
 export { commandInspectionPlugin } from './inspection-data.js';
 export { hostedCommandsDataPlugin } from './hosted-data.js';
@@ -24,7 +25,7 @@ declare module 'cordis' {
       ): ReturnType<Context['workflow']['run']>;
       updateArchitecture(
         directory: string,
-        feedback: string | undefined,
+        input: string | DocumentationSettings | undefined,
         observer: TaskObserver,
         signal: AbortSignal,
       ): ReturnType<Context['workflow']['update']>;
@@ -56,8 +57,8 @@ export const commandsPlugin = {
           observer,
           signal,
         ),
-      updateArchitecture: (directory, feedback, observer, signal) =>
-        context.workflow.update(directory, feedback, observer, signal),
+      updateArchitecture: (directory, input, observer, signal) =>
+        context.workflow.update(directory, input, observer, signal),
       runTask: (input: TaskInput, observer: TaskObserver, signal: AbortSignal) =>
         context.workflow.run(input, observer, signal),
       runRound: (directory, observer, signal) =>

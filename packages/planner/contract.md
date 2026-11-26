@@ -24,13 +24,11 @@ evidence. The trusted binding determines access and authority. Cite the exact
 source path, revision and supporting excerpt. Recommendations include proposed
 wording, a category and the uncovered need.
 
-A verified read-only connection can use the same recommendation activity before
-project execution admission. A platform-owned binding supplies the activity and
-permitted reads without relying on repository instructions or tool declarations.
-Retained drafts, citations and review discussion follow the verified repository
-identity into the admitted project. When a new capture changes cited evidence,
-show the change and review the draft against the reconciled baseline before
-publication.
+Default discovery searches the captured project documentation directories when
+provided. Each configured path must identify a directory inside the captured
+tree. Report invalid paths by name. An explicit file or directory supplied for
+this run can focus discovery elsewhere in the same authorized tree. Every
+recommendation uses the normal project workspace and delivery policy.
 
 ## Guide records
 
@@ -55,9 +53,8 @@ decision. An unrecognized or stale reply grants no approval.
 When a recommendation is approved, pass the selected objective bytes to the
 existing goal-alignment activity in the same admitted Plan session. If
 discovery supports no new objective, explain the assessment and continue
-standing-inventory alignment in an admitted Plan. A read-only connection can
-complete discovery with its drafts or a no-recommendation assessment. It
-cannot publish guide records or run goal alignment.
+standing-inventory alignment in that same Plan. An approved selection always
+reaches goal alignment before ordinary delivery, including on a newly set up project.
 
 An explicit save of the architect's exact objective draft is human
 authorization at its captured revision. Model-authored objective changes,
@@ -79,7 +76,7 @@ alignment needs no goal edits, deliver the authorized objectives on their own.
 | PLN-3 | A model-authored objective change reaches delivery only with authority over its exact selected bytes and baseline. A direct objective save records the architect's exact draft. |
 | PLN-4 | An interrupted round retains its captured goal inventory. The next fresh round uses the newly reviewed inventory. |
 | PLN-5 | Every refinement Plan phase evaluates the standing guides using prior observations. It produces a checked goal diff or justified no change while preserving objective authorization and keeping owners and results out of goal records. |
-| PLN-6 | Recommendations cite captured sources in an unconventional layout. A repository without an ArcNexus catalog retains its read-only drafts and evidence through later project admission. |
+| PLN-6 | Recommendations cite captured sources in an unconventional layout. Configured directories set default discovery, explicit source paths can focus one run, and an empty list permits discovery across the repository. Invalid configured paths produce actionable diagnostics. |
 | PLN-7 | After draft revision and restart, the same objective review resumes. Goal alignment receives only the selected approved bytes and goal changes enter independent review with no human approval prompt. |
 | PLN-8 | A categorized guide retains its identity, links and historical revisions after a move. Duplicate IDs, invalid paths and stale saves are refused. |
 

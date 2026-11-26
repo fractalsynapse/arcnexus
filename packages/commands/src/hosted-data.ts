@@ -13,9 +13,7 @@ import {
 
 const resource = 'workflow-requests';
 
-type Resolve = (
-  scope: DataScope,
-) => Promise<{ remote: string; revision: string; documentationOnly?: boolean } | undefined>;
+type Resolve = (scope: DataScope) => Promise<{ remote: string; revision: string } | undefined>;
 
 async function caller(scope: DataScope, resolve: Resolve) {
   const project = await resolve(scope);
@@ -29,7 +27,6 @@ function operations(data: Data, requests: WorkflowRequests, resolve: Resolve) {
       const binding = await caller(scope, resolve);
       return currentWorkflow.parse({
         canSubmit: await data.allows(scope, resource, 'create'),
-        ...(binding.documentationOnly && { recommendationOnly: true }),
         receipt: (await requests.current(binding)) ?? null,
       });
     }),
@@ -56,22 +53,16 @@ function submitOperation(requests: WorkflowRequests, resolve: Resolve) {
   return dataOperation(workflowSubmission, workflowReceipt, async (scope, input) => {
     const binding = await caller(scope, resolve);
     const { request } = input;
-    if (
-      binding.documentationOnly &&
-      (request.command !== 'task_plan' || request.mode !== 'recommend-objectives')
-    )
-      throw new Error('This connection only supports objective recommendations');
-    const draft = request.command === 'task_plan' ? request.draft : undefined;
+    const draft =
+      request.command === 'task_plan'
+        ? request.draft
+        : request.command === 'architecture_update'
+          ? request.documentation
+          : undefined;
     if (draft && draft.revision !== binding.revision)
       throw new Error('Refresh the project before submitting an edit from a different revision');
     return workflowReceipt.parse(
-      await requests.submit(
-        binding,
-        input.id,
-        request,
-        binding.revision,
-        binding.documentationOnly,
-      ),
+      await requests.submit(binding, input.id, request, binding.revision),
     );
   });
 }

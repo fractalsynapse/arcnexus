@@ -31,7 +31,6 @@ export function hostedHostPlugin(
   assignment: HostedProject & {
     runtime?: RuntimeImage;
     github?: GitHubCredential;
-    discovery?: Parameters<typeof executionPluginFor>[3];
   },
 ) {
   return mountHost(
@@ -39,7 +38,6 @@ export function hostedHostPlugin(
     (context) => context.provide('coordination', hostedProjectCoordination(assignment)),
     assignment.runtime,
     assignment.github,
-    assignment.discovery,
   );
 }
 
@@ -48,11 +46,10 @@ function mountHost(
   coordination: (context: Context) => unknown,
   runtime?: RuntimeImage,
   github?: GitHubCredential,
-  discovery?: Parameters<typeof executionPluginFor>[3],
 ) {
   return async (context: Context) => {
     await context.use(coordination);
-    await context.use(executionPluginFor(storage, runtime, github, discovery));
+    await context.use(executionPluginFor(storage, runtime, github));
     await context.use(plannerPlugin);
     await context.use(nativeWorkflow);
   };
@@ -68,11 +65,12 @@ const nativeWorkflow = {
 
 /** Map the workflow ports directly to their native owning services. */
 function services(context: Context): WorkflowServices {
+  const { architecture, agent } = context;
   return {
     execution: context.execution,
     architecture: {
-      propose: (session, feedback, signal) =>
-        context.architecture.propose(context.agent, hostTask(session), feedback, signal),
+      propose: (session, feedback, signal, documentation) =>
+        architecture.propose(agent, hostTask(session), feedback, signal, documentation),
     },
     planner: context.planner,
     direction: {

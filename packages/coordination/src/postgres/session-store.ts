@@ -13,7 +13,6 @@ export interface HostedProject {
   project: string;
   worker: string;
   connectionString: string;
-  documentationOnly?: boolean;
 }
 
 type Parameter = JournalValue | Record<string, JournalValue>;
@@ -53,7 +52,6 @@ class PostgresStore implements JournalStore {
         connectionString: project.connectionString,
         project: project.project,
         worker: project.worker,
-        documentationOnly: project.documentationOnly,
       });
     } catch (error) {
       this.close();

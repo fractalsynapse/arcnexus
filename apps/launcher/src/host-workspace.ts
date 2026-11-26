@@ -29,8 +29,7 @@ export function provisionHostCheckout(
     const target = join(scratch, 'checkout');
     git(scratch, 'clone', '--no-hardlinks', '--no-checkout', '--', config.source, target);
     git(target, 'remote', 'set-url', 'origin', config.remote);
-    if (config.documentationOnly) git(target, 'update-ref', '--no-deref', 'HEAD', config.revision);
-    else git(target, 'checkout', '--detach', config.revision);
+    git(target, 'checkout', '--detach', config.revision);
     renameSync(target, config.checkout);
   } finally {
     rmSync(scratch, { recursive: true, force: true });

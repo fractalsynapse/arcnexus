@@ -8,22 +8,27 @@ authority:
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
   approvalRecord: 'Exact proposal intent
-    9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b; architect
+    d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c; architect
     approval and named-editor delegation are required in Codex chat before
     application.'
-  approvedBase: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+  approvedBase: 92b3fe4e86e0b4a99185aa66d831af0545942444
 contracts:
   - id: arcnexus/project
     type: project
     file: docs/interface/arcnexus-project.md
     owner: architecture
     stage: locked
-    digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
+    digest: 3576083bae5a4446adda961474204b37531bf2dad12ca1fced970bccb9331f37
     dependsOn: []
     scenarios: 16
     acceptedBy: Adrian Webb (architect)
     acceptedAt: '2026-11-26'
     history:
+      - stage: locked
+        digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
+        file: docs/interface/arcnexus-project.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: locked
         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
         file: docs/interface/arcnexus-project.md
@@ -91,7 +96,7 @@ contracts:
         note: Replaced by human-reviewed proposal intent
           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     approvalRecord: 'Exact proposal intent
-      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
+      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
       architect approval and named-editor delegation are required in Codex chat
       before application.'
     stewardshipRecord: 'Architect approved steward ownership, release relocation and
@@ -129,7 +134,7 @@ contracts:
     file: apps/cli/contract.md
     owner: cli-app
     stage: locked
-    digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
+    digest: 26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2
     dependsOn:
       - arcnexus/project
       - arcnexus/commands
@@ -137,6 +142,11 @@ contracts:
     acceptedBy: Adrian Webb (architect)
     acceptedAt: '2026-11-26'
     history:
+      - stage: locked
+        digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
+        file: apps/cli/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: locked
         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
         file: apps/cli/contract.md
@@ -274,7 +284,7 @@ contracts:
         note: Replaced by human-reviewed proposal intent
           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     approvalRecord: 'Exact proposal intent
-      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
+      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
       architect approval and named-editor delegation are required in Codex chat
       before application.'
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
@@ -1011,9 +1021,14 @@ contracts:
       - arcnexus/coordination
       - arcnexus/verification
       - arcnexus/delivery
-    digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
+    digest: 1fc7557dd5b85f39c17c85ba8d0cad55bd4fda8a9af5a32a4e00d0cf2195daf9
     scenarios: 12
     history:
+      - stage: proposed
+        digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
+        file: packages/workflow/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: proposed
         digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
         file: packages/workflow/contract.md
@@ -1063,9 +1078,14 @@ contracts:
     dependsOn:
       - arcnexus/agent
       - arcnexus/workflow
-    digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
+    digest: 24c22aadcbad4100afafd8d4e41dab1723acd06560696e0eb6fbd0e68e2bca53
     scenarios: 8
     history:
+      - stage: proposed
+        digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
+        file: packages/planner/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: proposed
         digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
         file: packages/planner/contract.md

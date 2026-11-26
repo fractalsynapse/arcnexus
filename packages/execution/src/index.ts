@@ -80,11 +80,6 @@ export class HostTask implements TaskSession {
     );
   }
 
-  /** Distinguish the platform discovery binding from an admitted project. */
-  get documentationOnly() {
-    return this.config.documentationOnly === true;
-  }
-
   /** Propagate hosted writer loss to every active provider and tool. */
   get signal() {
     return this.journal.signal;
@@ -227,7 +222,6 @@ export class HostTask implements TaskSession {
 
   /** Materialize a read-only planning snapshot at the captured revision. */
   planningWorkspace(signal: AbortSignal) {
-    if (this.documentationOnly) throw new Error('Documentation discovery cannot create a worktree');
     signal.throwIfAborted();
     this.journal.assertWriter();
     const { source } = this.capture;
@@ -311,7 +305,6 @@ export class HostTask implements TaskSession {
 
   /** Protect uncommitted authorized edits, then remove only this attempt's worktree. */
   cleanup() {
-    if (this.documentationOnly) return;
     if (!this.worktree) this.removeRetainedPublicationWorkspace();
     saveCheckpoint(this);
     this.removeWorktree();

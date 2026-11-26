@@ -15,7 +15,6 @@ interface Assignment {
   directory: string;
   worker: string;
   runtime?: RuntimeImage;
-  documentationOnly?: boolean;
 }
 
 /** Run one durably admitted command using the normal Host services and journal. */

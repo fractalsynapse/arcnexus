@@ -44,6 +44,11 @@ const tools = {
     operation: 'read',
     description: 'Read a verified project binding.',
   },
+  read_project_settings: {
+    resource: 'project-settings',
+    operation: 'read',
+    description: 'Read the documentation directories at the project’s captured revision.',
+  },
   probe_project: {
     resource: 'projects',
     operation: 'probe',

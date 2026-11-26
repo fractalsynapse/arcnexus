@@ -26,6 +26,7 @@ import { textDigest } from '../../foundation/src/index.js';
 import { plannerDataPlugin } from '../../planner/src/index.js';
 import { uiPreferencesResource } from '../../ui/src/preferences/schema.js';
 import { hostAssignments } from './host-assignments.js';
+import { projectSettingsPlugin } from './project-settings.js';
 import { bindings } from './bindings.js';
 import { connectDatabase, readSecret } from './database.js';
 
@@ -101,8 +102,7 @@ async function authorized(
   const resolved = await project(scope);
   if (!resolved) return false;
   if (resource === 'workflow-requests') {
-    if (!configuration.hosted(resolved.remote) && !configuration.documentationOnly(resolved.remote))
-      return false;
+    if (!configuration.hosted(resolved.remote)) return false;
     if (operation !== 'create') return true;
     const provider = configuration.provider(resolved.remote);
     return provider ? admittedProvider(database, scope.principal, provider) : false;
@@ -131,10 +131,7 @@ async function projectResources(
     hostedCommandsDataPlugin(new WorkflowRequests(database), async (scope) => {
       const target = await project(scope);
       if (!target) return undefined;
-      const documentationOnly = configuration.documentationOnly(target.remote);
-      return configuration.hosted(target.remote) || documentationOnly
-        ? { ...target, documentationOnly }
-        : undefined;
+      return configuration.hosted(target.remote) ? target : undefined;
     }),
   );
 }
@@ -145,6 +142,12 @@ async function mountProjectReads(
   configuration: Configuration,
   project: Project,
 ) {
+  await context.use(
+    projectSettingsPlugin(async (scope) => {
+      const resolved = await project(scope);
+      return resolved ? configuration.capture(resolved.remote, resolved.revision) : undefined;
+    }),
+  );
   await context.use(
     plannerDataPlugin(async (scope, expected) => {
       const resolved = await project(scope);
@@ -157,7 +160,7 @@ async function mountProjectReads(
       const resolved = await project(scope);
       if (!resolved) return;
       const capture = configuration.capture(resolved.remote, resolved.revision);
-      return capture && !capture.documentationOnly
+      return capture
         ? { directory: capture.source.root, revision: capture.source.revision }
         : undefined;
     }),

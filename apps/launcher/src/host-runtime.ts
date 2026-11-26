@@ -83,15 +83,12 @@ function writeAssignment(config: HostAssignment) {
   const runtime = { image: config.image.approvedImage, base: config.image.base };
   const file = join(
     config.storage,
-    'host-assignment-' +
-      textDigest(JSON.stringify([config.revision, runtime, config.documentationOnly])) +
-      '.json',
+    'host-assignment-' + textDigest(JSON.stringify([config.revision, runtime])) + '.json',
   );
   const value = JSON.stringify({
     remote: config.remote,
     revision: config.revision,
     directory: checkout,
-    documentationOnly: config.documentationOnly,
     storage,
     runtime,
     githubAppId: config.github?.appId,
@@ -133,7 +130,7 @@ function containerArguments(config: HostAssignment, file: string, name: string, 
     'ARC_HOST_DATABASE_URL_FILE=' + database,
     '--env',
     'CODEX_HOME=' + credential,
-    ...mount(config.checkout, checkout, config.documentationOnly),
+    ...mount(config.checkout, checkout),
     ...mount(config.storage, storage),
     ...mount(config.credentials, credential),
     ...mount(config.database, database, true),

@@ -7,6 +7,8 @@ import { prepareArchitectureProposal } from './decode-proposal.js';
 import { ArchitectureResponseError, type ArchitectureDecision } from './proposal.js';
 import { architectAssignment } from './assignment.js';
 import { architectureFindings } from './findings.js';
+import { documentationProposal } from './documentation-proposal.js';
+import type { DocumentationSettings } from './documentation-settings.js';
 
 /** Assess real captured source and keep proposals and human decisions in the existing task journal. */
 export class ArchitectureAssessment {
@@ -26,7 +28,8 @@ export class ArchitectureAssessment {
   }
 
   /** Resume the exact pending batch or assess fresh inputs before asking the durable human gate. */
-  async propose(): Promise<ArchitectureDecision> {
+  async propose(documentation?: DocumentationSettings): Promise<ArchitectureDecision> {
+    if (documentation) return this.proposeDocumentation(documentation);
     const prior = this.task
       .observations<{ architectureProposal?: ArchitectureRecord }>()
       .findLast(
@@ -37,6 +40,23 @@ export class ArchitectureAssessment {
     const result = prior ?? (await this.generate());
     if ('kind' in result) return result;
     return this.decide(result);
+  }
+
+  /** Turn the authored settings into a deterministic proposal and use the ordinary human gate. */
+  private async proposeDocumentation(draft: DocumentationSettings): Promise<ArchitectureDecision> {
+    const proposal = documentationProposal(this.task.capture, draft);
+    if (!proposal)
+      return {
+        kind: 'no-change',
+        summary: 'Documentation directories are already set.',
+        evidence: [],
+      };
+    const prior = this.task
+      .observations<{ architectureProposal?: ArchitectureRecord }>()
+      .find(
+        ({ architectureProposal }) => architectureProposal?.proposal.id === proposal.id,
+      )?.architectureProposal;
+    return this.decide(prior ?? this.record(proposal));
   }
 
   /** Record the exact human decision and retain the batch unchanged when it is declined. */
@@ -106,7 +126,11 @@ export class ArchitectureAssessment {
       throw new ArchitectureResponseError(
         'Return a justified no-change assessment or an exact proposal; approval belongs to the host human gate',
       );
-    const proposal = prepareArchitectureProposal(this.task.capture, value, this.feedback);
+    return this.record(prepareArchitectureProposal(this.task.capture, value, this.feedback));
+  }
+
+  /** Retain the exact batch before any authorization attempt. */
+  private record(proposal: ArchitectureRecord['proposal']) {
     const report = this.task.store('architecture-proposal.md', architectureQuestion(proposal));
     const record = { proposal, report };
     this.task.note({ architectureProposal: record });

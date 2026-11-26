@@ -1,7 +1,11 @@
 import type { HoldContext } from '../../execution/src/index.js';
 import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
-import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
+import type {
+  ArchitectureDecision,
+  Capture,
+  DocumentationSettings,
+} from '../../architecture/src/index.js';
 import { AgentActivityHold } from '../../agent/src/index.js';
 import type { JournalEvent, RunMeasurements } from '../../coordination/src/index.js';
 import type {
@@ -94,7 +98,6 @@ export type TaskEvent =
   | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
-  readonly documentationOnly?: boolean;
   readonly signal?: AbortSignal;
   readonly capture: Capture;
   readonly goal: string;
@@ -218,6 +221,7 @@ export interface WorkflowServices {
       session: TaskSession,
       feedback: string | undefined,
       signal: AbortSignal,
+      documentation?: DocumentationSettings,
     ): Promise<ArchitectureDecision>;
   };
   execution: {
