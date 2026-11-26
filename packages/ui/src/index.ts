@@ -49,6 +49,7 @@ export { JsonView } from './content/json-view.js';
 export { AgentReport } from './content/agent-report.js';
 export { MessageTimeline, type MessagePoint } from './content/message-timeline.js';
 export { LocalTime } from './content/local-time.js';
+export { TimeRange } from './content/time-range.js';
 export { ModelRequestView } from './content/model-request-view.js';
 export { elapsedTime, useElapsedClock } from './hooks/elapsed-clock.js';
 export { TokenHistory, type TokenSample } from './content/token-history.js';

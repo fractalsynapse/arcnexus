@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Show compact Plan time ranges with a single date for same-day runs (#746).
+
 - Share expansion controls and their right inset across displays and the command dock, and isolate platform state by browser composition (#746).
 
 - Frame the Context viewer and add a subtle divider beneath its section tabs (#746).

@@ -1,5 +1,5 @@
 import { createElement as h } from 'react';
-import { Button, LocalTime } from '../../../../packages/ui/src/index.js';
+import { Button, TimeRange } from '../../../../packages/ui/src/index.js';
 import { ActiveProject } from './active-project.js';
 import { usePlanResource } from './plan-resource.js';
 
@@ -10,8 +10,8 @@ export function PlanContext() {
     'span',
     { className: 'arc-platform-inline', role: 'status' },
     h(ActiveProject),
-    h(LocalTime, { timestamp: recorded?.startedAt, prefix: 'Started ', date: true }),
-    active ? 'Active' : h(LocalTime, { timestamp: recorded?.updatedAt, prefix: 'Ended ' }),
+    h(TimeRange, { start: recorded?.startedAt, end: active ? undefined : recorded?.updatedAt }),
+    active && h('span', null, 'Active'),
     active &&
       updates.disconnected &&
       h(Button, { onClick: updates.reconnect }, 'Reconnect live updates'),

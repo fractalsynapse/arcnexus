@@ -58,13 +58,17 @@ async function rejectForeignBrowser(route: string) {
 }
 
 test('Plan history keeps the header and all displays scoped to the selected project and run', async (t) => {
-  const { application, page } = await browserPage(t);
+  const { application, page } = await browserPage(t, undefined, {
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+  });
   const requests = await responses(page, [project, otherProject]);
   await historyResponses(page);
   await page.goto(application.url);
   await selectProject(page);
   const selector = page.getByRole('combobox', { name: 'Plan run' });
   await page.getByText('Latest outcome', { exact: true }).waitFor();
+  await assertRunRange(page, '11/25/2025: 12:01:23 PM - 12:04:23 PM');
   const counts = page.getByText('853.6K / 15.2K', { exact: true });
   await counts.hover();
   await page
@@ -88,13 +92,14 @@ const earlier = {
   revision: 'b'.repeat(40),
   active: false,
   startedAt: '2025-11-24T17:01:23.000Z',
-  updatedAt: '2025-11-24T17:04:23.000Z',
+  updatedAt: '2025-11-25T05:04:23.000Z',
 };
 const latest = {
   ...earlier,
   execution: 'latest',
   revision: project.revision,
   startedAt: '2025-11-25T17:01:23.000Z',
+  updatedAt: '2025-11-25T17:04:23.000Z',
 };
 
 async function historyResponses(page: Page) {
@@ -130,8 +135,16 @@ async function assertHistoricalPlan(page: Page, requests: string[]) {
   assert.ok(requests.some((path) => path.endsWith('/goals?revision=' + earlier.revision)));
   await assertPlanHeading(page, 1180);
   await assertPlanHeading(page, 320);
+  await assertRunRange(page, '11/24/2025: 12:01:23 PM - 11/25/2025: 12:04:23 AM');
   const label = page.locator('.arc-page-context strong', { hasText: 'plan' });
   assert.equal(await label.evaluate((node) => getComputedStyle(node).fontWeight), '700');
+}
+
+async function assertRunRange(page: Page, range: string) {
+  const context = page.locator('.arc-page-context');
+  const times = context.locator('time');
+  assert.equal(await times.count(), 2);
+  assert.equal((await context.innerText()).replace(/\s+/g, ' ').trim(), 'plan ' + range);
 }
 
 async function assertPlanHeading(page: Page, width: number) {
