@@ -18,7 +18,10 @@ import {
   readOperationEvidence,
 } from '../../../../packages/coordination/src/index.js';
 import { databaseSetupPlugin } from '../../src/index.js';
-import { listPlanReferences } from '../../../../packages/coordination/src/postgres/plan-records.js';
+import {
+  listPlanReferences,
+  readPlanReference,
+} from '../../../../packages/coordination/src/postgres/plan-records.js';
 
 export const suite = { owner: 'db-app', level: 'integration', tags: ['postgresql'] } as const;
 const url = process.env.ARC_TEST_DATABASE_URL;
@@ -92,7 +95,8 @@ test(
     native.finish({ kind: 'planned' });
     native.close();
     const before = sqlite.readTaskTimeline(project, native.taskID);
-    await retiredDiscovery(database, project);
+    const lastNative = Date.parse(before.events.at(-1)!.timestamp!);
+    await retiredDiscovery(database, project, new Date(lastNative + 1).toISOString());
     const legacy = await readImportedTimeline(database, project, 'retired-plan');
     assert.equal(legacy.events[0]?.sequence, before.events[0]?.sequence);
     const receipt = await setup.cutover(directory, project);
@@ -100,13 +104,14 @@ test(
     assert.deepEqual(await readImportedTimeline(database, project, native.taskID), before);
     assert.deepEqual(await readImportedTimeline(database, project, 'retired-plan'), legacy);
     assert.deepEqual(
-      (await listPlanReferences(database, project)).map(({ execution }) => execution).sort(),
-      [native.taskID, 'retired-plan'].sort(),
+      (await listPlanReferences(database, project)).map(({ execution }) => execution),
+      ['retired-plan', native.taskID],
     );
+    assert.equal((await readPlanReference(database, project))?.execution, 'retired-plan');
   },
 );
 
-async function retiredDiscovery(database: Client, project: string) {
+async function retiredDiscovery(database: Client, project: string, recordedAt: string) {
   await database.query(
     `INSERT INTO arcnexus_coordination.runs
     (project,id,goal_id,task_id,goal,active,documentation_only)
@@ -115,13 +120,14 @@ async function retiredDiscovery(database: Client, project: string) {
   );
   await database.query(
     `INSERT INTO arcnexus_coordination.events
-    (project,id,run,content,recorded_at) VALUES ($1,1,1,$2,'2025-11-25T19:00:00.000Z')`,
+    (project,id,run,content,recorded_at) VALUES ($1,1,1,$2,$3)`,
     [
       project,
       JSON.stringify({
         planningExecution: { revision: 'retired-revision' },
         answer: 'Retained answer',
       }),
+      recordedAt,
     ],
   );
 }

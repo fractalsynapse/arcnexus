@@ -46,7 +46,7 @@ const plan = `
     AND recorded.id<=latest.id
   LEFT JOIN arcnexus_coordination.events e ON e.project=latest.project AND e.run=recorded.id
   GROUP BY captured.execution,captured.revision,latest.project,latest.id,latest.active
-  ORDER BY (latest.project=$1) DESC,latest.id DESC
+  ORDER BY "updatedAt" DESC NULLS LAST,(latest.project=$1) DESC,latest.id DESC
   LIMIT $3
 `;
 
