@@ -1,4 +1,5 @@
 import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
+import { objectiveReviewReady } from '../../planner/src/objective-review.js';
 import type {
   Observation,
   RoundOutcome,
@@ -26,7 +27,7 @@ export class RunObserver implements TaskObserver {
     session.ask = (question, signal, gate) => {
       const prompt = {
         phase: 'question' as const,
-        message: gate?.review ? 'Objective recommendations are ready for review' : question,
+        message: gate?.review ? objectiveReviewReady : question,
       };
       session.record(prompt);
       if (!session.listen) this.progress(prompt);

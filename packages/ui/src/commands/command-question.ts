@@ -1,4 +1,7 @@
-import type { ObjectiveReview } from '../../../planner/src/objective-review.js';
+import {
+  objectiveReviewLabel,
+  type ObjectiveReview,
+} from '../../../planner/src/objective-review.js';
 import { ObjectiveReviewForm } from './objective-review-form.js';
 import { createElement as h, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { Button } from '../controls/button.js';
@@ -18,7 +21,7 @@ const drafts = new Map<string, string>();
 /** Keep a draft with this gate even while its dialog is closed. */
 export function CommandQuestion({ question, send, identity, label, review }: Props) {
   const [open, setOpen] = useState(false);
-  const title = review ? 'Review objective recommendations' : 'Answer question';
+  const title = review ? objectiveReviewLabel : 'Answer question';
   const form = useAnswerForm({ question, send, identity }, setOpen);
   return h(
     'div',

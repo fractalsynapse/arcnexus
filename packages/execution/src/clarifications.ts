@@ -1,5 +1,6 @@
 import type { ActivitySelection, TaskContext } from '../../architecture/src/index.js';
 import { ClarificationRequired, type TaskQuestion } from '../../workflow/src/index.js';
+import { objectiveReviewLabel } from '../../planner/src/objective-review.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { HostTask } from './index.js';
 import { inboxIdentity, verificationContext } from './research.js';
@@ -92,10 +93,9 @@ export class Clarifications {
     if (!answer?.trim()) {
       const retained = gate.evidence ? gate : this.openQuestion(gate);
       if (retained !== gate) this.task.note({ clarification: retained });
-      throw new ClarificationRequired(
-        gate.review ? 'Review objective recommendations.' : question,
-        [retained.evidence!],
-      );
+      throw new ClarificationRequired(gate.review ? objectiveReviewLabel + '.' : question, [
+        retained.evidence!,
+      ]);
     }
     const evidence = this.task.store(
       'clarification.json',

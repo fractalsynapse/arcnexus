@@ -278,7 +278,8 @@ function planFixture(path: string, finished: boolean) {
     };
   if (path.endsWith('/metrics'))
     return {
-      wallElapsedMs: 60000,
+      wallElapsedMs: 3600000,
+      processingElapsedMs: 60000,
       nativeElapsedMs: 15000,
       profiles: [{ activeActivations: 1 }],
       usage: { input_tokens: { reported: finished ? 2000 : 1000 }, output_tokens: { reported: 0 } },

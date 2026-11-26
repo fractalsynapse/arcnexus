@@ -1,4 +1,8 @@
-import type { ObjectiveReview } from '../../../../packages/planner/src/objective-review.js';
+import {
+  objectiveReviewLabel,
+  objectiveReviewReady,
+  type ObjectiveReview,
+} from '../../../../packages/planner/src/objective-review.js';
 import type { TimelineFrame } from './timeline-stream.js';
 import { AttemptWindow } from '../../../../packages/coordination/src/attempt-window.js';
 
@@ -28,6 +32,7 @@ export interface Operation {
 }
 
 type Observation = {
+  phase?: string;
   message?: string;
   onboardingSelection?: { drafts: { title: string }[] };
   nativeEvent?: {
@@ -81,7 +86,7 @@ class TimelineProjection {
   /** Route status messages, questions and check results to their shared timeline. */
   private append(frame: TimelineFrame) {
     const observation = frame.observation as Observation | null;
-    if (!observation) return;
+    if (!observation || objectiveReviewNotice(observation)) return;
     const { clarification, message, nativeEvent, outcome, onboardingSelection } = observation;
     if (clarification?.question) return this.addQuestion(frame, clarification);
     if (onboardingSelection?.drafts?.length) {
@@ -147,6 +152,13 @@ class TimelineProjection {
     this.entries.push(entry);
     return entry;
   }
+}
+
+function objectiveReviewNotice({ phase, message, outcome }: Observation) {
+  return (
+    (phase === 'question' && message === objectiveReviewReady) ||
+    (outcome?.kind === 'blocked' && outcome.reason === objectiveReviewLabel + '.')
+  );
 }
 
 function outcomeMessage(outcome: Observation['outcome'], drafts?: { title: string }[]) {

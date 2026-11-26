@@ -20,8 +20,9 @@ export function EventQuestion({ question, command, binding, execution }: Questio
   return h(
     'div',
     { className: 'arc-plan-question', 'data-waiting': waiting || undefined },
-    h('strong', null, question.review ? 'Objective review' : 'Question'),
-    h('p', { className: 'arc-plan-message' }, question.review?.summary ?? question.question),
+    (!question.review || !waiting) &&
+      h('strong', null, question.review ? 'Objective review' : 'Question'),
+    !question.review && h('p', { className: 'arc-plan-message' }, question.question),
     question.answer !== undefined
       ? h(AnsweredQuestion, {
           answer: displayedAnswer(question, question.answer),

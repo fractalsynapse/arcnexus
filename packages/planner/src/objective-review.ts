@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const objectiveReviewLabel = 'Review objective recommendations';
+export const objectiveReviewReady = 'Objective recommendations are ready for review';
+
 const prose = z.string().refine((value) => Boolean(value.trim()), 'Supply nonblank text');
 const citation = z.strictObject({
   path: prose.describe('Exact repository-relative path at the captured revision'),

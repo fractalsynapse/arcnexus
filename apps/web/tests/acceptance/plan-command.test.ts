@@ -136,7 +136,8 @@ test('a single read-only objective uses direct retain and decline actions', asyn
   await (await timelineReview(page)).click();
   const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
   await dialog.getByRole('button', { name: 'Decline draft' }).waitFor();
-  await dialog.getByText('This read-only run ends after retaining the draft.').waitFor();
+  await dialog.getByText('Objective recommendations are ready for review.').waitFor();
+  await dialog.getByText('This preview ends after retaining the draft.').waitFor();
   assert.equal(await dialog.getByRole('checkbox').count(), 0);
   await dialog.getByRole('button', { name: 'Retain draft' }).click();
   await dialog.waitFor({ state: 'hidden' });
@@ -174,7 +175,7 @@ async function retainedDraftResponse(
 async function assertRetainedDraft(page: Page, title: string) {
   const outcome = page.getByRole('region', { name: 'Planner outcome' });
   await outcome.getByRole('status').filter({ hasText: 'Objective draft retained' }).waitFor();
-  await outcome.getByText('Saved to onboarding history. Goal refinement was skipped.').waitFor();
+  await outcome.getByText('This preview ends after saving the draft.').waitFor();
   await outcome.getByRole('button', { name: new RegExp(title) }).click();
   const saved = page.getByRole('dialog', { name: 'Objective draft' });
   await saved
@@ -247,8 +248,10 @@ async function timelineReview(page: Page) {
     exact: true,
   });
   await review.waitFor();
+  await assertSingleReviewEntry(timeline);
   await page.getByRole('tab', { name: 'Full log' }).click();
   await review.waitFor();
+  await assertSingleReviewEntry(timeline);
   await page.getByRole('tab', { name: 'Messages' }).click();
   assert.equal(
     await page
@@ -259,6 +262,19 @@ async function timelineReview(page: Page) {
   );
   assert.equal(await page.getByRole('checkbox', { name: 'Recommend objectives' }).count(), 0);
   return review;
+}
+
+async function assertSingleReviewEntry(timeline: Locator) {
+  assert.equal(
+    await timeline.getByText('Objective recommendations are ready for review').count(),
+    0,
+  );
+  assert.equal(
+    await timeline.getByText('Review objective recommendations.', { exact: true }).count(),
+    0,
+  );
+  assert.equal(await timeline.getByText('Documented recovery requirements.').count(), 0);
+  assert.equal(await timeline.getByText('Reading project docs', { exact: true }).count(), 1);
 }
 
 async function assertObjectiveWording(dialog: Locator) {
@@ -316,16 +332,22 @@ async function objectiveTimeline(page: Page, receipt: Receipt) {
   );
   await page.route('**/plan-executions/retained-plan/events', (route) => {
     const { question, review } = receipt.gate!;
-    const frame = {
-      sequence: '1',
-      timestamp: null,
-      observation: { clarification: { question, review } },
-    };
+    const observations = [
+      { phase: 'planning', message: 'Reading project docs' },
+      { clarification: { question, review } },
+      { phase: 'question', message: 'Objective recommendations are ready for review' },
+      { outcome: { kind: 'blocked', reason: 'Review objective recommendations.' } },
+    ];
     return route.fulfill({
       contentType: 'text/event-stream',
-      body: 'id: review-start\nevent: observation\ndata: ' + JSON.stringify(frame) + '\n\n',
+      body: observations.map(objectiveFrame).join(''),
     });
   });
+}
+
+function objectiveFrame(observation: object, index: number) {
+  const frame = { sequence: String(index + 1), timestamp: null, observation };
+  return `id: ${frame.sequence}\nevent: observation\ndata: ${JSON.stringify(frame)}\n\n`;
 }
 
 async function commandStreamFixture(page: Page) {

@@ -4,6 +4,7 @@ import type {
   ObjectiveDraft,
   ObjectiveReview,
 } from '../../../planner/src/objective-review.js';
+import { objectiveReviewReady } from '../../../planner/src/objective-review.js';
 import { MarkdownView } from '../content/markdown-view.js';
 import {
   ObjectiveDraftDetails,
@@ -38,6 +39,7 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
   return h(
     'div',
     { className: 'arc-objective-review' },
+    h('p', null, objectiveReviewReady + '.'),
     review.sourceChanges && h(ChangedSources, { sources: review.sourceChanges }),
     h(ReviewDrafts, { review, ...draftState }),
     h(ObjectiveReviewSummary, review),
@@ -52,8 +54,8 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
 function reviewConsequence({ readOnly, drafts }: ObjectiveReview) {
   if (!readOnly) return 'Approving continues this run into goal refinement.';
   return drafts.length === 1
-    ? 'This read-only run ends after retaining the draft.'
-    : 'This read-only run ends after retaining the selected drafts.';
+    ? 'This preview ends after retaining the draft.'
+    : 'This preview ends after retaining the selected drafts.';
 }
 
 function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveReview }) {

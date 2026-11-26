@@ -54,7 +54,7 @@ function RetainedRecommendations({ value }: { value: RecommendationAssessment })
       value.selected.length === 1 ? 'Objective draft retained' : 'Objective drafts retained',
     ),
     h(RecommendedObjectives, { value }),
-    h('small', null, 'Saved to onboarding history. Goal refinement was skipped.'),
+    h('small', null, 'This preview ends after saving the draft.'),
     h(ObjectiveReviewSummary, value),
   );
 }

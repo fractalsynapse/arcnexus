@@ -15,6 +15,7 @@ import {
 import { generatePlannerResponse, validatePlannerResponse } from './model-response.js';
 import {
   objectiveCandidate,
+  objectiveReviewLabel,
   onboardingSelection,
   readObjectiveDecision,
   type ObjectiveDecision,
@@ -249,7 +250,7 @@ function reviewPrompt(review: ObjectiveReview) {
     [title, gap, ...sources.map(({ path, quote }) => `${path}: ${quote}`)].join('\n'),
   );
   return [
-    `Review objective recommendations at ${review.revision}.`,
+    `${objectiveReviewLabel} at ${review.revision}.`,
     review.summary,
     ...notes,
     ...(review.sourceChanges ?? []).map(

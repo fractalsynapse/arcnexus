@@ -10,7 +10,7 @@ export function PlanContext() {
     'span',
     { className: 'arc-platform-inline', role: 'status' },
     h(ActiveProject),
-    command.recommendationOnly && h('small', { className: 'arc-status' }, 'Read-only onboarding'),
+    command.recommendationOnly && h('small', { className: 'arc-status' }, 'Draft preview'),
     h(TimeRange, { start: recorded?.startedAt, end: active ? undefined : recorded?.updatedAt }),
     active && h('span', null, command.status === 'Waiting' ? 'Awaiting review' : 'Active'),
     active &&

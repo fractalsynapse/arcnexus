@@ -13,7 +13,7 @@ import { PlanTokenHistory } from './plan-token-history.js';
 
 type Reported = { reported?: number | null };
 export interface PlanMetrics {
-  wallElapsedMs?: number | null;
+  processingElapsedMs?: number | null;
   nativeElapsedMs?: number | null;
   profiles?: Array<{ activeActivations?: number }>;
   usage?: { input_tokens?: Reported; output_tokens?: Reported; cached_input_tokens?: Reported };
@@ -46,13 +46,16 @@ export function PlannerMetrics({
 }
 
 function useTickingTimes(value: PlanMetrics, running: boolean) {
-  const offset = useElapsedClock(running && value.wallElapsedMs != null, value);
+  const offset = useElapsedClock(running && value.processingElapsedMs != null, value);
   const native = (value.profiles ?? []).reduce(
     (count, profile) => count + (profile.activeActivations ?? 0),
     0,
   );
   return {
-    wall: value.wallElapsedMs == null ? value.wallElapsedMs : value.wallElapsedMs + offset,
+    processing:
+      value.processingElapsedMs == null
+        ? value.processingElapsedMs
+        : value.processingElapsedMs + offset,
     agent:
       value.nativeElapsedMs == null
         ? value.nativeElapsedMs
@@ -62,7 +65,7 @@ function useTickingTimes(value: PlanMetrics, running: boolean) {
 
 function metricRows(
   value: PlanMetrics,
-  { wall, agent }: ReturnType<typeof useTickingTimes>,
+  { processing, agent }: ReturnType<typeof useTickingTimes>,
   details: TokenDetails,
 ) {
   const input = value.usage?.input_tokens?.reported;
@@ -74,10 +77,10 @@ function metricRows(
       : 'Unavailable';
   return [
     [
-      'Wall time',
+      'Processing time',
       h(MeasuredTime, {
-        milliseconds: wall,
-        label: 'Time from Plan start, including review pauses',
+        milliseconds: processing,
+        label: 'Time spent processing Plan, excluding time waiting between attempts',
       }),
     ],
     [

@@ -31,6 +31,7 @@ const outcomeSchema = planReference.extend({
 const metrics = z
   .object({
     wallElapsedMs: z.number().nullable(),
+    processingElapsedMs: z.number().nullable(),
     nativeElapsedMs: z.number().nullable(),
     usage: z.unknown(),
     cost: z.unknown(),

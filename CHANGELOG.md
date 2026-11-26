@@ -34,7 +34,7 @@
 
 ### Changed
 
-- Measure the whole Plan across approval pauses and identify read-only onboarding in the page header (#746).
+- Show Plan processing time without approval waits. Group recommendation notices in the objective review dialog and label the draft preview in the page header (#746).
 
 - Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog. Select multiple drafts beside the decision actions and confirm retained drafts in the outcome and timeline (#746).
 

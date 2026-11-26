@@ -120,17 +120,20 @@ test('CO-25: a terminated unfinished activation is incomplete rather than an eve
   assert.equal(result.usage.input_tokens.reported, null);
 });
 
-test('wall time retains the original start through an approval pause and Host reentry', () => {
+test('processing time stops for approval and resumes without counting the wait', () => {
   const scenario = new MeasurementScenario();
   scenario.feed({ invocation: { startedAt: new Date(900).toISOString() } }, 1000);
   scenario.feed({ nativeStarted: { activation: 'before-review' } }, 1010);
   scenario.feed({ nativeFinished: { activation: 'before-review', durationMs: 400 } }, 1410);
   scenario.feed({ outcome: { kind: 'blocked' } }, 1500);
-  assert.equal(scenario.projection.snapshot(3000).wallElapsedMs, 600);
+  const waiting = scenario.projection.snapshot(3000);
+  assert.equal(waiting.wallElapsedMs, 600);
+  assert.equal(waiting.processingElapsedMs, 600);
   scenario.feed({ invocation: { startedAt: new Date(4000).toISOString() } }, 4010, 2);
   scenario.feed({ invocation: { startedAt: new Date(4100).toISOString() } }, 4100, 3, 2);
   scenario.feed({ outcome: { kind: 'planned' } }, 4200, 2);
   const result = scenario.projection.snapshot(9000);
   assert.equal(result.wallElapsedMs, 3300);
+  assert.equal(result.processingElapsedMs, 800);
   assert.equal(result.nativeElapsedMs, 400);
 });
