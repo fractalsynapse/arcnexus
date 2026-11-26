@@ -61,7 +61,7 @@ class TimelineProjection {
     return this.window.includes(expected) ? this.entries : [];
   }
 
-  /** Reset after an unsuccessful attempt and preserve context across an approval pause. */
+  /** Reset after a completed attempt and preserve context across an approval pause. */
   private reset() {
     this.entries.length = 0;
     this.calls.clear();

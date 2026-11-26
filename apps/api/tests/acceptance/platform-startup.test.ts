@@ -289,26 +289,27 @@ test(
     assert.ok(operator);
     const project = await platform.context.catalog.add(operator.principal, { remote: repository });
     const execution = randomUUID();
-    await seedPlanRetry(repository, execution, project.revision);
+    await seedPlanAttempts(repository, execution, project.revision);
     await platform.context.use(apiPlugin(platform.authenticate));
     const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
-    await verifyPlanRetry(platform.context, address + execution, headers);
+    await verifyFreshPlan(platform.context, address + execution, headers);
     await append(
       repository,
       execution,
-      3,
+      4,
       'finished',
       {
         outcome: { kind: 'planned', summary: 'Targets mapped' },
         plannerProposal: { proposal: { summary: 'Compared the accepted goals.' } },
+        ...planUsage('current', 2000),
       },
-      2,
+      3,
     );
     await verifyPlanPanelResponses(platform.context, address, headers, execution);
   },
 );
 
-async function seedPlanRetry(repository: string, execution: string, revision: string) {
+async function seedPlanAttempts(repository: string, execution: string, revision: string) {
   await append(
     repository,
     execution,
@@ -316,27 +317,51 @@ async function seedPlanRetry(repository: string, execution: string, revision: st
     'failed',
     {
       planningExecution: { revision },
-      plannerProposal: { proposal: { summary: 'Previous proposal' } },
       outcome: { kind: 'failed', reason: 'First attempt failed' },
     },
     1,
     0,
   );
-  await append(repository, execution, 2, 'retry started', {}, 2);
+  await append(
+    repository,
+    execution,
+    2,
+    'previous plan completed',
+    {
+      outcome: { kind: 'planned', summary: 'Previous plan' },
+      plannerProposal: { proposal: { summary: 'Previous proposal' } },
+      editReceipt: { path: '.arc/goals/previous.md' },
+      ...planUsage('previous', 4000),
+    },
+    2,
+    0,
+  );
+  await append(repository, execution, 3, 'new plan started', {}, 3);
 }
 
-async function verifyPlanRetry(context: Context, address: string, headers: Record<string, string>) {
+function planUsage(activation: string, input_tokens: number) {
+  return {
+    nativeStarted: { activation },
+    nativeEvent: { activation, event: { type: 'turn.completed', usage: { input_tokens } } },
+    nativeFinished: { activation, durationMs: 100 },
+  };
+}
+
+async function verifyFreshPlan(context: Context, address: string, headers: Record<string, string>) {
   const outcome = await context.api(new Request(address + '/outcome', { headers }));
   assert.equal(outcome.status, 200);
   const plan = await outcome.json();
   assert.equal(plan.outcome, null);
   assert.equal(plan.report, undefined);
-  assert.equal(plan.attempt, '2');
+  assert.deepEqual(plan.changedPaths, []);
+  assert.equal(plan.attempt, '3');
+  const measurements = await context.api(new Request(address + '/metrics', { headers }));
+  assert.equal((await measurements.json()).usage.input_tokens.reported, null);
   const timeline = await context.api(new Request(address + '/events', { headers }));
   const { events } = await timeline.json();
   assert.deepEqual(
     events.map((event: { run: number }) => event.run),
-    [1, 2],
+    [1, 2, 3],
   );
 }
 
@@ -404,5 +429,5 @@ async function verifyPlanPanelResponses(
   assert.equal(plan.report.summary, 'Compared the accepted goals.');
   const metrics = await context.api(new Request(address + execution + '/metrics', { headers }));
   assert.equal(metrics.status, 200);
-  assert.ok('wallElapsedMs' in (await metrics.json()));
+  assert.equal((await metrics.json()).usage.input_tokens.reported, 2000);
 }

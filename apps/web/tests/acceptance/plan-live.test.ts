@@ -103,17 +103,24 @@ function scrollPage(page: Page, edge: 'start' | 'end') {
   );
 }
 
-test('the same Plan execution gets a fresh timeline on retry', async (t) => {
-  const fixture = await gateway(t, messageFrame(1, 201, { outcome: { kind: 'failed' } }));
-  const { application, page } = await browserPage(t, new URL(fixture.url));
-  await preferenceRoutes(page);
-  await page.goto(application.url);
-  const log = page.getByRole('log', { name: 'Planning events' });
-  await log.getByText('Message 1', { exact: true }).waitFor();
-  fixture.event(messageFrame(2, 202));
-  await log.getByText('Message 2', { exact: true }).waitFor();
-  assert.equal(await log.getByText('Message 1', { exact: true }).count(), 0);
-});
+for (const [kind, keepHistory] of [
+  ['failed', false],
+  ['planned', false],
+  ['blocked', true],
+] as const) {
+  test('the same Plan execution opens another journal run after ' + kind, async (t) => {
+    const fixture = await gateway(t, messageFrame(1, 201, { outcome: { kind } }));
+    const { application, page } = await browserPage(t, new URL(fixture.url));
+    await preferenceRoutes(page);
+    await page.goto(application.url);
+    const log = page.getByRole('log', { name: 'Planning events' });
+    const original = log.getByText('Message 1', { exact: true });
+    await original.waitFor();
+    fixture.event(messageFrame(2, 202));
+    await log.getByText('Message 2', { exact: true }).waitFor();
+    assert.equal(await original.count(), keepHistory ? 1 : 0);
+  });
+}
 
 function messageFrame(sequence: number, run?: number, detail?: object) {
   const frame = {

@@ -48,7 +48,7 @@
 
 ### Fixed
 
-- Reset Plan displays for a fresh journal attempt while preserving previous attempts in the retained timeline (#746).
+- Reset Plan displays when a new run follows a completed or failed attempt, while retaining historical evidence and the context of a paused approval (#746).
 
 - Keep live gateway streams from blocking saved Plan reports in Firefox (#746).
 

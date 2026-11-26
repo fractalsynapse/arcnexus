@@ -3,14 +3,14 @@ type Frame = { run?: number; taskID?: string; observation: unknown };
 /** Follow display boundaries without changing the retained journal or its cursors. */
 export class AttemptWindow {
   private attempt?: number;
-  private failed = false;
+  private completed = false;
 
-  /** Return true when a root run replaces an unsuccessful attempt. */
+  /** Return true when a root run follows a completed attempt. */
   advance({ run, taskID, observation }: Frame, execution: string | undefined) {
     if (!execution || taskID !== execution || run === undefined) return false;
-    const reset = this.failed && this.attempt !== run;
+    const reset = this.completed && this.attempt !== run;
     this.attempt = run;
-    this.failed = (!reset && this.failed) || unsuccessful(observation);
+    this.completed = (!reset && this.completed) || completedOutcome(observation);
     return reset;
   }
 
@@ -20,7 +20,8 @@ export class AttemptWindow {
   }
 }
 
-function unsuccessful(observation: unknown) {
+function completedOutcome(observation: unknown) {
   const kind = (observation as { outcome?: { kind?: unknown } } | null)?.outcome?.kind;
-  return kind === 'failed' || kind === 'cancelled' || kind === 'invalid';
+  // A blocked attempt can resume an approval with the same report and evidence.
+  return typeof kind === 'string' && kind !== 'blocked';
 }
