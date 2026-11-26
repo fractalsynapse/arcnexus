@@ -39,6 +39,10 @@ declare module 'cordis' {
 }
 
 type HostTask = ReturnType<typeof hostTask>;
+const aligningGoals = {
+  phase: 'planning',
+  message: 'Planner is aligning goals with the approved objectives.',
+} as const;
 type Mode = NonNullable<TaskInput['planning']>;
 interface PendingProposal {
   proposal: Proposal;
@@ -115,6 +119,7 @@ export class Planner {
       recordRecommendations(task, recommendations.batch, recommendations.selected, progress);
     if (recommendations?.declined)
       return planned(task, 'Objective recommendations were declined.', []);
+    if (recommendations?.selected.length) progress(aligningGoals);
     if (!task.branch) task.planningWorkspace(signal);
     return this.align(task, {
       objective: mode === 'objective',

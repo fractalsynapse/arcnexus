@@ -54,6 +54,10 @@ export { TimeRange } from './content/time-range.js';
 export { ModelRequestView } from './content/model-request-view.js';
 export { elapsedTime, useElapsedClock } from './hooks/elapsed-clock.js';
 export { TokenHistory, type RunTokenReport } from './content/token-history.js';
+export {
+  ObjectiveDraftDetails,
+  ObjectiveReviewSummary,
+} from './content/objective-draft-details.js';
 export { MarkdownView } from './content/markdown-view.js';
 export { YamlView } from './content/yaml-view.js';
 export { MarkdownEditor } from './content/markdown-editor.js';

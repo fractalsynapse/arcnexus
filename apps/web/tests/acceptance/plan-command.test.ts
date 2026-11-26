@@ -123,11 +123,13 @@ test('Plan defaults to recommendations and reviews selected source-backed drafts
 
 test('a single read-only objective uses direct retain and decline actions', async (t) => {
   const { application, page } = await browserPage(t);
-  const actions = await commandResponses(page, {
+  const review = {
     ...objectiveReviewFixture,
     readOnly: true,
     drafts: [objectiveReviewFixture.drafts[0]!],
-  });
+  };
+  const actions = await commandResponses(page, review);
+  await retainedDraftResponse(page, review, actions);
   await page.goto(application.url);
   await selectProject(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
@@ -141,7 +143,43 @@ test('a single read-only objective uses direct retain and decline actions', asyn
     gate: 'exact-gate',
     answer: JSON.stringify({ action: 'approve', selected: ['measure-recovery'] }),
   });
+  await assertRetainedDraft(page, review.drafts[0]!.title);
 });
+
+async function retainedDraftResponse(
+  page: Page,
+  review: ObjectiveReview,
+  actions: readonly unknown[],
+) {
+  await page.route('**/plan-executions/retained-plan/outcome', (route) => {
+    const retained = actions.length > 1;
+    return route.fulfill({
+      json: {
+        active: false,
+        outcome: retained ? { kind: 'planned', summary: review.summary } : { kind: 'blocked' },
+        ...(retained && {
+          recommendation: {
+            revision: review.revision,
+            summary: review.summary,
+            selected: review.drafts,
+          },
+        }),
+      },
+    });
+  });
+}
+
+async function assertRetainedDraft(page: Page, title: string) {
+  const outcome = page.getByRole('region', { name: 'Planner outcome' });
+  await outcome.getByRole('status').filter({ hasText: 'Objective draft retained' }).waitFor();
+  await outcome.getByText('Saved to this project’s onboarding history.', { exact: true }).waitFor();
+  await outcome.getByRole('button', { name: new RegExp(title) }).click();
+  const saved = page.getByRole('dialog', { name: title });
+  await saved
+    .getByRole('region', { name: 'Objective wording' })
+    .getByRole('heading', { name: 'Recovery' })
+    .waitFor();
+}
 
 const objectiveReviewFixture: ObjectiveReview = {
   id: 'review',
@@ -306,6 +344,8 @@ function commandActionResponse(
   requests.push({ body: cancel ? action : route.request().postDataJSON(), receipt: id! });
   const result = cancel
     ? { state: 'finished', outcome: { kind: 'cancelled' } }
-    : { state: 'queued' };
+    : receipt.gate?.review?.readOnly
+      ? { state: 'finished', outcome: { kind: 'planned' } }
+      : { state: 'queued' };
   return route.fulfill({ json: { ...receipt, ...result, gate: null }, status: 202 });
 }

@@ -5,7 +5,10 @@ import type {
   ObjectiveReview,
 } from '../../../planner/src/objective-review.js';
 import { MarkdownView } from '../content/markdown-view.js';
-import { Disclosure } from '../controls/disclosure.js';
+import {
+  ObjectiveDraftDetails,
+  ObjectiveReviewSummary,
+} from '../content/objective-draft-details.js';
 import { MarkdownEditor } from '../content/markdown-editor.js';
 import { splitMarkdown } from '../../../foundation/src/markdown-document.js';
 import { SourceCitations } from '../content/source-citations.js';
@@ -37,7 +40,7 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
     { className: 'arc-objective-review' },
     review.sourceChanges && h(ChangedSources, { sources: review.sourceChanges }),
     h(ReviewDrafts, { review, ...draftState }),
-    h(ReviewContext, { review }),
+    h(ObjectiveReviewSummary, review),
     h(RevisionFeedback, draftState),
     review.readOnly && h('small', null, 'Retained drafts are available after project admission.'),
     review.drafts.length > 1 && h(DraftSelections, { review, ...draftState }),
@@ -57,24 +60,6 @@ function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveRevi
       content: h(DraftReview, { draft, ...state }),
     })),
   });
-}
-
-function ReviewContext({ review }: Pick<ReviewProps, 'review'>) {
-  return h(
-    Disclosure,
-    { label: 'Planning summary' },
-    h(
-      'div',
-      { className: 'arc-review-context' },
-      h('p', null, review.summary),
-      h(
-        'dl',
-        null,
-        h('dt', null, 'Captured revision'),
-        h('dd', null, h('code', null, review.revision)),
-      ),
-    ),
-  );
 }
 
 function useDraftReview({ review, identity = review.id, send }: ReviewProps) {
@@ -179,33 +164,7 @@ function DraftReview(props: DraftProps) {
     'section',
     { className: 'arc-review-draft' },
     h(DraftWording, props),
-    h(DraftContext, { draft: props.draft }),
-  );
-}
-
-function DraftContext({ draft }: { draft: ObjectiveDraft }) {
-  return h(
-    Disclosure,
-    { label: 'Supporting information' },
-    h(
-      'div',
-      { className: 'arc-review-context' },
-      h('section', null, h('h3', null, 'Why this objective'), h('p', null, draft.gap)),
-      h(
-        'section',
-        null,
-        h('h3', null, 'Source excerpts'),
-        h(SourceCitations, { sources: draft.sources }),
-      ),
-      h(
-        'dl',
-        null,
-        h('dt', null, 'Category'),
-        h('dd', null, draft.category),
-        h('dt', null, 'Draft file'),
-        h('dd', null, h('code', null, draft.path)),
-      ),
-    ),
+    h(ObjectiveDraftDetails, { draft: props.draft }),
   );
 }
 

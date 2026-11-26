@@ -31,18 +31,21 @@ export function PlannerReport({
     label: 'Planner report',
     summary: report?.summary ?? recommendation?.summary ?? '',
     sections: [
-      ...(recommendation
-        ? [
-            {
-              title: 'Objectives',
-              count: recommendation.selected.length,
-              content: h(RecommendedObjectives, { value: recommendation }),
-            },
-          ]
-        : []),
+      ...(recommendation ? [objectivesSection(recommendation, report)] : []),
       ...(report ? reportSections(report, goal) : []),
     ],
   });
+}
+
+function objectivesSection(recommendation: RecommendationAssessment, report?: Proposal) {
+  return {
+    title: 'Objectives',
+    count: recommendation.selected.length,
+    content: h(RecommendedObjectives, {
+      value: recommendation,
+      showSummary: !!report && report.summary !== recommendation.summary,
+    }),
+  };
 }
 
 function reportSections(report: Proposal, goal: (id: string) => ReactNode) {

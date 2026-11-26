@@ -22,6 +22,7 @@ const valid = {
 /** Drive the public Planner against a real journal and scripted malformed replies. */
 class PlannerRepairScenario {
   readonly requests: TaskContext[] = [];
+  readonly progress: string[] = [];
   readonly task: HostTask;
 
   /** Retain one source and approval scope without creating an unrelated delivery workspace. */
@@ -60,7 +61,7 @@ class PlannerRepairScenario {
     return new Planner({} as Agent).propose(
       this.task,
       mode,
-      () => {},
+      ({ message }) => this.progress.push(message),
       new AbortController().signal,
     );
   }
@@ -212,7 +213,7 @@ function draftFixture(t: TestContext) {
   };
 }
 
-test('recommendations resume exact multi-draft review and align only the approved wording', async (t) => {
+test('one approved batch reaches goal alignment with exactly the selected objective wording', async (t) => {
   const path = 'handbook/operations/recovery.adoc';
   const quote = 'Operators rehearse recovery from a failed deployment.';
   const draft = (id: string) => ({
@@ -224,34 +225,66 @@ test('recommendations resume exact multi-draft review and align only the approve
     sources: [{ path, quote }],
   });
   const scenario = new PlannerRepairScenario(t, [
-    { summary: 'Recovery gaps', drafts: [draft('rehearse-recovery'), draft('record-recovery')] },
-    valid,
+    {
+      summary: 'Recovery gaps',
+      drafts: [draft('rehearse-recovery'), draft('record-recovery'), draft('audit-recovery')],
+    },
+    { ...valid, changes: [recoveryGoal], links: [recoveryGoal.id] },
   ]);
   Object.assign(scenario.task.capture.source, { paths: [path], read: () => quote });
   await inspectRecommendationReview(scenario);
 });
+
+const recoveryGoal = {
+  id: 'practice-recovery',
+  category: 'delivery/recovery',
+  content:
+    '---\npriority: 1\n---\n# Practice recovery\n\n## Success measures\nRecord evidence from a recovery rehearsal.\n',
+};
 
 async function inspectRecommendationReview(scenario: PlannerRepairScenario) {
   let prompts = 0;
   scenario.task.ask = async (_question, _signal, gate) => {
     const review = gate?.review;
     assert.ok(review);
-    assert.equal(review.drafts.length, 2);
+    assert.equal(review.drafts.length, 3);
     prompts++;
     if (prompts === 1) return undefined;
     const id = 'rehearse-recovery';
     const content = review.drafts[0]!.content + '\nRecord recovery duration.\n';
     if (prompts === 2) return JSON.stringify({ action: 'revise', edits: { [id]: content } });
     assert.match(review.drafts[0]!.content, /Record recovery duration/);
-    return JSON.stringify({ action: 'approve', selected: [id] });
+    return JSON.stringify({ action: 'approve', selected: [id, 'audit-recovery'] });
   };
   const run = () => scenario.run('recommendation');
   await assert.rejects(run(), /Review objective recommendations/);
   assert.ok('milestones' in (await run()));
   assert.equal(prompts, 3);
+  assertBatchAlignment(scenario);
+}
+
+function assertBatchAlignment(scenario: PlannerRepairScenario) {
   assert.equal(scenario.requests.length, 2);
-  assert.match(JSON.stringify(scenario.requests[1]!.assignment), /Record recovery duration/);
-  assert.doesNotMatch(JSON.stringify(scenario.requests[1]!.assignment), /record-recovery/);
+  assert.ok(scenario.progress.includes('Planner is aligning goals with the approved objectives.'));
+  const assignment = scenario.requests[1]!.assignment as {
+    approvedObjectives: { id: string; content: string }[];
+  };
+  assert.deepEqual(
+    assignment.approvedObjectives.map(({ id }) => id),
+    ['rehearse-recovery', 'audit-recovery'],
+  );
+  assert.match(assignment.approvedObjectives[0]!.content, /Record recovery duration/);
+  const { plannerEdits } = scenario.task
+    .observations<{ plannerEdits?: { edits: { path: string }[] } }>()
+    .findLast((event) => event.plannerEdits)!;
+  assert.deepEqual(
+    plannerEdits!.edits.map(({ path }) => path),
+    [
+      '.arc/goals/delivery/recovery/practice-recovery.md',
+      '.arc/objectives/delivery/recovery/rehearse-recovery.md',
+      '.arc/objectives/delivery/recovery/audit-recovery.md',
+    ],
+  );
 }
 
 test('a read-only recommendation retains a draft without creating a delivery plan', async (t) => {

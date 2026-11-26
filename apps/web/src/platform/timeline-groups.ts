@@ -29,6 +29,7 @@ export interface Operation {
 
 type Observation = {
   message?: string;
+  onboardingSelection?: { drafts: { title: string }[] };
   nativeEvent?: {
     activation?: string;
     event?: {
@@ -55,6 +56,7 @@ class TimelineProjection {
   private readonly questions = new Map<string, TimelineEntry>();
   private readonly messages = new Map<string, TimelineEntry>();
   private count = 0;
+  private retainedDrafts?: { title: string }[];
   private readonly window = new AttemptWindow();
 
   /** Process every new observation once, retaining its display position. */
@@ -72,6 +74,7 @@ class TimelineProjection {
     this.entries.length = 0;
     this.calls.clear();
     this.questions.clear();
+    this.retainedDrafts = undefined;
     this.messages.clear();
   }
 
@@ -79,12 +82,10 @@ class TimelineProjection {
   private append(frame: TimelineFrame) {
     const observation = frame.observation as Observation | null;
     if (!observation) return;
-    const { clarification, message, nativeEvent, outcome } = observation;
-    if (clarification?.question) {
-      const id = JSON.stringify([clarification.scope, clarification.question]);
-      const entry = this.questions.get(id);
-      if (entry) entry.question = clarification;
-      else this.questions.set(id, this.add(frame, { question: clarification }));
+    const { clarification, message, nativeEvent, outcome, onboardingSelection } = observation;
+    if (clarification?.question) return this.addQuestion(frame, clarification);
+    if (onboardingSelection?.drafts?.length) {
+      this.retainedDrafts = onboardingSelection.drafts;
       return;
     }
     const item = nativeEvent?.event?.item;
@@ -100,10 +101,18 @@ class TimelineProjection {
       return;
     }
     if (message || outcome) {
-      this.add(frame, { message: message ?? outcome?.summary ?? outcome?.reason ?? outcome?.kind });
+      this.add(frame, { message: message ?? outcomeMessage(outcome, this.retainedDrafts) });
       return;
     }
     this.addOperation(frame, observation);
+  }
+
+  /** Update a question in place when its journaled decision arrives. */
+  private addQuestion(frame: TimelineFrame, clarification: Question) {
+    const id = JSON.stringify([clarification.scope, clarification.question]);
+    const entry = this.questions.get(id);
+    if (entry) entry.question = clarification;
+    else this.questions.set(id, this.add(frame, { question: clarification }));
   }
 
   /** Keep a tool's final state at the position where it first appeared. */
@@ -138,6 +147,17 @@ class TimelineProjection {
     this.entries.push(entry);
     return entry;
   }
+}
+
+function outcomeMessage(outcome: Observation['outcome'], drafts?: { title: string }[]) {
+  if (outcome?.kind === 'planned' && drafts) return retainedMessage(drafts);
+  return outcome?.summary ?? outcome?.reason ?? outcome?.kind;
+}
+
+function retainedMessage(drafts: { title: string }[]) {
+  return drafts.length === 1
+    ? `Retained objective draft “${drafts[0]!.title}”.`
+    : `Retained ${drafts.length} objective drafts.`;
 }
 
 const projections = new WeakMap<readonly TimelineFrame[], TimelineProjection>();

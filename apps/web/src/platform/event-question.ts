@@ -23,7 +23,10 @@ export function EventQuestion({ question, command, binding, execution }: Questio
     h('strong', null, question.review ? 'Objective review' : 'Question'),
     h('p', { className: 'arc-plan-message' }, question.review?.summary ?? question.question),
     question.answer !== undefined
-      ? h(AnsweredQuestion, { answer: displayedAnswer(question, question.answer) })
+      ? h(AnsweredQuestion, {
+          answer: displayedAnswer(question, question.answer),
+          review: !!question.review,
+        })
       : gate &&
           binding.answer &&
           h(CommandQuestion, {
@@ -46,16 +49,25 @@ function relatedGate(question: Question, command: CommandState, execution?: stri
   return matches ? gate : undefined;
 }
 
-function AnsweredQuestion({ answer }: { answer: string }) {
-  return h('p', { className: 'arc-plan-message' }, h('strong', null, 'Answered '), answer);
+function AnsweredQuestion({ answer, review }: { answer: string; review: boolean }) {
+  return h(
+    'p',
+    { className: 'arc-plan-message' },
+    review ? null : h('strong', null, 'Answered '),
+    answer,
+  );
 }
 
 function displayedAnswer({ review }: Question, answer: string) {
   if (!review) return answer;
   try {
     const choice = readObjectiveDecision(answer, review);
-    if (choice.action === 'approve')
-      return (review.readOnly ? 'Retained ' : 'Approved ') + choice.selected.join(', ');
+    if (choice.action === 'approve') {
+      const titles = review.drafts
+        .filter(({ id }) => choice.selected.includes(id))
+        .map(({ title }) => title);
+      return (review.readOnly ? 'Selected ' : 'Approved ') + titles.join(', ');
+    }
     if (choice.action === 'revise') return choice.feedback ?? 'Submitted revised wording';
     return 'Declined';
   } catch {
