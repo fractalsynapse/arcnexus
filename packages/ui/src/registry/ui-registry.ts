@@ -1,11 +1,13 @@
+import { Subscriptions } from './subscriptions.js';
 import type { ReactNode } from 'react';
-import type { Workspace, DisplayRegistration } from './workspace.js';
+import type { Workspace, DisplayRegistration, WorkspaceFeature } from './workspace.js';
 
 /** Collect the workspace definitions contributed by trusted browser plugins. */
 export class UiRegistry {
   private readonly entries = new Map<string, Omit<Workspace, 'displays'>>();
   private readonly displays = new Map<string, Map<string, DisplayRegistration>>();
-  private readonly listeners = new Set<() => void>();
+  private readonly features = new Map<string, WorkspaceFeature>();
+  private readonly subscriptions = new Subscriptions();
   private readonly controls = new Map<string, ReactNode>();
   private snapshot: readonly Workspace[] = [];
   private controlSnapshot: ReadonlyArray<readonly [string, ReactNode]> = [];
@@ -51,6 +53,17 @@ export class UiRegistry {
     };
   }
 
+  /** Attach independently mounted feature content to a workspace's stable navigation route. */
+  registerWorkspaceFeature(path: string, feature: WorkspaceFeature) {
+    if (this.features.has(path)) throw new Error('Duplicate workspace feature: ' + path);
+    this.features.set(path, feature);
+    this.publish();
+    return () => {
+      this.features.delete(path);
+      this.publish();
+    };
+  }
+
   /** Contribute an eligible display without changing another plugin's workspace definition. */
   registerDisplay(path: string, display: DisplayRegistration) {
     const entries = this.displays.get(path) ?? new Map<string, DisplayRegistration>();
@@ -70,20 +83,16 @@ export class UiRegistry {
   readonly workspaces = () => this.snapshot;
 
   /** Notify mounted frames about contributions and plugin disposal. */
-  readonly subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
+  readonly subscribe = this.subscriptions.subscribe;
 
   /** Rebuild the renderable workspace registrations in navigation order. */
   private publish() {
     this.controlSnapshot = [...this.controls];
     this.snapshot = [...this.entries.values()].map((workspace) => ({
       ...workspace,
+      ...this.features.get(workspace.path),
       displays: [...(this.displays.get(workspace.path)?.values() ?? [])],
     }));
-    for (const listener of this.listeners) listener();
+    this.subscriptions.publish();
   }
 }

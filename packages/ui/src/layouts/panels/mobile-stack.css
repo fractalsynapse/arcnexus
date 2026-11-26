@@ -4,7 +4,7 @@
     flex-direction: column;
     gap: var(--gap);
   }
-  .arc-layout-column {
+  .arc-layout-region {
     display: contents;
   }
   .arc-app .arc-column-divider {

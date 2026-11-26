@@ -20,6 +20,12 @@ Recorded on 2026-11-19 from explicit human instructions in this conversation:
 | QUALIFICATION | Completion of the self-healing refinement plan | Three consecutive successful live refinement rounds | Human implementation request: “The plan is complete only when that live evidence demonstrates three successful continuous rounds.” This is acceptance, not a runtime retry or work budget. |
 | DEBUG-REASSESS | Engineering diagnosis | After three functionally identical attempts without progress, diagnose and change approach or report the blocker | Human-provided AGENTS.md instruction: “After three functionally identical attempts without progress, diagnose and change approach or report the blocker.” This requires reassessment; it does not authorize an automatic task retry ceiling. |
 
+Recorded on 2026-11-25 from explicit human instructions in this conversation:
+
+| ID               | Scope                                                | Approved limit                                                                     | Human approval evidence                                                                                                                              |
+| ---------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WEB-DIFF-CONTEXT | Context displayed in generated browser unified diffs | Up to three unchanged lines on each side of a change, combined when ranges overlap | Human request: “show the changes with 3 lines of context on each side with line numbers (basically the unified diff)”. Applies to presentation only. |
+
 No research request length, report length, source count, unresolved-question count,
 research-history count, Planner document size, or context truncation cap has an
 approval entry. Such limits are not authorized.

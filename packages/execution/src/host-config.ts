@@ -13,6 +13,7 @@ export interface HostConfig {
   executable: string;
   base: string;
   fresh: boolean;
+  documentationDirectories?: string[];
   storage: string;
   runtime?: RuntimeImage;
   github?: GitHubCredential;

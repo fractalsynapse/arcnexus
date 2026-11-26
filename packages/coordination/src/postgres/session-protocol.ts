@@ -3,7 +3,12 @@ import { StringDecoder } from 'node:string_decoder';
 import type { JournalRow } from '../journal-store.js';
 
 export type SessionRequest =
-  | { kind: 'open'; connectionString: string; project: string }
+  | {
+      kind: 'open';
+      connectionString: string;
+      project: string;
+      worker: string;
+    }
   | { kind: 'query'; sql: string; values: Array<string | number | null> }
   | { kind: 'close' };
 

@@ -37,6 +37,30 @@ export class Catalog {
     return rows[0];
   }
 
+  /** Read the saved source selection. A missing preference allows the repository default. */
+  async documentationDirectories(operator: string, id: string) {
+    const { rows } = await this.database.query<{ directories: string[] | null }>(
+      'SELECT documentation_directories AS directories FROM arcnexus_catalog.projects WHERE operator=$1 AND id=$2 AND NOT retired',
+      [operator, id],
+    );
+    return rows[0]?.directories ?? undefined;
+  }
+
+  /** Change source selection only if the authenticated project still uses the validated revision. */
+  async saveDocumentationDirectories(
+    operator: string,
+    id: string,
+    revision: string,
+    directories: string[],
+  ) {
+    const { rowCount } = await this.database.query(
+      'UPDATE arcnexus_catalog.projects SET documentation_directories=$4::jsonb WHERE operator=$1 AND id=$2 AND revision=$3 AND NOT retired',
+      [operator, id, revision, JSON.stringify(directories)],
+    );
+    if (!rowCount)
+      throw new Error('Project revision changed. Reopen project settings before saving.');
+  }
+
   /** Test the configured path without changing the selected revision. */
   async probe(operator: string, id: string) {
     const project = await this.binding(operator, id);

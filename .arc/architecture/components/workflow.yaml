@@ -49,12 +49,10 @@ purpose: |
   their public interfaces rather than duplicated inside a command handler.
 
   Goal planning uses the same admission, progress, cancellation, clarification and
-  delivery foundations. Planner evaluates a human objective or explores the captured
-  project and goal inventory. A justified read-only assessment can finish without
-  a source change. Proposed objective or goal edits retain their exact approval
-  and use normal checked changes, independent review and delivery. Workflow handles
-  the lifecycle; it does not rewrite Planner's domain assessment or hide a changed
-  guide behind an implementation repair.
+  delivery foundations. Use the Workflow and Planner contracts for Plan modes,
+  durable objective decisions, checked changes, independent review and staging.
+  Keep the read-only discovery position and verified project identity when the
+  repository later enters the ordinary admitted Plan workflow.
 
   Architecture update likewise uses the existing lifecycle. Architect assesses
   approved direction and prior observations, returns no change or a reviewable
@@ -185,7 +183,7 @@ purpose: |
   A real missing owner or conflict with locked authority requires an architectural
   proposal and named high-level decision. Ordinary owned engineering choices,
   formatting corrections and plan sequencing do not. Keep human gates concerned
-  with objectives, goals and architecture. Actual unavailable external prerequisites
+  with objectives and architecture. Actual unavailable external prerequisites
   remain named observable holds. A model assertion that an API is missing must
   be investigated through the available public interfaces rather than accepted as
   proof that the task should terminate.

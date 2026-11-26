@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -18,6 +18,10 @@ import {
   readOperationEvidence,
 } from '../../../../packages/coordination/src/index.js';
 import { databaseSetupPlugin } from '../../src/index.js';
+import {
+  listPlanReferences,
+  readPlanReference,
+} from '../../../../packages/coordination/src/postgres/plan-records.js';
 
 export const suite = { owner: 'db-app', level: 'integration', tags: ['postgresql'] } as const;
 const url = process.env.ARC_TEST_DATABASE_URL;
@@ -78,6 +82,54 @@ test(
 
 function coordinated(project: string, worker: string) {
   return hostedProjectCoordination({ project, worker, connectionString: url! });
+}
+
+test(
+  'cutover preserves both histories when retired discovery and SQLite IDs overlap',
+  { skip: !url },
+  async (t) => {
+    const { directory, database, project, sqlite, setup } = await fixture(t);
+    const native = sqlite.admit(project, 'Native history');
+    assert(native instanceof Journal);
+    native.record({ planningExecution: { revision: 'native-revision' } });
+    native.finish({ kind: 'planned' });
+    native.close();
+    const before = sqlite.readTaskTimeline(project, native.taskID);
+    const lastNative = Date.parse(before.events.at(-1)!.timestamp!);
+    await retiredDiscovery(database, project, new Date(lastNative + 1).toISOString());
+    const legacy = await readImportedTimeline(database, project, 'retired-plan');
+    assert.equal(legacy.events[0]?.sequence, before.events[0]?.sequence);
+    const receipt = await setup.cutover(directory, project);
+    assert.deepEqual(await setup.cutover(directory, project), receipt);
+    assert.deepEqual(await readImportedTimeline(database, project, native.taskID), before);
+    assert.deepEqual(await readImportedTimeline(database, project, 'retired-plan'), legacy);
+    assert.deepEqual(
+      (await listPlanReferences(database, project)).map(({ execution }) => execution),
+      ['retired-plan', native.taskID],
+    );
+    assert.equal((await readPlanReference(database, project))?.execution, 'retired-plan');
+  },
+);
+
+async function retiredDiscovery(database: Client, project: string, recordedAt: string) {
+  await database.query(
+    `INSERT INTO arcnexus_coordination.runs
+    (project,id,goal_id,task_id,goal,active,documentation_only)
+    VALUES ($1,1,'retired-goal','retired-plan','Retired Plan',0,true)`,
+    [project],
+  );
+  await database.query(
+    `INSERT INTO arcnexus_coordination.events
+    (project,id,run,content,recorded_at) VALUES ($1,1,1,$2,$3)`,
+    [
+      project,
+      JSON.stringify({
+        planningExecution: { revision: 'retired-revision' },
+        answer: 'Retained answer',
+      }),
+      recordedAt,
+    ],
+  );
 }
 
 async function cutoverWithArtifact(
@@ -280,6 +332,45 @@ test(
     await verifyEvidenceScope(database, project, writer.taskID, call.sequence, directory);
   },
 );
+
+test(
+  'the hosted writer and the retained archive share the scoped evidence reader',
+  { skip: !url },
+  async (t) => {
+    const { directory, database, project, sqlite, setup } = await fixture(t);
+    const [archive, live] = evidenceDirectories(directory);
+    const native = sqlite.admit(project, 'Archived Plan');
+    assert.ok('record' in native);
+    const saved = recordOperation(native, archive, 'completed', { output: 'Reviewed result' });
+    native.finish({ kind: 'planned' });
+    native.close();
+    await setup.cutover(directory, project);
+    const writer = coordinated(project, 'live-evidence-host').admit(project, 'Live Plan');
+    assert.ok('record' in writer);
+    t.after(() => writer.close());
+    const call = recordOperation(writer, live, 'started', { args: { path: 'README.md' } });
+    const read = (execution: string, sequence: string) =>
+      readOperationEvidence(database, project, execution, sequence, [archive, live]);
+    assert.deepEqual((await read(writer.taskID, call.sequence)).entries, [
+      { args: { path: 'README.md' } },
+    ]);
+    recordOperation(writer, live, 'completed', { result: { content: 'Current contents' } });
+    assert.deepEqual((await read(writer.taskID, call.sequence)).entries, [
+      { args: { path: 'README.md' } },
+      { result: { content: 'Current contents' } },
+    ]);
+    assert.deepEqual((await read(native.taskID, saved.sequence)).entries, [
+      { output: 'Reviewed result' },
+    ]);
+    await assert.rejects(read(writer.taskID, saved.sequence), /not retained/);
+  },
+);
+
+function evidenceDirectories(directory: string) {
+  const paths = [join(directory, 'archive'), join(directory, 'host')] as const;
+  for (const path of paths) mkdirSync(path);
+  return paths;
+}
 
 function recordOperation(
   writer: Extract<ReturnType<Coordination['admit']>, { record: unknown }>,

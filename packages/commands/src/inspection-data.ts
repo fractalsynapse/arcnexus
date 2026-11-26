@@ -1,6 +1,7 @@
 import type { Context } from 'cordis';
 import { z } from 'zod';
 import { dataOperation, type DataScope } from '../../data/src/index.js';
+import { modelRequest } from '../../foundation/src/model-request.js';
 
 const selection = z.strictObject({ component: z.string().min(1), activity: z.string().min(1) });
 const inspection = z.strictObject({
@@ -8,7 +9,7 @@ const inspection = z.strictObject({
   component: z.string(),
   activity: z.string(),
   placeholders: z.array(z.string()),
-  request: z.strictObject({ input: z.string(), options: z.record(z.string(), z.unknown()) }),
+  request: modelRequest,
 });
 
 type Project = { directory: string; revision: string };

@@ -8,21 +8,27 @@ authority:
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
   approvalRecord: 'Exact proposal intent
-    57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095; human
-    approval is required and recorded in Coordination before host application.'
-  approvedBase: 0fd3290678d3fc219a2ec0b60c54287066b94cad
+    d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c; architect
+    approval and named-editor delegation are required in Codex chat before
+    application.'
+  approvedBase: 92b3fe4e86e0b4a99185aa66d831af0545942444
 contracts:
   - id: arcnexus/project
     type: project
     file: docs/interface/arcnexus-project.md
     owner: architecture
     stage: locked
-    digest: 04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3
+    digest: 3576083bae5a4446adda961474204b37531bf2dad12ca1fced970bccb9331f37
     dependsOn: []
-    scenarios: 15
+    scenarios: 16
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-15'
+    acceptedAt: '2026-11-26'
     history:
+      - stage: locked
+        digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
+        file: docs/interface/arcnexus-project.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: locked
         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
         file: docs/interface/arcnexus-project.md
@@ -64,9 +70,35 @@ contracts:
       - stage: proposed
         digest: 133f9cf2ab5f1a317969b7fc46a5cafdb4c982e0d36d3e48d5e4b1ba1298e114
         note: proposed in
-    approvalRecord: 'Architect approved explicit activities, Team, CLI app ownership
-      and transport-neutral Commands in Codex chat on 2026-11-15. Base:
-      5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454.'
+      - id: arcnexus/project
+        type: project
+        file: docs/interface/arcnexus-project.md
+        owner: architecture
+        stage: locked
+        digest: 04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3
+        dependsOn: []
+        scenarios: 15
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-15
+        approvalRecord: "Architect approved explicit activities, Team, CLI app ownership
+          and transport-neutral Commands in Codex chat on 2026-11-15. Base:
+          5b081f8ab10248daac6a966e88c4525324f5e15b. Issue #454."
+        stewardshipRecord: "Architect approved steward ownership, release relocation and
+          the architecture component name in Codex chat on 2026-11-15. Base:
+          ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454."
+        amendmentRecord: "Architect approved the Team, checkpoint and goal-round
+          proposal in Codex chat. Base:
+          e73aedb283eecbe2f80b482923b2ae6eced1a6bf. Issue #522."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+        note: Replaced by human-reviewed proposal intent
+          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+    approvalRecord: 'Exact proposal intent
+      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
+      architect approval and named-editor delegation are required in Codex chat
+      before application.'
     stewardshipRecord: 'Architect approved steward ownership, release relocation and
       the architecture component name in Codex chat on 2026-11-15. Base:
       ff08a26ce1f7b6fb8de0087e72c12884e1ad5c87. Issue #454.'
@@ -102,14 +134,19 @@ contracts:
     file: apps/cli/contract.md
     owner: cli-app
     stage: locked
-    digest: 0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845
+    digest: 26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2
     dependsOn:
       - arcnexus/project
       - arcnexus/commands
     scenarios: 25
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-24'
+    acceptedAt: '2026-11-26'
     history:
+      - stage: locked
+        digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
+        file: apps/cli/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: locked
         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
         file: apps/cli/contract.md
@@ -222,9 +259,34 @@ contracts:
         revision: 0fd3290678d3fc219a2ec0b60c54287066b94cad
         note: Replaced by human-reviewed proposal intent
           57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095.
+      - id: arcnexus/cli-gateway
+        type: gateway
+        file: apps/cli/contract.md
+        owner: cli-app
+        stage: locked
+        digest: 0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/commands
+        scenarios: 25
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-24
+        approvalRecord: Exact proposal intent
+          57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
+          foreground human approval recorded in Coordination.
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+        note: Replaced by human-reviewed proposal intent
+          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     approvalRecord: 'Exact proposal intent
-      57286449936ee6102d7dc6c3943c3a575d027f071fe0081a4e5e69cceb549095;
-      foreground human approval recorded in Coordination.'
+      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
+      architect approval and named-editor delegation are required in Codex chat
+      before application.'
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
@@ -850,8 +912,8 @@ contracts:
     dependsOn:
       - arcnexus/agent
       - arcnexus/workflow
-    digest: 07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491
-    scenarios: 5
+    digest: 10fab582e3a67d82b425dc2f805beea3bd8b8c51c1e865bd6d12545719f5107c
+    scenarios: 6
     history:
       - stage: proposed
         digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
@@ -865,6 +927,25 @@ contracts:
         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
         note: Superseded by the exact human-approved self-healing refinement amendment
           in issue #615.
+      - id: arcnexus/commands
+        type: library
+        file: packages/commands/contract.md
+        owner: commands
+        stage: proposed
+        dependsOn:
+          - arcnexus/agent
+          - arcnexus/workflow
+        digest: 07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491
+        scenarios: 5
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+        note: Replaced by human-reviewed proposal intent
+          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
@@ -940,9 +1021,14 @@ contracts:
       - arcnexus/coordination
       - arcnexus/verification
       - arcnexus/delivery
-    digest: 3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8
+    digest: 1fc7557dd5b85f39c17c85ba8d0cad55bd4fda8a9af5a32a4e00d0cf2195daf9
     scenarios: 12
     history:
+      - stage: proposed
+        digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
+        file: packages/workflow/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: proposed
         digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
         file: packages/workflow/contract.md
@@ -955,6 +1041,29 @@ contracts:
         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
         note: Superseded by the exact human-approved self-healing refinement amendment
           in issue #615.
+      - id: arcnexus/workflow
+        type: library
+        file: packages/workflow/contract.md
+        owner: workflow
+        stage: proposed
+        dependsOn:
+          - arcnexus/agent
+          - arcnexus/direction
+          - arcnexus/execution
+          - arcnexus/coordination
+          - arcnexus/verification
+          - arcnexus/delivery
+        digest: 3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8
+        scenarios: 12
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+        note: Replaced by human-reviewed proposal intent
+          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
@@ -969,15 +1078,36 @@ contracts:
     dependsOn:
       - arcnexus/agent
       - arcnexus/workflow
-    digest: 5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676
-    scenarios: 5
+    digest: 24c22aadcbad4100afafd8d4e41dab1723acd06560696e0eb6fbd0e68e2bca53
+    scenarios: 8
     history:
+      - stage: proposed
+        digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
+        file: packages/planner/contract.md
+        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
+        note: Superseded after exact approval of unified Plan and documentation directories.
       - stage: proposed
         digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
         file: packages/planner/contract.md
         revision: fc6df1e8755764adfc133fbc2776257a9c6e1bbb
         note: Superseded by the exact human-approved self-healing refinement amendment
           in issue #615.
+      - id: arcnexus/planner
+        type: library
+        file: packages/planner/contract.md
+        owner: planner
+        stage: proposed
+        dependsOn:
+          - arcnexus/agent
+          - arcnexus/workflow
+        digest: 5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676
+        scenarios: 5
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
+        note: Replaced by human-reviewed proposal intent
+          9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'

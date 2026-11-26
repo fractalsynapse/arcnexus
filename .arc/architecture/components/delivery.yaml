@@ -31,7 +31,7 @@ purpose: |
 
   Configured CI and review are real delivery prerequisites. Pending results leave publication pending. A provider observation that cannot complete is unavailable, not passed and not proof the record is absent. A missing credential, inaccessible repository or irreversible remote state becomes a named hold with the required action. Delivery preserves the candidate and report rather than silently skipping the gate.
 
-  These prerequisites differ from high-level human guide approval. Objectives, goals and architecture require exact human decisions. Routine publication retries under existing authority do not add a new approval prompt. Conversely, a human's general wish to finish does not authorize bypassing an unavailable required check. The system must express the actual blocker clearly enough that the right responsible party can act.
+  These prerequisites differ from high-level human guide approval. Objectives and architecture require exact human decisions. Goal changes require independent review and verified staging. Routine publication retries under existing authority do not add a new approval prompt. Conversely, a human's general wish to finish does not authorize bypassing an unavailable required check. The system must express the actual blocker clearly enough that the right responsible party can act.
 
   A model's independent engineering verdict is not a GitHub review approval. Delivery can observe configured review and request an authorized verified-head merge, but cannot submit an approval to satisfy its own gate. An external review requirement may be absent under the project's accepted policy, present and satisfied, or pending; the actual rule matters. Do not hardcode a review ceremony or assume a waiver from unrelated work.
 

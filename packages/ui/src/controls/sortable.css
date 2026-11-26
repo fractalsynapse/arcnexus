@@ -1,0 +1,39 @@
+.arc-sort-list {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.arc-sort-list:empty {
+  display: none;
+}
+.arc-sort-list button.arc-sort-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.arc-sort-grip {
+  width: 10px;
+  height: 15px;
+  background: radial-gradient(circle, currentColor 1px, transparent 1.5px) 0 0 / 5px 5px;
+}
+.arc-sort-gap {
+  border: 1px dashed var(--link);
+  border-radius: 7px;
+  background: var(--quiet);
+  pointer-events: none;
+}
+.arc-sort-list > [data-sort-dragging] {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 3;
+  background: var(--tint);
+  border-color: var(--link);
+  box-shadow: 0 4px 12px #0b182a26;
+  user-select: none;
+}
+.arc-sort-list [data-sort-dragging] button.arc-sort-handle {
+  cursor: grabbing;
+}
+.arc-sort-list [data-sort-dragging] .arc-tooltip {
+  display: none;
+}

@@ -33,10 +33,16 @@ function assignedProject() {
   if (process.env.ARC_ISOLATED_REVIEW !== '1' || !file || !secret || !worker)
     throw new Error('Hosted execution requires a trusted isolated assignment');
   const assignment = assignmentSchema.parse(JSON.parse(readFileSync(file, 'utf8')) as unknown);
-  const { source, project } = new Architecture().capture(assignment.directory);
+  const captured = new Architecture().capture(assignment.directory);
+  const source = captured.source;
   if (source.remote !== assignment.remote || source.revision !== assignment.revision)
     throw new Error('Hosted checkout differs from its captured assignment');
-  return { ...assignment, worker, binding: project.bindings, connectionString: readSecret(secret) };
+  return {
+    ...assignment,
+    worker,
+    binding: captured.project.bindings,
+    connectionString: readSecret(secret),
+  };
 }
 
 async function main() {
@@ -45,22 +51,26 @@ async function main() {
   const assignment = assignedProject();
   verifyCheckSandbox(assignment.storage);
   prepareCodexBinding(assignment.directory, assignment.binding);
+  const context = await hostContext(assignment);
+  await serve(assignment, context.commands);
+}
+
+async function hostContext(assignment: ReturnType<typeof assignedProject>) {
   const context = new Context();
   for (const dependency of [teamPlugin, architecturePlugin, agentPlugin])
     await context.use(dependency);
+  const { remote, storage, worker, runtime, connectionString } = assignment;
   await context.use(
-    hostedHostPlugin(assignment.storage, {
-      project: assignment.remote,
-      worker: assignment.worker,
-      runtime: assignment.runtime,
-      github: assignment.githubAppId
-        ? configureGitHub(assignment.directory, assignment.remote)
-        : undefined,
-      connectionString: assignment.connectionString,
+    hostedHostPlugin(storage, {
+      project: remote,
+      worker,
+      runtime,
+      connectionString,
+      github: assignment.githubAppId ? configureGitHub(assignment.directory, remote) : undefined,
     }),
   );
   await context.use(commandsPlugin);
-  await serve(assignment, context.commands);
+  return context;
 }
 
 async function serve(

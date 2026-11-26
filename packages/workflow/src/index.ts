@@ -13,6 +13,8 @@ import { TaskRun } from './task-run.js';
 import { ArchitectRun } from './architect-run.js';
 import { RefinementRun } from './refinement-run.js';
 import type { RunObserver } from './observer.js';
+import type { DocumentationSettings } from '../../architecture/src/index.js';
+import { textDigest } from '../../foundation/src/index.js';
 
 export type { RoundCount } from './round-count.js';
 
@@ -64,18 +66,22 @@ export class Workflow {
   /** Assess accepted direction, obtain exact guide approval and deliver prerequisites before returning. */
   async update(
     directory: string,
-    feedback: string | undefined,
+    change: string | DocumentationSettings | undefined,
     observer: TaskObserver,
     signal: AbortSignal,
     parent?: TaskSession,
     scope = 'architecture:update',
   ) {
     const reporting = (await import('./observer.js')).RunObserver.for(observer);
+    const documentation = typeof change === 'object' ? change : undefined;
+    const feedback = typeof change === 'string' ? change : undefined;
     const input = {
       directory,
-      goal: feedback ?? 'Assess architecture alignment',
+      goal: documentation
+        ? 'Update project documentation directories'
+        : (feedback ?? 'Assess architecture alignment'),
       architecture: true,
-      scope,
+      scope: documentation ? scope + ':' + textDigest(JSON.stringify(documentation)) : scope,
     };
     return this.invoke(
       input,
@@ -84,7 +90,7 @@ export class Workflow {
       (session, writer) =>
         new ArchitectRun(this.services!, session, reporting, writer, (child) =>
           this.run(child, reporting, writer, session),
-        ).execute(feedback),
+        ).execute(feedback, documentation),
       parent,
     );
   }

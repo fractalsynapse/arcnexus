@@ -1,0 +1,222 @@
+diff --git a/apps/cli/contract.md b/apps/cli/contract.md
+index 50c684c8ea2162dc57d0077d6b1288276ffcfa17..ce6498a17ec0786885df313788f9050e000a6747 100644
+--- a/apps/cli/contract.md
++++ b/apps/cli/contract.md
+@@ -17,7 +17,8 @@ Commands using the shared progress, cancellation and output contract:
+ - `arcnexus task plan "<objective>"` preserves the exact human submission and
+   offers resumable clarification and objective review.
+ - `arcnexus task plan --recommend-objectives [<focus>]` recommends objectives
+-  from captured documentation. Focus guides source selection or analysis.
++  from captured documentation. Project documentation directories guide default
++  discovery. Focus can select other authorized sources at that same revision.
+   Duplicate flags, extra positional arguments and blank explicit inputs are
+   rejected before admission.
+ 
+@@ -72,8 +73,8 @@ Exit 0 represents the verified staging merge for a single goal, or a completed
+ round in which every goal has a Director assessment supported by evidence for the
+ evaluated revision or a verified merge. The Director can plan applicable checks
+ through the existing activity mappings. Assembled-candidate checks remain required
+-for changes. A completed mapping, completed read-only discovery or an already
+-recorded objective may exit 0 without a new staging merge.
++for changes. A completed mapping or an already recorded objective may exit 0
++without a new staging merge. Missing project setup is reported as a prerequisite.
+ Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
+ and exit 130 cancellation. Refuse a second active task in the same project. Other
+ verbs, option modes and launch surfaces are reserved for later qualification.
+diff --git a/docs/interface/arcnexus-project.md b/docs/interface/arcnexus-project.md
+index 6fe5b5c021ef3e65e6f57e63aedb043c1a62bdb2..95fbdaad8206293eb1a025a6f94192bfc4dc1256 100644
+--- a/docs/interface/arcnexus-project.md
++++ b/docs/interface/arcnexus-project.md
+@@ -27,13 +27,13 @@ authored rules and commands are reused by reference. Use the least code that mee
+ accepted contract. Add a service seam for an actual consumer or a responsibility that
+ must be independently replaceable.
+ 
+-Before project execution admission, an authorized repository connection may pin a
+-verified Git revision and inspect its documentation through a trusted,
+-platform-owned read-only Planner binding. This discovery can retain draft
+-objectives and review observations under the same repository identity. It grants
+-no repository writes, project-declared tools or project execution authority.
+-Admission to publish objectives or align goals resolves the approved catalog,
+-authority, checks, revision, bindings identity and trusted plugin composition.
++Plan uses the ordinary project lane. Admission resolves the approved catalog,
++write authority, checks, revision, bindings identity and trusted plugin
++composition. A project that needs setup exposes the missing prerequisite
++before Plan starts. The same Plan flow is available once it is resolved.
++The project definition may select repository-relative documentation directories
++for default Planner discovery. These paths guide source selection within the
++captured revision. An omitted or empty list permits repository-wide discovery.
+ Reload that integrated model after every
+ applied human-approved architecture update at a recorded activity boundary, once
+ required implementation and handlers are validated. Revalidate retained work before
+@@ -67,4 +67,4 @@ holds on current staging. Keep one configuration version. Main integration, tags
+ | PRJ-13 | Moving an owner-local contract, test or script outside its owner root fails ownership validation. The CLI can substitute a trusted plugin at composition without changing a consuming plugin. |
+ | PRJ-14 | A target repository plugin declaration cannot execute privileged host code or replace the application composition. |
+ | PRJ-15 | The CLI app owns `apps/cli`, the Commands plugin owns `packages/commands`, and the project owner owns neither path. Both the app and plugin expose their own complete component specifications. |
+-| PRJ-16 | An authorized repository without an ArcNexus catalog can produce retained, revision-cited objective drafts. Its source and project authority remain intact. Project admission reuses the verified repository identity and retains the drafts and citations. |
++| PRJ-16 | A repository awaiting catalog or write setup reports the missing prerequisite. Once set up, its verified repository identity enters the same Plan flow as an existing project. Documentation directories are captured with project settings and grant no authority. |
+diff --git a/docs/interface/registry.yaml b/docs/interface/registry.yaml
+index 16cc7e9337197f8a36965f745b4896c6fa6da4b2..3ec1728633393c0a48c28606675de80f2e7cba1e 100644
+--- a/docs/interface/registry.yaml
++++ b/docs/interface/registry.yaml
+@@ -8,22 +8,27 @@ authority:
+   editorDelegation: Explicit architect approval for a named change and base,
+     applied by a named editor or the trusted host.
+   approvalRecord: 'Exact proposal intent
+-    9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b; architect
++    d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c; architect
+     approval and named-editor delegation are required in Codex chat before
+     application.'
+-  approvedBase: 32a59d7149170a2bac76592b5d59d1c95b0dab02
++  approvedBase: 92b3fe4e86e0b4a99185aa66d831af0545942444
+ contracts:
+   - id: arcnexus/project
+     type: project
+     file: docs/interface/arcnexus-project.md
+     owner: architecture
+     stage: locked
+-    digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
++    digest: 3576083bae5a4446adda961474204b37531bf2dad12ca1fced970bccb9331f37
+     dependsOn: []
+     scenarios: 16
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-26'
+     history:
++      - stage: locked
++        digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
++        file: docs/interface/arcnexus-project.md
++        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
++        note: Superseded after exact approval of unified Plan and documentation directories.
+       - stage: locked
+         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
+         file: docs/interface/arcnexus-project.md
+@@ -91,7 +96,7 @@ contracts:
+         note: Replaced by human-reviewed proposal intent
+           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     approvalRecord: 'Exact proposal intent
+-      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
++      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
+       architect approval and named-editor delegation are required in Codex chat
+       before application.'
+     stewardshipRecord: 'Architect approved steward ownership, release relocation and
+@@ -129,7 +134,7 @@ contracts:
+     file: apps/cli/contract.md
+     owner: cli-app
+     stage: locked
+-    digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
++    digest: 26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2
+     dependsOn:
+       - arcnexus/project
+       - arcnexus/commands
+@@ -137,6 +142,11 @@ contracts:
+     acceptedBy: Adrian Webb (architect)
+     acceptedAt: '2026-11-26'
+     history:
++      - stage: locked
++        digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
++        file: apps/cli/contract.md
++        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
++        note: Superseded after exact approval of unified Plan and documentation directories.
+       - stage: locked
+         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
+         file: apps/cli/contract.md
+@@ -274,7 +284,7 @@ contracts:
+         note: Replaced by human-reviewed proposal intent
+           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+     approvalRecord: 'Exact proposal intent
+-      9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b;
++      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
+       architect approval and named-editor delegation are required in Codex chat
+       before application.'
+     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
+@@ -1011,9 +1021,14 @@ contracts:
+       - arcnexus/coordination
+       - arcnexus/verification
+       - arcnexus/delivery
+-    digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
++    digest: 1fc7557dd5b85f39c17c85ba8d0cad55bd4fda8a9af5a32a4e00d0cf2195daf9
+     scenarios: 12
+     history:
++      - stage: proposed
++        digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
++        file: packages/workflow/contract.md
++        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
++        note: Superseded after exact approval of unified Plan and documentation directories.
+       - stage: proposed
+         digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
+         file: packages/workflow/contract.md
+@@ -1063,9 +1078,14 @@ contracts:
+     dependsOn:
+       - arcnexus/agent
+       - arcnexus/workflow
+-    digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
++    digest: 24c22aadcbad4100afafd8d4e41dab1723acd06560696e0eb6fbd0e68e2bca53
+     scenarios: 8
+     history:
++      - stage: proposed
++        digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
++        file: packages/planner/contract.md
++        revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
++        note: Superseded after exact approval of unified Plan and documentation directories.
+       - stage: proposed
+         digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
+         file: packages/planner/contract.md
+diff --git a/packages/planner/contract.md b/packages/planner/contract.md
+index 52a96f318fc57764fc382b6533a4d95f83b7c94d..d80e26b33c6ee248daae16bccef44cadcf02324d 100644
+--- a/packages/planner/contract.md
++++ b/packages/planner/contract.md
+@@ -24,13 +24,11 @@ evidence. The trusted binding determines access and authority. Cite the exact
+ source path, revision and supporting excerpt. Recommendations include proposed
+ wording, a category and the uncovered need.
+ 
+-A verified read-only connection can use the same recommendation activity before
+-project execution admission. A platform-owned binding supplies the activity and
+-permitted reads without relying on repository instructions or tool declarations.
+-Retained drafts, citations and review discussion follow the verified repository
+-identity into the admitted project. When a new capture changes cited evidence,
+-show the change and review the draft against the reconciled baseline before
+-publication.
++Default discovery searches the captured project documentation directories when
++provided. Each configured path must identify a directory inside the captured
++tree. Report invalid paths by name. An explicit file or directory supplied for
++this run can focus discovery elsewhere in the same authorized tree. Every
++recommendation uses the normal project workspace and delivery policy.
+ 
+ ## Guide records
+ 
+@@ -55,9 +53,8 @@ decision. An unrecognized or stale reply grants no approval.
+ When a recommendation is approved, pass the selected objective bytes to the
+ existing goal-alignment activity in the same admitted Plan session. If
+ discovery supports no new objective, explain the assessment and continue
+-standing-inventory alignment in an admitted Plan. A read-only connection can
+-complete discovery with its drafts or a no-recommendation assessment. It
+-cannot publish guide records or run goal alignment.
++standing-inventory alignment in that same Plan. An approved selection always
++reaches goal alignment before ordinary delivery, including on a newly set up project.
+ 
+ An explicit save of the architect's exact objective draft is human
+ authorization at its captured revision. Model-authored objective changes,
+@@ -79,7 +76,7 @@ alignment needs no goal edits, deliver the authorized objectives on their own.
+ | PLN-3 | A model-authored objective change reaches delivery only with authority over its exact selected bytes and baseline. A direct objective save records the architect's exact draft. |
+ | PLN-4 | An interrupted round retains its captured goal inventory. The next fresh round uses the newly reviewed inventory. |
+ | PLN-5 | Every refinement Plan phase evaluates the standing guides using prior observations. It produces a checked goal diff or justified no change while preserving objective authorization and keeping owners and results out of goal records. |
+-| PLN-6 | Recommendations cite captured sources in an unconventional layout. A repository without an ArcNexus catalog retains its read-only drafts and evidence through later project admission. |
++| PLN-6 | Recommendations cite captured sources in an unconventional layout. Configured directories set default discovery, explicit source paths can focus one run, and an empty list permits discovery across the repository. Invalid configured paths produce actionable diagnostics. |
+ | PLN-7 | After draft revision and restart, the same objective review resumes. Goal alignment receives only the selected approved bytes and goal changes enter independent review with no human approval prompt. |
+ | PLN-8 | A categorized guide retains its identity, links and historical revisions after a move. Duplicate IDs, invalid paths and stale saves are refused. |
+ 
+diff --git a/packages/workflow/contract.md b/packages/workflow/contract.md
+index b2346b02c605340550e62fe2c9c72e6c2c04f277..604c6e0841592e6ab829314149c86f39ccbe28c8 100644
+--- a/packages/workflow/contract.md
++++ b/packages/workflow/contract.md
+@@ -51,9 +51,8 @@ gates preserve the observed position and evidence.
+ `task plan` uses the same cancellation, clarification, evidence and delivery
+ boundaries. [Planner](../planner/contract.md) assesses the standing inventory,
+ evaluates a human objective, or recommends objectives from captured
+-documentation. A documentation-only connection can retain draft observations
+-without admitting project writes. In an admitted Plan, Workflow retains the
+-objective decision and resumes the existing alignment activity with the
++documentation. Surface missing project setup before starting Plan. Workflow
++retains the objective decision and resumes the same Plan's alignment activity with the
+ authorized wording. It sends the exact journaled changes through Execution,
+ independent review and staging. A rejected Planner candidate returns its
+ findings to Planner. Only changes to objective authorization reopen human

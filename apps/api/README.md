@@ -35,18 +35,24 @@ remote before import succeeds.
 ```
 
 Run `docker compose up -d --build` at the repository root. Web serves its own
-shell and proxies requests under `/api/` to API. Pass the operator bearer
-credential when calling `GET /api/projects` or `POST /api/projects`. To
-import a bound fixture, send its canonical remote as the `remote` field.
+shell and proxies requests under `/api/` to API. The local Compose
+frontend supplies the configured operator credential at the proxy.
+Direct API calls use the bearer credential. To import a bound fixture,
+send its canonical remote as the `remote` field.
 The response supplies the project ID. The project endpoint exposes its
 OpenAPI document at `/api/projects/{project}/openapi.json`. Connect an MCP
 client with the same bearer credential at `/projects/{project}/mcp` on the
 MCP port.
 
 The review stack serves pinned Plan guide reads, outcome and metric projections,
-and replay and live follow of retained PostgreSQL observations. The browser uses
-an operator credential held in memory for the review session. A registered
-launcher can use `connect` to keep its authorized presence active.
+and replay and live follow of retained PostgreSQL observations. A project binding’s
+`evidence` accepts an absolute mount path or a list of paths for retained and live
+Host artifacts. Mount each path read-only at its recorded location. A
+registered launcher can use `connect` to keep its authorized presence active.
+
+`GET /api/projects/{project}/plan-executions` lists retained Plan execution
+references for that project, newest first. Select a reference by its execution
+ID to fetch its outcome, metrics, tool counts, or event stream independently.
 
 The platform CLI uses `ARC_API_URL`, `ARC_PROJECT_ID` and
 `ARC_OPERATOR_TOKEN_FILE`. Include the Web proxy's `/api` prefix in the URL

@@ -51,6 +51,7 @@ class PostgresStore implements JournalStore {
         kind: 'open',
         connectionString: project.connectionString,
         project: project.project,
+        worker: project.worker,
       });
     } catch (error) {
       this.close();

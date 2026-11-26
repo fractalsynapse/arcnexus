@@ -15,9 +15,8 @@ export function workspacePlugin() {
     /** Register the frame's workspace links and route-specific header action. */
     apply(context: Context) {
       const headerAction = h(RefineButton, { binding: context.webCommands });
-      for (const item of workspaces) {
+      for (const item of workspaces)
         context.effect(() => context.ui.register({ ...item, headerAction }));
-      }
     },
   };
 }

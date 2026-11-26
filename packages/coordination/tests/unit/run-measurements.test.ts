@@ -17,10 +17,11 @@ class MeasurementScenario {
   readonly projection = new coordination.RunMeasurements();
 
   /** Supply ordered journal-shaped observations with a deterministic wall clock. */
-  feed(observation: unknown, milliseconds: number) {
+  feed(observation: unknown, milliseconds: number, run = 1, parent?: number) {
     return this.projection.accept({
       sequence: String(++this.sequence),
-      run: 1,
+      run,
+      parent,
       taskID: 'task',
       goalID: 'goal',
       timestamp: new Date(milliseconds).toISOString(),
@@ -117,4 +118,22 @@ test('CO-25: a terminated unfinished activation is incomplete rather than an eve
   assert.equal(result.profiles[0]!.finishedActivations, 0);
   assert.equal(result.profiles[0]!.elapsedMs, null);
   assert.equal(result.usage.input_tokens.reported, null);
+});
+
+test('processing time stops for approval and resumes without counting the wait', () => {
+  const scenario = new MeasurementScenario();
+  scenario.feed({ invocation: { startedAt: new Date(900).toISOString() } }, 1000);
+  scenario.feed({ nativeStarted: { activation: 'before-review' } }, 1010);
+  scenario.feed({ nativeFinished: { activation: 'before-review', durationMs: 400 } }, 1410);
+  scenario.feed({ outcome: { kind: 'blocked' } }, 1500);
+  const waiting = scenario.projection.snapshot(3000);
+  assert.equal(waiting.wallElapsedMs, 600);
+  assert.equal(waiting.processingElapsedMs, 600);
+  scenario.feed({ invocation: { startedAt: new Date(4000).toISOString() } }, 4010, 2);
+  scenario.feed({ invocation: { startedAt: new Date(4100).toISOString() } }, 4100, 3, 2);
+  scenario.feed({ outcome: { kind: 'planned' } }, 4200, 2);
+  const result = scenario.projection.snapshot(9000);
+  assert.equal(result.wallElapsedMs, 3300);
+  assert.equal(result.processingElapsedMs, 800);
+  assert.equal(result.nativeElapsedMs, 400);
 });

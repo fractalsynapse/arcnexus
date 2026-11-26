@@ -1,6 +1,6 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { z } from 'zod';
-import { Architecture } from '../../architecture/src/index.js';
+import { Architecture, openProject, projectCatalogPath } from '../../architecture/src/index.js';
 import {
   githubAppReadToken,
   managedRepository,
@@ -11,6 +11,7 @@ import { importSchema } from '../../catalog/src/index.js';
 
 const id = z.string().min(1);
 const absoluteSecret = z.string().startsWith('/');
+const evidenceRoots = z.union([absoluteSecret, z.array(absoluteSecret).nonempty()]);
 const githubBinding = z.union([
   z.strictObject({ id, tokenFile: absoluteSecret }),
   z.strictObject({ id, appId: z.string().min(1), privateKeyFile: absoluteSecret }),
@@ -25,7 +26,7 @@ const configuration = z.strictObject({
       hosted: z.boolean().optional(),
       managed: z.boolean().optional(),
       provider: z.uuid().optional(),
-      evidence: z.string().startsWith('/').optional(),
+      evidence: evidenceRoots.optional(),
       github: githubBinding.optional(),
     }),
   ),
@@ -48,14 +49,18 @@ export function bindings(file: string) {
         .filter(({ provider: owner, hosted }) => hosted && owner === provider)
         .map(({ remote }) => remote);
     },
-    capture(remote: string, revision?: string) {
-      const directory = projects.get(remote)?.directory;
-      if (!directory) return undefined;
-      const capture = architecture.capture(directory, revision);
-      if (capture.source.remote !== remote) throw new Error('Bound project remote changed');
-      return capture;
-    },
+    capture: (remote: string, revision?: string) =>
+      captureBinding(architecture, projects.get(remote), revision),
   };
+}
+
+function captureBinding(architecture: Architecture, project?: ProjectBinding, revision?: string) {
+  if (!project) return undefined;
+  const source = openProject(project.directory, revision);
+  if (source.remote !== project.remote) throw new Error('Bound project remote changed');
+  if (!source.paths.includes(projectCatalogPath))
+    throw new Error('Project setup requires the ArcNexus catalog: ' + projectCatalogPath);
+  return architecture.resolve(source);
 }
 
 function privateCredential(file: string) {
@@ -78,8 +83,7 @@ async function verifyProject(
     throw new Error('Repository provider binding unavailable');
   const token = github && (await repositoryToken(remote, github));
   const pinned = managed ? await managedRepository({ remote, directory, token }) : undefined;
-  const { source } = architecture.capture(directory, pinned);
-  if (source.remote !== remote) throw new Error('Bound project remote changed');
+  const source = captureBinding(architecture, project, pinned)!.source;
   if (token) await verifyBoundCommit(remote, source.revision, { token });
   return { revision: source.revision, credential: github?.id };
 }

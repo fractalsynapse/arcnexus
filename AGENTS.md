@@ -30,9 +30,12 @@ and keeps ArcNexus-specific release rules in this repository.
 - Make every public interface a Cordis plugin. Co-locate its contract, public entry,
   implementation, docs, tests and owner-specific scripts. Compose the CLI in
   [apps/cli](apps/cli/README.md).
-- Use the least code that satisfies the accepted outcome. Define each responsibility,
-  service shape and command once. Reuse its definition directly. Omit boilerplate,
-  duplicate implementations and compatibility machinery for the previous runtime.
+- Code duplication and boilerplate are prohibited everywhere in this repository.
+  Use the least code that satisfies the accepted outcome. Define each responsibility,
+  behavior, schema, component, style and command once, and reuse its canonical
+  implementation directly. When you find duplication or boilerplate, fix it as
+  part of the current work through the existing ownership and approval boundaries.
+  Apply the same rule to production code, prototypes, tests, tooling and guidance.
 - NEVER EVER create or introduce a quantitative limit without the human architect's
   express permission. Every implemented limit must have an entry in the
   [accepted-limits log](.arc/architecture/accepted-limits.md) citing that approval.
@@ -80,8 +83,8 @@ receipts, complete answers and unaffected evidence. Direction engages initially,
 on explicit escalation and after final independent rejection. Link
 already accepted supplier work, or place required supplier work before the dependent
 milestone. Escalate a decision that needs different authority. Human approval concerns
-objectives, goals and architecture. Routine repairs, plan sequencing and authorized
-staging delivery add no approval gates. External prerequisites remain named holds.
+objectives and architecture. Goal changes use independent review and verified
+staging delivery. Routine repairs and plan sequencing add no approval gates. External prerequisites remain named holds.
 The host validates
 authority and persists plan and learning records. Stream and retain complete
 exposed harness and host observations through the existing journal/evidence path.

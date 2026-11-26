@@ -36,7 +36,7 @@ function roundFooter() {
     <div class="arc-footer-details" id="arc-footer-details">
       <span>Updated <time>${escape(ended)} ET</time></span>
       <span>Elapsed <strong>${escape(wall)}</strong></span>
-      <span>Tokens (in / out) <strong>${roundTokens()}</strong></span>
+      <span>Tokens <strong>${roundTokens()}</strong></span>
     </div>
   </div>
   <button type="button" class="arc-link arc-footer-toggle" data-action="toggle-round-footer"
@@ -88,7 +88,7 @@ function roundEvidence() {
       ['Codex execution time', escape(native)],
       ['Model messages', tokenCount(tools.messages)],
       ['Tool calls', tokenCount(tools.provider)],
-      ['Reported tokens (in / out)', roundTokens()],
+      ['Reported tokens', roundTokens()],
       ['Token cache rate', cacheRate(usage.input_tokens, usage.cached_input_tokens)],
       ['Activations with token usage', coverage.withReportedUsage + ' / ' + coverage.activations],
     ]) +

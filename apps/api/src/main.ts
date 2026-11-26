@@ -1,12 +1,14 @@
 import { verifyPlatformDatabase } from '../../db/src/index.js';
 import { capacityPlugin } from '../../../packages/capacity/src/index.js';
 import { reviewPlatform } from '../../../packages/platform/src/index.js';
+import { uiPreferencesDataPlugin } from '../../../packages/ui/src/preferences/server.js';
 import { launcherBuilds } from './launcher-builds.js';
 import { apiPlugin, capacityApiPlugin, serveApi } from './index.js';
 
 const { context, database, authenticate, followTimeline, followCommands, hostAssignments } =
   await reviewPlatform();
 await verifyPlatformDatabase(database);
+await context.use(uiPreferencesDataPlugin(database));
 await context.use(apiPlugin(authenticate, followTimeline, followCommands));
 await context.use(capacityPlugin(database));
 await context.use(

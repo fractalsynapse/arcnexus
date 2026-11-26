@@ -8,12 +8,23 @@ Workspace plugins register navigation in order and contribute their own
 content and header actions. Each path has one registration and a disposal
 callback. Trusted feature plugins can register displays against a workspace
 and dispose their registrations independently. The mounted frame observes
-the registry for changes.
+the registry for changes. A feature can attach its scope, heading context and
+content to a registered navigation route. Disposing that feature restores the
+base workspace while preserving navigation order.
 
 A command binding supplies stable snapshots, subscription, and an optional
 structured submission function. The frame uses the binding for status,
-measurements and availability. It owns visual state, local theme preferences
-and an unsent instruction. The generic page settings editor saves a workspace's
+measurements and availability. It owns transient visual state and an unsent
+instruction. The Plan feature registers **Recommend objectives** in the shared
+composer and defaults it to checked for a new composer. It applies to the Plan
+request it launches. Objective drafts and decisions use the shared question
+dialog, Markdown editor and diff viewer. Goal and objective file pages use the
+same revision-bound editor and show the reviewed delivery outcome.
+
+A preferences binding supplies the operator's named site schemes,
+workspace layouts and display appearance. The browser package consumes that
+binding and the server preferences entry registers the same schemas in Data.
+The generic page settings editor saves a workspace's
 desktop columns and display arrangement. The panel layout uses the same display
 order for its mobile stack. Host admission and task lifecycle belong to the
 application's future trusted transport.

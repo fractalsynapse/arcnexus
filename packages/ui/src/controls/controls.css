@@ -34,18 +34,24 @@
   display: inline-flex;
   align-self: start;
 }
-.arc-tooltip {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  max-inline-size: calc(100vw - 2 * var(--pad));
+.arc-expansion-button {
+  margin-inline-end: 6px;
+}
+.arc-app .arc-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.arc-app .arc-checkbox input {
+  inline-size: auto;
+  min-block-size: 0;
+}
+.arc-app .arc-checkbox input:disabled {
   pointer-events: none;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--quiet);
-  color: var(--ink);
-  padding: 4px 7px;
-  font-size: 12px;
+}
+.arc-app .arc-checkbox:has(input:disabled) {
+  cursor: default;
 }
 .arc-sr {
   position: absolute;
@@ -54,40 +60,63 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
-@supports (appearance: base-select) {
-  .arc-app select,
-  .arc-app select::picker(select) {
-    appearance: base-select;
-  }
-  .arc-app select::picker(select) {
-    inline-size: anchor-size(width);
-    min-inline-size: 0;
-    margin-block: 4px;
-    padding: 4px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--paper);
-    color: var(--ink);
-    box-shadow: 0 5px 16px #0b182a32;
-    font: inherit;
-    overscroll-behavior: contain;
-  }
-  .arc-app select::picker-icon {
-    color: var(--muted);
-    align-self: center;
-  }
-  .arc-app select:open::picker-icon {
-    rotate: 180deg;
-  }
-  .arc-app select option {
-    padding: 7px 9px;
-    border-radius: 5px;
-    color: var(--ink);
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .arc-app select option:is(:hover, :focus, :checked) {
-    background: var(--tint);
-    color: var(--link);
-  }
+.arc-topic-picker {
+  position: relative;
+}
+.arc-topic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.arc-topic-tags:empty {
+  display: none;
+}
+.arc-topic-tags > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding-inline-start: 7px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--quiet);
+}
+.arc-app .arc-topic-tags .arc-icon-button {
+  min-block-size: 23px;
+  min-inline-size: 23px;
+}
+.arc-topic-options {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 100%;
+  inset-inline: 0;
+  display: grid;
+  gap: 3px;
+  max-block-size: 14rem;
+  overflow: auto;
+  padding: 5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px #0002;
+}
+.arc-topic-options button {
+  padding: 5px 7px;
+  text-align: start;
+  border: 0;
+  border-radius: 5px;
+  background: var(--quiet);
+  color: var(--ink);
+}
+.arc-topic-options button:is(:hover, [aria-selected='true']) {
+  background: var(--tint);
+}
+.arc-disclosure {
+  padding-block-start: 6px;
+  border-block-start: 1px solid var(--line);
+}
+:is(.arc-disclosure, .arc-structured-branch) summary {
+  cursor: pointer;
 }

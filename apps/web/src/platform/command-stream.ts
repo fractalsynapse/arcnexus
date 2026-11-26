@@ -3,9 +3,9 @@ import {
   type CurrentWorkflow,
   type Receipt,
 } from '../../../../packages/commands/src/browser.js';
-import { readServerEvents } from '../../../../packages/foundation/src/server-events.js';
 import type { CommandState, Operation } from '../../../../packages/ui/src/index.js';
-import { gatewayRequest } from './resource.js';
+import { followGatewayEvents } from './gateway-events.js';
+import type { GatewayClient } from './gateway-client.js';
 
 export const unavailable: CommandState = { status: 'Unavailable', supported: [] };
 const supported: readonly Operation[] = ['plan', 'architect', 'run'];
@@ -19,21 +19,16 @@ const labels: Record<Receipt['request']['command'], string> = {
 
 /** Follow the latest scoped receipt through the same browser API transport as other displays. */
 export async function followCommands(
+  gateway: GatewayClient,
   path: string,
-  token: string,
   signal: AbortSignal,
   receive: (data: CurrentWorkflow) => void,
 ) {
-  const response = await gatewayRequest(path + '/current', token, {
+  await followGatewayEvents(gateway, path + '/current', {
+    kind: 'command',
     signal,
-    headers: { accept: 'text/event-stream' },
-  });
-  if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
-    throw new Error('Command updates are unavailable.');
-  await readServerEvents(response.body, (frame) => {
-    if (!/^event: command$/m.test(frame)) return;
-    const data = /^data: (.+)$/m.exec(frame)?.[1];
-    if (data && !signal.aborted) receive(currentWorkflow.parse(JSON.parse(data) as unknown));
+    unavailable: 'Command updates are unavailable.',
+    receive: (data) => receive(currentWorkflow.parse(data)),
   });
 }
 
@@ -57,7 +52,9 @@ export function dockState({ receipt, canSubmit }: CurrentWorkflow, scope: string
   const busy = receipt && receipt.state !== 'finished';
   return {
     scope,
+    canRecommendObjectives: true,
     status: status(receipt, canSubmit),
+    requestId: receipt?.id,
     supported: canSubmit && !busy ? supported : [],
     canCancel: Boolean(busy),
     command: receipt ? labels[receipt.request.command] : undefined,

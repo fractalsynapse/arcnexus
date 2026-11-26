@@ -89,12 +89,34 @@ test('Planner rejects owner metadata and goal files without named measures', () 
   }
 });
 
+test('categorized goals retain their stable IDs when filenames change and duplicates are rejected', () => {
+  const { capture } = new ProposalScenario();
+  const paths = ['.arc/goals/verification/reliable-reviews.md'];
+  const moved = {
+    ...capture,
+    source: {
+      ...capture.source,
+      paths,
+      read: () => goal.replace('priority:', 'id: ' + id + '\npriority:'),
+    },
+  };
+  assert.deepEqual(
+    goalInventory(moved).map((entry) => entry.id),
+    [id],
+  );
+  paths.push('.arc/goals/delivery/another-copy.md');
+  assert.throws(() => goalInventory(moved), /Duplicate goal record ID: reviewed-tree/);
+});
+
 test('objective records preserve exact intake and replies separately from the mapping', () => {
   const { capture, reply, session } = new ProposalScenario();
   const proposal = decodeProposal(reply, capture, [id], true);
   const input = [{ question: 'Which boundary?', answer: '  Keep the reviewer gate.\n' }];
   const record = objectiveRecord(session, proposal, input, new Set([id]));
-  assert.match(objectivePath(session), /^\.arc\/objectives\/[a-f0-9]{64}\.md$/);
+  assert.equal(
+    objectivePath(session, { name: 'retain-approval', category: 'verification' }),
+    '.arc/objectives/verification/retain-approval.md',
+  );
   assert(record.includes(`\n${objective}\n`));
   assert(record.includes(`\n${input[0]!.answer}\n`));
   assert.match(record, /status: active/);

@@ -1,3 +1,5 @@
+import { tabDestination } from '../../../packages/ui/src/controls/tab-navigation.js';
+
 export function selectTab(tab: HTMLButtonElement) {
   const group = tab.closest('[role="tablist"]');
   if (!group) return;
@@ -15,14 +17,8 @@ export function navigateTabs(event: KeyboardEvent, tab: HTMLButtonElement) {
   const group = tab.closest('[role="tablist"]');
   if (!group) return;
   const tabs = [...group.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
-  const current = tabs.indexOf(tab);
   const vertical = group.getAttribute('aria-orientation') === 'vertical';
-  const candidate = {
-    [vertical ? 'ArrowUp' : 'ArrowLeft']: (current - 1 + tabs.length) % tabs.length,
-    [vertical ? 'ArrowDown' : 'ArrowRight']: (current + 1) % tabs.length,
-    Home: 0,
-    End: tabs.length - 1,
-  }[event.key];
+  const candidate = tabDestination(event.key, tabs.indexOf(tab), tabs.length, vertical);
   if (candidate === undefined || !tabs[candidate]) return;
   event.preventDefault();
   selectTab(tabs[candidate]);

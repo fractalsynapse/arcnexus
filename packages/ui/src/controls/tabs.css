@@ -1,0 +1,36 @@
+.arc-tabs {
+  display: grid;
+  gap: var(--gap);
+  min-inline-size: 0;
+}
+.arc-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+.arc-tab-list .arc-tab {
+  padding-inline: 8px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+.arc-tab-list .arc-tab:hover {
+  background: var(--quiet);
+  color: var(--ink);
+}
+.arc-tab-list .arc-tab[aria-selected='true'] {
+  border-color: var(--link);
+  background: var(--tint);
+  color: var(--link);
+}
+.arc-tab-count {
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: var(--quiet);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}

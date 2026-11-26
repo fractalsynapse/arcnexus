@@ -57,7 +57,9 @@ export class Execution {
           input.goal,
           config.fresh,
           scope,
-          Boolean(input.architecture || input.scope === 'refine'),
+          Boolean(
+            input.architecture || input.scope === 'refine' || input.planning === 'recommendation',
+          ),
         );
     if (!journal)
       return invalid(`Task admission requires the current verified ${config.base} head`);
@@ -77,6 +79,7 @@ export class Execution {
     const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
     return {
       ...preflight(selected, this.storage, fresh),
+      documentationDirectories: input.documentationDirectories,
       runtime: this.runtime,
       github: this.github,
     };

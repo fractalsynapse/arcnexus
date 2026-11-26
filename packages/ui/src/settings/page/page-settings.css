@@ -11,11 +11,6 @@
   inline-size: min(100%, 20rem);
   gap: 8px;
 }
-.arc-settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 .arc-layout-choices label {
   position: relative;
   justify-items: center;
@@ -25,8 +20,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
 }
-.arc-layout-choices label:has(:checked),
-.arc-settings-tabs button[aria-pressed='true'] {
+.arc-layout-choices label:has(:checked) {
   background: var(--tint);
   border-color: var(--link);
   color: var(--link);
@@ -42,16 +36,21 @@
 .arc-layout-diagram {
   inline-size: min(100%, 68px);
   block-size: 31px;
-  padding: 8px 4px 4px;
+  padding: 4px;
   border: 1px solid currentColor;
   border-radius: 4px;
-  display: flex;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(var(--arc-preview-columns), minmax(0, 1fr));
+  grid-template-rows: auto 1fr auto;
+  gap: 3px;
 }
 .arc-layout-diagram i {
-  flex: 1;
   border: 1px solid currentColor;
   border-radius: 2px;
+}
+.arc-layout-diagram i[data-band] {
+  grid-column: 1 / -1;
+  opacity: 0.6;
 }
 .arc-panel-settings-list {
   list-style: none;
@@ -60,25 +59,25 @@
   display: grid;
   gap: 5px;
 }
-.arc-panel-settings-list li {
+.arc-panel-settings-list > li:not(.arc-sort-gap) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
   min-block-size: 38px;
+}
+.arc-panel-settings-list > li:not([data-sort-row], .arc-sort-gap) {
+  grid-template-columns: minmax(0, 1fr) auto;
   border-bottom: 1px solid var(--line);
 }
-.arc-panel-settings-list li:not([data-panel-order]) {
-  grid-template-columns: minmax(0, 1fr) auto;
+.arc-panel-settings-list > li[data-sort-row] {
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+.arc-panel-settings-list > li[data-sort-dragging] {
+  border-color: var(--link);
 }
 .arc-settings-actions {
   justify-content: end;
-}
-.arc-app .arc-order-handle {
-  cursor: grab;
-  touch-action: none;
-}
-.arc-app .arc-order-handle:active {
-  cursor: grabbing;
-  background: var(--tint);
 }

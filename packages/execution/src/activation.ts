@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs';
 import type { Agent } from '../../agent/src/index.js';
 import type {
   ActivitySelection,
@@ -15,7 +16,7 @@ import { LocalMcp } from './mcp.js';
 import { retainedEvidence } from './context-evidence.js';
 import { NativeObservation } from './native-observation.js';
 
-type ActivityData = Omit<TaskContext, 'goal' | 'worktree'>;
+type ActivityData = Omit<TaskContext, 'worktree'>;
 export type ContextRefresh = (input: ActivityData) => Promise<ActivityData>;
 
 /** Activate and resume an actor with the captured workspace and native request builder. */
@@ -27,6 +28,8 @@ export function activateActor(
   signal: AbortSignal,
   refresh?: ContextRefresh,
 ) {
+  if (data.capturedDocumentation)
+    return activateCapturedDocuments(task, agent, selection, data, signal);
   const { capture } = task;
   const worktree = task.worktree ?? capture.source.root;
   verifyNativeGuidance(capture, worktree);
@@ -44,6 +47,37 @@ export function activateActor(
   return new Clarifications(task, selection, signal, revision).run({ ...data, evidence }, (input) =>
     inbox.run(selection, input),
   );
+}
+
+/** Run the recommendation against pinned Git objects from a neutral directory. */
+async function activateCapturedDocuments(
+  task: HostTask,
+  agent: Agent,
+  selection: ActivitySelection,
+  data: ActivityData,
+  signal: AbortSignal,
+) {
+  const worktree = task.documentationWorkspace();
+  const context = { ...data, worktree, goal: task.goal };
+  try {
+    return await agent.activate(
+      { capture: task.capture, selection, task: context },
+      (view, cancellation) => {
+        const options = view.request.options;
+        const tools = options.tools.filter(
+          ({ handler }) => handler === 'read' || handler === 'list',
+        );
+        const request = {
+          ...view.request,
+          options: { ...options, tools, webSearchMode: 'disabled' },
+        };
+        return invokeCodex(task, { ...view, request }, context, cancellation);
+      },
+      signal,
+    );
+  } finally {
+    rmSync(worktree, { recursive: true, force: true });
+  }
 }
 
 /** Refresh only the returning original caller while preserving inbox-owned answer enrichment. */
@@ -75,7 +109,7 @@ function actorInvoker(
 function invocationContext(task: HostTask, current: ActivityData, observed?: number): TaskContext {
   const context = {
     ...current,
-    goal: activationGoal(task),
+    goal: activationGoal(task, current.goal),
     worktree: task.worktree ?? task.capture.source.root,
   };
   const retained = completedRoundContext(task, context.assignment);
@@ -117,12 +151,12 @@ function completedRoundContext(task: HostTask, assignment: unknown) {
   };
 }
 
-/** Use the verified delivery purpose for prerequisite actors while preserving canonical retry identity. */
-function activationGoal(task: HostTask) {
+/** Scope an actor's instructions without changing the task's canonical retry identity. */
+function activationGoal(task: HostTask, goal?: string) {
   const approved = task.guide;
   return approved
     ? `Implement and deliver the exact human-approved architecture batch and its prerequisites.\n\n${approved.proposal.purpose}`
-    : task.goal;
+    : (goal ?? task.goal);
 }
 
 /** Store a host-generated response schema next to the protected transcript. */

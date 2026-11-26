@@ -22,6 +22,7 @@ const valid = {
 /** Drive the public Planner against a real journal and scripted malformed replies. */
 class PlannerRepairScenario {
   readonly requests: TaskContext[] = [];
+  readonly progress: string[] = [];
   readonly task: HostTask;
 
   /** Retain one source and approval scope without creating an unrelated delivery workspace. */
@@ -56,11 +57,11 @@ class PlannerRepairScenario {
   }
 
   /** Exercise generation, validation and ordinary no-change reporting through the public capability. */
-  run() {
+  run(mode: 'exploration' | 'objective' | 'recommendation' = 'exploration') {
     return new Planner({} as Agent).propose(
       this.task,
-      'exploration',
-      () => {},
+      mode,
+      ({ message }) => this.progress.push(message),
       new AbortController().signal,
     );
   }
@@ -103,3 +104,203 @@ test('Planner holds an unchanged finding despite new transcript filenames', asyn
   await assert.rejects(scenario.run(), AgentActivityHold);
   assert.equal(scenario.requests.length, 2);
 });
+
+test('Planner records the exact goal draft for independent review without a human gate', async (t) => {
+  const { task, draft } = draftFixture(t);
+  const planner = new Planner({} as Agent);
+  const signal = new AbortController().signal;
+  await assert.rejects(
+    planner.proposeDraft(task, { ...draft, revision: 'stale' }, () => {}, signal),
+    /revision is stale/,
+  );
+  task.ask = async (question) => assert.fail('Unexpected goal approval: ' + question);
+  const candidate = await planner.proposeDraft(task, draft, () => {}, signal);
+  assert.ok('milestones' in candidate);
+  const observation = task
+    .observations<{ plannerEdits?: { edits: { path: string; content: string }[] } }>()
+    .find((event) => event.plannerEdits);
+  assert.equal(observation?.plannerEdits?.edits[0]?.content, draft.content);
+});
+
+test('a model-proposed goal change reaches a delivery plan without a human gate', async (t) => {
+  const scenario = new PlannerRepairScenario(t, [
+    {
+      ...valid,
+      changes: [
+        {
+          id: 'reliable-checks',
+          content: '---\npriority: 1\n---\n# Checks\n\n## Success measures\nChecks can be rerun.\n',
+        },
+      ],
+    },
+  ]);
+  scenario.task.ask = async (question) => assert.fail('Unexpected goal approval: ' + question);
+  const outcome = await scenario.run();
+  assert.ok('milestones' in outcome);
+  assert.equal(outcome.milestones[0]?.owner, 'planner');
+});
+
+test('an explicit objective resumes the exact review before retaining guide edits', async (t) => {
+  const source = { path: 'engineering/intent.txt', quote: 'Keep reliable checks.' };
+  const scenario = new PlannerRepairScenario(t, [{ ...valid, sources: [source] }]);
+  Object.assign(scenario.task.capture.source, { paths: [source.path], read: () => source.quote });
+  const questions: string[] = [];
+  scenario.task.ask = async (question) => {
+    questions.push(question);
+    return questions.length === 1 ? undefined : 'approve';
+  };
+  await assert.rejects(scenario.run('objective'), /Review this exact objective change/);
+  const edits = () =>
+    scenario.task
+      .observations<{ plannerEdits?: unknown }>()
+      .filter(({ plannerEdits }) => plannerEdits);
+  assert.equal(edits().length, 0);
+  assert.ok('milestones' in (await scenario.run('objective')));
+  assert.equal(edits().length, 1);
+  assert.equal(scenario.requests.length, 1);
+  assert.match(questions[0]!, /\+Assess goals/);
+  assert.equal(questions[0], questions[1]);
+});
+
+test('saving an exact human objective draft records its authorization without asking again', async (t) => {
+  const scenario = new PlannerRepairScenario(t, []);
+  const { task } = scenario;
+  const path = '.arc/objectives/reliability/preserve-evidence.md';
+  const before = '---\nid: preserve-evidence\n---\n# Preserve evidence\n';
+  Object.assign(task.capture.source, { paths: [path], read: () => before });
+  task.ask = async (question) => assert.fail('Unexpected second objective decision: ' + question);
+  const draft = {
+    kind: 'objectives' as const,
+    id: 'preserve-evidence',
+    revision: task.capture.source.revision,
+    content: before + '\nRetain the exact evidence.\n',
+  };
+  const result = await new Planner({} as Agent).proposeDraft(
+    task,
+    draft,
+    () => {},
+    new AbortController().signal,
+  );
+  assert.ok('milestones' in result);
+  const authorization = task
+    .observations<{ objectiveDraftAuthorization?: { revision: string } }>()
+    .find(
+      ({ objectiveDraftAuthorization }) => objectiveDraftAuthorization,
+    )?.objectiveDraftAuthorization;
+  assert.equal(authorization?.revision, draft.revision);
+});
+
+function draftFixture(t: TestContext) {
+  const scenario = new PlannerRepairScenario(t, []);
+  const task = scenario.task;
+  const source = task.capture.source;
+  const path = '.arc/goals/fixture-goal.md';
+  const content = '---\npriority: 1\n---\n\nPrevious outcome\n';
+  Object.assign(source, {
+    paths: [path],
+    read: (requested: string) => {
+      assert.equal(requested, path);
+      return content;
+    },
+  });
+  return {
+    task,
+    draft: {
+      id: 'fixture-goal',
+      revision: source.revision,
+      content: content.replace('Previous', 'Updated'),
+    },
+  };
+}
+
+test('one approved batch reaches goal alignment with exactly the selected objective wording', async (t) => {
+  const path = 'handbook/operations/recovery.adoc';
+  const quote = 'Operators rehearse recovery from a failed deployment.';
+  const draft = (id: string) => ({
+    id,
+    category: 'delivery/recovery',
+    title: id,
+    gap: 'The documented rehearsal is not reflected in the objectives.',
+    content: '# Recovery\n\nRehearse recovery.\n',
+    sources: [{ path, quote }],
+  });
+  const scenario = new PlannerRepairScenario(t, [
+    {
+      summary: 'Recovery gaps',
+      drafts: [draft('rehearse-recovery'), draft('record-recovery'), draft('audit-recovery')],
+    },
+    { ...valid, changes: [recoveryGoal], links: [recoveryGoal.id] },
+  ]);
+  Object.assign(scenario.task.capture.source, { paths: [path], read: () => quote });
+  Object.assign(scenario.task.capture.project, { documentationDirectories: ['handbook'] });
+  Object.assign(scenario.task.config, { documentationDirectories: ['handbook/operations'] });
+  await inspectRecommendationReview(scenario);
+  assert.deepEqual(
+    (scenario.requests[0]!.assignment as { documentationDirectories: string[] })
+      .documentationDirectories,
+    ['handbook/operations'],
+  );
+});
+
+test('missing configured documentation directories fail before the Planner invokes a model', async (t) => {
+  const scenario = new PlannerRepairScenario(t, []);
+  Object.assign(scenario.task.capture.project, { documentationDirectories: ['missing/docs'] });
+  await assert.rejects(
+    scenario.run('recommendation'),
+    /Documentation directory is missing.*missing\/docs/,
+  );
+  assert.equal(scenario.requests.length, 0);
+});
+
+const recoveryGoal = {
+  id: 'practice-recovery',
+  category: 'delivery/recovery',
+  content:
+    '---\npriority: 1\n---\n# Practice recovery\n\n## Success measures\nRecord evidence from a recovery rehearsal.\n',
+};
+
+async function inspectRecommendationReview(scenario: PlannerRepairScenario) {
+  let prompts = 0;
+  scenario.task.ask = async (_question, _signal, gate) => {
+    const review = gate?.review;
+    assert.ok(review);
+    assert.equal(review.drafts.length, 3);
+    prompts++;
+    if (prompts === 1) return undefined;
+    const id = 'rehearse-recovery';
+    const content = review.drafts[0]!.content + '\nRecord recovery duration.\n';
+    if (prompts === 2) return JSON.stringify({ action: 'revise', edits: { [id]: content } });
+    assert.match(review.drafts[0]!.content, /Record recovery duration/);
+    return JSON.stringify({ action: 'approve', selected: [id, 'audit-recovery'] });
+  };
+  const run = () => scenario.run('recommendation');
+  await assert.rejects(run(), /Review objective recommendations/);
+  assert.ok('milestones' in (await run()));
+  assert.equal(prompts, 3);
+  assertBatchAlignment(scenario);
+}
+
+function assertBatchAlignment(scenario: PlannerRepairScenario) {
+  assert.equal(scenario.requests.length, 2);
+  assert.ok(scenario.progress.includes('Planner is aligning goals with the approved objectives.'));
+  assert.equal(scenario.requests[1]!.goal, 'Align standing goals with the project’s objectives.');
+  const assignment = scenario.requests[1]!.assignment as {
+    approvedObjectives: { id: string; content: string }[];
+  };
+  assert.deepEqual(
+    assignment.approvedObjectives.map(({ id }) => id),
+    ['rehearse-recovery', 'audit-recovery'],
+  );
+  assert.match(assignment.approvedObjectives[0]!.content, /Record recovery duration/);
+  const { plannerEdits } = scenario.task
+    .observations<{ plannerEdits?: { edits: { path: string }[] } }>()
+    .findLast((event) => event.plannerEdits)!;
+  assert.deepEqual(
+    plannerEdits!.edits.map(({ path }) => path),
+    [
+      '.arc/goals/delivery/recovery/practice-recovery.md',
+      '.arc/objectives/delivery/recovery/rehearse-recovery.md',
+      '.arc/objectives/delivery/recovery/audit-recovery.md',
+    ],
+  );
+}

@@ -4,6 +4,20 @@
 
 ### Added
 
+- Recommend source-cited objectives from project documentation, review selected Markdown drafts, and retain discovery for read-only projects before admission (#746).
+
+- Add a timestamped Messages view, live elapsed clocks, cumulative token reports and captured startup context to Plan (#746).
+
+- Refresh mounted Plan panels on committed journal changes and show the retained Planner assessment in the outcome panel (#746).
+
+- Save site schemes, page layouts and per-display color choices in PostgreSQL for the platform operator (#746).
+
+- Offer optional full-width Top and Bottom display regions in every desktop workspace layout (#746).
+
+- Browse historical executions from the Plan heading, with every panel scoped to the selected project and run (#746).
+
+- Add Plan and Plan File workspaces with live metrics, grouped timeline and check evidence, captured file history, and exact goal edit approvals. Inspect retained and live tool payloads on demand (#746).
+
 - Provision pinned Host checkouts, check gateway reachability, and support explicit provider egress and repository-scoped GitHub App publication for isolated execution (#706).
 
 - Add the shared Data registry and isolated REST and MCP reads for captured Plan guides and execution timelines. Add resumable HTTP event streaming, verified PostgreSQL import rehearsal, operator-scoped project catalog records, and launcher enrollment and revocation (#706).
@@ -20,9 +34,83 @@
 
 ### Changed
 
+- Preserve retired Plan history through SQLite cutover, keep invalid objective edits open with validation feedback, and follow guide history across Git renames (#746).
+
+- Open newly delivered goals from Planner outcome at the merged revision and retain links to removed goals at their captured revision (#746).
+
+- Keep Plan objective batches evidence-driven, show the recorded actor and activity in both timelines, and label Explorer entries with their relative file paths (#746).
+
+- Reconnect live Plan metrics after a dropped change stream and keep elapsed time scoped to the selected run (#746).
+
+- Carry retained objective approvals straight into goal alignment with instructions scoped to standing goals (#746).
+
+- Save Plan documentation directories directly in Project Settings and show readable labels for older objective files (#746).
+
+- Add project documentation directory settings and use one Plan flow for objective review and goal refinement (#746).
+
+- Show Plan processing time without approval waits. Group recommendation notices in the objective review dialog and label the draft preview in the page header (#746).
+
+- Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog. Select multiple drafts beside the decision actions and confirm retained drafts in the outcome and timeline (#746).
+
+- Keep human approval for Plan objective changes, route goal edits to independent review, and resolve categorized guide files by stable ID (#746).
+
+- Show per-run token usage and a reported total for the active project in the Plan metrics popup (#746).
+
+- Show compact Plan time ranges with a single date for same-day runs (#746).
+
+- Share expansion controls and their right inset across displays and the command dock, and isolate platform state by browser composition (#746).
+
+- Frame the Context viewer and add a subtle divider beneath its section tabs (#746).
+
+- Add expandable YAML mappings and sequences to startup context with exact source available in a dialog (#746).
+
+- Center shared sub-tabs and use syntax-highlighted YAML and rendered Markdown in the Plan context view (#746).
+
+- Open the timestamped token breakdown from the Reported tokens value in Planner metrics (#746).
+
+- Let live Plan events grow with the page, put Stop in the command composer during execution, and move reconnect into the compact round controls (#746).
+
+- Keep the Planner outcome summary visible above report tabs and open detailed ratings and proposed documents in the shared dialog (#746).
+
+- Follow new Plan events while the reader is at the bottom, and color operation rows by recorded status (#746).
+
+- Restore full-width header dividers and content spacing on shared display panels (#746).
+
+- Show numbered unified diffs with three lines of context, and give the read-only Markdown viewer the editor's frame and padding (#746).
+
+- Increase desktop reading sizes across the browser UI and use the ArcNexus brain logo as the favicon (#746).
+
+- Use the full Changes panel for single-file diffs and keep file tabs for release and other multi-file comparisons (#746).
+
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Reset Plan displays when a new run follows a completed or failed attempt, while retaining historical evidence and the context of a paused approval (#746).
+
+- Keep live gateway streams from blocking saved Plan reports in Firefox (#746).
+
+- Show Back on inner workspaces and keep Refine on the root workspaces (#746).
+
+- Enlarge the Plan File Edit touch target and explain read-only historical revisions through the shared tooltip (#746).
+
+- Let Page Settings control File Information placement and give selector options shared theme colors in Firefox and Chromium (#746).
+
+- Keep workspace headings evenly spaced below breadcrumbs on desktop and mobile (#746).
+
+- Keep Plan and Plan File dropdown rows consistent on narrow screens and reuse common UI controls, display logic, and theme rules (#746).
+
+- Match the mockup's Markdown viewer and editor, use the shared heading selector for Plan File history, and describe token counts with a tooltip (#746).
+
+- Center text and space the arrows in shared selectors, and give the Plan run selector more room beside the title (#746).
+
+- Keep Plan File links pinned to the project and captured revision (#746).
+
+- Use the mockup’s drag behavior in page settings, including a lifted row, visible insertion gap, and drop cancellation (#746).
+
+- Open local review directly in a fresh browser by keeping the operator credential on the loopback Web proxy (#746).
+
+- Restore compact Project and Connection managers and the single expand/collapse control for Plan workspace panels (#746).
 
 - Continue observing the same GitHub pull request when an existing check suite finishes during verification (#734).
 

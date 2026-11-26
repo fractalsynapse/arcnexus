@@ -1,5 +1,7 @@
 import { useId, createElement as h } from 'react';
-import type { ReactNode, ChangeEvent } from 'react';
+import type { ReactNode } from 'react';
+import * as Select from '@radix-ui/react-select';
+import { Icon } from './icon.js';
 
 export interface SelectProps<Value extends string> {
   label: string;
@@ -15,20 +17,55 @@ export interface SelectProps<Value extends string> {
 export function SelectField<Value extends string>(props: SelectProps<Value>) {
   const { label, value, options, onChange, className, prefix, hideLabel } = props;
   const id = useId();
+  const labelId = id + '-label';
   const select = h(
-    'select',
+    Select.Root,
     {
-      id,
-      value,
-      onChange: ({ currentTarget }: ChangeEvent<HTMLSelectElement>) =>
-        onChange(currentTarget.value as Value),
+      value: optionKey(value),
+      onValueChange: (choice) => onChange(choice.slice(1) as Value),
+      disabled: !options.length,
     },
-    options.map((choice) => h('option', { key: choice.value, value: choice.value }, choice.label)),
+    h(
+      Select.Trigger,
+      { id, 'aria-labelledby': labelId, className: 'arc-select-trigger' },
+      h(Select.Value, { className: 'arc-select-value' }),
+      h(Select.Icon, { asChild: true }, h(Icon, { name: 'down' })),
+    ),
+    selectMenu(options, labelId),
   );
   return h(
     'div',
     { className: ['arc-field', className].filter(Boolean).join(' ') },
-    h('label', { htmlFor: id, className: hideLabel ? 'arc-sr' : undefined }, label),
+    h('label', { id: labelId, htmlFor: id, className: hideLabel ? 'arc-sr' : undefined }, label),
     prefix ? h('div', { className: 'arc-field-with-prefix' }, prefix, select) : select,
   );
+}
+
+function selectMenu(options: SelectProps<string>['options'], label: string) {
+  return h(
+    Select.Content,
+    {
+      className: 'arc-select-menu',
+      position: 'popper',
+      align: 'end',
+      sideOffset: 4,
+      'aria-labelledby': label,
+    },
+    h(
+      Select.Viewport,
+      null,
+      options.map(({ value, label }) =>
+        h(
+          Select.Item,
+          { key: value, value: optionKey(value), className: 'arc-select-option' },
+          h(Select.ItemText, null, label),
+        ),
+      ),
+    ),
+  );
+}
+
+/** Preserve empty domain values as options, since the select reserves the empty string. */
+function optionKey(value: string) {
+  return ':' + value;
 }

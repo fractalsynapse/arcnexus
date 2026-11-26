@@ -1,7 +1,11 @@
 import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { capacityMigration } from '../../../packages/capacity/src/index.js';
-import { catalogMigration } from '../../../packages/catalog/src/index.js';
+import {
+  catalogMigration,
+  projectDocumentationMigration,
+} from '../../../packages/catalog/src/index.js';
+import { uiPreferencesMigration } from '../../../packages/ui/src/preferences/server.js';
 import {
   coordinationMigration,
   importSqliteJournal,
@@ -9,8 +13,11 @@ import {
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowDocumentationMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
+  documentationDiscoveryMigration,
+  retireDocumentationDiscoveryMigration,
   journalNotificationMigration,
 } from '../../../packages/coordination/src/index.js';
 import { migrate, verifyMigrations } from './migrations.js';
@@ -21,10 +28,15 @@ const modelMigrations = [
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowDocumentationMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
+  documentationDiscoveryMigration,
+  retireDocumentationDiscoveryMigration,
   capacityMigration,
   catalogMigration,
+  projectDocumentationMigration,
+  uiPreferencesMigration,
 ];
 
 /** Refuse runtime schema mismatches before admitting requests. */

@@ -125,7 +125,7 @@ profile. Missing usage and unverified pricing remain unknown. Cached-input usage
 must not be blindly added to input totals. Commands forwards measurements and
 does not substitute profiles or impose budgets.
 
-Human gates govern objectives, goals and architecture. An unavailable answer
+Human approvals govern objectives and architecture. An unavailable answer
 yields a durable pending gate, currently represented by a `TaskOutcome` with
 `kind: 'blocked'`, its reason and evidence references. Later interaction resumes
 the same phase and proposal. A decline preserves the submitted intent and accepted

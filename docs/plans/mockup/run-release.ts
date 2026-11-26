@@ -143,20 +143,17 @@ function deliveryDiff(delivery: Goal['delivery'], commit: string | undefined, ac
   const patches = new Map(
     readPatch(delivery.patch ?? '', delivery.patchPath).map((file) => [file.path, file]),
   );
-  return diffView(
-    'Staging merge',
-    delivery.files.map(([, path]) => {
-      const file = patches.get(path);
-      return {
-        path,
-        lines: file?.lines ?? [],
-        note: !file
-          ? 'Open the local merge patch to inspect this path.'
-          : delivery.patchExcerpt
-            ? 'Retained patch excerpt'
-            : undefined,
-      };
-    }),
-    { localPatch: true, action },
-  );
+  const files = delivery.files.map(([, path]) => {
+    const file = patches.get(path);
+    return {
+      path,
+      lines: file?.lines ?? [],
+      note: !file
+        ? 'Open the local merge patch to inspect this path.'
+        : delivery.patchExcerpt
+          ? 'Retained patch excerpt'
+          : undefined,
+    };
+  });
+  return diffView('Staging merge', { files }, { localPatch: true, action });
 }

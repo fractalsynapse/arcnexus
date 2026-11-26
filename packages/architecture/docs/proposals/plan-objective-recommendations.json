@@ -1,0 +1,158 @@
+{
+  "status": "proposed; not applied; no approval asserted",
+  "baseline": "32a59d7149170a2bac76592b5d59d1c95b0dab02",
+  "intentSha256": "9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b",
+  "patchSha256": "61275ce6ad058756dc7261b805bda2a6f7f1a3a7cb97fea544a514c9b28db8d4",
+  "changes": [
+    {
+      "path": ".agents/skills/arcnexus-release/SKILL.md",
+      "before": "2f1a03af39d1d2b11bc8c4566d064c25eda5cfd877445847566257890e39d47b",
+      "after": "b5d7be1765b6f2fe435bdfc0f365dc8a69f4d2f9c8c84acd82699467e054e68f"
+    },
+    {
+      "path": ".arc/architecture/components/cli-app.yaml",
+      "before": "78f325e9456acffe10eb44421039c602ff2e7e62a99c986c5a698fbfc0256a45",
+      "after": "f0c3c0deaedbdedcc7ed2b409540407458b372a47586abeadc409aa0725ae226"
+    },
+    {
+      "path": ".arc/architecture/components/commands.yaml",
+      "before": "d57a7316f6572bfa9972cdb68bab90cd1f5aabe67037c857c2a74a3b2ec8ab70",
+      "after": "c272c594931a846cb5b9f821c293d9b8fa016b64d8b269259639317feb1f6d2b"
+    },
+    {
+      "path": ".arc/architecture/components/coordination.yaml",
+      "before": "810604d281bf73bb3e94fa50478227f5692f8c992644f9ccb7c80e671f26bb25",
+      "after": "d25749de2c1a1e4fa7a7055755acae103d98b688e98fa4ff456a210aec4affac"
+    },
+    {
+      "path": ".arc/architecture/components/delivery.yaml",
+      "before": "7db7dff6329eff934f12a33207483a152fb2b25977692912d116bafb0d06a166",
+      "after": "d86e8a8a116727f8db5421c007d4de4b88298949f46db367fef5a74063cdfbd5"
+    },
+    {
+      "path": ".arc/architecture/components/direction.yaml",
+      "before": "4617043e85f33786bb9c5b89f357795bc6f3942b6bbdef4bff397df8b4de7b17",
+      "after": "678e60ff765a585d0f1b715ca5fe8a2ef86eaf02ee8497bf01c673487b1996c7"
+    },
+    {
+      "path": ".arc/architecture/components/execution.yaml",
+      "before": "216bee3340b2261f7eefc4b89a916dc7d53249451fe74223b0d7f6dd984b48a7",
+      "after": "df0ad82e16d4fd4a15194dd099ea504a86124191f098a07b271c617fd5c59464"
+    },
+    {
+      "path": ".arc/architecture/components/manager.yaml",
+      "before": "3c111952f46be8c04ae914cb6a9e087269edf0ecb5e0bc1f64b1f1966f64227c",
+      "after": "a653bf062a4e4da6c5eb1322c2afb08060d5c1404c814cebd8e6e11a72b8eb3d"
+    },
+    {
+      "path": ".arc/architecture/components/planner.yaml",
+      "before": "bd54bb817001a2422901c0232751fb0e9b0185992b5bc19c2669bc584147cbfa",
+      "after": "e595be033db06bb9a2cd521d5b1a269d9f5272c135cc1a8c9e9b71fcb6599f8a"
+    },
+    {
+      "path": ".arc/architecture/components/project.yaml",
+      "before": "ff14ca9362ad741c610dea86e8b22575d8df5cc8841504144a65f4697e6c4a23",
+      "after": "c9a3de74226cbf79bbb75b632d5da24bb09ffcfc467a6f90d644c67aec37b0a3"
+    },
+    {
+      "path": ".arc/architecture/components/release.yaml",
+      "before": "c2bdaa5c7cd25dbdd8b1df4388355a2516c23c5fa97e0f5f08a8790edde3c1d3",
+      "after": "a9e0eb449d64aa5eba6c552f3677fe251419a536cd55d5b39b5b54e68c888940"
+    },
+    {
+      "path": ".arc/architecture/components/workflow.yaml",
+      "before": "a307f300742080e40d572441abb6756dfa7b476dc31be0527e01be18e6e6ca70",
+      "after": "dea871f68f7b3aa6905c73911413bd6c5553daacea7d9c38925ffc0d78fbad5d"
+    },
+    {
+      "path": ".arc/architecture/plan-template.md",
+      "before": "6ee44f44b8d8cb7ceb335f4ecc98510cda83c2f26042b3f0f293d72a01d5ba22",
+      "after": "3d46776ce6bf8a5340a1c1953ca309d351775d62fd7a11dea7db1fdfe1471cdb"
+    },
+    {
+      "path": ".arc/architecture/roles/planner.yaml",
+      "before": "dd5aefcd55cf8340c59bd366a892ccf1e3154dfcf725d281544a498d46e0aa39",
+      "after": "2d9d9b05daebc09b204a6801d30ac8221c7e63196a79f3bb5db7d5d3b8d2ba38"
+    },
+    {
+      "path": ".arc/architecture/roles/technical-writer.yaml",
+      "before": "2166c589672b5c409bf05f01a6eb0523be9f5a75fe345b9031a4b0c7f0e5caee",
+      "after": "20ef2b2f198a8453bb84045398b27767c2302fdf461755b5ff94856814a7bae4"
+    },
+    {
+      "path": ".arc/architecture/standards/agent-operating-protocol.md",
+      "before": "349d6b565bea96fb2418cb9849419cb99167c2a38a6cc2582daaf439ec14daf4",
+      "after": "ccb85566cc8d5fc7e0f4be8988d30b469ea3262ae0deeacfe30bbe0f536b26b1"
+    },
+    {
+      "path": "AGENTS.md",
+      "before": "26da6b5c873a3c1031336e1e171414088974755e4d8daeb79f4f9f273d615f3f",
+      "after": "a1927812537b3d2c9f2b5f178269b1471f0f66dc2a12a435e81e180e0cb6e7e6"
+    },
+    {
+      "path": "apps/cli/contract.md",
+      "before": "0b2cc883260dc81ab983dbe4baaf228865920a80c126fcac5b7159b3384a0845",
+      "after": "ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b"
+    },
+    {
+      "path": "apps/cli/README.md",
+      "before": "e33c2ad31a2fc366c22bc3e34b22bddd60a3f56977fa786607654088e5a71db3",
+      "after": "3dd5bb80f338d217b733b096f1bbf52e8b10139e241e0f663e9ebb1345baf945"
+    },
+    {
+      "path": "docs/dev.md",
+      "before": "c59de3c2f3a3f78e8c9cc8d5aa78061996bdd676c8c6a4ec9f3a01c514413eab",
+      "after": "c8c0ed4c78378d4e22e85e2e2f77609227cb321995349e9d27749b3d6c7735a8"
+    },
+    {
+      "path": "docs/interface/arcnexus-project.md",
+      "before": "04bee43d94eb79fa7b344808a320a4c5862262c3209138ed4408f6fad702d3e3",
+      "after": "cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886"
+    },
+    {
+      "path": "docs/interface/registry.yaml",
+      "before": "38352eea976d34f759fe24d6f4eee187da5fb436f435f0fff50bac0e2b7e92d9",
+      "after": "9d36118b244db9249765d3d3e600e3d7696cc733232a0dda9b125e986fd91b6e"
+    },
+    {
+      "path": "docs/plans/self-development-mvp.md",
+      "before": "f0db6a46f4a4a6a03ec9c5507b64080802cc54304288188b7415f8ee438a701b",
+      "after": "31b52bcc30d55164ac3eb183d191045fb48af42393b17e374f85400183d387ee"
+    },
+    {
+      "path": "packages/commands/contract.md",
+      "before": "07646324af4077c7151920c98741a8ab77488d1d44f9e823da8a56f48b87e491",
+      "after": "10fab582e3a67d82b425dc2f805beea3bd8b8c51c1e865bd6d12545719f5107c"
+    },
+    {
+      "path": "packages/commands/README.md",
+      "before": "96066a08ea36746a3ceccad5ab369c050b8df3e852299495c06094ccb0690cc6",
+      "after": "dd50f0767a7b0e04ab9e150d2de08f34728d199fdeefb195df7c6c2aacfca908"
+    },
+    {
+      "path": "packages/execution/docs/refinement.md",
+      "before": "8a4c54413725c08bd9a4f632d1ddb4c36f71c37471c157a372ac6e8172fb45e1",
+      "after": "c65eb293cd77b84f087c4b2382db8cc8215d84565d3471672829539fb462b066"
+    },
+    {
+      "path": "packages/planner/contract.md",
+      "before": "5ea97cee45fede63b5946d8ea708e1a5b2d519d4bacc6b40c906b44c82c5c676",
+      "after": "28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d"
+    },
+    {
+      "path": "packages/ui/contract.md",
+      "before": "74765c14489df17850e8f7fdd41202e2573100e3ca81011570a0373531309d39",
+      "after": "5a2a896d137044fb0b4bb78f8984f2a35671fb6b27e338e3ec93c4d1d00beac7"
+    },
+    {
+      "path": "packages/workflow/contract.md",
+      "before": "3ae53f8999cb46aa36f9a7913851e4151c70054887d170e9a96bc98692cbcee8",
+      "after": "63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5"
+    },
+    {
+      "path": "packages/workflow/refinement.md",
+      "before": "5eff9551ada7d9b4ea74f41ffab8ba7111296a6e0f0191ad761c6f249e959b9c",
+      "after": "a2493be6a87414750ebae12a2d8614761fb27a77ce179ec16124fbf059e2f3a4"
+    }
+  ]
+}

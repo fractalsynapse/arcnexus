@@ -1,4 +1,4 @@
-import { catalogPaths } from './catalog-routes.js';
+import { platformPaths } from './platform-routes.js';
 import type { Data, DataScope } from '../../../packages/data/src/index.js';
 import { routes } from './routes.js';
 
@@ -19,7 +19,7 @@ function parametersFor(route: Route) {
 
 /** Use authorization and schemas from the Data registration for each scoped REST operation. */
 export async function openApi(data: Data, scope: DataScope) {
-  if (scope.project === 'platform') return document(await catalogPaths(data, scope));
+  if (scope.project === 'platform') return document(await platformPaths(data, scope));
   const operations = await data.describe(scope);
   const paths: Record<string, Record<string, object>> = {};
   for (const route of routes) {
@@ -42,13 +42,24 @@ function projectOperation(route: Route, definition: Definition) {
       requestBody: { required: true, content: { 'application/json': { schema: body } } },
     }),
     responses: {
-      [route.method ? 202 : 200]: {
-        description: route.method ? 'Accepted workflow request' : 'Scoped data',
+      [route.method === 'POST' ? 202 : 200]: {
+        description: route.method === 'POST' ? 'Accepted workflow request' : 'Scoped data',
         content: {
           'application/json': { schema: definition.output },
           ...(route.stream && { 'text/event-stream': { schema: string } }),
         },
       },
+      ...(route.resource === 'workflow-requests' &&
+        route.operation === 'answer' && {
+          422: {
+            description: 'Objective Markdown is invalid. The review remains open.',
+            content: {
+              'application/json': {
+                schema: { type: 'object', required: ['error'], properties: { error: string } },
+              },
+            },
+          },
+        }),
     },
   };
 }

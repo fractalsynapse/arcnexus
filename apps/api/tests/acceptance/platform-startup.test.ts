@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { Client } from 'pg';
 import { openPlatform } from '../../../../packages/platform/src/index.js';
+import { uiPreferencesDataPlugin } from '../../../../packages/ui/src/preferences/server.js';
 import { databaseSetupPlugin } from '../../../db/src/index.js';
 import { Context } from 'cordis';
 import { createProject } from '../fixtures/project.js';
@@ -42,10 +43,16 @@ test(
         .revision,
       record.revision,
     );
+    const settings = { revision: record.revision, directories: ['.arc/goals'] };
+    await platform.context.data.invoke(project, 'project-settings', 'update', settings);
+    assert.deepEqual(
+      await platform.context.data.invoke(project, 'project-settings', 'read', {}),
+      settings,
+    );
   },
 );
 
-async function fixture(t: TestContext, withAgent = false) {
+async function fixture(t: TestContext, withAgent = false, withEvidence = false) {
   const root = mkdtempSync(join(tmpdir(), 'arc-platform-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const repository = 'https://github.com/arcnexus-fixtures/' + randomUUID() + '.git';
@@ -59,7 +66,10 @@ async function fixture(t: TestContext, withAgent = false) {
   const file = join(root, 'bindings.json');
   writeFileSync(
     file,
-    JSON.stringify({ operator: randomUUID(), projects: [{ directory, remote: repository }] }),
+    JSON.stringify({
+      operator: randomUUID(),
+      projects: [{ directory, remote: repository, ...(withEvidence && { evidence: root }) }],
+    }),
   );
   const database = new Client({ connectionString: url });
   await database.connect();
@@ -68,7 +78,57 @@ async function fixture(t: TestContext, withAgent = false) {
   await setup.use(databaseSetupPlugin(database));
   await setup.databaseSetup.migrate();
   const platform = await openPlatform({ database, file, token });
-  return { token, platform, repository, directory, root };
+  return { token, platform, repository, directory, root, database, file };
+}
+
+test(
+  'operator preferences persist across gateway connections and keep independent settings',
+  { skip: !url },
+  async (t) => {
+    const first = await fixture(t);
+    const left = await preferenceRequests(first);
+    const right = await preferenceRequests({ ...first, database: await separateConnection(t) });
+    const site = { kind: 'site', selected: 'midnight' };
+    const display = {
+      kind: 'display',
+      workspace: '/plan/',
+      panel: 'metrics',
+      selected: 'midnight',
+    };
+    assert.equal((await left({ entries: [site] })).status, 200);
+    assert.equal((await right({ entries: [display] })).status, 200);
+    await left({ entries: [{ ...site, selected: 'older browser' }], preserveExisting: true });
+    const restored = await right();
+    assert.equal(restored.headers.get('cache-control'), 'no-store');
+    assert.deepEqual((await restored.json()).entries, [display, site]);
+    assert.equal((await right({ entries: [{ ...site, selected: false }] })).status, 400);
+    const other = await preferenceRequests(await fixture(t));
+    assert.deepEqual(await (await other()).json(), { entries: [] });
+    assert.equal((await right(undefined, '')).status, 401);
+    const description = await right(undefined, undefined, '/projects/platform/openapi.json');
+    assert.ok((await description.json()).paths['/ui-preferences'].patch.requestBody.required);
+  },
+);
+
+async function separateConnection(t: TestContext) {
+  const database = new Client({ connectionString: url });
+  await database.connect();
+  t.after(() => database.end());
+  return database;
+}
+
+async function preferenceRequests({ database, token, file }: Awaited<ReturnType<typeof fixture>>) {
+  const platform = await openPlatform({ database, token, file });
+  await platform.context.use(uiPreferencesDataPlugin(database));
+  await platform.context.use(apiPlugin(platform.authenticate));
+  return (body?: unknown, credential: string = token, path = '/ui-preferences') =>
+    platform.context.api(
+      new Request('http://arc.test' + path, {
+        method: body ? 'PATCH' : 'GET',
+        headers: { authorization: 'Bearer ' + credential },
+        body: body ? JSON.stringify(body) : undefined,
+      }),
+    );
 }
 
 test(
@@ -111,24 +171,52 @@ async function append(
   sequence: number,
   message: string,
   detail?: object,
+  run = 1,
+  active = 1,
 ) {
   const writer = new Client({ connectionString: url });
   await writer.connect();
   try {
     await writer.query('BEGIN');
     await writer.query(
-      'INSERT INTO arcnexus_coordination.runs (project,id,goal_id,task_id,goal,active) VALUES ($1,$2,$3,$3,$3,1) ON CONFLICT DO NOTHING',
-      [repository, 1, execution],
+      'INSERT INTO arcnexus_coordination.runs (project,id,goal_id,task_id,goal,active) VALUES ($1,$2,$3,$3,$3,$4) ON CONFLICT DO NOTHING',
+      [repository, run, execution, active],
     );
     await writer.query(
-      'INSERT INTO arcnexus_coordination.events (project,id,run,content) VALUES ($1,$2,1,$3)',
-      [repository, sequence, JSON.stringify({ message, ...detail })],
+      'INSERT INTO arcnexus_coordination.events (project,id,run,content) VALUES ($1,$2,$3,$4)',
+      [repository, sequence, run, JSON.stringify({ message, ...detail })],
     );
     await writer.query('COMMIT');
   } finally {
     await writer.end();
   }
 }
+
+test(
+  'Plan change notices follow committed journal writes without sending the journal',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token, accept: 'text/event-stream' };
+    const scope = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(scope);
+    const record = await platform.context.catalog.add(scope.principal, { remote: repository });
+    const url = 'http://arc.test/projects/' + record.id + '/plan-executions';
+    await platform.context.use(apiPlugin(platform.authenticate, platform.followTimeline));
+    const response = await platform.context.api(new Request(url, { headers }));
+    assert.equal(response.headers.get('content-type'), 'text/event-stream');
+    const reader = response.body!.getReader();
+    const notice = 'event: plan-change\ndata: null\n\n';
+    const decode = () => reader.read().then(({ value }) => new TextDecoder().decode(value));
+    assert.equal(await decode(), notice);
+    await append(repository, randomUUID(), 1, 'A private journal message');
+    assert.equal(await decode(), notice);
+    await reader.cancel();
+  },
+);
 
 async function frame(reader: ReadableStreamDefaultReader<Uint8Array>) {
   const result = await reader.read();
@@ -210,17 +298,130 @@ test(
     assert.ok(operator);
     const project = await platform.context.catalog.add(operator.principal, { remote: repository });
     const execution = randomUUID();
-    await append(repository, execution, 1, 'started', {
-      planningExecution: { revision: project.revision },
-    });
-    await append(repository, execution, 2, 'finished', {
-      outcome: { kind: 'planned', summary: 'Targets mapped' },
-    });
+    await seedPlanAttempts(repository, execution, project.revision);
     await platform.context.use(apiPlugin(platform.authenticate));
     const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
+    await verifyFreshPlan(platform.context, address + execution, headers);
+    await append(
+      repository,
+      execution,
+      4,
+      'finished',
+      {
+        outcome: { kind: 'planned', summary: 'Targets mapped' },
+        plannerProposal: { proposal: { summary: 'Compared the accepted goals.' } },
+        ...planUsage('current', 2000),
+      },
+      3,
+    );
     await verifyPlanPanelResponses(platform.context, address, headers, execution);
   },
 );
+
+async function seedPlanAttempts(repository: string, execution: string, revision: string) {
+  await append(
+    repository,
+    execution,
+    1,
+    'failed',
+    {
+      planningExecution: { revision },
+      outcome: { kind: 'failed', reason: 'First attempt failed' },
+    },
+    1,
+    0,
+  );
+  await append(
+    repository,
+    execution,
+    2,
+    'previous plan completed',
+    {
+      outcome: { kind: 'planned', summary: 'Previous plan' },
+      plannerProposal: { proposal: { summary: 'Previous proposal' } },
+      editReceipt: { path: '.arc/goals/previous.md' },
+      ...planUsage('previous', 4000),
+    },
+    2,
+    0,
+  );
+  await append(repository, execution, 3, 'new plan started', {}, 3);
+}
+
+function planUsage(activation: string, input_tokens: number) {
+  return {
+    nativeStarted: { activation },
+    nativeEvent: { activation, event: { type: 'turn.completed', usage: { input_tokens } } },
+    nativeFinished: { activation, durationMs: 100 },
+  };
+}
+
+async function verifyFreshPlan(context: Context, address: string, headers: Record<string, string>) {
+  const outcome = await context.api(new Request(address + '/outcome', { headers }));
+  assert.equal(outcome.status, 200);
+  const plan = await outcome.json();
+  assert.equal(plan.outcome, null);
+  assert.equal(plan.report, undefined);
+  assert.deepEqual(plan.changedPaths, []);
+  assert.equal(plan.attempt, '3');
+  const measurements = await context.api(new Request(address + '/metrics', { headers }));
+  assert.equal((await measurements.json()).usage.input_tokens.reported, null);
+  const timeline = await context.api(new Request(address + '/events', { headers }));
+  const { events } = await timeline.json();
+  assert.deepEqual(
+    events.map((event: { run: number }) => event.run),
+    [1, 2, 3],
+  );
+}
+
+test(
+  'Plan history lists distinct project executions and recognizes older proposal markers',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository } = await fixture(t);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    const executions = await seedPlanHistory(repository, project.revision);
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const address = 'http://arc.test/projects/' + project.id + '/plan-executions';
+    const response = await platform.context.api(new Request(address, { headers }));
+    assert.equal(response.status, 200);
+    const { entries } = await response.json();
+    assert.deepEqual(
+      entries.map((entry: { execution: string; active: boolean }) => [
+        entry.execution,
+        entry.active,
+      ]),
+      executions,
+    );
+  },
+);
+
+async function seedPlanHistory(repository: string, revision: string) {
+  const earlier = randomUUID();
+  const latest = randomUUID();
+  const marked = { planningExecution: { revision } };
+  await append(repository, earlier, 1, 'older proposal', { plannerProposal: {}, revision }, 1, 0);
+  await append(repository, latest, 2, 'started', marked, 2, 0);
+  await append(repository, latest, 3, 'resumed', {}, 3);
+  await append(repository, randomUUID(), 4, 'non-Plan journal entry', {}, 4, 0);
+  await append(
+    'https://github.com/arcnexus-fixtures/' + randomUUID() + '.git',
+    randomUUID(),
+    1,
+    'different project',
+    marked,
+  );
+  return [
+    [latest, true],
+    [earlier, false],
+  ];
+}
 
 async function verifyPlanPanelResponses(
   context: Context,
@@ -232,8 +433,60 @@ async function verifyPlanPanelResponses(
   assert.equal(current.status, 200);
   assert.equal((await current.json()).execution, execution);
   const outcome = await context.api(new Request(address + execution + '/outcome', { headers }));
-  assert.equal((await outcome.json()).outcome.summary, 'Targets mapped');
+  const plan = await outcome.json();
+  assert.equal(plan.outcome.summary, 'Targets mapped');
+  assert.equal(plan.report.summary, 'Compared the accepted goals.');
   const metrics = await context.api(new Request(address + execution + '/metrics', { headers }));
   assert.equal(metrics.status, 200);
-  assert.ok('wallElapsedMs' in (await metrics.json()));
+  assert.equal((await metrics.json()).usage.input_tokens.reported, 2000);
+  const tokens = await context.api(
+    new Request(address + execution + '/token-history', { headers }),
+  );
+  assert.equal(tokens.status, 200);
+  assert.deepEqual((await tokens.json()).samples, [
+    { sequence: '4', timestamp: null, input: 2000, output: null },
+  ]);
+}
+
+test(
+  'Plan context reads the exact request from its own retained artifact',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository, root } = await fixture(t, false, true);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    const { execution, request } = await seedPlanContext(repository, project.revision, root);
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
+    const captured = await platform.context.api(
+      new Request(address + execution + '/context', { headers }),
+    );
+    assert.equal(captured.status, 200);
+    assert.deepEqual(await captured.json(), { timestamp: null, component: 'planner', request });
+    const outside = await platform.context.api(
+      new Request(address + randomUUID() + '/context', { headers }),
+    );
+    assert.notEqual(outside.status, 200);
+  },
+);
+
+async function seedPlanContext(repository: string, revision: string, root: string) {
+  const execution = randomUUID();
+  const path = join(root, 'native-request.json');
+  const request = {
+    input: '## Task\nSource: captured assignment\n\nRecorded objective',
+    options: { model: 'live-model' },
+  };
+  writeFileSync(path, JSON.stringify(request));
+  await append(repository, execution, 1, 'started', { planningExecution: { revision } });
+  await append(repository, execution, 2, 'stored', { artifact: path });
+  await append(repository, execution, 3, 'activated', {
+    nativeStarted: { request: path, component: 'planner' },
+  });
+  return { execution, request };
 }

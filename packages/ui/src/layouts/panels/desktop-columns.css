@@ -1,13 +1,16 @@
 .arc-panel-layout,
-.arc-layout-column {
+.arc-layout-region {
   display: grid;
   gap: var(--gap);
   min-inline-size: 0;
 }
 .arc-panel-layout {
   --arc-column-min: 9rem;
-  gap: 0;
+  column-gap: 0;
   grid-template-columns: var(--arc-columns);
+}
+.arc-layout-band {
+  grid-column: 1 / -1;
 }
 .arc-layout-column {
   min-inline-size: var(--arc-column-min);

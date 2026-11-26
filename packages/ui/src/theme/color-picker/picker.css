@@ -18,7 +18,7 @@
   justify-content: space-between;
   padding-inline-start: calc(var(--family-width) + var(--shade-gap));
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-label);
 }
 .arc-shade-grid {
   display: grid;

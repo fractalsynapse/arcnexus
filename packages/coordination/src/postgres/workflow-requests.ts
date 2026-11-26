@@ -1,3 +1,4 @@
+import type { ObjectiveReview } from '../../../planner/src/objective-review.js';
 import { finishRetainedRound } from './retained-round.js';
 import { reconcileHosted } from './reconcile.js';
 import { workflowReceiptChannel } from './workflow-receipts-schema.js';
@@ -11,6 +12,7 @@ const columns = 'id, request, revision, runtime, state, execution, gate, outcome
 export interface WorkflowGate {
   id: string;
   question: string;
+  review?: ObjectiveReview;
 }
 
 export interface WorkflowReceipt {
@@ -27,7 +29,11 @@ export interface WorkflowReceipt {
 const cancelledOutcome = { kind: 'cancelled', reason: 'Cancelled by operator', evidence: [] };
 
 type Caller = { remote: string; principal: string };
-type Worker = { remote: string; worker: string; runtime?: RuntimeImage };
+type Worker = {
+  remote: string;
+  worker: string;
+  runtime?: RuntimeImage;
+};
 
 /** Persist one authorized command position and its operator answer per project. */
 export class WorkflowRequests {
@@ -47,7 +53,7 @@ export class WorkflowRequests {
   /** Recover the operator's active command or their most recently submitted result. */
   async current(caller: Caller) {
     const { rows } = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND NOT documentation_only
        ORDER BY (state <> 'finished') DESC, ordinal DESC FETCH FIRST ROW ONLY`,
       [caller.remote, caller.principal],
     );
@@ -55,24 +61,30 @@ export class WorkflowRequests {
   }
 
   /** Admit one request and return exact duplicate submissions idempotently. */
-  async submit(caller: Caller, id: string, request: unknown, revision: string) {
+  async submit(
+    caller: Caller,
+    id: string,
+    request: unknown,
+    revision: string,
+    documentationDirectories?: string[],
+  ) {
     const content = JSON.stringify(request);
     const values = [caller.remote, caller.principal, id, content, revision];
     const entered = await this.database.query<WorkflowReceipt>(
       `
-      INSERT INTO ${store} (project,principal,id,request,revision,state)
-      SELECT $1,$2,$3,$4::jsonb,$5,'queued'
-      FROM arcnexus_coordination.hosted_projects WHERE project=$1
+      INSERT INTO ${store} (project,principal,id,request,revision,state,documentation_directories)
+      SELECT $1,$2,$3,$4::jsonb,$5,'queued',$6::jsonb
+      WHERE EXISTS (SELECT 1 FROM arcnexus_coordination.hosted_projects WHERE project=$1)
         AND NOT EXISTS (
-          SELECT 1 FROM arcnexus_coordination.runs WHERE project=$1 AND active=1
+          SELECT 1 FROM arcnexus_coordination.runs WHERE project=$1 AND active=1 AND NOT documentation_only
         )
       ON CONFLICT DO NOTHING RETURNING ${columns}
       `,
-      values,
+      [...values, JSON.stringify(documentationDirectories ?? null)],
     );
     if (entered.rows[0]) return entered.rows[0];
     const existing = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND id=$3 AND request=$4::jsonb`,
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND principal=$2 AND id=$3 AND request=$4::jsonb AND NOT documentation_only`,
       values.slice(0, 4),
     );
     if (!existing.rows[0])
@@ -94,7 +106,7 @@ export class WorkflowRequests {
   async answer(caller: Caller, id: string, gate: string, answer: string) {
     const { rows } = await this.database.query<WorkflowReceipt>(
       `UPDATE ${store} SET state='queued', reply=$5
-       WHERE project=$1 AND principal=$2 AND id=$3 AND state='waiting' AND gate->>'id'=$4
+       WHERE project=$1 AND principal=$2 AND id=$3 AND state='waiting' AND NOT documentation_only AND gate->>'id'=$4
        RETURNING ${columns}`,
       [caller.remote, caller.principal, id, gate, answer],
     );
@@ -105,31 +117,35 @@ export class WorkflowRequests {
   /** Return the pinned revision only when a project needs an assigned Host. */
   async loadAssignment(remote: string) {
     const { rows } = await this.database.query<{ revision: string }>(
-      `SELECT revision FROM ${store} WHERE project=$1 AND state IN ('queued','running')`,
+      `SELECT revision FROM ${store}
+       WHERE project=$1 AND NOT documentation_only AND state IN ('queued','running')`,
       [remote],
     );
-    return rows[0]?.revision;
+    return rows[0];
   }
 
   /** Transfer the pending request to a Host with the verified revision and retained image. */
   async claim(owner: Worker & { revision: string }) {
     const runtime = owner.runtime ? JSON.stringify(owner.runtime) : null;
-    const { rows } = await this.database.query<WorkflowReceipt & { reply: string | null }>(
+    const { rows } = await this.database.query<
+      WorkflowReceipt & { reply: string | null; documentationDirectories: string[] | null }
+    >(
       `UPDATE ${store} SET state='running',worker=$2,runtime=COALESCE(runtime,$4::jsonb)
        WHERE project=$1 AND revision=$3 AND state='queued' AND NOT cancellation
-         AND (runtime IS NULL OR runtime=$4::jsonb) RETURNING ${columns},reply`,
+         AND NOT documentation_only AND (runtime IS NULL OR runtime=$4::jsonb)
+       RETURNING ${columns},reply,documentation_directories AS "documentationDirectories"`,
       [owner.remote, owner.worker, owner.revision, runtime],
     );
-    if (!rows[0]) await this.verifyQueuedImage(owner.remote, owner.revision, runtime);
+    if (!rows[0]) await this.verifyQueuedImage(owner, runtime);
     return rows[0];
   }
 
   /** Name the retained prerequisite when the queued command needs a different image. */
-  private async verifyQueuedImage(remote: string, revision: string, runtime: string | null) {
+  private async verifyQueuedImage(owner: Worker & { revision: string }, runtime: string | null) {
     const { rows } = await this.database.query<{ runtime: RuntimeImage }>(
       `SELECT runtime FROM ${store} WHERE project=$1 AND revision=$2 AND state='queued'
-         AND runtime IS NOT NULL AND runtime IS DISTINCT FROM $3::jsonb`,
-      [remote, revision, runtime],
+         AND NOT documentation_only AND runtime IS NOT NULL AND runtime IS DISTINCT FROM $3::jsonb`,
+      [owner.remote, owner.revision, runtime],
     );
     if (rows[0]) throw imageUnavailable(rows[0].runtime);
   }
@@ -161,7 +177,7 @@ export class WorkflowRequests {
   /** Reconcile the departed assigned worker before consuming its retained command. */
   async recover(owner: Worker, confirmStopped: (worker: string) => boolean | Promise<boolean>) {
     const { rows } = await this.database.query<WorkflowReceipt>(
-      `SELECT ${columns} FROM ${store} WHERE project=$1 AND worker=$2 AND state='running'`,
+      `SELECT ${columns} FROM ${store} WHERE project=$1 AND worker=$2 AND state='running' AND NOT documentation_only`,
       [owner.remote, owner.worker],
     );
     const request = rows[0];

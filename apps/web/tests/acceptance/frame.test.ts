@@ -7,6 +7,10 @@ import { chromium, type Browser, type Page } from 'playwright';
 import { bundleWeb } from '../../src/bundle.js';
 import { serveWeb } from '../../src/serve.js';
 import type {} from '../fixtures/browser.js';
+import { chooseOption, openSelect } from '../fixtures/browser-select.js';
+import { preferenceRoutes } from '../fixtures/preferences.js';
+import { assertDocked } from '../fixtures/docked-frame.js';
+import { fixturePreferences } from '../../previews/platform/fixture-preferences.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 
@@ -57,6 +61,32 @@ test('web server defaults to loopback and can listen on the container interface'
   assert.equal((await fetch(container.url + '/plan/')).status, 200);
 });
 
+test('the shell uses the brain logo as its favicon and increases desktop reading sizes', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+  t.after(() => page.close());
+  await page.goto(application.url);
+  const brand = page.getByRole('link', { name: 'ArcNexus home' }).locator('img').first();
+  await brand.waitFor();
+  const favicon = page.locator('head link[rel="icon"]');
+  assert.equal(await favicon.count(), 1);
+  const source = await favicon.getAttribute('href');
+  assert.ok(source);
+  assert.equal(source, await brand.getAttribute('src'));
+  const icon = await page.request.get(new URL(source, application.url).href);
+  assert.equal(icon.status(), 200);
+  assert.equal(icon.headers()['content-type'], 'image/webp');
+  const sizes = () =>
+    page
+      .locator('.arc-app')
+      .evaluate((root) => [
+        getComputedStyle(root).fontSize,
+        getComputedStyle(root.querySelector('label')!).fontSize,
+      ]);
+  assert.deepEqual(await sizes(), ['16px', '14px']);
+  await page.setViewportSize({ width: 390, height: 850 });
+  assert.deepEqual(await sizes(), ['13px', '11px']);
+});
+
 test('built shell exposes all workspaces and reports unavailable live commands', async (t) => {
   const page = await browser.newPage();
   t.after(() => page.close());
@@ -103,6 +133,23 @@ async function assertReloadedWorkspace(page: Page, name: string) {
   }
 }
 
+test('a multi-file comparison keeps its file selector and switches the displayed diff', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  await view(page, 'Release');
+  const files = page.getByRole('list', { name: 'Changed files' });
+  const first = files.getByRole('button', { name: 'src/first.ts' });
+  const second = files.getByRole('button', { name: 'src/second.ts' });
+  assert.equal(await first.getAttribute('aria-pressed'), 'true');
+  await second.click();
+  assert.equal(await second.getAttribute('aria-pressed'), 'true');
+  const diff = page.locator('pre[aria-label="Changes for src/second.ts"]');
+  await diff.getByText('+new second', { exact: true }).waitFor();
+  const [sidebar, content] = await Promise.all([files.boundingBox(), diff.boundingBox()]);
+  assert.ok(sidebar && content && sidebar.x + sidebar.width <= content.x);
+});
+
 async function assertUnavailableMetrics(page: Page) {
   await button(page, 'Round metrics').click();
   const metrics = page.getByRole('dialog', { name: 'End-to-end refinement metrics' });
@@ -110,9 +157,11 @@ async function assertUnavailableMetrics(page: Page) {
   assert.equal(await metrics.getByText('Unavailable', { exact: true }).count(), 3);
 }
 
-test('site schemes can be created, selected and reloaded across workspaces', async (t) => {
+test('site schemes can be created, selected and restored across browsers', async (t) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   t.after(() => page.close());
+  const preferences = fixturePreferences();
+  await preferenceRoutes(page, preferences);
   await page.goto(application.url);
   await makeSiteScheme(page);
   await button(page, 'Close').click();
@@ -120,13 +169,14 @@ test('site schemes can be created, selected and reloaded across workspaces', asy
     await button(page, 'Color schemes').evaluate((element) => document.activeElement === element),
     true,
   );
-  await view(page, 'Run');
-  await page.reload();
-  await page.getByRole('heading', { name: 'Run', level: 1 }).waitFor();
-  assert.equal(
-    await page.locator('.arc-app').evaluate((element) => getComputedStyle(element).backgroundColor),
-    'rgb(20, 19, 42)',
-  );
+  const other = await browser.newPage({ colorScheme: 'dark' });
+  t.after(() => other.close());
+  await preferenceRoutes(other, preferences);
+  await other.goto(application.url + '/run/');
+  await other.waitForFunction(() => {
+    const frame = document.querySelector('.arc-app');
+    return frame && getComputedStyle(frame).backgroundColor === 'rgb(20, 19, 42)';
+  });
 });
 
 async function makeSiteScheme(page: Page) {
@@ -138,17 +188,60 @@ async function makeSiteScheme(page: Page) {
   await picker.getByRole('button', { name: 'Indigo #14132a for background' }).click();
   assert.equal(await picker.isVisible(), false);
   await button(page, 'Save scheme').click();
-  await dialog.getByLabel('Site background and default scheme').selectOption({ label: 'Midnight' });
+  await dialog.getByText('Saved Midnight.', { exact: true }).waitFor();
+  await chooseOption(page, 'Site background and default scheme', 'Midnight');
   await dialog.getByLabel('Scheme name').fill('Midnight revised');
   await button(page, 'Text color').click();
   const custom = page.getByRole('dialog', { name: 'Text color' }).getByLabel('Custom hex color');
   await custom.fill('#edf4ff');
   await custom.press('Enter');
   await button(page, 'Save scheme').click();
+  await dialog.getByText('Saved Midnight revised.', { exact: true }).waitFor();
   assert.equal(
-    await dialog.locator('select').first().locator('option:checked').textContent(),
+    await dialog.getByLabel('Site background and default scheme').textContent(),
     'Midnight revised',
   );
+}
+
+test('a clean browser restores imported layout, visibility and display appearance', async (t) => {
+  const source = await browser.newPage();
+  const reader = await browser.newPage();
+  t.after(() => Promise.all([source.close(), reader.close()]));
+  const preferences = fixturePreferences();
+  await preferenceRoutes(source, preferences);
+  await preferenceRoutes(reader, preferences);
+  await source.addInitScript(legacyBrowserSettings);
+  await source.goto(fixture.url);
+  await source.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
+  await reader.goto(fixture.url);
+  await reader.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
+  const metrics = reader.getByRole('region', { name: 'Planning data' });
+  assert.equal(await metrics.evaluate((node) => node.parentElement?.dataset.region), 'bottom');
+  assert.equal(
+    await metrics.evaluate((node) => getComputedStyle(node).backgroundColor),
+    'rgb(20, 19, 42)',
+  );
+  assert.equal(await reader.getByRole('heading', { name: 'Planner outcome' }).count(), 0);
+});
+
+function legacyBrowserSettings() {
+  const scheme = {
+    id: 'legacy-scheme',
+    name: 'Legacy scheme',
+    colors: { background: '#14132a', text: '#edf4ff', accent: '#aabbcc' },
+  };
+  localStorage.setItem('arcnexus.web.theme', JSON.stringify({ selected: '', schemes: [scheme] }));
+  localStorage.setItem(
+    'arcnexus.web.layout:/plan/',
+    JSON.stringify({
+      columns: 3,
+      hidden: ['outcome'],
+      order: [],
+      regions: { metrics: 'bottom' },
+      widths: [1, 2, 1],
+    }),
+  );
+  localStorage.setItem('arcnexus.web.panel:["/plan/","metrics"]', scheme.id);
 }
 
 test('desktop stays docked and reports controlled active, waiting and failed command states', async (t) => {
@@ -160,6 +253,12 @@ test('desktop stays docked and reports controlled active, waiting and failed com
   await view(page, 'Architect');
   assert.equal(await page.evaluate(() => scrollY), 0);
   await submitFixtureCommand(page);
+  const footer = page.getByRole('contentinfo', { name: 'Command controls' });
+  await footer.getByText('853.6K / 15.2K', { exact: true }).hover();
+  await footer
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Input / output tokens' })
+    .waitFor();
   await button(page, 'Round metrics').click();
   await page
     .getByRole('dialog', { name: 'End-to-end refinement metrics' })
@@ -167,20 +266,10 @@ test('desktop stays docked and reports controlled active, waiting and failed com
     .waitFor();
 });
 
-async function assertDocked(page: Page) {
-  await page.evaluate(() => window.scrollTo(0, innerHeight));
-  const nav = await page.getByRole('navigation', { name: 'Workspace' }).boundingBox();
-  const header = await page.getByRole('banner').boundingBox();
-  const footer = await page.getByRole('contentinfo', { name: 'Command controls' }).boundingBox();
-  assert.ok(nav && nav.y === 0, 'the links are pinned');
-  assert.ok(header && header.y + header.height < 0, 'the brand scrolls away');
-  assert.ok(footer && footer.y + footer.height === 800, 'the command dock stays in view');
-}
-
 async function submitFixtureCommand(page: Page) {
   const instruction = page.getByRole('textbox', { name: 'Instruction optional' });
   await instruction.fill('Keep this draft if the command fails.');
-  await page.getByLabel('Operation', { exact: true }).selectOption('architect');
+  await chooseOption(page, 'Operation', 'Architect');
   await button(page, 'Send').click();
   const readout = page.getByRole('group', { name: 'Round state' });
   await readout.getByText('Active', { exact: true }).waitFor();
@@ -249,45 +338,100 @@ test('header tooltips clear the narrow navigation and menu options share the fie
 });
 
 async function assertStyledMenu(page: Page, label: string) {
-  const select = page.getByLabel(label, { exact: true });
-  await select.click();
-  await page.locator('select:open').waitFor();
-  assert.equal(
-    await select.evaluate((element) => {
-      const trigger = getComputedStyle(element);
-      const menu = getComputedStyle(element, '::picker(select)');
-      return (
-        menu.appearance === 'base-select' &&
-        menu.backgroundColor === trigger.backgroundColor &&
-        menu.borderColor === trigger.borderColor
-      );
-    }),
-    true,
-  );
+  const select = page.getByRole('combobox', { name: label, exact: true });
+  const triggerId = await select.getAttribute('id');
+  const trigger = await select.evaluate(fieldPalette);
+  const menu = await openSelect(page, label);
+  assert.deepEqual(await menu.evaluate(fieldPalette), trigger);
   await page.keyboard.press('Escape');
+  await menu.waitFor({ state: 'hidden' });
+  await page.waitForFunction((id) => document.activeElement?.id === id, triggerId);
 }
+
+function fieldPalette(element: Element) {
+  const style = getComputedStyle(element);
+  return [style.backgroundColor, style.borderColor, style.color];
+}
+
+test('platform compositions isolate the gateway, active project, and timeline cursor', async (t) => {
+  const page = await browser.newPage();
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  assert.deepEqual(await page.evaluate(() => window.frameFixture.platformIsolation()), {
+    received: ['left', 'right'],
+    rightProject: 'right',
+    rightCursor: undefined,
+  });
+});
 
 test('page settings save layout and panel placement, while plugin contributions update mounted pages', async (t) => {
   const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
   t.after(() => page.close());
+  await preferenceRoutes(page);
   await page.goto(fixture.url);
   await page.getByRole('heading', { name: 'Planning data' }).waitFor();
   await page.evaluate(() => window.frameFixture.toggleDisplay?.());
   const evidence = page.getByRole('heading', { name: 'Supporting evidence' });
+  const workspace = page.getByText('Fixture workspace content', { exact: true });
   await evidence.waitFor();
+  await workspace.waitFor();
   await page.evaluate(() => window.frameFixture.toggleDisplay?.());
   await evidence.waitFor({ state: 'detached' });
+  await workspace.waitFor({ state: 'detached' });
 
   await configureLayout(page);
   await assertResize(page);
   await page.reload();
   await page.getByRole('separator', { name: 'Resize columns 2 and 3' }).waitFor();
   assert.equal(
-    await page.locator('.arc-layout-column').nth(2).getByText('Planner outcome').count(),
+    await page
+      .locator('.arc-layout-column')
+      .nth(2)
+      .getByRole('heading', { name: 'Planner outcome' })
+      .count(),
     1,
   );
   await assertMobilePanelOrder(page);
 });
+
+test('panel drag lifts the row and previews the insertion gap before saving', async (t) => {
+  const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
+  t.after(() => page.close());
+  await preferenceRoutes(page);
+  await page.goto(fixture.url);
+  await button(page, 'Plan page settings').click();
+  const source = button(page, 'Reorder Planning data');
+  const target = button(page, 'Reorder Planner outcome');
+  const labels = () => page.locator('.arc-panel-settings-list li strong').allTextContents();
+  const before = await labels();
+  await dragPanel(page, source, target);
+  await page.mouse.move(1, 1);
+  assert.equal(await page.locator('.arc-sort-gap').count(), 0);
+  await page.mouse.up();
+  assert.deepEqual(await labels(), before);
+  await dragPanel(page, source, target);
+  await page.mouse.up();
+  assert.deepEqual(await labels(), ['Planner outcome', 'Planning data']);
+  assert.equal(await source.evaluate((element) => document.activeElement === element), true);
+  await button(page, 'Save').click();
+  await page.getByRole('region', { name: 'Plan page settings' }).waitFor({ state: 'hidden' });
+  await assertMobilePanelOrder(page);
+});
+
+async function dragPanel(
+  page: Page,
+  source: ReturnType<typeof button>,
+  target: ReturnType<typeof button>,
+) {
+  const from = await source.boundingBox();
+  const to = await target.boundingBox();
+  assert.ok(from && to);
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height - 1);
+  assert.equal(await page.locator('[data-sort-dragging]').count(), 1);
+  assert.equal(await page.locator('.arc-sort-gap').count(), 1);
+}
 
 async function assertMobilePanelOrder(page: Page) {
   await page.setViewportSize({ width: 360, height: 800 });
@@ -295,11 +439,11 @@ async function assertMobilePanelOrder(page: Page) {
   assert.deepEqual(
     await page.locator('.arc-display').evaluateAll((panels) =>
       panels
-        .map((panel) => [panel.textContent?.trim(), panel.getBoundingClientRect().top])
+        .map((panel) => [panel.querySelector('h2')?.textContent, panel.getBoundingClientRect().top])
         .sort((left, right) => Number(left[1]) - Number(right[1]))
         .map(([label]) => label),
     ),
-    ['Planner outcomeFixture outcome', 'Planning data'],
+    ['Planner outcome', 'Planning data'],
   );
 }
 
@@ -309,13 +453,14 @@ async function configureLayout(page: Page) {
   assert.equal(await page.getByRole('heading', { name: 'Planning data' }).count(), 0);
   await page.getByRole('radio', { name: 'Three columns' }).check();
   await button(page, 'Remove Planner outcome').click();
-  await button(page, 'Available panels').click();
+  await page.getByRole('tab', { name: 'Available panels', exact: true }).click();
   await button(page, 'Add Planner outcome').click();
-  await button(page, 'Active panels').click();
+  await page.getByRole('tab', { name: 'Active panels', exact: true }).click();
   await assertStyledMenu(page, 'Planner outcome region');
-  await page.getByLabel('Planner outcome region').selectOption({ label: 'Right' });
+  await chooseOption(page, 'Planner outcome region', 'Right');
   await button(page, 'Reorder Planner outcome').press('ArrowUp');
   await button(page, 'Save').click();
+  await page.getByRole('region', { name: 'Plan page settings' }).waitFor({ state: 'hidden' });
   assert.equal(await settings.evaluate((element) => document.activeElement === element), true);
   await settings.click();
   await page.getByRole('radio', { name: 'One column' }).check();
@@ -336,8 +481,17 @@ async function assertResize(page: Page) {
   await page.mouse.down();
   await page.mouse.move(bounds.x + bounds.width / 2 + 42, bounds.y + 40);
   await page.mouse.up();
+  const selector = '[aria-label="Resize columns 1 and 2"]';
+  const changed = (value: string | null) =>
+    page.waitForFunction(
+      ({ selector, value }) =>
+        document.querySelector(selector)?.getAttribute('aria-valuenow') !== value,
+      { selector, value },
+    );
+  await changed(before);
   const afterDrag = await splitter.getAttribute('aria-valuenow');
   assert.notEqual(afterDrag, before);
   await splitter.press('ArrowRight');
+  await changed(afterDrag);
   assert.notEqual(await splitter.getAttribute('aria-valuenow'), afterDrag);
 }

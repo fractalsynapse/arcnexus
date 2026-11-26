@@ -35,7 +35,8 @@ diagram to the existing task, verification and delivery boundaries.
 
 [Planner](../packages/planner/contract.md) maintains standing goals and human
 objective records. Explore the current mapping with `arcnexus task plan` or
-submit a human objective to guide it. Review proposed goal edits before delivery.
+submit a human objective to guide it. Approve objective changes through Plan.
+Goal changes go through independent review before delivery.
 Bare `arcnexus task run` evaluates the reviewed inventory in priority order.
 `arcnexus architecture update [<feedback>]` assesses architecture and proposes
 exact changes for approval. Required implementation is delivered within Architect

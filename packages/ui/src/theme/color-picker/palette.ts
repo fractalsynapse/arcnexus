@@ -17,6 +17,10 @@ export const families = {
 
 export const shades = Object.values(families).flat();
 
+export function initialShade(color: string) {
+  return shades.includes(color) ? color : shades[0];
+}
+
 export type ColorField = (typeof colorFields)[number];
 
 export const titles = {
@@ -29,4 +33,8 @@ export interface PickerProps {
   field: ColorField;
   color: string;
   pick: (color: string) => void;
+}
+
+export function normalizeHex(value: string) {
+  return '#' + value.replace(/^#/, '').toLowerCase();
 }

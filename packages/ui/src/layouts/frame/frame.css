@@ -74,6 +74,11 @@
   padding: var(--pad);
   min-inline-size: 0;
 }
+.arc-preference-error {
+  padding: var(--pad);
+  color: var(--ink);
+  background: var(--tint);
+}
 
 @media (max-width: 900px) {
   .arc-app[data-header-controls] .arc-nav {

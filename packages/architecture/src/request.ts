@@ -13,6 +13,7 @@ export interface TaskContext {
   acceptance?: readonly unknown[];
   evidence?: readonly unknown[];
   worktree?: string;
+  capturedDocumentation?: Record<string, unknown>;
 }
 
 /** Assemble the sole model request for both inspection and a task activation. */
@@ -41,7 +42,7 @@ export function buildCodexRequest(
     placeholders,
     request: {
       input: sections.join('\n\n'),
-      options: modelOptions(references, context.worktree, name),
+      options: modelOptions(references, context.worktree, name, task.capturedDocumentation),
     },
   };
 }
@@ -64,14 +65,17 @@ function modelOptions(
   { profile, operations }: ReturnType<typeof resolveReferences>,
   worktree: string,
   activity: string,
+  responseSchema?: Record<string, unknown>,
 ) {
+  const outputSchema =
+    responseSchema ?? (activity === 'research' ? researchReportSchema : undefined);
   return {
     model: profile.model,
     modelReasoningEffort: profile.reasoning,
     webSearchMode: profile.webSearch,
     workingDirectory: worktree,
     tools: operations.flatMap(({ id, tool }) => (tool ? [operationTool(id, tool)] : [])),
-    ...(activity === 'research' ? { outputSchema: researchReportSchema } : {}),
+    ...(outputSchema && { outputSchema }),
   };
 }
 

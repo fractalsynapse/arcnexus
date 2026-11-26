@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react';
 import { followTimeline, type TimelineFrame } from './timeline-stream.js';
-
-type Snapshot = { frames: TimelineFrame[]; cursor?: string };
-const retained = new Map<string, Snapshot>();
+import { useBrowserPlatform, type BrowserPlatform } from './browser-platform.js';
 
 /** Keep the applied cursor when a panel closes or its network connection ends. */
-export function useTimeline(path?: string, token?: string) {
+export function useTimeline(path?: string) {
+  const platform = useBrowserPlatform();
   const [revision, refresh] = useState(0);
   const [live, setLive] = useState<{ key: string; error: string }>();
-  const key = path && token ? JSON.stringify([path, token]) : undefined;
   useEffect(() => {
-    if (!path || !token || !key) return;
-    return subscribeTimeline(path, token, key, (error) => setLive({ key, error }));
-  }, [path, token, revision, key]);
+    if (!path) return;
+    return subscribeTimeline(platform, path, (error) => setLive({ key: path, error }));
+  }, [platform, path, revision]);
   return {
-    frames: (key && retained.get(key)?.frames) || [],
-    error: live?.key === key ? live?.error : undefined,
+    frames: (path && platform.timelines.get(path)?.frames) || [],
+    error: live?.key === path ? live?.error : undefined,
     reconnect: () => {
       setLive(undefined);
       refresh((value) => value + 1);
@@ -24,15 +22,14 @@ export function useTimeline(path?: string, token?: string) {
 }
 
 function subscribeTimeline(
+  { gateway, timelines }: BrowserPlatform,
   path: string,
-  token: string,
-  key: string,
   notify: (error: string) => void,
 ) {
   const controller = new AbortController();
-  const snapshot = retained.get(key) ?? { frames: [] };
-  retained.set(key, snapshot);
-  void followTimeline(path, token, controller.signal, snapshot.cursor, ({ id, frame }) => {
+  const snapshot = timelines.get(path) ?? { frames: [] };
+  timelines.set(path, snapshot);
+  void followTimeline(gateway, path, controller.signal, snapshot.cursor, ({ id, frame }) => {
     if (controller.signal.aborted || !nextSequence(snapshot.frames, frame.sequence)) return;
     snapshot.cursor = id;
     snapshot.frames.push(frame);

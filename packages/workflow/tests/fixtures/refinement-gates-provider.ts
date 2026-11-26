@@ -19,10 +19,10 @@ class RefinementGateProvider {
     this.emit({ type: 'turn.completed', usage: { input_tokens: 17, output_tokens: 11 } });
   }
 
-  /** Propose exact goal removal and a template change; Direction still assesses the retained goal. */
+  /** Reassess goals and retain an exact architecture proposal for its existing gate. */
   private reply() {
     const citation = { path: 'baseline', quote: 'durable evidence' };
-    if (this.component === 'planner') return goalProposal();
+    if (this.component === 'planner') return standingAssessment();
     if (this.component === 'architecture')
       return {
         kind: 'proposal',
@@ -38,7 +38,8 @@ class RefinementGateProvider {
       };
     return {
       kind: 'satisfied',
-      summary: 'Direction assessed the retained baseline after both declined proposals.',
+      summary:
+        'Direction assessed the retained baseline after the architecture proposal was declined.',
       evidence: [citation],
     };
   }
@@ -49,11 +50,11 @@ class RefinementGateProvider {
   }
 }
 
-/** Supply a complete production Planner proposal with exact bytes for the real approval gate. */
-function goalProposal() {
+/** Supply the real Planner schema for an inventory that needs no change. */
+function standingAssessment() {
   const citation = { path: 'baseline', quote: 'durable evidence' };
   return {
-    summary: 'Propose removing the baseline goal for human review.',
+    summary: 'The baseline goal still covers the captured direction.',
     ratings: [
       {
         id: 'baseline',
@@ -65,7 +66,7 @@ function goalProposal() {
       },
     ],
     comparison: ['The single goal covers the baseline without overlap.'],
-    changes: [{ id: 'baseline', content: null }],
+    changes: [],
     links: [],
     sources: [citation],
   };

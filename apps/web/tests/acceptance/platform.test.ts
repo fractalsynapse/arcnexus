@@ -1,90 +1,217 @@
 import assert from 'node:assert/strict';
+import { get } from 'node:http';
 import test, { type TestContext } from 'node:test';
-import { chromium, type Page } from 'playwright';
+import type { Page, Route } from 'playwright';
+import {
+  browserPage,
+  otherProject,
+  planData,
+  project,
+  responses,
+  selectProject,
+  verifyTokenTotals,
+} from '../fixtures/plan-browser.js';
+import { serveApi } from '../../../api/src/serve.js';
 import { serveWeb } from '../../src/serve.js';
+import { chooseOption, openSelect } from '../fixtures/browser-select.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
 
-const project = {
-  id: 'bound-project',
-  remote: 'https://github.com/example/plan.git',
-  revision: 'verified-revision',
-};
-
-test('the built Plan requests only visible project guides and loads detail on demand', async (t) => {
-  const { application, page } = await browserPage(t);
-  const requests = await responses(page);
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      'arcnexus.web.layout:/plan/',
-      JSON.stringify({
-        columns: 2,
-        order: [],
-        hidden: ['objectives'],
-        regions: {},
-        widths: [],
-      }),
-    ),
-  );
-  await page.goto(application.url);
-  await selectProject(page);
-  const goal = page.getByRole('button', { name: 'fixture-goal' });
-  await goal.waitFor();
-  assert.ok(
-    !requests.some((path) => path.includes('/objectives') || path.includes('/fixture-goal')),
-  );
-  await goal.click();
-  await page.getByText('# Verified goal', { exact: true }).waitFor();
-  assert.ok(
-    requests.includes(
-      '/api/projects/' + project.id + '/goals/fixture-goal?revision=' + project.revision,
-    ),
+test('the local Web proxy supplies the operator only for the local browser', async (t) => {
+  const forwarded: (string | null)[] = [];
+  const gateway = await serveApi(async (request) => {
+    forwarded.push(request.headers.get('authorization'));
+    return Response.json({ entries: [project] });
+  });
+  t.after(() => gateway.server.close());
+  const operator = { credential: 'server-only-fixture' };
+  const api = new URL(gateway.url);
+  const application = await serveWeb('dist/apps/web/site', 0, '127.0.0.1', api, operator);
+  t.after(() => application.server.close());
+  const route = application.url + '/api/projects';
+  const visible = await fetch(route);
+  assert.deepEqual(await visible.json(), { entries: [project] });
+  assert.equal(visible.headers.get('cache-control'), 'no-store');
+  await rejectForeignBrowser(route);
+  assert.deepEqual(forwarded, ['Bearer server-only-fixture']);
+  await assert.rejects(
+    serveWeb('dist/apps/web/site', 0, '0.0.0.0', api, operator),
+    /loopback origin/,
   );
 });
 
-async function browserPage(t: TestContext) {
-  const application = await serveWeb('dist/apps/web/site');
-  t.after(() => application.server.close());
-  const browser = await chromium.launch({ executablePath: process.env.ARC_CHROMIUM_PATH });
-  t.after(() => browser.close());
-  const page = await browser.newPage();
-  return { application, page };
-}
-
-async function responses(page: Page) {
-  const requests: string[] = [];
-  await page.route('**/api/**', (route) => {
-    const url = new URL(route.request().url());
-    requests.push(url.pathname + url.search);
-    if (url.pathname === '/api/capacity-providers') return route.fulfill({ json: [] });
-    const json =
-      url.pathname === '/api/projects'
-        ? { entries: [project] }
-        : url.pathname.endsWith('/goals')
-          ? { entries: [{ id: 'fixture-goal' }] }
-          : url.pathname.endsWith('/objectives')
-            ? { entries: [] }
-            : { content: '# Verified goal' };
-    return route.fulfill({ json });
+async function rejectForeignBrowser(route: string) {
+  const response = await fetch(route, {
+    method: 'POST',
+    headers: { origin: 'http://untrusted.example', 'sec-fetch-site': 'cross-site' },
   });
-  return requests;
+  assert.equal(response.status, 403);
+  const rebound = await new Promise<number | undefined>((resolve, reject) => {
+    get(route, { headers: { host: 'untrusted.example' } }, (response) => {
+      response.resume();
+      resolve(response.statusCode);
+    }).on('error', reject);
+  });
+  assert.equal(rebound, 403);
 }
 
-async function selectProject(page: Page) {
-  await page.getByRole('button', { name: 'Project manager' }).click();
-  await page.getByLabel('Operator credential').fill('review-fixture');
-  await page.getByRole('button', { name: 'Connect', exact: true }).click();
-  await page.getByLabel('Active project').selectOption(project.id);
-  await page.getByRole('button', { name: 'Close' }).click();
+test('Plan history keeps the header and all displays scoped to the selected project and run', async (t) => {
+  const { application, page } = await browserPage(t, undefined, {
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+  });
+  const requests = await responses(page, [project, otherProject]);
+  await historyResponses(page, requests);
+  await page.goto(application.url);
+  await selectProject(page);
+  const selector = page.getByRole('combobox', { name: 'Plan run' });
+  await page.getByText('Latest outcome', { exact: true }).waitFor();
+  await assertRunRange(page, '11/25/2025: 12:01:23 PM - 12:04:23 PM');
+  await assertTokenTooltip(page);
+  assert.equal(await selector.count(), 1);
+  assert.equal(await selector.textContent(), 'Latest run');
+  await chooseOption(page, 'Plan run', /11\/24\/2025/);
+  await assertHistoricalPlan(page, requests);
+  assert.ok(!requests.some((path) => path.endsWith('/token-history')));
+  await verifyTokenTotals(page, '977.0K / 15.2K', 2, '123.4K / —');
+  await selectProject(page, otherProject.id);
+  await page.getByText('Other outcome', { exact: true }).waitFor();
+  await verifyTokenTotals(page, '7.0K / 1.0K', 1);
+  assert.equal(await selector.textContent(), 'Latest run');
+  const menu = await openSelect(page, 'Plan run');
+  assert.equal(await menu.getByRole('option', { name: /11\/24\/2025/ }).count(), 0);
+  assert.ok(!requests.some((path) => path.includes('/other-project/plan-executions/earlier')));
+});
+
+const earlier = {
+  execution: 'earlier',
+  revision: 'b'.repeat(40),
+  active: false,
+  startedAt: '2025-11-24T17:01:23.000Z',
+  updatedAt: '2025-11-25T05:04:23.000Z',
+};
+const latest = {
+  ...earlier,
+  execution: 'latest',
+  revision: project.revision,
+  startedAt: '2025-11-25T17:01:23.000Z',
+  updatedAt: '2025-11-25T17:04:23.000Z',
+};
+
+async function historyResponses(page: Page, requests: string[]) {
+  await page.route('**/plan-executions**', respondToPlanHistory);
+  await page.route('**/token-history', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    requests.push(path);
+    const [input, output] = path.includes('/other-project/')
+      ? [7000, 1000]
+      : path.includes('/earlier/')
+        ? [123400, null]
+        : [853600, 15200];
+    const samples = [
+      { input: 500, output: output === null ? null : 40 },
+      { input, output },
+    ];
+    return route.fulfill({ json: { samples } });
+  });
+}
+
+function respondToPlanHistory(route: Route) {
+  const path = new URL(route.request().url()).pathname;
+  const other = path.includes('/other-project/');
+  const selected = path.includes('/earlier/') ? earlier : latest;
+  if (path.endsWith('/plan-executions'))
+    return route.fulfill({ json: { entries: other ? [latest] : [latest, earlier] } });
+  if (path.endsWith('/current')) return route.fulfill({ json: latest });
+  if (path.endsWith('/metrics'))
+    return route.fulfill({
+      json: { usage: { input_tokens: { reported: 853600 }, output_tokens: { reported: 15200 } } },
+    });
+  if (path.endsWith('/events'))
+    return route.fulfill({
+      contentType: 'text/event-stream',
+      body: timelineRecord('1', selected.execution + ' message'),
+    });
+  const summary = other
+    ? 'Other outcome'
+    : selected === earlier
+      ? 'Earlier outcome'
+      : 'Latest outcome';
+  return route.fulfill({ json: { ...selected, outcome: { kind: 'planned', summary } } });
+}
+
+async function assertTokenTooltip(page: Page) {
+  await page.getByText('853.6K / 15.2K', { exact: true }).hover();
+  await page
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Input / output tokens' })
+    .waitFor();
+}
+
+async function assertHistoricalPlan(page: Page, requests: string[]) {
+  await page.getByText('Earlier outcome', { exact: true }).waitFor();
+  await page.getByText('earlier message', { exact: true }).waitFor();
+  assert.equal(await page.getByText('latest message', { exact: true }).count(), 0);
+  assert.ok(requests.some((path) => path.endsWith('/goals?revision=' + earlier.revision)));
+  await assertPlanHeading(page, 1180);
+  await assertPlanHeading(page, 320);
+  await assertRunRange(page, '11/24/2025: 12:01:23 PM - 11/25/2025: 12:04:23 AM');
+  const label = page.locator('.arc-page-context strong', { hasText: 'plan' });
+  assert.equal(await label.evaluate((node) => getComputedStyle(node).fontWeight), '700');
+}
+
+async function assertRunRange(page: Page, range: string) {
+  const context = page.locator('.arc-page-context');
+  const times = context.locator('time');
+  assert.equal(await times.count(), 2);
+  assert.equal((await context.innerText()).replace(/\s+/g, ' ').trim(), 'plan ' + range);
+}
+
+async function assertPlanHeading(page: Page, width: number) {
+  await page.setViewportSize({ width, height: 800 });
+  const gear = await page
+    .getByRole('button', { name: 'Plan page settings' })
+    .locator('svg')
+    .boundingBox();
+  const title = await page.getByRole('heading', { name: 'Plan', exact: true }).boundingBox();
+  const selector = await page.getByRole('combobox', { name: 'Plan run' }).boundingBox();
+  const context = await page.locator('.arc-page-context').boundingBox();
+  assert.ok(gear && title && selector && context);
+  const gearGap = title.x - (gear.x + gear.width);
+  const selectorGap = selector.x - (title.x + title.width);
+  assert.ok(Math.abs(gearGap - selectorGap) < 1, 'Title spacing should match on both sides');
+  assert.ok(title.y < selector.y + selector.height && selector.y < title.y + title.height);
+  if (width === 1180)
+    assert.ok(selector.width >= 346, 'Desktop run selector should have room for dates');
+  else {
+    assert.ok(context.y >= selector.y + selector.height);
+    assert.ok(title.height < selector.height, 'Plan should stay on one line at mobile width');
+  }
+  assert.ok(selector.x + selector.width <= width);
 }
 
 test('the browser keeps native messages and resumes an interrupted event log', async (t) => {
   const { application, page } = await browserPage(t);
   const cursors: Array<string | undefined> = [];
   await responses(page);
-  await page.route('**/plan-executions/current', (route) =>
+  await timelineResponses(page, cursors);
+  await page.goto(application.url);
+  await selectProject(page);
+  const timeline = page.getByRole('log', { name: 'Planning events' });
+  await timeline.getByText('Opening café 🛠', { exact: true }).waitFor();
+  await page.getByRole('tab', { name: 'Full log', exact: true }).click();
+  await timeline.getByText('1 operation', { exact: true }).click();
+  await timeline.getByText('Passed', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
+  await timeline.getByText('Closing message', { exact: true }).waitFor();
+  assert.equal(await timeline.getByText('Opening café 🛠', { exact: true }).count(), 1);
+  assert.deepEqual(cursors, [undefined, 'cursor-2']);
+});
+
+async function timelineResponses(page: Page, cursors: Array<string | undefined>) {
+  await page.route('**/plan-executions', (route) =>
     route.fulfill({
-      json: { execution: 'retained-plan', revision: project.revision, active: true },
+      json: { entries: [{ execution: 'retained-plan', revision: project.revision, active: true }] },
     }),
   );
   await page.route('**/plan-executions/retained-plan/events', (route) => {
@@ -92,80 +219,107 @@ test('the browser keeps native messages and resumes an interrupted event log', a
     cursors.push(cursor);
     return route.fulfill({
       contentType: 'text/event-stream',
-      body: cursor ? timelineRecord('2', 'Closing message') : timelineRecord('1', 'Opening café 🛠'),
+      body: cursor
+        ? timelineRecord('3', 'Closing message')
+        : timelineRecord('1', 'Opening café 🛠') +
+          timelineFrame('2', { check: { id: 'repository-tests', status: 0 } }),
     });
   });
+}
+
+test('an open tool inspector loads input on demand and refreshes when the live result commits', async (t) => {
+  const fixture = await liveToolFixture(t);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
   await page.goto(application.url);
   await selectProject(page);
   const timeline = page.getByRole('log', { name: 'Planning events' });
-  await timeline.getByText('Opening café 🛠', { exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
-  await timeline.getByText('Closing message', { exact: true }).waitFor();
-  assert.equal(await timeline.getByText('Opening café 🛠', { exact: true }).count(), 1);
-  assert.deepEqual(cursors, [undefined, 'cursor-1']);
+  await page.getByRole('tab', { name: 'Full log', exact: true }).click();
+  await timeline.getByText('1 operation', { exact: true }).click();
+  assert.equal(fixture.reads(), 0);
+  await timeline.getByRole('button', { name: 'read-file inputs and outputs' }).click();
+  const detail = page.getByRole('dialog', { name: 'read-file inputs and outputs' });
+  await detail.getByRole('heading', { name: 'Input', exact: true }).waitFor();
+  await detail.locator('section').filter({ hasText: 'Input' }).locator('summary').nth(1).click();
+  await detail.getByText('".arc/goals/fixture-goal.md"', { exact: true }).waitFor();
+  fixture.finish();
+  await detail.getByRole('heading', { name: 'Output', exact: true }).waitFor();
+  assert.equal(
+    await timeline.locator('[data-operation-state="passed"]').getByText('Completed').count(),
+    1,
+  );
+  assert.equal(fixture.reads(), 2);
 });
+
+async function liveToolFixture(t: TestContext) {
+  const args = { path: '.arc/goals/fixture-goal.md' };
+  const result = { content: [{ type: 'text', text: 'Recorded tool output' }] };
+  const input = { phase: 'started', args };
+  const output = { phase: 'completed', result };
+  let reads = 0;
+  let completed = false;
+  const updates = liveToolUpdates();
+  const application = await serveApi(async (request) =>
+    liveToolResponse(new URL(request.url).pathname, {
+      entries: () => {
+        reads += 1;
+        return completed ? [input, output] : [input];
+      },
+      events: updates.events,
+    }),
+  );
+  t.after(() => application.server.close());
+  return {
+    ...application,
+    reads: () => reads,
+    finish() {
+      completed = true;
+      updates.finish();
+    },
+  };
+}
+
+function liveToolUpdates() {
+  let stream: ReadableStreamDefaultController;
+  return {
+    events: () =>
+      new ReadableStream({
+        start(controller) {
+          stream = controller;
+          controller.enqueue(Buffer.from(toolFrame('1', 'started')));
+        },
+      }),
+    finish: () => stream.enqueue(Buffer.from(toolFrame('2', 'completed'))),
+  };
+}
+
+function liveToolResponse(
+  path: string,
+  fixture: { entries(): unknown[]; events(): ReadableStream },
+) {
+  if (path.endsWith('/plan-executions'))
+    return Response.json({
+      entries: [{ execution: 'live-plan', revision: project.revision, active: true }],
+    });
+  if (path.endsWith('/live-plan/events'))
+    return new Response(fixture.events(), { headers: { 'content-type': 'text/event-stream' } });
+  if (path.endsWith('/operation-evidence/1')) return Response.json({ entries: fixture.entries() });
+  return Response.json(planData('/api' + path));
+}
+
+function toolFrame(sequence: string, phase: string) {
+  return timelineFrame(sequence, {
+    operation: { name: 'read-file', call: 'recorded-call', phase },
+  });
+}
 
 function timelineRecord(sequence: string, text: string) {
   const observation = { nativeEvent: { event: { item: { type: 'agent_message', text } } } };
-  const data = JSON.stringify({ sequence, timestamp: null, observation });
-  return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + data + '\n\n';
+  return timelineFrame(sequence, observation);
 }
 
-test('the built command dock submits Plan and answers only the retained question', async (t) => {
-  const { application, page } = await browserPage(t);
-  const actions = await commandResponses(page);
-  await page.goto(application.url);
-  await selectProject(page);
-  await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Answer question' });
-  await dialog.getByText('Approve this proposed change?').waitFor();
-  await dialog.getByLabel('Answer').fill('Use the verified baseline.');
-  await dialog.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
-  assert.equal(await dialog.getByLabel('Answer').inputValue(), 'Use the verified baseline.');
-  await dialog.getByRole('button', { name: 'Send answer' }).click();
-  await page
-    .getByRole('button', { name: 'Answer question', exact: true })
-    .waitFor({ state: 'hidden' });
-  assert.deepEqual(
-    actions.map((action) => action.body),
-    [
-      { id: actions[0]?.receipt, request: { command: 'task_plan' } },
-      { gate: 'exact-gate', answer: 'Use the verified baseline.' },
-    ],
-  );
-});
-
-async function commandResponses(page: Page) {
-  await responses(page);
-  const requests: { body: unknown; receipt: string }[] = [];
-  const receipt = {
-    id: '38882637-979e-4702-a8c7-186d1aa066e8',
-    request: { command: 'task_plan' },
-    revision: project.revision,
-    execution: 'retained-plan',
-    state: 'waiting',
-    gate: { id: 'exact-gate', question: 'Approve this proposed change?' },
-    outcome: null,
-  };
-  await page.route('**/commands/current', (route) =>
-    route.fulfill({
-      contentType: 'text/event-stream',
-      body: 'event: command\ndata: {"canSubmit":true,"receipt":null}\n\n',
-    }),
-  );
-  await page.route('**/commands', (route) => {
-    const body = route.request().postDataJSON() as { id: string };
-    receipt.id = body.id;
-    requests.push({ body, receipt: body.id });
-    return route.fulfill({ json: receipt, status: 202 });
-  });
-  await page.route('**/commands/*/answer', (route) => {
-    requests.push({ body: route.request().postDataJSON(), receipt: receipt.id });
-    return route.fulfill({ json: { ...receipt, state: 'queued', gate: null }, status: 202 });
-  });
-  return requests;
+function timelineFrame(sequence: string, observation: object) {
+  const data = JSON.stringify({ sequence, timestamp: null, observation });
+  return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + data + '\n\n';
 }
 
 test('the Connection manager downloads only an available launcher build', async (t) => {
@@ -174,12 +328,85 @@ test('the Connection manager downloads only an available launcher build', async 
   await page.route('**/api/launcher-builds', (route) =>
     route.fulfill({ json: { entries: [{ target: 'linux-x64', sha256: 'a'.repeat(64) }] } }),
   );
+  await page.route('**/api/capacity-providers/codes', (route) =>
+    route.fulfill({ json: { code: 'REVIEW-FIXTURE' } }),
+  );
   await page.goto(application.url);
   await selectProject(page);
   await page.getByRole('button', { name: 'Connection manager' }).click();
-  await page.getByLabel('Launcher build').selectOption('linux-x64');
+  await page
+    .getByText('No capacity providers connected.', { exact: true })
+    .waitFor({ state: 'visible' });
+  await chooseOption(page, 'Launcher build', 'Linux · x64');
   const link = page.getByRole('link', { name: 'Download launcher' });
   assert.equal(await link.getAttribute('href'), '/api/launcher-builds/linux-x64');
-  await page.getByLabel('Launcher build').selectOption('linux-arm64');
+  await chooseOption(page, 'Launcher build', 'Linux · ARM64');
   assert.equal(await link.count(), 0);
+  await verifyRegistrationCode(page);
 });
+
+async function verifyRegistrationCode(page: Page) {
+  const manager = page.getByRole('button', { name: 'Connection manager', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Connection manager', exact: true });
+  const code = dialog.getByText('REVIEW-FIXTURE', { exact: true });
+  await dialog.getByRole('button', { name: 'Create registration code', exact: true }).click();
+  await code.waitFor();
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await manager.click();
+  await code.waitFor();
+}
+
+test('the Project manager keeps reachability with status and uses a compact import action', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.getByRole('button', { name: 'Project manager' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Project manager' });
+  await dialog.getByLabel('Active project').waitFor();
+  assert.equal(await dialog.getByPlaceholder('https://github.com/owner/repository').count(), 1);
+  const reach = dialog.getByRole('button', { name: 'Check reachability', exact: true });
+  assert.equal(
+    await reach.evaluate((control) => !!control.closest('.arc-management-record')),
+    true,
+  );
+  assert.equal(await dialog.getByRole('button', { name: 'Remove plan', exact: true }).count(), 1);
+});
+
+test('a project saves documentation folders immediately without starting a workflow', async (t) => {
+  const { application, page } = await browserPage(t);
+  await responses(page);
+  const changes = await documentationSettingsRoutes(page);
+  await page.goto(application.url);
+  await page.getByRole('button', { name: 'Project manager' }).click();
+  await page.getByRole('button', { name: 'Project settings for plan', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Project settings for plan' });
+  const directories = settings.getByLabel('Documentation directories');
+  assert.equal(await directories.inputValue(), 'handbook');
+  await directories.fill('handbook\ndesign/decisions');
+  await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await settings.getByText('Documentation directories saved.').waitFor();
+  assert.deepEqual(changes, [
+    {
+      revision: project.revision,
+      directories: ['handbook', 'design/decisions'],
+    },
+  ]);
+});
+
+async function documentationSettingsRoutes(page: Page) {
+  const submitted: unknown[] = [];
+  await page.route('**/projects/' + project.id + '/settings', (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { revision: project.revision, directories: ['handbook'] } });
+    assert.equal(route.request().method(), 'PATCH');
+    const settings = route.request().postDataJSON();
+    submitted.push(settings);
+    return route.fulfill({ json: settings });
+  });
+  await page.route('**/projects/' + project.id + '/commands', (route) => {
+    throw new Error('Saving documentation folders started a workflow: ' + route.request().url());
+  });
+  return submitted;
+}

@@ -1,146 +1,45 @@
-import { OperationDetail } from './operation-detail.js';
-import { createElement as h, useSyncExternalStore } from 'react';
-import { Button, type CommandBinding } from '../../../../packages/ui/src/index.js';
-import { useResource } from './resource.js';
-import { usePlatformSession } from './session.js';
-import type { TimelineFrame } from './timeline-stream.js';
+import { createElement as h } from 'react';
+import { Button, Tabs, type CommandBinding } from '../../../../packages/ui/src/index.js';
+import { EventTimeline } from './event-timeline.js';
+import { usePlanResource } from './plan-resource.js';
+import { groupTimeline } from './timeline-groups.js';
 import { useTimeline } from './use-timeline.js';
 
-type Entry = { message?: string; key: string; operations: TimelineFrame[] };
-
+/** Follow the selected Plan and display only its ordered, retained observations. */
 export function EventDisplay({ binding }: { binding: CommandBinding }) {
-  const { project, current, execution, timeline } = useEventSource(binding);
+  const { project, history, events, execution, command, active, recorded } = usePlanResource();
+  const timeline = useTimeline(events && events + '/events');
   if (!project) return h('p', null, 'Select a project to see planning events.');
-  if (current.error) return h('p', { role: 'alert' }, current.error);
-  if (current.value && !execution) return h('p', null, 'No recorded planning execution.');
-  return h(
-    'div',
-    { className: 'arc-platform-stack' },
-    timeline.error &&
-      h(
-        'div',
-        null,
-        h('p', { role: 'status' }, timeline.error),
-        h(Button, { onClick: timeline.reconnect }, 'Reconnect'),
-      ),
-    h(
-      'div',
-      { role: 'log', 'aria-label': 'Planning events' },
-      entries(timeline.frames).map((entry) => h(EventEntry, { key: entry.key, entry, execution })),
-    ),
-  );
-}
-
-function useEventSource(binding: CommandBinding) {
-  const { project, token } = usePlatformSession();
-  const command = useSyncExternalStore(binding.subscribe, binding.getSnapshot);
-  const root = project && '/projects/' + project.id;
-  const recorded = command.command === 'Plan' ? command.execution : undefined;
-  const current = useResource<{ execution?: string }>(
-    root && !recorded ? root + '/plan-executions/current' : undefined,
-    token,
-  );
-  const execution = recorded ?? current.value?.execution;
-  const timeline = useTimeline(
-    root && execution
-      ? root +
-          (recorded ? '/executions/' : '/plan-executions/') +
-          encodeURIComponent(execution) +
-          '/events'
-      : undefined,
-    token,
-  );
-  return { project, current, execution, timeline };
-}
-
-function EventEntry({ entry, execution }: { entry: Entry; execution?: string }) {
-  return h(
-    'div',
-    { className: 'arc-platform-stack' },
-    entry.message && h('p', { className: 'arc-plan-message' }, entry.message),
-    entry.operations.length > 0 &&
-      h(
-        'details',
-        null,
-        h('summary', null, entry.operations.length + ' recorded events'),
-        h(
-          'ul',
-          null,
-          entry.operations.map((operation) =>
-            h(OperationEntry, { key: operation.sequence, operation, execution }),
-          ),
-        ),
-      ),
-  );
-}
-
-function OperationEntry({
-  operation,
-  execution,
-}: {
-  operation: TimelineFrame;
-  execution?: string;
-}) {
-  const name = toolName(operation.observation);
-  return h(
-    'li',
-    null,
-    h('code', null, eventLabel(operation.observation)),
-    execution &&
-      name &&
-      h(OperationDetail, { sequence: operation.sequence, execution, operation: name }),
-  );
-}
-
-function entries(frames: TimelineFrame[]) {
-  const groups: Entry[] = [];
-  for (const frame of frames) {
-    const message = modelMessage(frame.observation);
-    if (message) groups.push({ key: frame.sequence, message, operations: [] });
-    else {
-      if (!groups.length) groups.push({ key: frame.sequence, operations: [] });
-      groups.at(-1)!.operations.push(frame);
-    }
-  }
-  return groups;
-}
-
-type Observation = {
-  message?: string;
-  operation?: { name?: string };
-  nativeEvent?: {
-    kind?: string;
-    event?: { type?: string; item?: { type?: string; text?: string; tool?: string } };
+  if (history.error && !events) return h('p', { role: 'alert' }, history.error);
+  if (history.value && !execution) return h('p', null, 'No recorded planning execution.');
+  const view = {
+    entries: groupTimeline(timeline.frames, execution, recorded?.attempt),
+    execution,
+    command,
+    binding,
+    active,
+    path: events,
+    sequence: timeline.frames.at(-1)?.sequence,
   };
-  outcome?: { kind?: string; summary?: string; reason?: string };
-};
-
-function modelMessage(value: unknown) {
-  const observation = value as Observation | null;
-  const event = observation?.nativeEvent?.event;
-  const text = event?.item?.type === 'agent_message' ? event.item.text : undefined;
-  return (
-    text ??
-    observation?.message ??
-    observation?.outcome?.summary ??
-    observation?.outcome?.reason ??
-    observation?.outcome?.kind
+  return h(
+    'div',
+    { className: 'arc-platform-stack' },
+    timeline.error && h(StreamNotice, { message: timeline.error, reconnect: timeline.reconnect }),
+    h(Tabs, {
+      label: 'Event log',
+      sections: [
+        { title: 'Messages', content: h(EventTimeline, { ...view, messagesOnly: true }) },
+        { title: 'Full log', content: h(EventTimeline, view) },
+      ],
+    }),
   );
 }
 
-function toolName(value: unknown) {
-  return (value as Observation | null)?.operation?.name;
-}
-
-function eventLabel(value: unknown) {
-  const observation = value as Observation | null;
-  const native = observation?.nativeEvent;
-  return (
-    toolName(value) ??
-    native?.event?.item?.tool ??
-    native?.event?.item?.type ??
-    native?.event?.type ??
-    (observation && Object.keys(observation).join(', ')) ??
-    'Observation'
+function StreamNotice({ message, reconnect }: { message: string; reconnect: () => void }) {
+  return h(
+    'div',
+    { className: 'arc-platform-inline' },
+    h('p', { role: 'status' }, message),
+    h(Button, { onClick: reconnect }, 'Reconnect'),
   );
 }

@@ -18,7 +18,7 @@ export function SchemeEditor({ theme }: { theme: Theme }) {
   };
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    saveScheme(theme, draft, setDraft, setFeedback);
+    void saveScheme(theme, draft, setDraft, setFeedback);
   };
   return h(
     'form',
@@ -36,7 +36,7 @@ export function SchemeEditor({ theme }: { theme: Theme }) {
   );
 }
 
-function saveScheme(
+async function saveScheme(
   theme: Theme,
   draft: Scheme,
   setDraft: (scheme: Scheme) => void,
@@ -51,7 +51,7 @@ function saveScheme(
   )
     return feedback('This scheme name is already in use.');
   const next = { ...draft, id: draft.id || crypto.randomUUID(), name };
-  theme.save(next);
+  if (!(await theme.save(next))) return feedback('Scheme could not be saved.');
   setDraft(next);
   feedback('Saved ' + name + '.');
 }

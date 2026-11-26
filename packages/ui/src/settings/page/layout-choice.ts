@@ -1,4 +1,6 @@
 import { createElement as h } from 'react';
+import type { CSSProperties } from 'react';
+import { panelRegionsFor } from '../../layouts/panels/presets/index.js';
 import type { ColumnCount, PanelLayoutDefinition } from '../../layouts/panels/presets/index.js';
 
 interface ChoiceProps {
@@ -20,8 +22,14 @@ export function LayoutChoice({ layout, selected, choose }: ChoiceProps) {
     }),
     h(
       'span',
-      { className: 'arc-layout-diagram', 'aria-hidden': true },
-      layout.regions.map((region) => h('i', { key: region })),
+      {
+        className: 'arc-layout-diagram',
+        style: { '--arc-preview-columns': layout.columns } as CSSProperties,
+        'aria-hidden': true,
+      },
+      panelRegionsFor(layout).map(({ id }) =>
+        h('i', { key: id, 'data-band': typeof id === 'string' ? '' : undefined }),
+      ),
     ),
     layout.label,
   );

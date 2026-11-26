@@ -1,5 +1,6 @@
 import { useId, createElement as h } from 'react';
 import { IconButton } from '../controls/icon-button.js';
+import { ExpansionButton } from '../controls/expansion-button.js';
 import type { CommandState } from './command-binding.js';
 import { RoundValues } from './round-values.js';
 
@@ -9,9 +10,17 @@ interface ReadoutProps {
   body: string;
   toggle: () => void;
   showMetrics: () => void;
+  reconnect?: () => void;
 }
 
-export function RoundReadout({ state, collapsed, body, toggle, showMetrics }: ReadoutProps) {
+export function RoundReadout({
+  state,
+  collapsed,
+  body,
+  toggle,
+  showMetrics,
+  reconnect,
+}: ReadoutProps) {
   const details = useId();
   return h(
     'div',
@@ -23,10 +32,26 @@ export function RoundReadout({ state, collapsed, body, toggle, showMetrics }: Re
       onClick: showMetrics,
     }),
     h(RoundValues, { state, collapsed, details }),
-    h(IconButton, {
-      icon: collapsed ? 'up' : 'down',
-      label: collapsed ? 'Expand command panel' : 'Collapse command panel',
-      'aria-expanded': !collapsed,
+    roundActions({ collapsed, body, details, toggle, reconnect }),
+  );
+}
+
+function roundActions({
+  collapsed,
+  body,
+  details,
+  toggle,
+  reconnect,
+}: Pick<ReadoutProps, 'collapsed' | 'body' | 'toggle' | 'reconnect'> & { details: string }) {
+  return h(
+    'div',
+    { className: 'arc-round-tools' },
+    reconnect &&
+      h(IconButton, { icon: 'refine', label: 'Reconnect command updates', onClick: reconnect }),
+    h(ExpansionButton, {
+      label: 'command panel',
+      expanded: !collapsed,
+      direction: 'vertical',
       'aria-controls': body + ' ' + details,
       onClick: toggle,
     }),

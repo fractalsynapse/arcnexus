@@ -25,6 +25,7 @@ export const hostAssignmentSchema = z.strictObject({
     .optional(),
   github: z.strictObject({ appId: z.string().min(1), privateKeyFile: local }).optional(),
   image: z.discriminatedUnion('source', [
+    z.strictObject({ ...base, source: z.literal('base') }),
     z.strictObject({
       ...base,
       source: z.literal('registry'),

@@ -1,3 +1,4 @@
+import { matchTopics, topicKey } from '../../../packages/ui/src/controls/topic-matches.js';
 import { fileArea, files, root, state } from './model.ts';
 import type { Revision } from './model.ts';
 import { escape, pill } from './view.ts';
@@ -13,9 +14,7 @@ type TopicMenu = {
 };
 let menu: TopicMenu | undefined;
 
-export function topicKey(topic: string) {
-  return topic.trim().toLowerCase();
-}
+export { topicKey };
 
 export function filterTopics() {
   return picker('filter', state.filters[fileArea()].topics, '');
@@ -167,22 +166,19 @@ function showTopicPopup(input: HTMLInputElement) {
 function renderTopicMatches({ input, picker, list, status }: TopicMenu) {
   const creating = picker.dataset.topicPicker === 'file';
   const selected = creating ? (draft?.selected ?? []) : state.filters[fileArea()].topics;
-  const selectedKeys = new Set(selected.map(topicKey));
   const query = input.value.split(',').at(-1)?.trim() ?? '';
   const key = topicKey(query);
   const catalog = catalogTopics();
-  const matches = [...catalog]
-    .filter(([keyOfTopic]) => !selectedKeys.has(keyOfTopic) && keyOfTopic.includes(key))
-    .map(([, topic]) => topic)
-    .sort((a, b) => a.localeCompare(b));
+  const { matches, alreadySelected } = matchTopics([...catalog.values()], selected, query);
+  matches.sort((a, b) => a.localeCompare(b));
   const rows = matches.map((name, index) => topicOption(list.id, index, name, name));
-  if (creating && key && !catalog.has(key) && !selectedKeys.has(key)) {
+  if (creating && key && !catalog.has(key) && !alreadySelected) {
     rows.push(topicOption(list.id, rows.length, query, `Create “${query}”`, 'arc-topic-create'));
   }
   list.innerHTML = rows.join('');
   status.textContent = matches.length
     ? ''
-    : selectedKeys.has(key)
+    : alreadySelected
       ? 'Topic already selected.'
       : 'No matching topics.';
   input.removeAttribute('aria-activedescendant');

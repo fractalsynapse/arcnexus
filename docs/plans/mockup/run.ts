@@ -225,12 +225,13 @@ export function scopedDiff(
   for (const entry of entries) {
     if (entry.excerpt || !paths.has(entry.path)) paths.set(entry.path, entry);
   }
-  return diffView(label + ' · ' + entries.length + ' checked edit receipts', [...paths.values()].map((entry) => ({
+  const files = [...paths.values()].map((entry) => ({
     path: entry.path,
     lines: entry.excerpt ? readPatch(entry.excerpt, entry.path).find((file) => file.path === entry.path)?.lines ?? [] : [],
     note: entry.truncated ? 'Latest retained checkpoint patch excerpt' :
       entry.excerpt ? 'Latest retained checkpoint patch' : 'No patch text retained for this path.',
-  })), { localPatch: true, action });
+  }));
+  return diffView(label + ' · ' + entries.length + ' checked edit receipts', { files }, { localPatch: true, action });
 }
 
 function scopedReceipts(owner: string, milestone: string | null, activity: string | null) {

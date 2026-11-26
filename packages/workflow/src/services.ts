@@ -1,7 +1,11 @@
 import type { HoldContext } from '../../execution/src/index.js';
 import type { RoundCount } from './round-count.js';
 import type { StandingGoal } from '../../planner/src/inventory.js';
-import type { ArchitectureDecision, Capture } from '../../architecture/src/index.js';
+import type {
+  ArchitectureDecision,
+  Capture,
+  DocumentationSettings,
+} from '../../architecture/src/index.js';
 import { AgentActivityHold } from '../../agent/src/index.js';
 import type { JournalEvent, RunMeasurements } from '../../coordination/src/index.js';
 import type {
@@ -21,7 +25,9 @@ export interface TaskInput {
   goal: string;
   scope?: string;
   standing?: boolean;
-  planning?: 'exploration' | 'objective';
+  planning?: 'exploration' | 'objective' | 'recommendation';
+  documentationDirectories?: string[];
+  guideDraft?: import('../../planner/src/guide-draft.js').GuideDraft;
   architecture?: boolean;
   guide?: string;
   inbox?: { owner: string; question: string };
@@ -36,6 +42,7 @@ export interface Observation {
 export interface TaskQuestion {
   scope: string;
   question: string;
+  review?: import('../../planner/src/objective-review.js').ObjectiveReview;
 }
 
 export interface TaskObserver {
@@ -215,6 +222,7 @@ export interface WorkflowServices {
       session: TaskSession,
       feedback: string | undefined,
       signal: AbortSignal,
+      documentation?: DocumentationSettings,
     ): Promise<ArchitectureDecision>;
   };
   execution: {
@@ -239,6 +247,7 @@ export interface WorkflowServices {
     ): Promise<Candidate>;
   };
   planner?: {
+    proposeDraft?: import('../../planner/src/index.js').Planner['proposeDraft'];
     propose(
       session: TaskSession,
       mode: NonNullable<TaskInput['planning']>,

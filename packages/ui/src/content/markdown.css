@@ -1,0 +1,220 @@
+:is(.arc-app, #arc-preview) .arc-markdown {
+  line-height: 1.6;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1em 0 0.4em;
+  font-size: var(--font-markdown-heading);
+}
+:is(.arc-app, #arc-preview) .arc-markdown h1 {
+  font-size: var(--font-markdown-title);
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(p, ul, ol, blockquote, pre, table) {
+  margin: 0.65em 0;
+}
+:is(.arc-app, #arc-preview) .arc-markdown > :first-child {
+  margin-top: 0;
+}
+:is(.arc-app, #arc-preview) .arc-markdown > :last-child {
+  margin-bottom: 0;
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(ul, ol) {
+  padding-inline-start: 1.6em;
+}
+:is(.arc-app, #arc-preview) .arc-markdown li > p {
+  margin: 0.25em 0;
+}
+:is(.arc-app, #arc-preview) .arc-markdown blockquote {
+  padding-inline-start: 10px;
+  border-inline-start: 3px solid var(--line);
+  color: var(--muted);
+}
+:is(.arc-app, #arc-preview) .arc-markdown table {
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(th, td) {
+  border: 1px solid var(--line);
+  padding: 0.3em 0.5em;
+}
+:is(.arc-app, #arc-preview) .arc-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1em 0;
+}
+:is(.arc-app, #arc-preview) .arc-markdown pre {
+  background: var(--quiet);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font:
+    var(--font-small) / 1.55 ui-monospace,
+    monospace;
+}
+:is(.arc-app, #arc-preview) .arc-markdown :not(pre) > code {
+  background: var(--quiet);
+  border-radius: 3px;
+  padding: 0.08em 0.2em;
+  color: var(--link);
+}
+:is(.arc-app, #arc-preview) .arc-markdown pre code {
+  font: inherit;
+}
+:is(.arc-app, #arc-preview) .arc-markdown a {
+  display: inline;
+  padding: 0;
+}
+:is(.arc-app, #arc-preview) .arc-md-edit {
+  min-width: 0;
+}
+:is(.arc-app, #arc-preview) :is(.arc-mdx, .mdxeditor-popup-container) {
+  --basePageBg: var(--paper);
+  --baseBg: var(--quiet);
+  --baseBgSubtle: var(--quiet);
+  --baseText: var(--muted);
+  --baseTextContrast: var(--ink);
+  --baseBorder: var(--line);
+  --baseBgHover: var(--tint);
+  --baseBgActive: var(--tint);
+  --baseLine: var(--line);
+  --accentText: var(--link);
+  --accentBgActive: var(--tint);
+  --accentSolid: var(--accent);
+}
+:is(.arc-app, #arc-preview) :is(.arc-md-view, .mdxeditor.arc-mdx) {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  min-width: 0;
+}
+:is(.arc-app, #arc-preview) .arc-mdx-tools,
+:is(.arc-app, #arc-preview) .arc-mdx-modes,
+:is(.arc-app, #arc-preview) .arc-mdx-format {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+:is(.arc-app, #arc-preview) .arc-mdx-tools {
+  gap: 7px;
+}
+:is(.arc-app, #arc-preview) .arc-mdx-modes button[aria-pressed='true'] {
+  background: var(--tint);
+  color: var(--link);
+}
+:is(.arc-app, #arc-preview) .arc-mdx-visual {
+  min-block-size: 12em;
+}
+:is(.arc-app, #arc-preview) :is(.arc-md-view, .arc-mdx-visual) {
+  padding: var(--gap, 10px);
+}
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) {
+  overflow: hidden;
+}
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) .cm-editor {
+  background: var(--quiet);
+  color: var(--ink);
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  :is(.cm-gutters, .cm-panels, .cm-tooltip) {
+  background: var(--ground);
+  color: var(--muted);
+  border-color: var(--line);
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  :is(.cm-activeLine, .cm-activeLineGutter, .cm-selectionMatch) {
+  background: var(--tint);
+}
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) .cm-selectionBackground,
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) .cm-content ::selection {
+  background: color-mix(in srgb, var(--link) 22%, var(--quiet));
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  :is(.cm-searchMatch-selected, .cm-matchingBracket) {
+  background: var(--tint);
+}
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) .cm-content {
+  caret-color: var(--link);
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  :is(.cm-cursor, .cm-dropCursor) {
+  border-color: var(--link);
+}
+:is(.arc-app, #arc-preview) :is(.mdxeditor-source-editor, .arc-yaml-raw) .cm-line span {
+  color: inherit;
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  .cm-line
+  :is(.tok-heading, .tok-keyword, .tok-strong, .tok-link, .tok-url, .tok-propertyName, .tok-bool) {
+  color: var(--link);
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  .cm-line
+  :is(.tok-comment, .tok-meta, .tok-punctuation) {
+  color: var(--muted);
+}
+:is(.arc-app, #arc-preview)
+  :is(.mdxeditor-source-editor, .arc-yaml-raw)
+  .cm-line
+  :is(.tok-literal, .tok-string, .tok-number) {
+  color: light-dark(#186640, #92ddb3);
+}
+:is(.arc-app, #arc-preview) textarea.arc-mdx-code {
+  font-family: ui-monospace, monospace;
+}
+:is(.arc-app, #arc-preview)
+  .arc-markdown
+  :is(.hljs-section, .hljs-bullet, .hljs-keyword, .hljs-attr, .hljs-strong) {
+  color: var(--link);
+  font-weight: 650;
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(.hljs-code, .hljs-string, .hljs-template-variable) {
+  color: light-dark(#186640, #92ddb3);
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(.hljs-link, .hljs-literal, .hljs-number) {
+  color: light-dark(#894412, #ffbe86);
+}
+:is(.arc-app, #arc-preview) .arc-markdown :is(.hljs-emphasis, .hljs-comment) {
+  font-style: italic;
+  color: var(--muted);
+}
+:is(.arc-app, #arc-preview) .mdxeditor-select-content {
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--picker-shadow, 0 5px 16px #0b182a32);
+  font: inherit;
+}
+:is(.arc-app, #arc-preview) .mdxeditor-select-content {
+  inline-size: var(--radix-select-trigger-width);
+  min-inline-size: 0;
+}
+:is(.arc-app, #arc-preview) .mdxeditor-select-content [role='option'] {
+  padding: 7px 9px;
+  border-radius: 5px;
+  color: var(--ink);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:is(.arc-app, #arc-preview) .mdxeditor-select-content [role='option'] {
+  cursor: pointer;
+}
+:is(.arc-app, #arc-preview)
+  .mdxeditor-select-content
+  [role='option']:is([data-highlighted], [data-state='checked']) {
+  background: var(--tint);
+  color: var(--link);
+}

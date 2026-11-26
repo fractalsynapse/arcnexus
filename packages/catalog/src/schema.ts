@@ -34,3 +34,9 @@ export const catalogMigration = {
     );
   `,
 };
+
+/** Store the operator's optional source selection with the stable project identity. */
+export const projectDocumentationMigration = {
+  id: 'catalog/documentation-directories',
+  sql: `ALTER TABLE arcnexus_catalog.projects ADD COLUMN documentation_directories jsonb;`,
+};

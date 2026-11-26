@@ -1,37 +1,56 @@
-import { createElement as h } from 'react';
-import { panelColumn } from '../../layouts/page/page-preferences.js';
+import { createElement as h, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
+import { SortableLists } from '../../controls/sortable-lists.js';
+import { panelRegion } from '../../layouts/page/page-preferences.js';
 import type { PagePreferences } from '../../layouts/page/page-preferences.js';
-import { panelLayoutFor } from '../../layouts/panels/presets/index.js';
+import { panelLayoutFor, panelRegionsFor } from '../../layouts/panels/presets/index.js';
+import type { PanelRegion } from '../../layouts/panels/presets/index.js';
 import type { DisplayRegistration } from '../../registry/workspace.js';
 import { ActivePanel } from './active-panel.js';
 
 interface ActiveProps {
   visible: readonly DisplayRegistration[];
   draft: PagePreferences;
-  place: (id: string, region: string) => void;
+  place: (id: string, region: PanelRegion) => void;
   show: (id: string, visible: boolean) => void;
   reorder: (order: string[]) => void;
 }
 
-export function ActivePanels({ visible, draft, place, show, reorder }: ActiveProps) {
-  const choices = panelLayoutFor(draft.columns).regions.map((label, index) => ({
-    label,
-    value: String(index),
-  }));
+export function ActivePanels(props: ActiveProps) {
+  const { visible, reorder } = props;
+  const container = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!container.current) return;
+    const sorter = new SortableLists(container.current, (_list, from, to) => {
+      flushSync(() => reorderPanels(visible, from, to, reorder));
+    });
+    return () => sorter.dispose();
+  }, [visible, reorder]);
   if (!visible.length) return h('p', { className: 'arc-muted' }, 'No active panels.');
   return h(
+    'div',
+    { ref: container },
+    h(PanelRows, props),
+    h('span', { className: 'arc-sr', role: 'status', 'data-sort-status': '' }),
+  );
+}
+
+function PanelRows({ visible, draft, place, show }: Omit<ActiveProps, 'reorder'>) {
+  const choices = panelRegionsFor(panelLayoutFor(draft.columns));
+  return h(
     'ul',
-    { className: 'arc-panel-settings-list' },
-    visible.map((panel, index) =>
+    { className: 'arc-panel-settings-list arc-sort-list', 'data-sortable-list': 'active-panels' },
+    visible.map((panel) =>
       h(ActivePanel, {
         key: panel.id,
         label: panel.label,
-        index,
         choices,
-        value: String(panelColumn(panel, draft)),
-        place: (value) => place(panel.id, value),
+        value: String(panelRegion(panel, draft)),
+        place: (value) => {
+          const choice = choices.find((region) => region.value === value);
+          if (choice) place(panel.id, choice.id);
+        },
         remove: () => show(panel.id, false),
-        move: (next) => reorderPanels(visible, index, next, reorder),
       }),
     ),
   );

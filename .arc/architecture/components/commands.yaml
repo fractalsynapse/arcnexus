@@ -181,7 +181,7 @@ purpose: |
   Architecture and Execution own coherent resolution and enforcement, while
   Workflow owns the phase and activity position.
 
-  Architecture proposals and objectives/goals retain human approval. Ordinary
+  Architecture proposals and objective changes retain human approval. Ordinary
   implementation correction, local check repair and authorized staging integration
   do not add a gate. A real unavailable external prerequisite remains a named
   domain hold. The SDK should convey the exact missing decision or capability

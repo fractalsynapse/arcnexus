@@ -1,18 +1,32 @@
-import type { ReactNode } from 'react';
-import type { ColumnCount } from '../layouts/panels/presets/index.js';
+import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
+import type { ColumnCount, PanelRegion } from '../layouts/panels/presets/index.js';
+import type { TabSection } from '../controls/tabs.js';
 
 export interface DisplayRegistration {
   id: string;
   label: string;
   content: ReactNode;
-  defaultColumn?: number;
+  defaultRegion?: PanelRegion;
 }
 
 export interface Workspace {
   path: string;
   label: string;
+  titleAction?: ReactNode;
   content?: ReactNode;
+  sections?: readonly TabSection[];
   headerAction?: ReactNode;
+  parent?: string;
+  match?: (path: string) => boolean;
+  title?: ComponentType;
+  breadcrumbs?: ReactNode;
+  context?: ReactNode;
+  scope?: ComponentType<PropsWithChildren>;
   defaultColumns?: ColumnCount;
   displays?: readonly DisplayRegistration[];
 }
+
+export type WorkspaceFeature = Pick<
+  Workspace,
+  'titleAction' | 'content' | 'sections' | 'context' | 'scope'
+>;

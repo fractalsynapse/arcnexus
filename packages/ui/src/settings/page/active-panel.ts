@@ -1,31 +1,21 @@
 import { createElement as h } from 'react';
 import { Button } from '../../controls/button.js';
 import { SelectField } from '../../controls/select-field.js';
-import { PanelOrderHandle } from './panel-order-handle.js';
+import { SortHandle } from '../../controls/sort-handle.js';
 
 interface ActivePanelProps {
   label: string;
-  index: number;
   choices: ReadonlyArray<{ label: string; value: string }>;
   value: string;
   place: (value: string) => void;
   remove: () => void;
-  move: (index: number) => void;
 }
 
-export function ActivePanel({
-  label,
-  index,
-  choices,
-  value,
-  place,
-  remove,
-  move,
-}: ActivePanelProps) {
+export function ActivePanel({ label, choices, value, place, remove }: ActivePanelProps) {
   return h(
     'li',
-    { 'data-panel-order': index },
-    h(PanelOrderHandle, { index, label, move }),
+    { 'data-sort-row': '' },
+    h(SortHandle, { label }),
     h('strong', null, label),
     h(SelectField<string>, {
       label: label + ' region',

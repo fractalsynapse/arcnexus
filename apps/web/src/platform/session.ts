@@ -1,41 +1,21 @@
 import { useSyncExternalStore } from 'react';
+import { useBrowserPlatform } from './browser-platform.js';
+import type { Project } from './project-session.js';
+export type { Project } from './project-session.js';
 
-export interface Project {
-  id: string;
-  remote: string;
-  name?: string;
-  revision: string;
-}
-
-type Session = { token?: string; project?: Project };
-
-let session: Session = {};
-const listeners = new Set<() => void>();
-
-export function setSession(value: Session) {
-  session = value;
-  for (const listener of listeners) listener();
-}
-
-export function subscribeSession(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-/** Share the active project and in-memory operator session across workspace routes. */
+/** Share the active project across workspace routes. */
 export function usePlatformSession() {
-  return useSyncExternalStore(subscribeSession, activeSession);
-}
-
-export function activeSession() {
-  return session;
+  const { session } = useBrowserPlatform();
+  return useSyncExternalStore(session.subscribe, session.getSnapshot);
 }
 
 export function projectName(project: Project) {
   return (
+    project.name ??
     project.remote
       .split('/')
       .at(-1)
-      ?.replace(/\.git$/, '') ?? project.id
+      ?.replace(/\.git$/, '') ??
+    project.id
   );
 }

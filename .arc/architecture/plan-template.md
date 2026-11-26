@@ -55,7 +55,7 @@ Director call is needed for same-owner repair.
 The director controls initial sequencing and changes after explicit escalation or
 final independent rejection. Link accepted supplier work or place distinct
 supplier work before its dependent. Revisions preserve completed outcomes and
-original acceptance. Human approvals concern objectives, goals and architecture.
+original acceptance. Human approvals concern objectives and architecture.
 Unresolved external prerequisites retain named holds without granting authority.
 Record position, check outcomes and evidence through the host. Keep a
 brief simplification ledger naming removals, reuse and any added responsibility

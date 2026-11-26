@@ -1,0 +1,122 @@
+---
+id: aafe513737dcc8aca0a7e7d61e1f1a9953197ffba170b09ab25682c83418b00b
+mapping: mapped
+revision: 108414f9544b267f9de4595c9fc832fc924f189d
+goals:
+  - id: recover-reviewed-steward-holds
+    status: active
+  - id: recover-moved-staging
+    status: active
+---
+
+# Human objective
+
+## Exact submission
+
+```text
+Turn the retained parity incident into durable prevention goals. Keep historical failures and observed results in the journal and mapping report. Preserve all existing goal files unless a narrowly scoped additional success measure is essential.
+
+Define an outcome for recovering a steward that cannot complete a criterion after independent review. Direction should receive the exact diagnostic and retained check or edit evidence, preserve the issue, checkpoint and original acceptance, and be able to split an oversized correction into sequential runnable contributions. Success measures should cover eventual progress from a repairable hold and a bounded, explicit stop for a repeated hold or a genuine human or external prerequisite.
+
+Define an outcome for staging moving after a task has prepared its branch. Preserve the issue, checked bytes and human answers. Recover only against newly captured ownership, base and acceptance. Fresh checks and independent review should govern the final candidate, and an uncertain or outdated GitHub publication should be reconciled without creating a second delivery. Success measures should exercise a preserved checkpoint, a moved staging base, and the refusal of stale approval.
+
+Use the retained-parity incident as motivation and cite the charter and existing project contracts. Keep each goal owner-free, with proposed behavior and observable measures.
+```
+
+## Planner interpretation
+
+Propose two owner-free prevention goals and preserve all six existing goal files. The retained-parity incident motivates correction and staging-recovery outcomes; historical failures and results remain journal and mapping evidence. Run 9 supports checkpoint recovery, not the proposed outcomes. The incident journal was not available in the captured files, so no additional incident details are asserted.
+
+- Source · [docs/charter.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/docs/charter.md)
+
+```text
+The architect owns purpose, boundaries, and accepted interfaces. A director turns
+a goal into a sequence of accountable milestones. Component stewards produce the
+changes. The host captures and enforces authority, records evidence, and carries
+an independently verified candidate through the configured delivery path.
+Differences between steward claims, observed checks, review and integration stay
+visible. A candidate cannot grant itself permission or weaken its active acceptance.
+```
+
+- Source · [docs/dev.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/docs/dev.md)
+
+```text
+The Director starts
+the task and the final Reviewer can send rejected work back to Direction through
+the [Agent loop](../packages/agent/contract.md).
+```
+
+- Source · [packages/direction/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/direction/contract.md)
+
+```text
+Stewards can propose corrections and escalations. The
+director decides sequencing and preserves the original acceptance and authority.
+```
+
+- Source · [packages/direction/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/direction/contract.md)
+
+```text
+| DI-7 | A failed step produces a correction milestone for the same owner with a stated diagnosis; no new state, retry counter or recovery path appears. |
+```
+
+- Source · [packages/verification/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/verification/contract.md)
+
+```text
+Route a rejected criterion and its evidence to the accountable
+owner through direction.
+```
+
+- Source · [packages/verification/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/verification/contract.md)
+
+```text
+Bind the verdict to the candidate, captured acceptance, checks and environment.
+Reuse evidence only when those inputs match.
+```
+
+- Source · [packages/coordination/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/coordination/contract.md)
+
+```text
+Retain issue and checkpoint identities and the last committed
+activity position in the same journal.
+Transactional writes reject stale versions and are idempotent for identical content.
+Events are append-only observations.
+```
+
+- Source · [packages/team/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/team/contract.md)
+
+```text
+Catalog changes require a new
+capture before they can affect membership or ownership.
+```
+
+- Source · [packages/delivery/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/delivery/contract.md)
+
+```text
+Delivery opens one staging pull request for the independently
+accepted final tree. Checkpoint availability confers no integration authority.
+```
+
+- Source · [packages/delivery/contract.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/packages/delivery/contract.md)
+
+```text
+Inspect provider state after an uncertain effect before another
+attempt. Preserve the report and candidate if delivery cannot finish.
+```
+
+- Source · [docs/release/verification.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/docs/release/verification.md)
+
+```text
+If the staging base moves before an unmerged publication, ArcNexus refuses to reuse the previous acceptance because it covers the earlier tree.
+```
+
+- Source · [.arc/objectives/4b396d5ebce78f810a14eba618d295f2b2be785af74943398b2abaa79e042015.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/.arc/objectives/4b396d5ebce78f810a14eba618d295f2b2be785af74943398b2abaa79e042015.md)
+
+```text
+Emphasize the charter’s distinction between steward claims, observed checks, independent review, and integration. Keep those observations separate, and preserve the architect’s authority over accepted boundaries.
+```
+
+- Source · [.arc/objectives/cf0325dfeb4552eafd48d97b0f5976b3ecf4dd9fbe7bcc0e7117b97ef1aac830.md](https://github.com/fractalsynapse/arcnexus/blob/108414f9544b267f9de4595c9fc832fc924f189d/.arc/objectives/cf0325dfeb4552eafd48d97b0f5976b3ecf4dd9fbe7bcc0e7117b97ef1aac830.md)
+
+```text
+Success means focused tests cover the three citation types and the output remains traceable without placing results or component owners in goal files. Keep existing goals and unrelated behavior in scope only for comparison.
+```

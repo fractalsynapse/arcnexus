@@ -11,7 +11,9 @@ const fields = {
 const input = createInterface({ input: process.stdin });
 let database: Client | undefined;
 
-async function open(connectionString: string, project: string) {
+type Opening = Extract<SessionRequest, { kind: 'open' }>;
+
+async function open({ connectionString, project }: Opening) {
   database = new Client({ connectionString });
   database.once('error', () => input.close());
   await database.connect();
@@ -31,7 +33,7 @@ async function open(connectionString: string, project: string) {
 
 async function handle(message: SessionRequest): Promise<SessionResult> {
   if (message.kind === 'open') {
-    await open(message.connectionString, message.project);
+    await open(message);
     return { rows: [], changes: 0 };
   }
   if (!database) throw new Error('PostgreSQL writer session is unavailable');

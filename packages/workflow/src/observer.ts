@@ -1,4 +1,5 @@
 import { RunMeasurements, type JournalEvent } from '../../coordination/src/index.js';
+import { objectiveReviewReady } from '../../planner/src/objective-review.js';
 import type {
   Observation,
   RoundOutcome,
@@ -24,7 +25,10 @@ export class RunObserver implements TaskObserver {
   /** Bind each session's questions and retain the original foreground entry time. */
   admittedSession(session: TaskSession) {
     session.ask = (question, signal, gate) => {
-      const prompt = { phase: 'question' as const, message: question };
+      const prompt = {
+        phase: 'question' as const,
+        message: gate?.review ? objectiveReviewReady : question,
+      };
       session.record(prompt);
       if (!session.listen) this.progress(prompt);
       signal.throwIfAborted();

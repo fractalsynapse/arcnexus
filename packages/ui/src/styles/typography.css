@@ -1,0 +1,29 @@
+:is(.arc-app, #arc-preview) {
+  --font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --font-body: 0.8125rem;
+  --font-small: 0.75rem;
+  --font-label: 0.6875rem;
+  --font-page-title: 1.5625rem;
+  --font-panel-title: 1.0625rem;
+  --font-section-title: 0.875rem;
+  --font-markdown-title: 1.1875rem;
+  --font-markdown-heading: 1rem;
+  font: 400 var(--font-body) / 1.45 var(--font-family);
+}
+
+@media (min-width: 900px) {
+  :is(.arc-app, #arc-preview) {
+    --font-body: 1rem;
+    --font-small: 0.875rem;
+    --font-label: var(--font-small);
+    --font-page-title: 1.875rem;
+    --font-panel-title: 1.3125rem;
+    --font-section-title: 1.0625rem;
+    --font-markdown-title: 1.5rem;
+    --font-markdown-heading: 1.25rem;
+  }
+  :is(.arc-app, #arc-preview)
+    :is(small, .arc-mdx .cm-editor, .arc-diff-content pre, pre.arc-diff-content) {
+    font-size: var(--font-small);
+  }
+}

@@ -38,7 +38,7 @@ purpose: |
   the ordinary checked-edit and independent verification lifecycle; model-authored
   proposals do not authorize their own application.
 
-  ## Human-objective planning and exploratory mapping
+  ## Objective recommendations, explicit submissions and exploration
 
   An explicit objective starts with the human's verbatim submission. Planner
   considers how it relates to existing objectives, accepted goals, current sources
@@ -56,18 +56,20 @@ purpose: |
   retained dialogue instead of asking again or treating a summary as the original
   answer. Blank lines and qualifications can matter to the meaning of the response.
 
-  Exploratory planning starts without a new human objective. It studies the captured
-  charter, development direction, accepted goals, architecture, implementation and
-  applicable observations. Its job is to map and improve the existing direction,
+  Exploratory planning starts from captured documentation, accepted objectives
+  and goals, architecture, implementation and applicable observations. Its job is to map and improve the existing direction,
   including extracting durable outcomes from approved project sources. It can
   compare overlaps and missing measures and propose a clearer inventory. Existing
   code is evidence of behavior, not automatic approval of every historical design
   choice or a reason to preserve an accidental implementation constraint as a goal.
 
-  Both strategies use the same planning service and ordinary application lifecycle.
-  They differ in the intent being assessed, not in their authority or persistence
-  mechanism. A bare assessment can legitimately conclude that the inventory needs
-  no change. An explicit objective can remain unresolved while its exact submission
+  Recommendation mode uses the project's configured documentation directories
+  for discovery. An empty list permits repository-wide discovery. Consider explicit
+  file or directory references in the instruction and return cited objective drafts
+  for human review. Approved drafts enter goal alignment in the same Plan run.
+
+  The modes use the same planning service and ordinary application lifecycle.
+  A bare assessment can legitimately conclude that the inventory needs no change. An explicit objective can remain unresolved while its exact submission
   is preserved. Do not invent goal changes merely because the command ran or force
   a new objective to appear fully mapped before the human has settled its meaning.
 
@@ -160,37 +162,31 @@ purpose: |
 
   ## Approval and record delivery
 
-  The human reviews one understandable summary and the exact proposed objective/goal
-  diff. Model-authored refinements and changed goal bytes require that decision.
-  The host retains the proposal, baseline, question and complete answer in the
-  existing journal. An unknown response is not approval, and an absent response
-  preserves a durable pending decision for restart. A readable line diff should
-  let the human see the actual aspirations and measures being changed, not merely
-  the planner's description of its intent.
+  Apply the Planner contract's objective review and guide delivery rules.
+  Present the exact objective diff and preserve selected drafts, edits and
+  feedback in the durable question path. Goal changes remain visible in the
+  report and go through independent review and verified staging.
 
   The verbatim human submission is already authorized input. Preserve it accurately,
   including explicit refinement references and dialogue. A model-authored reformulation
-  is a separate proposal and cannot erase the original. Declining proposed goal
-  changes does not make the submission disappear. Where recording the original
-  objective still needs delivery, retain that distinct disposition rather than
-  assuming every decline means no source record can be written.
+  is a separate proposal. Retain the exact original text and the decision even
+  when a recommended or revised objective is declined.
 
-  Approved changes use the ordinary task lane and checked source writes. Planner
+  Guide delivery uses the ordinary task lane and checked source writes. Planner
   does not add a privileged model-edit path or a second publication workflow for
   Markdown. Each acknowledged file has a checked preimage and retained receipt.
-  Independent review compares the candidate with the exact approved records and
-  human evidence. Delivery then observes the configured staging effect. A report
+  Independent review compares the candidate with the retained guide changes
+  and the human evidence for authorized objectives. Delivery then observes the configured staging effect. A report
   that describes approval cannot stand in for the actual host-held receipt.
 
   Independent rejection returns the specific findings to Planner for correction.
-  If the guide bytes change, present the new exact diff for approval. If a routine
-  implementation correction remains within already approved intent, use the normal
-  engineering route without manufacturing another human gate. Preserve original
+  If the objective bytes change, present the new exact objective diff for
+  approval. Goal-only and routine implementation corrections use normal repair. Preserve original
   acceptance, prior observations and acknowledged edits. The planner must not weaken
   a measure to make the rejected candidate appear acceptable.
 
   Changed proposal content, intent or relevant baseline must remain reviewable.
-  Do not silently rebase an approval onto different goal text after staging moves.
+  Validate objective approval against the exact covered bytes and baseline.
   The human can approve a concrete reconciled proposal, while the host validates
   expected source identities before application. A candidate-side note claiming
   that an earlier answer applies is not itself authority. Keep the same logical
@@ -229,9 +225,9 @@ purpose: |
   interrupted publication.
 
   No-change and pending decisions have different outcomes. A justified completed
-  assessment can end without a merge; an unanswered exact guide proposal remains
-  unfinished and resumable. A declined exploration change can preserve the current
-  inventory while recording the decision. Reports and CLI output should explain
+  assessment can end without a merge. An unanswered objective review remains
+  unfinished and resumable. A declined recommendation batch retains the decision
+  and closes that session. Reports and CLI output should explain
   which occurred. Do not turn an approval wait into a technical failure or count
   an interrupted attempt as a completed refinement round.
 
@@ -250,8 +246,8 @@ purpose: |
   relevant retained reports and primary project sources. Give enough context for
   the researcher to return a useful full answer, then preserve its applicability
   and unresolved questions. External findings are evidence for a proposal; they
-  cannot authorize a new goal, override the human's intent or replace the exact
-  approval of changed guide bytes.
+  cannot override human intent or replace the exact approval of changed
+  objective bytes.
 
   Planner can identify that an objective needs architectural work without deciding
   that work itself. The Architect phase owns the accepted operating model and
@@ -296,7 +292,7 @@ purpose: |
   provider needs the actual raw Planner response shape, including required ratings,
   comparison, changes, links and sources. Exploration rates the captured inventory;
   an empty inventory and a populated one need different valid fixture responses.
-  Candidate correction should preserve exact approved bytes and real record paths.
+  Candidate correction should preserve authorized objective bytes and record paths.
   Do not force product behavior to accept a malformed test object or report a
   compiler failure as the desired planning red.
 
@@ -317,9 +313,8 @@ purpose: |
   result or require the current worktree implementation forever. Direction can
   choose the appropriate owners each time that outcome is assessed.
 
-  If the human replies that some proposed goals are useful but others need changes,
-  preserve that feedback and produce a revised reviewable proposal through the
-  supported dialogue. Do not interpret conversational approval of an idea as
+  If the human replies that some proposed objectives are useful but others need
+  changes, preserve that feedback and produce a revised reviewable proposal. Do not interpret conversational approval of an idea as
   approval of unseen exact bytes or silently apply only a guessed subset of the
   batch. The accepted inventory stays intact until its actual decision, while the
   original objective and complete clarification remain available for continuation.
@@ -345,7 +340,7 @@ purpose: |
   The deeper measure is a later round that demonstrably uses previous findings
   to improve direction. A missing recovery requirement can become a clarified
   measure, an overlapping goal can be consolidated and an obsolete implementation
-  assumption can be removed. Those refinements still need human approval. The
+  assumption can be removed. Goal refinements go through independent review. The
   following Director assessments and engineering work should consume the accepted
   result, giving the planner evidence of whether the refined goal actually helped.
 
@@ -367,8 +362,10 @@ objectives:
   - measure: Each active goal has observable measures and objective or project
       source links.
 constraints:
-  - failure: A standing goal grants ownership or changes active inventory without
-      human approval.
+  - failure: A standing goal grants ownership or enters the active inventory
+      without independently verified staging delivery.
+  - failure: A model-authored objective change enters delivery without human
+      authorization for its exact bytes and baseline.
 owns:
   - packages/planner
   - .arc/goals
@@ -379,7 +376,7 @@ activities:
     profile: gpt-astra
     instructions:
       - |
-        Investigate a specific uncertainty in objective formation, goal comparison or exploratory mapping. Read the approved charter and development direction, existing objectives and goals, and the relevant implementation and findings. Distinguish a human's desired outcome from a model's suggested interpretation, and distinguish a durable success measure from an observed test result.
+        Investigate a specific uncertainty in objective formation, goal comparison or exploratory mapping. Read relevant captured project documentation, existing objectives and goals, and the relevant implementation and findings. Distinguish a human's desired outcome from a model's suggested interpretation, and distinguish a durable success measure from an observed test result.
 
         Research should identify a useful missing capability, conflict, ambiguity or measure rather than manufacture new goals to keep a round busy. Consider whether multiple existing goals express the same aspiration and whether a proposed goal would remain valid if components were reorganized. Source observations belong in the report, not embedded as results in the goal.
 
@@ -393,7 +390,7 @@ activities:
     profile: gpt-sol
     instructions:
       - |
-        Document the two goal-planning strategies and their shared approval lifecycle. Explicit task plan records the original human objective and may clarify it; bare task plan explores the accepted project direction and current implementation. Both compare existing goals, propose concrete aspirations with measurable success, and preserve a no-change assessment as a real analytical outcome. Do not imply that every exploration invents a human objective.
+        Document the Planner contract's three modes, their source evidence and the shared delivery lifecycle. Explain the human objective review and independent goal review using examples from explicit fixtures.
 
         Show the actual objective, goal and Planner response formats. Keep goals independent of ownership and free of results, logs or evidence. Explain priority ordering, relationships, proposed removals and how the next round consumes earlier findings without copying those findings into durable aspirations. Clarification is a dialog with retained full answers, not an automatic substitute for human approval.
 
@@ -412,11 +409,11 @@ activities:
     profile: gpt-sol
     instructions:
       - |
-        Test the real Planner service with explicit charter, development, objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
+        Test the real Planner service with documentation in different repository layouts and with captured objective and goal fixtures. Exercise exploration without a human objective, explicit objective capture with verbatim original text, clarification and full answer reuse, conflict comparison, priority changes, deletion, no-change and malformed response repair. Assert the actual raw Planner fields instead of a fabricated kind discriminator.
 
         Include an exploration regression that fails if an internal refinement description is saved as a human objective. Reopen retained state and confirm a completed assessment is reused only for its actual identity, while a new round still invokes Planner. Use distinct prior and resumed findings so an unchanged generic summary cannot satisfy evidence-consumption assertions.
 
-        Validate exact proposed bytes, approval baseline, declined/pending decisions and refusal to apply unapproved guides. Inspect resulting goals for owner assignments and results masquerading as success measures. A fake Planner.propose proves its consumer, not Planner mode selection or persistence; use the real service for those obligations with an isolated controlled actor. Establish the meaningful red and mapped checks without demanding the later Implementation already pass.
+        Validate exact proposed bytes, approval baseline, declined or pending decisions and refusal to apply unauthorized objectives. Inspect resulting goals for owner assignments and results masquerading as success measures. A fake Planner.propose proves its consumer, not Planner mode selection or persistence; use the real service for those obligations with an isolated controlled actor. Establish the meaningful red and mapped checks without demanding the later Implementation already pass.
     operations:
       - read-file
       - list-files
@@ -443,7 +440,7 @@ activities:
       - |
         Implement objective and goal assessment through the existing Planner public service and Workflow lane. Select exploration when there is no real human objective and objective mode only for the submitted human text. Preserve the original submission, full clarification answers and the exact proposal identity. Do not synthesize an objective from an internal phase prompt merely to reuse a convenient API.
 
-        Parse and validate the actual Planner response, returning exact errors to the same activity. Keep ratings, comparisons, source relationships and changes complete. Goals remain aspirations and success measures without owners or results. Pending or declined proposals cannot leak edits into the active inventory; exact approval and verified delivery precede adoption.
+        Parse and validate the actual Planner response, returning exact errors to the same activity. Keep ratings, comparisons, source relationships and changes complete. Goals remain aspirations and success measures without owners or results. Pending or declined objective proposals stay outside the active inventory. Require exact objective authorization and independently verified delivery of guide edits.
 
         Reuse Coordination for durable position and answers and the existing normal task workflow for implementation/delivery. Correct owned fixtures, mode selection and persistence tests locally, including when earlier Testing is unavailable. Do not add another planner scheduler, approval database or direct protected-write path. If a missing operation or archive root is needed, propose the concrete architecture mapping rather than granting it in prose.
     operations:
@@ -488,13 +485,13 @@ activities:
     profile: gpt-sol
     instructions:
       - |
-        Assess the supplied human objective in objective mode, or map the captured project in exploration mode when no objective was submitted. Read the charter, development direction, approved objective index, complete goal inventory, actual implementation and relevant prior round findings. A synthetic internal phase description is not human input and must never be persisted as an objective.
+        Assess the supplied human objective or map the standing inventory as directed by the assigned mode. Read relevant captured documentation, the objective index, complete goal inventory, actual implementation and applicable prior findings. A synthetic internal phase description is not human input and must never be persisted as an objective.
 
         Compare and rate existing goals against direction and implementation, identifying conflicts, overlap, missing measures and useful omissions. Goals contain aspirations and abstract or concrete success measures, with no component owners, prescribed team, execution results or evidence fields. Preserve the human's original submitted words separately from proposed refinements. Explain the relationship between every proposed objective and its goals, including removals and unresolved ambiguity.
 
         Return the exact host-supplied Planner response shape with summary, ratings, comparison, changes, links and sources. Use complete content for proposed files and the defined deletion representation; do not add a guessed kind discriminator. A justified no-change assessment still analyzes the actual inventory. Ask a focused clarification when human intent is needed, retaining the complete answer across restart.
 
-        This activity cannot write guide files directly or approve them. The host retains the exact proposal and baseline for human approval and delivers accepted changes through the ordinary workflow. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
+        Return proposals through the host. The host retains the exact objective decision and delivers eligible guide changes through checked edits, independent review and verified staging. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
     operations:
       - read-file
       - list-files

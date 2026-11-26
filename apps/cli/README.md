@@ -165,22 +165,24 @@ evidence. The report links findings to the captured revision. Use
 Planner needs clarification, answer at the terminal or rerun the exact
 submission to continue.
 
+Use `arcnexus task plan --recommend-objectives [<focus>]` to discover
+objective candidates from the captured repository's documentation. Optional focus
+can reference files or directories.
+
 To refine a previous objective, begin the submitted text with
-`Refines <full objective record ID>` on its own line. The record ID is the
-filename without the `.md` extension. The new submission retains the original
-objective identity and links to the preceding record. An unresolved objective
-can be recorded while its goal mapping stays open.
+`Refines <full objective record ID>` on its own line. Use the record's stable
+ID. The new submission retains the original objective identity and links to
+the preceding record. An unresolved objective can be recorded while its goal
+mapping stays open.
 
 Planner reports source alignment and revision-bound run observations in its
 mapping. Goal files express requirements and success measures. Observed checks,
 review and staging delivery stay in the task journal and its protected artifacts.
 
-The gateway displays the exact proposed goal changes for approval. Reply
-`approve` to authorize the shown bytes, or `skip` to keep the current inventory.
-The submitted objective can be recorded in either case. Approved Markdown
-changes pass through checked edits, candidate checks, independent review and
-verified staging integration. Use `--json` for the structured result and artifact
-locations.
+The gateway presents the exact objective diff for a human decision. Accepted
+objectives feed goal alignment in the same session. Goal changes go through
+checked edits, candidate checks, independent review and verified staging.
+Use `--json` for the structured result and artifact locations.
 
 ## Assess architecture
 

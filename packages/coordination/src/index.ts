@@ -29,11 +29,18 @@ export { readImportedTimeline } from './postgres/read-timeline.js';
 export { hasPlanRevision } from './postgres/plan-records.js';
 export { planExecutionDataPlugin } from './postgres/plan-data.js';
 export { reconcileHosted } from './postgres/reconcile.js';
+export {
+  documentationDiscoveryMigration,
+  retireDocumentationDiscoveryMigration,
+} from './postgres/documentation-schema.js';
 export { hostedCoordinationMigration } from './postgres/hosted-schema.js';
 export { hostSessionMigration } from './postgres/session-schema.js';
 export { workflowRuntimeMigration } from './postgres/workflow-runtime-schema.js';
 export { workflowReceiptsMigration } from './postgres/workflow-receipts-schema.js';
-export { workflowRequestsMigration } from './postgres/workflow-requests-schema.js';
+export {
+  workflowRequestsMigration,
+  workflowDocumentationMigration,
+} from './postgres/workflow-requests-schema.js';
 export {
   operationEvidenceDataPlugin,
   readOperationEvidence,

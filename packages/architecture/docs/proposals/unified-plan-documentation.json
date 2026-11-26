@@ -1,0 +1,33 @@
+{
+  "status": "proposed; not applied; no approval asserted",
+  "baseline": "92b3fe4e86e0b4a99185aa66d831af0545942444",
+  "intentSha256": "d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c",
+  "patchSha256": "524312433f0be06b90d71e7caa07790f09f8fb0cab0e103f7979217e54d3336e",
+  "changes": [
+    {
+      "path": "apps/cli/contract.md",
+      "before": "ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b",
+      "after": "26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2"
+    },
+    {
+      "path": "docs/interface/arcnexus-project.md",
+      "before": "cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886",
+      "after": "3576083bae5a4446adda961474204b37531bf2dad12ca1fced970bccb9331f37"
+    },
+    {
+      "path": "docs/interface/registry.yaml",
+      "before": "9d36118b244db9249765d3d3e600e3d7696cc733232a0dda9b125e986fd91b6e",
+      "after": "52930461fcd3f1e8c8cca9710ab46fb823aec5cdfb1fa7e31437832b90f549a8"
+    },
+    {
+      "path": "packages/planner/contract.md",
+      "before": "28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d",
+      "after": "24c22aadcbad4100afafd8d4e41dab1723acd06560696e0eb6fbd0e68e2bca53"
+    },
+    {
+      "path": "packages/workflow/contract.md",
+      "before": "63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5",
+      "after": "1fc7557dd5b85f39c17c85ba8d0cad55bd4fda8a9af5a32a4e00d0cf2195daf9"
+    }
+  ]
+}

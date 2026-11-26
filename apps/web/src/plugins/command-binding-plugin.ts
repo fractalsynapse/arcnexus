@@ -1,9 +1,12 @@
 import type { Context } from 'cordis';
 import type { CommandBinding } from '../../../../packages/ui/src/index.js';
+import type { GuideDraft } from '../../../../packages/planner/src/guide-draft.js';
+
+export type WebCommands = CommandBinding & { saveGuide?(draft: GuideDraft): Promise<void> };
 
 declare module 'cordis' {
   interface Context {
-    webCommands: CommandBinding;
+    webCommands: WebCommands;
   }
 }
 

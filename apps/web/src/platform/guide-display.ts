@@ -1,63 +1,88 @@
-import { createElement as h, useState } from 'react';
-import { Button } from '../../../../packages/ui/src/index.js';
+import { createElement as h, useDeferredValue, useState } from 'react';
+import { GuideFilters, type GuideFilter } from './guide-filters.js';
+import { GuideList } from './guide-list.js';
+import { guideRelativePath, type Guide, type GuideCollection } from './guide.js';
+import { deliveredPlanRevision, usePlanResource, type PlanOutcome } from './plan-resource.js';
 import { useResource } from './resource.js';
-import { usePlatformSession } from './session.js';
 
-type Guide = { id: string; path: string; priority?: number };
-export type GuideKind = 'objectives' | 'goals';
+const initial: GuideFilter = {
+  kind: 'goals',
+  order: 'priority',
+  search: '',
+  topics: [],
+  changed: false,
+};
 
-/** Mount one guide collection independently of the other Plan displays. */
-export function GuideDisplay({ kind }: { kind: GuideKind }) {
-  const { token, project } = usePlatformSession();
-  const [selected, select] = useState<{ project: string; id: string }>();
-  const base = project ? '/projects/' + project.id + '/' + kind : undefined;
-  const selection = useResource<{ revision?: string }>(
-    project ? '/projects/' + project.id + '/plan-executions/current' : undefined,
-    token,
-  );
-  const revision = project ? '?revision=' + (selection.value?.revision ?? project.revision) : '';
-  const collection = useResource<{ entries: Guide[] }>(
-    base && selection.value && base + revision,
-    token,
-  );
-  const detailPath =
-    base && selected && selected.project === project?.id
-      ? base + '/' + encodeURIComponent(selected.id) + revision
-      : undefined;
-  const detail = useResource<{ content: string }>(detailPath, token);
-  if (!project) return h('p', null, 'Select a project to view ' + kind + '.');
-  if (selection.error) return h('p', { role: 'alert' }, selection.error);
-  if (collection.error) return h('p', { role: 'alert' }, collection.error);
-  if (!collection.value) return h('p', { role: 'status' }, 'Loading ' + kind + '…');
-  return h(GuideEntries, {
-    entries: collection.value.entries,
-    select: (id) => select({ project: project.id, id }),
-    detail,
-    kind,
-  });
-}
-
-function GuideEntries({
-  entries,
-  select,
-  detail,
-  kind,
-}: {
-  entries: Guide[];
-  select(id: string): void;
-  detail: { error?: string; value?: { content: string } };
-  kind: GuideKind;
-}) {
+/** Mount the visible collection and keep guide bodies behind the file route. */
+export function GuideDisplay() {
+  const plan = usePlanResource();
+  const { project } = plan;
+  const [filter, update] = useState(initial);
+  const { files, changed, error } = useGuideCollection(plan, filter);
+  if (!project) return h('p', null, 'Select a project to view Plan files.');
+  const entries = files.value?.entries ?? [];
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    h(
-      'ul',
-      null,
-      entries.map(({ id }) => h('li', { key: id }, h(Button, { onClick: () => select(id) }, id))),
-    ),
-    !entries.length && h('p', null, 'No ' + kind + ' at the selected revision.'),
-    detail.error && h('p', { role: 'alert' }, detail.error),
-    detail.value && h('pre', { className: 'arc-guide-content' }, detail.value.content),
+    h(GuideFilters, {
+      filter,
+      topics: [...new Set(entries.flatMap((entry) => entry.topics ?? []))].sort(),
+      update,
+    }),
+    error && h('p', { role: 'alert' }, error),
+    files.value
+      ? h(GuideList, {
+          entries: visibleGuides(entries, filter, changed),
+          kind: filter.kind,
+          project: project.id,
+          revision: files.value.revision,
+          changed,
+        })
+      : !error && h('p', { role: 'status' }, 'Loading Plan files…'),
   );
+}
+
+function visibleGuides(entries: Guide[], filter: GuideFilter, changed: ReadonlySet<string>) {
+  return entries
+    .filter(
+      (entry) =>
+        filter.topics.every((topic) => entry.topics?.includes(topic)) &&
+        (!filter.changed || changed.has(entry.path)),
+    )
+    .sort((left, right) => compare(left, right, filter.order));
+}
+
+function compare(left: Guide, right: Guide, order: GuideFilter['order']) {
+  const alphabetical = guideRelativePath(left).localeCompare(guideRelativePath(right));
+  if (order === 'name') return alphabetical;
+  if (order === 'updated')
+    return (right.updated ?? '').localeCompare(left.updated ?? '') || alphabetical;
+  return (left.priority ?? Infinity) - (right.priority ?? Infinity) || alphabetical;
+}
+
+function useGuideCollection(
+  {
+    project,
+    root,
+    history,
+    recorded,
+    execution,
+    plan,
+    refresh,
+  }: ReturnType<typeof usePlanResource>,
+  filter: GuideFilter,
+) {
+  const search = useDeferredValue(filter.search);
+  const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh, recorded?.attempt);
+  const delivered = deliveredPlanRevision(outcome.value);
+  const revision = delivered ?? recorded?.revision ?? (!execution ? project?.revision : undefined);
+  const query = new URLSearchParams({ revision: revision ?? '', ...(search.trim() && { search }) });
+  const files = useResource<GuideCollection>(
+    root && history.value && revision ? root + '/' + filter.kind + '?' + query : undefined,
+  );
+  return {
+    files,
+    changed: new Set(outcome.value?.changedPaths),
+    error: history.error ?? files.error ?? outcome.error,
+  };
 }

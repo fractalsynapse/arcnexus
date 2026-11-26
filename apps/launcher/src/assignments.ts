@@ -4,7 +4,10 @@ import { readServerEvents } from '../../../packages/foundation/src/index.js';
 import { hostAssignmentSchema } from './host-assignment.js';
 import { startHost } from './host-runtime.js';
 
-const notice = hostAssignmentSchema.pick({ project: true, revision: true });
+const notice = z.strictObject({
+  project: z.uuid(),
+  revision: hostAssignmentSchema.shape.revision,
+});
 const identity = ({ project, revision }: z.output<typeof notice>) => project + '/' + revision;
 
 /** Match only a project identity and revision approved on this machine. */

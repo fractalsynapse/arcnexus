@@ -44,6 +44,8 @@ interface NativeRecord {
   outcome?: unknown;
 }
 
+type MeasuredAttempt = { run: number; startedAt: number; lastAt: number; ended: boolean };
+
 /** Derive live or replayed accounting from canonical events without another persistent store or budget. */
 export class RunMeasurements {
   private readonly profiles = new Map<string, Profile>();
@@ -51,7 +53,12 @@ export class RunMeasurements {
   private sequence?: bigint;
   private startedAt: number | null = null;
   private endedAt: number | null = null;
+  private attempt?: MeasuredAttempt;
+  private priorProcessingMs = 0;
   private historicalUnmeasuredActivations = 0;
+
+  /** Optionally expose a cumulative snapshot at each actual provider usage report. */
+  constructor(private readonly report?: (frame: JournalEvent, usage: Usage) => void) {}
 
   /** Consume ordered durable events once, retaining missing measurements as unknown. */
   accept(frame: JournalEvent) {
@@ -59,16 +66,36 @@ export class RunMeasurements {
     if (this.sequence !== undefined && sequence <= this.sequence) return false;
     this.sequence = sequence;
     const at = frame.timestamp === null ? null : Date.parse(frame.timestamp);
-    if (this.startedAt === null && at !== null) this.startedAt = at;
     const record = frame.observation as NativeRecord | null;
-    if (record?.invocation) this.startedAt = Date.parse(record.invocation.startedAt);
-    this.endedAt = record?.outcome && frame.parent === undefined ? at : null;
+    this.measureWall(frame, at, record);
     if (record?.nativeInvocation) this.historicalUnmeasuredActivations++;
     if (record?.nativeStarted) this.start(record.nativeStarted, at, frame.run);
-    if (record?.nativeEvent?.event?.type === 'turn.completed') this.usage(record.nativeEvent);
+    if (record?.nativeEvent?.event?.type === 'turn.completed' && this.usage(record.nativeEvent))
+      this.report?.(frame, totalUsage([...this.profiles.values()].map(({ usage }) => usage)));
     if (record?.nativeFinished) this.finish(record.nativeFinished);
     if (record?.outcome) this.interrupt(frame.run);
     return true;
+  }
+
+  /** Preserve the calendar span and measure processing only during foreground attempts. */
+  private measureWall(frame: JournalEvent, at: number | null, record: NativeRecord | null) {
+    if (this.startedAt === null && at !== null) this.startedAt = at;
+    if (frame.parent !== undefined || at === null) return;
+    const invoked = record?.invocation ? Date.parse(record.invocation.startedAt) : at;
+    const start = Number.isFinite(invoked) ? Math.min(at, invoked) : at;
+    this.startedAt = Math.min(this.startedAt ?? start, start);
+    if (this.attempt?.run !== frame.run) {
+      if (this.attempt) this.priorProcessingMs += this.attempt.lastAt - this.attempt.startedAt;
+      this.attempt = { run: frame.run, startedAt: start, lastAt: at, ended: false };
+      this.endedAt = null;
+    }
+    if (this.attempt.ended) return;
+    this.attempt.startedAt = Math.min(this.attempt.startedAt, start);
+    this.attempt.lastAt = at;
+    if (record?.outcome) {
+      this.attempt.ended = true;
+      this.endedAt = at;
+    }
   }
 
   /** Render an independent current snapshot with inclusive native time separated from run wall time. */
@@ -82,6 +109,7 @@ export class RunMeasurements {
     );
     return {
       wallElapsedMs: this.startedAt === null ? null : (this.endedAt ?? now) - this.startedAt,
+      processingElapsedMs: this.processingElapsed(now),
       nativeElapsedMs: profiles.some((profile) => profile.elapsedMs === null)
         ? null
         : observedNativeElapsedMs,
@@ -91,6 +119,14 @@ export class RunMeasurements {
       cost: { estimate: null, reason: 'No verified pricing or billing basis was supplied' },
       profiles,
     };
+  }
+
+  /** Add the current attempt to completed processing spans without counting the gaps. */
+  private processingElapsed(now: number) {
+    const attempt = this.attempt;
+    return attempt
+      ? this.priorProcessingMs + (attempt.ended ? attempt.lastAt : now) - attempt.startedAt
+      : null;
   }
 
   /** Attribute each activation to the exact alias, resolved model and reasoning configuration. */
@@ -136,6 +172,7 @@ export class RunMeasurements {
         tally.reported = (tally.reported ?? 0) + value;
       else tally.missingTurns++;
     }
+    return event.event?.usage != null;
   }
 
   /** Retain actual failures and explicitly count invocations whose provider supplied no usage. */

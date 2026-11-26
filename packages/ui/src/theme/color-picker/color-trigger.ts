@@ -1,5 +1,6 @@
 import { createElement as h } from 'react';
 import type { RefObject } from 'react';
+import { Button } from '../../controls/button.js';
 import { Icon } from '../../controls/icon.js';
 import { Swatch } from './swatch.js';
 
@@ -15,10 +16,9 @@ export function ColorTrigger({
   control: RefObject<HTMLButtonElement | null>;
 }) {
   return h(
-    'button',
+    Button,
     {
-      type: 'button',
-      className: 'arc-button arc-color-trigger',
+      className: 'arc-color-trigger',
       popoverTarget: id,
       ref: control,
       'aria-label': title,

@@ -2,13 +2,21 @@ type Route = {
   path: string;
   resource: string;
   operation: string;
-  method?: 'POST';
+  method?: 'POST' | 'PATCH';
   parameter?: string;
-  stream?: 'timeline' | 'commands';
+  stream?: 'timeline' | 'commands' | 'plan-changes';
   query?: readonly string[];
 };
 
 export const routes: readonly Route[] = [
+  { path: '/settings', resource: 'project-settings', operation: 'read', query: [] },
+  {
+    method: 'PATCH',
+    path: '/settings',
+    resource: 'project-settings',
+    operation: 'update',
+    query: [],
+  },
   {
     path: '/operation-evidence/{sequence}',
     resource: 'operation-evidence',
@@ -56,18 +64,32 @@ export const routes: readonly Route[] = [
   },
 
   {
+    path: '/plan-executions',
+    resource: 'plan-executions',
+    operation: 'list',
+    query: [],
+    stream: 'plan-changes',
+  },
+  {
     path: '/plan-executions/current',
     resource: 'plan-executions',
     operation: 'current',
     query: [],
   },
-  ...['outcome', 'metrics', 'tool-counts'].map((operation) => ({
+  ...['outcome', 'metrics', 'tool-counts', 'token-history'].map((operation) => ({
     path: '/plan-executions/{execution}/' + operation,
     resource: 'plan-executions',
     operation,
     parameter: 'execution',
     query: [],
   })),
+  {
+    path: '/plan-executions/{execution}/context',
+    resource: 'operation-evidence',
+    operation: 'context',
+    parameter: 'execution',
+    query: [],
+  },
   {
     path: '/plan-executions/{execution}/events',
     resource: 'execution-events',
@@ -82,10 +104,7 @@ export const routes: readonly Route[] = [
     query: ['component', 'activity'],
   },
 
-  { path: '/goals', resource: 'goals', operation: 'list' },
-  { path: '/goals/{id}', resource: 'goals', operation: 'read', parameter: 'id' },
-  { path: '/objectives', resource: 'objectives', operation: 'list' },
-  { path: '/objectives/{id}', resource: 'objectives', operation: 'read', parameter: 'id' },
+  ...['goals', 'objectives'].flatMap((resource) => guideRoutes(resource)),
   {
     path: '/executions/{execution}/events',
     resource: 'execution-events',
@@ -94,6 +113,22 @@ export const routes: readonly Route[] = [
     stream: 'timeline',
   },
 ];
+
+function guideRoutes(resource: string): Route[] {
+  const path = '/' + resource;
+  const detail = { resource, parameter: 'id' };
+  return [
+    { path, resource, operation: 'list', query: ['revision', 'search'] },
+    { ...detail, path: path + '/{id}', operation: 'read', query: ['revision', 'fileRevision'] },
+    { ...detail, path: path + '/{id}/revisions', operation: 'revisions' },
+    {
+      ...detail,
+      path: path + '/{id}/changes',
+      operation: 'changes',
+      query: ['revision', 'fileRevision'],
+    },
+  ];
+}
 
 export function matchRoute(path: string, method?: string) {
   for (const route of routes) {

@@ -19,6 +19,7 @@ import {
   assessCandidate,
   deliverAcceptedCandidate,
   plannerCorrection,
+  requestPlan,
   reviewKey,
 } from './assembly.js';
 import { stopped, type Interrupted } from './services.js';
@@ -126,17 +127,15 @@ export class TaskRun {
     );
   }
 
-  /** Admit the exact approved Planner edit set or record its read-only result. */
+  /** Admit exact Planner edits or record its read-only result. */
   private async startPlanner(mode: NonNullable<TaskInput['planning']>) {
-    const planner = this.services.planner;
-    if (!planner) return stopped('invalid', 'Planner is unavailable in this build');
-    const decision = await planner.propose(this.session, mode, this.report.bind(this), this.signal);
-    if ('kind' in decision) {
-      this.session.record({ assessment: decision });
-      return decision;
-    }
-    validatePlan(this.session.capture, decision);
-    return this.commitPlan(decision);
+    const decision = await requestPlan(this.services.planner, this.session, {
+      mode,
+      progress: this.report.bind(this),
+      signal: this.signal,
+      draft: this.input.guideDraft,
+    });
+    return 'kind' in decision ? decision : this.commitPlan(decision);
   }
 
   /** Read the durable cursor and handle an outcome observed just before interruption. */
@@ -472,13 +471,15 @@ export class TaskRun {
   /** Get a corrected proposal and retain earlier checkpoints before reviewing it again. */
   private async correctPlanner(findings: Extract<Feedback, { kind: 'rejection' }>['findings']) {
     const decision = await plannerCorrection(
-      this.services.planner!.propose(
-        this.session,
-        this.input.planning!,
-        this.report.bind(this),
-        this.signal,
-        findings,
-      ),
+      this.input.guideDraft
+        ? undefined
+        : this.services.planner!.propose(
+            this.session,
+            this.input.planning!,
+            this.report.bind(this),
+            this.signal,
+            findings,
+          ),
       this.plan!,
       this.session.capture,
       this.evidence,

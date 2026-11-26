@@ -2,7 +2,6 @@ import { createElement as h, useEffect, useState } from 'react';
 import { launcherTargets, type LauncherBuild } from '../../../launcher/src/targets.js';
 import { LauncherDownload } from './launcher-download.js';
 import { useResource } from './resource.js';
-import { usePlatformSession } from './session.js';
 import { Button, SelectField } from '../../../../packages/ui/src/index.js';
 
 const targets = [
@@ -48,8 +47,7 @@ function useLauncherTarget() {
 /** Pick a launcher target and display the operator-issued registration code. */
 export function LauncherSetup({ code, issue }: { code?: string; issue(): void }) {
   const [target, select] = useLauncherTarget();
-  const { token } = usePlatformSession();
-  const builds = useResource<{ entries: LauncherBuild[] }>('/launcher-builds', token);
+  const builds = useResource<{ entries: LauncherBuild[] }>('/launcher-builds');
   const published = builds.value?.entries?.find((build) => build.target === target);
   return h(
     'section',
@@ -61,8 +59,7 @@ export function LauncherSetup({ code, issue }: { code?: string; issue(): void })
       options: targets,
       onChange: select,
     }),
-    h(LauncherDownload, { build: published }),
-    h(Button, { onClick: issue }, 'Create registration code'),
+    h(LauncherActions, { published, issue, unavailable: !!target && !!builds.value && !published }),
     code &&
       h(
         'div',
@@ -70,5 +67,23 @@ export function LauncherSetup({ code, issue }: { code?: string; issue(): void })
         h('span', null, 'Registration code'),
         h('code', null, code),
       ),
+  );
+}
+
+function LauncherActions({
+  published,
+  issue,
+  unavailable,
+}: {
+  published?: LauncherBuild;
+  issue(): void;
+  unavailable: boolean;
+}) {
+  return h(
+    'div',
+    { className: 'arc-platform-inline' },
+    h(LauncherDownload, { build: published }),
+    h(Button, { onClick: issue }, 'Create registration code'),
+    unavailable && h('small', null, 'No launcher build for this target.'),
   );
 }

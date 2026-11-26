@@ -1,5 +1,5 @@
 export const oneColumn = {
   columns: 1,
   label: 'One column',
-  regions: ['Full width'],
+  columnLabels: ['Full width'],
 } as const;

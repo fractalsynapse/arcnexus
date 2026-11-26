@@ -28,13 +28,21 @@ const capture = gzipSync(previewCapture(readFileSync(capturePath), values.file),
 
 const script = bundle('main.ts', Boolean(values.viewer));
 
-const layout = readFileSync(resolve(source, 'layout.html'), 'utf8').replace(
-  /(["'])brand\/([a-z-]+\.webp)\1/g,
-  (_, quote: string, filename: string) => {
-    const image = readFileSync(resolve(source, 'brand', filename)).toString('base64');
-    return quote + 'data:image/webp;base64,' + image + quote;
-  },
-);
+const shared = (path: string) => readFileSync(resolve(source, '../../../packages/ui/src', path), 'utf8');
+const layout = readFileSync(resolve(source, 'layout.html'), 'utf8')
+  .replace('/* shared-typography-styles */', shared('styles/typography.css'))
+  .replace('/* shared-sortable-styles */', shared('controls/sortable.css'))
+  .replace('/* shared-select-styles */', shared('controls/select.css'))
+  .replace('/* shared-tooltip-styles */', shared('controls/tooltip.css'))
+  .replace('/* shared-markdown-styles */', shared('content/markdown.css'))
+  .replace('/* shared-diff-styles */', shared('content/diff-colors.css'))
+  .replace(
+    /(["'])brand\/([a-z-]+\.webp)\1/g,
+    (_, quote: string, filename: string) => {
+      const image = readFileSync(resolve(source, '../../../packages/ui/assets', filename)).toString('base64');
+      return quote + 'data:image/webp;base64,' + image + quote;
+    },
+  );
 
 const encodedCapture = values.viewer ? encodeBase85(capture) : capture.toString('base64');
 const fragment = `${layout}

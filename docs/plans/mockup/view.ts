@@ -1,3 +1,4 @@
+import { formatTokenPair, tokenPairHint } from '../../../packages/ui/src/content/token-pair.js';
 import { data } from './model.ts';
 
 export function tokenCount(value: number | null | undefined) {
@@ -108,16 +109,9 @@ export function githubOutcome(
     ${status(label)}<small>${escape(quantity)}</small></div>`;
 }
 
-export function thousand(value: number | null) {
-  return value == null
-    ? '—'
-    : new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
-        value / 1000,
-      ) + 'K';
-}
-
 export function tokenPair(input: number | null, output: number | null) {
-  return thousand(input) + ' / ' + thousand(output);
+  const pair = formatTokenPair({ input, output });
+  return `<span tabindex="0" data-arc-tooltip="${tokenPairHint}" aria-label="${tokenPairHint} ${pair}">${pair}</span>`;
 }
 
 export function cacheRate(input: number | null, cached: number | null) {

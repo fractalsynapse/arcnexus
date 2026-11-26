@@ -2,6 +2,7 @@ import {
   stopped,
   type Observation,
   type TaskInput,
+  type TaskObserver,
   type TaskSession,
   type WorkflowServices,
 } from './services.js';
@@ -78,14 +79,16 @@ export async function deliverAcceptedCandidate(
 
 /** Bind a corrected Planner proposal to its original criteria before the host commits it. */
 export async function plannerCorrection(
-  proposal: ReturnType<NonNullable<WorkflowServices['planner']>['propose']>,
+  proposal: ReturnType<NonNullable<WorkflowServices['planner']>['propose']> | undefined,
   prior: Plan,
   capture: Capture,
   evidence: readonly string[],
 ) {
+  if (!proposal)
+    return stopped('blocked', 'Independent review rejected the exact guide edit.', evidence);
   const decision = await proposal;
   if ('kind' in decision)
-    return stopped('blocked', 'Planner correction needs an approved goal change', evidence);
+    return stopped('blocked', 'Planner correction has no eligible guide change', evidence);
   const correction = {
     ...decision.milestones[0]!,
     id: `planner-correction-${prior.milestones.length}`,
@@ -94,4 +97,28 @@ export async function plannerCorrection(
   const revised = { ...prior, milestones: [...prior.milestones, correction] };
   validatePlan(capture, revised);
   return revised;
+}
+
+interface PlanInput {
+  mode: NonNullable<TaskInput['planning']>;
+  progress: TaskObserver['progress'];
+  signal: AbortSignal;
+  draft?: TaskInput['guideDraft'];
+}
+
+/** Prepare either a mapping or an exact human-authored draft through Planner. */
+export async function requestPlan(
+  planner: WorkflowServices['planner'],
+  session: TaskSession,
+  { mode, progress, signal, draft }: PlanInput,
+) {
+  if (!planner) return stopped('invalid', 'Planner is unavailable in this build');
+  if (draft && !planner.proposeDraft)
+    return stopped('invalid', 'Guide draft delivery is unavailable');
+  const decision = draft
+    ? await planner.proposeDraft!(session, draft, progress, signal)
+    : await planner.propose(session, mode, progress, signal);
+  if ('kind' in decision) session.record({ assessment: decision });
+  else validatePlan(session.capture, decision);
+  return decision;
 }

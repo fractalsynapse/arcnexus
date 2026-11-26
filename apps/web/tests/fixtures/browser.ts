@@ -1,17 +1,20 @@
 import { createElement as h } from 'react';
-import type { Context } from 'cordis';
+import { Context } from 'cordis';
+import { DiffView } from '../../../../packages/ui/src/index.js';
 import type {
   CommandBinding,
   CommandRequest,
   CommandState,
 } from '../../../../packages/ui/src/index.js';
 import { mountWeb } from '../../src/composition.js';
+import { browserPlatformPlugin } from '../../src/platform/browser-platform.js';
 
 interface Fixture {
   requests: CommandRequest[];
   wait: () => void;
   fail: () => void;
   toggleDisplay?: () => Promise<void>;
+  platformIsolation: typeof platformIsolation;
 }
 
 declare global {
@@ -27,7 +30,15 @@ let rejectRequest: ((error: Error) => void) | undefined;
 
 /** Publish controlled observations for the application binding's subscribers. */
 function observe(status: CommandState['status'], command = state.command) {
-  state = { ...state, status, command, metrics: [['Elapsed', '2m 31s']] };
+  state = {
+    ...state,
+    status,
+    command,
+    metrics: [
+      ['Elapsed', '2m 31s'],
+      ['Reported tokens', { input: 853600, output: 15200 }],
+    ],
+  };
   for (const listener of listeners) listener();
 }
 
@@ -55,11 +66,39 @@ window.frameFixture = {
     observe('Failed');
     rejectRequest?.(new Error('The controlled command failed.'));
   },
+  platformIsolation,
 };
+
+async function platformIsolation() {
+  const [left, right] = await Promise.all([isolatedPlatform('left'), isolatedPlatform('right')]);
+  const first = left.gateway.share('/projects', 'projects');
+  const second = right.gateway.share('/projects', 'projects');
+  const received = await Promise.all([first.value, second.value]);
+  first.release();
+  second.release();
+  left.session.select(undefined);
+  left.timelines.set('/events', { frames: [], cursor: 'left' });
+  return {
+    received,
+    rightProject: right.session.getSnapshot().project?.id,
+    rightCursor: right.timelines.get('/events')?.cursor,
+  };
+}
+
+async function isolatedPlatform(id: string) {
+  const scope = new Context();
+  await scope.use(
+    browserPlatformPlugin({
+      project: { id, remote: 'https://github.com/example/' + id, revision: 'fixture' },
+      transport: async () => Response.json(id),
+    }),
+  );
+  return scope.webPlatform;
+}
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Fixture root is missing');
-const context = await mountWeb(root, binding, {
+const displayFixture = {
   inject: ['ui'],
   /** Contribute fixture displays through the same registry as workspace features. */
   apply(context: Context) {
@@ -74,12 +113,25 @@ const context = await mountWeb(root, binding, {
       context.ui.registerDisplay('/plan/', {
         id: 'outcome',
         label: 'Planner outcome',
-        defaultColumn: 1,
+        defaultRegion: 1,
         content: 'Fixture outcome',
       }),
     );
+    context.effect(() =>
+      context.ui.registerDisplay('/release/', {
+        id: 'changes',
+        label: 'Changes',
+        content: h(DiffView, {
+          files: [
+            { path: 'src/first.ts', before: 'old first', after: 'new first' },
+            { path: 'src/second.ts', before: 'old second', after: 'new second' },
+          ],
+        }),
+      }),
+    );
   },
-});
+};
+const context = await mountWeb(root, { commands: binding, feature: displayFixture });
 
 let remove: (() => Promise<void>) | undefined;
 window.frameFixture.toggleDisplay = async () => {
@@ -90,8 +142,13 @@ window.frameFixture.toggleDisplay = async () => {
   }
   const contribution = await context.use({
     inject: ['ui'],
-    /** Attach a display after the frame has mounted to verify plugin lifecycle. */
+    /** Attach workspace content and a display after the frame has mounted. */
     apply(context: Context) {
+      context.effect(() =>
+        context.ui.registerWorkspaceFeature('/plan/', {
+          content: h('p', null, 'Fixture workspace content'),
+        }),
+      );
       context.effect(() =>
         context.ui.registerDisplay('/plan/', {
           id: 'evidence',

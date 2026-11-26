@@ -2,73 +2,79 @@ import { createElement as h, useState } from 'react';
 import {
   Button,
   DialogButton,
+  ExternalLink,
   ManagementRow,
   SelectField,
 } from '../../../../packages/ui/src/index.js';
 import type { Project } from './session.js';
-import { projectName, setSession, usePlatformSession } from './session.js';
-import { api, useResource } from './resource.js';
-import { OperatorGate } from './operator-gate.js';
+import { projectName, usePlatformSession } from './session.js';
+import { useBrowserPlatform } from './browser-platform.js';
+import { useResource } from './resource.js';
 import { ImportProject } from './project-import.js';
+import { ProjectSettingsButton } from './project-settings.js';
 
 export function ProjectManager() {
   return h(DialogButton, {
     icon: 'folder',
     title: 'Project manager',
-    children: h(OperatorGate, { children: h(Projects) }),
+    children: h(Projects),
   });
 }
 
 function Projects() {
-  const { session, projects, change, error } = useProjects();
+  const { session } = useBrowserPlatform();
+  const { project } = usePlatformSession();
+  const { projects, change, error, loaded } = useProjects();
   return h(ProjectRows, {
     projects,
-    select: (project) => setSession({ ...session, project }),
-    selected: session.project?.id,
-    token: session.token,
+    select: (project) => session.select(project),
+    selected: project?.id,
     error,
     change,
+    loaded,
   });
 }
 
 function useProjects() {
-  const session = usePlatformSession();
+  const { gateway, session } = useBrowserPlatform();
   const [refresh, reload] = useState(0);
   const [error, showError] = useState('');
-  const result = useResource<{ entries: Project[] }>('/projects', session.token, refresh);
+  const result = useResource<{ entries: Project[] }>('/projects', refresh);
   const projects = result.value?.entries ?? [];
   const change = async (project?: Project, remote?: string) => {
     try {
       if (project) {
-        await api('/projects/' + project.id, session.token!, { method: 'DELETE' });
-        if (project.id === session.project?.id)
-          setSession({ ...session, project: projects.find((item) => item.id !== project.id) });
+        await gateway.read('/projects/' + project.id, { method: 'DELETE' });
+        if (project.id === session.getSnapshot().project?.id)
+          session.select(projects.find((item) => item.id !== project.id));
       } else {
-        const added = await api<Project>('/projects', session.token!, {
+        const added = await gateway.read<Project>('/projects', {
           method: 'POST',
           body: JSON.stringify({ remote }),
         });
-        setSession({ ...session, project: added });
+        session.select(added);
       }
       showError('');
       reload((index) => index + 1);
+      return true;
     } catch (reason) {
       showError((reason as Error).message);
+      return false;
     }
   };
-  return { session, projects, change, error: error || result.error };
+  return { projects, change, error: error || result.error, loaded: !!result.value };
 }
 
 interface ProjectRowsProps {
   projects: Project[];
   selected?: string;
-  token?: string;
   select(project?: Project): void;
-  change(project?: Project, remote?: string): Promise<void>;
+  change(project?: Project, remote?: string): Promise<boolean>;
   error?: string;
+  loaded: boolean;
 }
 
-function ProjectRows({ projects, selected, token, select, change, error }: ProjectRowsProps) {
+function ProjectRows({ projects, selected, select, change, error, loaded }: ProjectRowsProps) {
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -81,15 +87,24 @@ function ProjectRows({ projects, selected, token, select, change, error }: Proje
       ],
       onChange: (id) => select(projects.find((project) => project.id === id)),
     }),
-    h(
-      'ul',
-      { className: 'arc-management-list', 'aria-label': 'Projects' },
-      projects.map((project) =>
-        h(ProjectRow, { key: project.id, project, token, remove: () => void change(project) }),
-      ),
-    ),
+    h(ProjectList, { projects, loaded, remove: (project) => void change(project) }),
     h(ImportProject, { submit: (remote) => change(undefined, remote) }),
     error && h('p', { role: 'alert' }, error),
+  );
+}
+
+interface ProjectListProps extends Pick<ProjectRowsProps, 'projects' | 'loaded'> {
+  remove(project: Project): void;
+}
+
+function ProjectList({ projects, loaded, remove }: ProjectListProps) {
+  if (!projects.length) return loaded ? h('p', null, 'No projects registered.') : null;
+  return h(
+    'ul',
+    { className: 'arc-management-list', 'aria-label': 'Projects' },
+    projects.map((project) =>
+      h(ProjectRow, { key: project.id, project, remove: () => remove(project) }),
+    ),
   );
 }
 
@@ -97,42 +112,46 @@ type Probe = { reachable: true; revision: string } | { reachable: false; diagnos
 
 interface ProjectRowProps {
   project: Project;
-  token?: string;
   remove(): void;
 }
 
-function ProjectRow({ project, token, remove }: ProjectRowProps) {
-  const { probe, checking, check } = useProjectProbe(project.id, token);
+function ProjectRow({ project, remove }: ProjectRowProps) {
+  const { probe, checking, check } = useProjectProbe(project.id);
   const { remote } = project;
   const name = projectName(project);
   return h(ManagementRow, {
-    title: h('a', { href: remote, target: '_blank', rel: 'noreferrer' }, name),
+    title: h(ExternalLink, { href: remote }, name),
     detail: probe?.reachable === false ? probe.diagnostic : remote,
     status: {
       label: probe ? (probe.reachable ? 'Reachable' : 'Unavailable') : 'Revision verified',
       tone: probe?.reachable === false ? 'neutral' : 'positive',
     },
+    statusAction: h(
+      Button,
+      {
+        className: 'arc-management-status-action',
+        disabled: checking,
+        onClick: () => void check(),
+      },
+      checking ? 'Checking…' : 'Check reachability',
+    ),
     action: h(
       'div',
-      { className: 'arc-platform-stack' },
-      h(
-        Button,
-        { disabled: checking || !token, onClick: () => void check() },
-        checking ? 'Checking…' : 'Check reachability',
-      ),
+      { className: 'arc-platform-inline' },
+      h(ProjectSettingsButton, { project }),
       h(Button, { 'aria-label': 'Remove ' + name, onClick: remove }, 'Remove'),
     ),
   });
 }
 
-function useProjectProbe(id: string, token?: string) {
+function useProjectProbe(id: string) {
+  const { gateway } = useBrowserPlatform();
   const [probe, setProbe] = useState<Probe>();
   const [checking, setChecking] = useState(false);
   async function check() {
-    if (!token) return;
     setChecking(true);
     try {
-      setProbe(await api<Probe>('/projects/' + id + '/reachability', token));
+      setProbe(await gateway.read<Probe>('/projects/' + id + '/reachability'));
     } catch {
       setProbe({ reachable: false, diagnostic: 'The gateway could not check this project.' });
     } finally {

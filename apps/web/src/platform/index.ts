@@ -1,29 +1,17 @@
-import { createElement as h } from 'react';
 import type { Context } from 'cordis';
-import { platformCommandsPlugin } from './command-binding.js';
-import { ConnectionManager } from './connection-manager.js';
-import { planDisplaysPlugin } from './plan-displays.js';
-import { ProjectManager } from './project-manager.js';
-import { projectName, usePlatformSession } from './session.js';
+import { connectionManagementPlugin } from './connection-management-plugin.js';
+import { planPlugin } from './plan-plugin.js';
+import { planFilePlugin } from './plan-file-plugin.js';
+import { projectManagementPlugin } from './project-management-plugin.js';
 import './platform.css';
 
-function WorkspaceProject() {
-  const { project } = usePlatformSession();
-  return h(
-    'span',
-    { role: 'status' },
-    project ? 'Project · ' + projectName(project) : 'No active project',
-  );
-}
-
 export const platformUiPlugin = {
-  inject: ['ui'],
-  /** Add live platform managers and independent Plan displays to the shared web frame. */
+  inject: ['ui', 'webPlatform'],
+  /** Compose the authenticated platform's independent browser features. */
   async apply(context: Context) {
-    await context.use(platformCommandsPlugin);
-    context.effect(() => context.ui.registerHeaderControl('connections', h(ConnectionManager)));
-    context.effect(() => context.ui.registerHeaderControl('projects', h(ProjectManager)));
-    context.effect(() => context.ui.registerWorkspaceContext(h(WorkspaceProject)));
-    await context.use(planDisplaysPlugin);
+    await context.use(connectionManagementPlugin);
+    await context.use(projectManagementPlugin);
+    await context.use(planPlugin);
+    await context.use(planFilePlugin);
   },
 };

@@ -1,7 +1,6 @@
-import { diffArrays } from 'diff';
+import { numberPatchLines, textChanges as draftDiff, type DiffLine } from '../../../packages/ui/src/content/line-changes.js';
+import type { DiffSelection } from '../../../packages/ui/src/content/diff-selection.js';
 import { commitReferences, escape, noData, panel } from './view.ts';
-
-type DiffLine = [kind: string, text: string];
 
 export type FileDelta = {
   path: string;
@@ -28,32 +27,30 @@ export function readPatch(source: string, fallbackPath = ''): FileDelta[] {
 }
 
 function patchLines(source: string): DiffLine[] {
-  const lines: DiffLine[] = [];
-  let hunk = false;
-  for (const line of source.replace(/\r?\n$/, '').split(/\r?\n/)) {
-    if (line.startsWith('@@')) {
-      hunk = true;
-      lines.push(['hunk', line]);
-    } else if (hunk && line.startsWith('+')) lines.push(['added', line]);
-    else if (hunk && line.startsWith('-')) lines.push(['removed', line]);
-    else if (hunk || !/^(diff --git |index |--- |\+\+\+ )/.test(line)) {
-      lines.push(['context', line]);
+  return source.replace(/\r?\n$/, '').split(/(?=^@@)/m).flatMap((section): DiffLine[] => {
+    const lines = section.replace(/\r?\n$/, '').split(/\r?\n/);
+    const [header = '', ...body] = lines;
+    if (!header.startsWith('@@')) {
+      return lines.filter((line) => !/^(diff --git |index |--- |\+\+\+ )/.test(line)).map((line) => ['context', line]);
     }
-  }
-  return lines;
+    const range = header.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    const rows = range ? numberPatchLines(body, Number(range[1]), Number(range[2])) : numberPatchLines(body);
+    return [['hunk', header], ...rows];
+  });
 }
 
 export function diffView(
   label: string,
-  files: FileDelta[],
+  comparison: DiffSelection<FileDelta>,
   { localPatch = false, heading = 'Changes', action = '' } = {},
 ) {
   const caption = `<div class="arc-row"><small>${commitReferences(label)}</small>${action}</div>`;
-  if (!files.length) return panel(heading, noData('No changed files recorded.'), caption);
-  return panel(heading, diffBody(files, localPatch), caption);
+  return panel(heading, diffBody(comparison, localPatch), caption);
 }
 
-export function diffBody(files: FileDelta[], localPatch = false) {
+export function diffBody({ file, files }: DiffSelection<FileDelta>, localPatch = false) {
+  if (file) return `<div class="arc-file-diff">${diffContent(file)}</div>`;
+  if (!files.length) return noData('No changed files recorded.');
   const id = 'arc-diff-' + ++viewerId;
   const selected = Math.max(
     0,
@@ -68,24 +65,8 @@ export function diffBody(files: FileDelta[], localPatch = false) {
       <div class="arc-diff-content">${views.map((view) => view.content).join('')}</div></div></div>`;
 }
 
-export function draftDiff(before: string[], after: string[]): DiffLine[] {
-  const parts = diffArrays(before, after);
-  const start = parts.findIndex((part) => part.added || part.removed);
-  if (start < 0) return [];
-  const end = parts.findLastIndex((part) => part.added || part.removed);
-  const startLine = (parts[start - 1]?.count ?? 0) + 1;
-  return [
-    ['hunk', `@@ Draft changes from line ${startLine}`],
-    ...parts.slice(start, end + 1).flatMap(({ added, removed, value }) => {
-      const [kind, prefix] = added
-        ? ['added', '+ ']
-        : removed
-          ? ['removed', '− ']
-          : ['context', '  '];
-      return value.map<DiffLine>((line) => [kind, prefix + line]);
-    }),
-  ];
-}
+export { draftDiff };
+export type { DiffLine };
 
 function fileTab(file: FileDelta, id: string, selected: boolean) {
   const path = escape(file.path);
@@ -102,17 +83,22 @@ function diffContent(file: FileDelta) {
   if (!file.lines.length) return note || noData('No text changes recorded for this file.');
   const added = file.lines.filter(([kind]) => kind === 'added').length;
   const removed = file.lines.filter(([kind]) => kind === 'removed').length;
-  const legend = `<div class="arc-diff-legend"><span class="added">+${added} additions</span>
-    <span class="removed">−${removed} deletions</span></div>`;
+  const legend = `<div class="arc-diff-legend arc-diff-lines"><span data-change="added">+${added} additions</span>
+    <span data-change="removed">−${removed} deletions</span></div>`;
   return (
     note +
     legend +
-    '<pre class="arc-diff arc-patch">' +
-    file.lines
-      .map(([kind, line]) => `<span class="${kind}">${escape(line) || ' '}</span>`)
-      .join('') +
+    '<pre class="arc-diff arc-patch arc-diff-lines arc-numbered-diff">' +
+    file.lines.map(diffRow).join('') +
     '</pre>'
   );
+}
+
+function diffRow([kind, line, before, after]: DiffLine) {
+  const text = escape(line) || ' ';
+  if (kind === 'hunk') return `<span data-change="hunk">${text}</span>`;
+  const numbers = [before, after].map((number) => `<span class="arc-diff-number" aria-hidden="true">${number ?? ''}</span>`);
+  return `<span class="arc-diff-row" data-change="${kind}">${numbers.join('')}<span class="arc-diff-code">${text}</span></span>`;
 }
 
 export async function loadDiffPatch(input: HTMLInputElement) {

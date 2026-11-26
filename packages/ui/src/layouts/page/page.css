@@ -1,8 +1,30 @@
-.arc-page-heading {
+.arc-page-header {
+  display: grid;
+  gap: var(--gap);
+}
+.arc-page-title {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: inherit;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.arc-page-title > .arc-icon-wrap {
+  flex: none;
+  align-self: center;
+}
+.arc-page-title-action {
+  min-inline-size: 0;
+  /* Match the visual gap after the inset settings icon. */
+  margin-inline-start: 9px;
+}
+.arc-page-title h1 {
+  max-inline-size: 50%;
+  overflow-wrap: break-word;
+}
+.arc-page-title-action > .arc-field {
+  inline-size: 22rem;
+  max-inline-size: 100%;
 }
 .arc-page-context {
   min-inline-size: 0;
@@ -22,7 +44,7 @@
   overflow-wrap: anywhere;
 }
 .arc-page-settings,
-.arc-display {
+.arc-display > :is(.arc-surface-heading, .arc-display-body) {
   padding: 14px 15px;
 }
 .arc-page-settings,
@@ -31,6 +53,7 @@
   gap: var(--gap);
 }
 .arc-page-settings,
+.arc-workspace-tabs,
 .arc-panel-layout {
   margin-block-start: var(--gap);
 }

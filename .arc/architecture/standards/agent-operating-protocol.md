@@ -292,7 +292,7 @@ to reassign accepted ownership or weaken validation to make an invalid link fit.
 
 Consult existing approved guidance and retained answers before asking a question.
 Routine engineering choices within accepted authority are yours to make. Human
-decisions concern objectives, goals and architecture; ordinary correction does
+approval concerns objectives and architecture; ordinary correction does
 not need a new approval gate. When intent is genuinely missing, ask a self-contained
 question explaining the decision and the evidence. End the activation after the
 mapped handoff, so the host can record the complete answer and resume the same

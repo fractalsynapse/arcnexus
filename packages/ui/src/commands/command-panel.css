@@ -42,12 +42,27 @@
 .arc-send {
   grid-area: send;
 }
+.arc-command-panel .arc-stop {
+  color: #fff;
+  background: #a72735;
+  border-color: #d55562;
+}
+.arc-command-panel .arc-stop:hover:not(:disabled) {
+  background: #bd3443;
+}
 .arc-composer textarea {
   display: block;
   resize: vertical;
 }
+.arc-operation-options,
 .arc-composer-error {
   grid-column: 1 / -1;
+}
+.arc-operation-options {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .arc-command-readout {
   display: grid;
@@ -64,21 +79,22 @@
   padding: 0;
 }
 .arc-round-values,
-.arc-round-details {
+.arc-round-details,
+.arc-round-tools {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 3px 12px;
 }
 .arc-round-values {
-  font-size: 12px;
+  font-size: var(--font-small);
 }
 .arc-status {
   border-radius: 16px;
   padding: 3px 8px;
   background: var(--tint);
   color: var(--ink);
-  font-size: 11px;
+  font-size: var(--font-label);
   font-weight: 650;
 }
 

@@ -220,12 +220,12 @@ class YamlEditor {
     this.changes.innerHTML =
       this.source === this.revision.content
         ? noData('No draft changes yet.')
-        : diffBody([
-            {
+        : diffBody({
+            file: {
               path: this.file.path,
-              lines: draftDiff(this.revision.content.split('\n'), this.source.split('\n')),
+              lines: draftDiff(this.revision.content, this.source),
             },
-          ]);
+          });
   }
 
   /** Match Zod issue paths to field diagnostics or the source editor summary. */

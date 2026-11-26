@@ -5,7 +5,12 @@ import { dataOperation } from '../../data/src/index.js';
 import { Catalog, type VerifyRepository } from './catalog.js';
 import { importSchema, projectSchema, revisionSchema } from './schema.js';
 
-export { catalogMigration, importSchema, projectSchema } from './schema.js';
+export {
+  catalogMigration,
+  importSchema,
+  projectSchema,
+  projectDocumentationMigration,
+} from './schema.js';
 export type { VerifyRepository } from './catalog.js';
 
 declare module 'cordis' {

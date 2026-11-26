@@ -1,5 +1,5 @@
 import { useRef, useId, useEffect, createElement as h } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, SyntheticEvent } from 'react';
 import { Button } from './button.js';
 
 interface DialogProps {
@@ -20,7 +20,14 @@ export function Dialog({ title, open, onClose, children }: DialogProps) {
   }, [open]);
   return h(
     'dialog',
-    { ref: dialog, className: 'arc-dialog', 'aria-labelledby': heading, onClose },
+    {
+      ref: dialog,
+      className: 'arc-dialog',
+      'aria-labelledby': heading,
+      onClose: (event: SyntheticEvent<HTMLDialogElement>) => {
+        if (event.target === event.currentTarget) onClose();
+      },
+    },
     h(
       'div',
       { className: 'arc-dialog-header' },

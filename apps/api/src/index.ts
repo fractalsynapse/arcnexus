@@ -1,8 +1,10 @@
 import type { TimelineChanges } from '../../../packages/coordination/src/index.js';
 import type { Context } from 'cordis';
 import { ZodError } from 'zod';
+import { InvalidDocumentationDirectories } from '../../../packages/architecture/src/index.js';
+import { InvalidObjectiveEdits } from '../../../packages/planner/src/objective-review.js';
 import type { Data, DataScope, ResolveDataScope } from '../../../packages/data/src/index.js';
-import { catalogRequest, matchCatalog } from './catalog-routes.js';
+import { matchPlatform, platformRequest } from './platform-routes.js';
 import { openApi } from './openapi.js';
 import { matchRoute, routeInput } from './routes.js';
 import { scopedEventStream, acceptsEvents } from './scoped-event-stream.js';
@@ -21,6 +23,8 @@ function problem(status: number, message: string) {
 }
 
 function apiError(error: unknown) {
+  if (error instanceof InvalidDocumentationDirectories || error instanceof InvalidObjectiveEdits)
+    return problem(422, error.message);
   if (error instanceof URIError || error instanceof SyntaxError || error instanceof ZodError)
     return problem(400, 'Invalid resource request');
   if (error instanceof Error && error.message === 'Data operation not authorized')
@@ -34,13 +38,13 @@ function handler(data: Data, authenticate: AuthenticateRequest, live: LiveResour
   return async (request: Request) => {
     const url = new URL(request.url);
     const projectRoute = /^\/projects\/([^/]+)(\/.*)$/.exec(url.pathname);
-    const catalog = matchCatalog(request.method, url.pathname);
-    if (!catalog && !projectRoute) return problem(404, 'Resource unavailable');
+    const platform = matchPlatform(request.method, url.pathname);
+    if (!platform && !projectRoute) return problem(404, 'Resource unavailable');
     try {
-      const project = catalog ? 'platform' : decodeURIComponent(projectRoute![1]!);
+      const project = platform ? 'platform' : decodeURIComponent(projectRoute![1]!);
       const scope = await authenticate(request, project);
       if (!scope || scope.project !== project) return problem(401, 'Project access unavailable');
-      if (catalog) return await catalogRequest(data, scope, request, catalog);
+      if (platform) return await platformRequest(data, scope, request, platform);
       return await projectResource(data, request, scope, projectRoute![2]!, url, live);
     } catch (error) {
       return apiError(error);
@@ -73,13 +77,23 @@ async function projectStream(
   data: Data,
   scope: DataScope,
   request: Request,
-  kind: keyof LiveResources,
+  kind: keyof LiveResources | 'plan-changes',
   input: Record<string, unknown>,
   live: LiveResources,
 ) {
-  const changes = live[kind];
+  const changes = kind === 'commands' ? live.commands : live.timeline;
   if (!changes) return problem(406, 'Live resource unavailable');
   if (kind === 'timeline') return streamTimeline(data, scope, input, request, changes);
+  if (kind === 'plan-changes') {
+    if (!(await data.allows(scope, 'plan-executions', 'list')))
+      return problem(403, 'Operation unavailable');
+    return scopedEventStream(
+      request,
+      scope,
+      changes,
+      async () => 'event: plan-change\ndata: null\n\n',
+    );
+  }
   return scopedEventStream(request, scope, changes, async () => {
     const result = await data.invoke(scope, 'workflow-requests', 'current', input);
     return 'event: command\ndata: ' + JSON.stringify(result) + '\n\n';
@@ -94,7 +108,7 @@ async function invokeResource(
   input: Record<string, unknown>,
 ) {
   const { resource, operation } = route;
-  const content = route.method === 'POST' ? await request.text() : '';
+  const content = route.method ? await request.text() : '';
   const body: unknown = content ? JSON.parse(content) : {};
   const value =
     typeof body === 'object' && body !== null && !Array.isArray(body)

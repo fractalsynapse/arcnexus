@@ -28,7 +28,10 @@ export function hostPlugin(storage = applicationStorage()) {
 /** Use a PostgreSQL writer with the same Execution and Workflow plugins. */
 export function hostedHostPlugin(
   storage: string,
-  assignment: HostedProject & { runtime?: RuntimeImage; github?: GitHubCredential },
+  assignment: HostedProject & {
+    runtime?: RuntimeImage;
+    github?: GitHubCredential;
+  },
 ) {
   return mountHost(
     storage,
@@ -62,11 +65,12 @@ const nativeWorkflow = {
 
 /** Map the workflow ports directly to their native owning services. */
 function services(context: Context): WorkflowServices {
+  const { architecture, agent } = context;
   return {
     execution: context.execution,
     architecture: {
-      propose: (session, feedback, signal) =>
-        context.architecture.propose(context.agent, hostTask(session), feedback, signal),
+      propose: (session, feedback, signal, documentation) =>
+        architecture.propose(agent, hostTask(session), feedback, signal, documentation),
     },
     planner: context.planner,
     direction: {

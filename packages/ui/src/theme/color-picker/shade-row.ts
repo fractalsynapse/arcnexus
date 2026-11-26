@@ -1,12 +1,13 @@
 import { createElement as h } from 'react';
 import type { CSSProperties } from 'react';
-import { shades } from './palette.js';
+import { Button } from '../../controls/button.js';
+import { initialShade } from './palette.js';
 import type { PickerProps } from './palette.js';
 
 type ShadeRowProps = PickerProps & { name: string; values: readonly string[] };
 
 export function ShadeRow({ field, color, pick, name, values }: ShadeRowProps) {
-  const initial = shades.includes(color) ? color : shades[0];
+  const initial = initialShade(color);
   return h(
     'div',
     { className: 'arc-shade-row' },
@@ -15,9 +16,9 @@ export function ShadeRow({ field, color, pick, name, values }: ShadeRowProps) {
       'div',
       { className: 'arc-shades' },
       values.map((shade) =>
-        h('button', {
+        h(Button, {
           key: shade,
-          type: 'button',
+          variant: 'plain',
           className: 'arc-shade',
           'aria-label': name + ' ' + shade + ' for ' + field,
           'aria-pressed': shade === color,

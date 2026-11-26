@@ -68,7 +68,7 @@ main approval and merge, tags, hotfix direction and production publication.
 
 Continuous refinement delivers approved implementation to staging through this
 same path. Routine repair and authorized staging integration add no human
-approval gate. Objectives, goals and architecture retain their exact reviewed
-approval. Main integration, tags and releases remain separate maintainer actions.
+approval gate. Objectives and architecture retain their exact human approval. Goal changes use
+independent review and verified staging. Main integration, tags and releases remain separate maintainer actions.
 Bootstrap only a named capability preventing platform-led delivery and follow it
 with a real demonstration through the platform.

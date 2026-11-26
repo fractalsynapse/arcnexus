@@ -2,7 +2,9 @@ import { parse, stringify } from 'yaml';
 import type { TaskSession } from '../../workflow/src/index.js';
 import type { Capture, RevisionCitation } from '../../architecture/src/index.js';
 import { unifiedDiff, textDigest, type ContentPatch } from '../../foundation/src/index.js';
-import type { Proposal } from './proposal.js';
+import type { ObjectiveFile, Proposal } from './proposal.js';
+import { guideDirectory, guideIndex } from './guide-index.js';
+import { recordID } from './guide-data.js';
 
 export type GoalPatch = ContentPatch;
 export { textDigest };
@@ -12,24 +14,30 @@ export interface HumanReply {
   answer: string;
 }
 
-/** Derive the objective filename from the exact submitted text. */
-export function objectivePath(session: TaskSession) {
-  return `${objectiveDirectory(session)}/${textDigest(session.goal)}.md`;
-}
-
-/** Resolve objective storage from the captured project knowledge root. */
-export function objectiveDirectory(session: TaskSession) {
-  return `${session.capture.project.knowledgeRoot ?? '.arc'}/objectives`;
+/** Keep the submission identity while deriving a human-readable path for a new record. */
+export function objectivePath(
+  session: TaskSession,
+  { name, category }: ObjectiveFile = { name: 'objective', category: 'general' },
+  previous?: ReadonlyMap<string, string | null>,
+) {
+  const id = textDigest(session.goal);
+  const existing = guideIndex(session.capture, 'objectives', previous).get(id);
+  if (existing) return existing.path;
+  const base = `${guideDirectory(session.capture, 'objectives')}/${category}/${name}`;
+  const paths = new Set([...session.capture.source.paths, ...(previous?.keys() ?? [])]);
+  let path = `${base}.md`;
+  for (let variant = 2; paths.has(path); variant++) path = `${base}-${variant}.md`;
+  return path;
 }
 
 /** Honor an explicit refinement reference and retain the original objective's stable identity. */
 export function refinement(session: TaskSession) {
-  const previous = /^Refines ([a-f0-9]{64})\s*$/im.exec(session.goal)?.[1];
+  const previous = /^Refines (\S+)[^\S\n]*$/im.exec(session.goal)?.[1];
   if (!previous) return;
-  const path = `${objectiveDirectory(session)}/${previous}.md`;
-  const { source } = session.capture;
-  if (!source.paths.includes(path)) throw new Error(`Unknown objective to refine: ${previous}`);
-  const metadata = parse(source.read(path).split('---', 3)[1] ?? '') as {
+  if (!recordID.test(previous)) throw new Error(`Invalid objective to refine: ${previous}`);
+  const entry = guideIndex(session.capture, 'objectives').get(previous);
+  if (!entry) throw new Error(`Unknown objective to refine: ${previous}`);
+  const metadata = parse(entry.content.split('---', 3)[1] ?? '') as {
     objective?: string;
   } | null;
   return { objective: metadata?.objective ?? previous, supersedes: previous };
@@ -96,6 +104,7 @@ export function objectiveRecord(
 ) {
   const { source } = session.capture;
   const metadata = stringify({
+    id: textDigest(session.goal),
     ...refinement(session),
     mapping: proposal.links.length ? 'mapped' : 'unresolved',
     revision: source.revision,

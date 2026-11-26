@@ -12,6 +12,7 @@ import {
   commandsPlugin,
   dispatchWorkflow,
   hostedCommandsDataPlugin,
+  workflowReceipt,
 } from '../../../../packages/commands/src/index.js';
 import {
   Coordination,
@@ -25,6 +26,7 @@ import { apiPlugin } from '../../../api/src/index.js';
 import { databaseSetupPlugin } from '../../../db/src/index.js';
 import { operatorMcpPlugin } from '../../../mcp/src/index.js';
 import { hostedHostPlugin, runHostedRequest } from '../../src/index.js';
+import type { ObjectiveReview } from '../../../../packages/planner/src/objective-review.js';
 
 export const suite = { owner: 'host-app', level: 'integration', tags: ['postgresql'] } as const;
 
@@ -146,6 +148,74 @@ test(
 
 type Api = (request: Request) => Promise<Response>;
 
+test(
+  'an invalid objective edit leaves the review open and returns its diagnostic',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const receipts = new WorkflowRequests(database);
+    const { api } = await gateway(t, receipts, remote, revision);
+    const { id, review } = await holdObjectiveReview(receipts, remote, revision);
+    const call = commandClient(api);
+    const submit = (content: string) =>
+      call('/' + id + '/answer', 'POST', {
+        gate: review.id,
+        answer: JSON.stringify({ action: 'revise', edits: { recovery: content } }),
+      });
+    const rejected = await submit('---\nid: recovery\n---\n');
+    assert.equal(rejected.status, 422);
+    assert.match((await rejected.json()).error, /recovery.*Markdown body/i);
+    const changedID = await submit('---\nid: different\n---\n# Recovery');
+    assert.equal(changedID.status, 422);
+    assert.match((await changedID.json()).error, /original objective ID/);
+    const current = await (await call('/' + id)).json();
+    assert.equal(current.state, 'waiting');
+    assert.equal(current.gate.id, review.id);
+    assert.equal((await submit('---\nid: recovery\n---\n# Corrected body')).status, 202);
+  },
+);
+
+async function holdObjectiveReview(receipts: WorkflowRequests, remote: string, revision: string) {
+  const owner = { remote, revision, worker: 'isolated-host' };
+  const id = randomUUID();
+  const review = objectiveGate(revision);
+  await receipts.submit(
+    { remote, principal: 'isolated-operator' },
+    id,
+    { command: 'task_plan', mode: 'recommend-objectives' },
+    revision,
+  );
+  assert.equal((await receipts.claim(owner))?.id, id);
+  await receipts.settle(
+    owner,
+    id,
+    { kind: 'blocked' },
+    { id: review.id, question: 'Review?', review },
+  );
+  return { id, review };
+}
+
+function objectiveGate(revision: string): ObjectiveReview {
+  return {
+    id: 'exact-objective',
+    revision,
+    readOnly: false,
+    summary: 'Review recovery',
+    drafts: [
+      {
+        id: 'recovery',
+        category: 'delivery',
+        title: 'Recovery',
+        gap: 'Recovery intent',
+        path: '.arc/objectives/delivery/recovery.md',
+        before: null,
+        content: '---\nid: recovery\n---\n# Recovery',
+        sources: [{ path: 'docs/recovery.md', quote: 'Rehearse recovery' }],
+      },
+    ],
+  };
+}
+
 async function verifyContract(api: Api) {
   const spec = await (
     await api(new Request('http://arc.local/projects/fixture/openapi.json'))
@@ -167,6 +237,59 @@ function commandClient(api: Api) {
       }),
     );
 }
+
+test(
+  'project documentation settings use the normal exact architecture review gate',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, project, remote, revision } = await fixture(t);
+    const requests = new WorkflowRequests(database);
+    const { api } = await gateway(t, requests, remote, revision);
+    const call = commandClient(api);
+    const worker = await commands(project, remote);
+    const signal = new AbortController().signal;
+    const owner = { remote, revision, directory: project.root, worker: 'isolated-host' };
+    const id = randomUUID();
+    const request = {
+      command: 'architecture_update',
+      documentation: { revision, directories: ['.arc/goals'] },
+    };
+    assert.equal((await call('', 'POST', { id, request })).status, 202);
+    assert.ok(await runHostedRequest(requests, worker, owner, signal));
+    const held = workflowReceipt.parse(await (await call('/' + id)).json());
+    assert.equal(held.state, 'waiting', JSON.stringify(held.outcome));
+    assert.match(held.gate!.question, /documentationDirectories:\n\+ {2}- \.arc\/goals/);
+    const read = () => project.architecture.capture(project.root).project.documentationDirectories;
+    assert.equal(read(), undefined);
+    await declineSettings(call, held.id, held.gate!.id);
+    assert.ok(await runHostedRequest(requests, worker, owner, signal));
+    const finished = workflowReceipt.parse(await (await call('/' + id)).json());
+    assert.equal(finished.state, 'finished');
+    assert.equal(finished.execution, held.execution);
+    assert.equal(read(), undefined);
+  },
+);
+
+async function declineSettings(call: ReturnType<typeof commandClient>, id: string, gate: string) {
+  assert.equal((await call('/' + id + '/answer', 'POST', { gate, answer: 'skip' })).status, 202);
+}
+
+test(
+  'a queued Plan retains its folder selection across retries',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const requests = new WorkflowRequests(database);
+    const operator = { remote, principal: 'isolated-operator' };
+    const owner = { remote, revision, worker: 'isolated-host' };
+    const id = randomUUID();
+    const plan = { command: 'task_plan', mode: 'recommend-objectives' };
+    await requests.submit(operator, id, plan, revision, []);
+    await requests.submit(operator, id, plan, revision, ['.arc/goals']);
+    const claimed = await requests.claim(owner);
+    assert.deepEqual(claimed?.documentationDirectories, []);
+  },
+);
 
 async function verifyAdmission(call: ReturnType<typeof commandClient>, id: string) {
   assert.equal((await call('', 'POST', { id, request: { command: 'task_plan' } })).status, 202);

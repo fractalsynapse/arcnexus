@@ -265,7 +265,7 @@ purpose: |
 
   The Director Agent remains read-only. Its plan can describe required changes
   but cannot write implementation, contracts, the registry or permissions. Human
-  architectural approval governs objectives, goals and architecture. Routine plan
+  approval governs objectives and architecture. Routine plan
   sequencing under that accepted guidance and authorized verified staging delivery
   do not need another human gate. Main integration and release are separate
   maintainer concerns, not effects a task plan can grant itself.

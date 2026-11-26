@@ -40,6 +40,7 @@ export async function reconcileHosted(
   const current = await database.query<{ id: string; lease: string | null }>(
     `SELECT id,lease FROM ${store}.runs
      WHERE project=$1 AND active=1 AND parent_id IS NULL
+       AND NOT documentation_only
        AND EXISTS (SELECT 1 FROM ${store}.hosted_projects WHERE project=$1)`,
     [project],
   );

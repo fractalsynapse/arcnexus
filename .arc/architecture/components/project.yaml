@@ -140,8 +140,8 @@ purpose: |
   demonstrate the loop's value. The exact captured inventory and completed positions
   must survive interruption without silently skipping work or repeating delivery.
 
-  Human attention belongs primarily on objectives, goals and architecture. Exact
-  proposed guide changes are reviewable decisions; ordinary implementation,
+  Human approval concerns objectives and architecture. Goal changes proceed through
+  independent review and verified staging; ordinary implementation,
   activity repair, check execution and authorized staging delivery proceed under
   accepted guidance. Unavailable external prerequisites remain named holds. Project
   documentation should not add approval ceremonies or obscure which high-level
@@ -450,7 +450,7 @@ activities:
 
         Update authored checklists with exact completed and pending outcomes, retaining links to failures and checkpoints. Remove obsolete guidance that the accepted batch replaces; do not preserve contradictory instructions as historical authority. Generated plans and evidence remain in their designated spaces, with application transcripts and databases outside source.
 
-        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives, goals or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
+        Use checked edits within captured ownership and applicable validation. A missing component capability becomes its owner's contribution, while changed objectives or architecture retain the human gate. Ordinary documentation and fixture correction adds no approval. If this activity has no code to change, a truthful validated documentation outcome is preferable to invented implementation or a ceremonial test framework.
     operations:
       - read-file
       - list-files

@@ -1,3 +1,6 @@
+import type { ObjectiveReview } from '../../../planner/src/objective-review.js';
+import type { TokenUsage } from '../content/token-pair.js';
+
 export const operations = {
   plan: 'Plan',
   architect: 'Architect',
@@ -11,19 +14,21 @@ export interface CommandRequest {
   operation: Operation;
   instruction: string;
   workspace: string;
+  recommendObjectives?: boolean;
 }
 
 export interface CommandState {
   status: 'Unavailable' | 'Idle' | 'Active' | 'Waiting' | 'Failed' | 'Completed' | 'Cancelled';
   scope?: string;
-  gate?: { id: string; key: string; question: string };
-  connectionError?: string;
+  gate?: { id: string; key: string; question: string; review?: ObjectiveReview };
+  canRecommendObjectives?: boolean;
   canReconnect?: boolean;
   canCancel?: boolean;
   supported: readonly Operation[];
+  requestId?: string;
   command?: string;
   execution?: string;
-  metrics?: ReadonlyArray<readonly [label: string, value: string]>;
+  metrics?: ReadonlyArray<readonly [label: string, value: string | TokenUsage]>;
 }
 
 export interface CommandBinding {

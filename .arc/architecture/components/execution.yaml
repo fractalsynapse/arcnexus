@@ -452,7 +452,7 @@ activities:
         unavailable. Attempt the actual mapped operation for a legitimate owned effect
         and use its exact response to decide what to do next.
 
-        The human governs objectives, goals and architecture. Implementation corrections
+        The human approves objective and architecture changes. Implementation corrections
         within already approved intent ordinarily need no additional human gate. A new
         permission, locked-contract change, different accepted architectural intent or
         unapproved owner does need that route. Distinguish uncertainty about how to

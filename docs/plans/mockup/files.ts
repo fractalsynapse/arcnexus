@@ -1,6 +1,7 @@
 import { phaseActor, phaseRows } from './composer.ts';
 import { componentReadout } from './component-form.ts';
 import { diffView, draftDiff } from './diff.ts';
+import type { DiffLine } from './diff.ts';
 import { showInspector } from './inspector.ts';
 import { markdownContent } from './markdown.ts';
 import { overview, splitPanels } from './panels.ts';
@@ -225,7 +226,7 @@ export function fileDiff(item: DesignFile, index: number, action = '') {
   const label = 'Compared with ' + previous.id;
   const lines = revisionDiff(current, previous);
   return lines.length
-    ? diffView(label, [{ path: item.path, lines }], { action })
+    ? diffView(label, { file: { path: item.path, lines } }, { action })
     : panel(
         'Changes',
         noData('Contents match the selected comparison.'),
@@ -233,8 +234,8 @@ export function fileDiff(item: DesignFile, index: number, action = '') {
       );
 }
 
-function revisionDiff(current: Revision, previous: Revision): [string, string][] {
-  const lines: [string, string][] = [];
+function revisionDiff(current: Revision, previous: Revision): DiffLine[] {
+  const lines: DiffLine[] = [];
   for (const [before, after] of [
     [previous.name, current.name],
     [`Priority ${previous.priority ?? '—'}`, `Priority ${current.priority ?? '—'}`],
@@ -250,7 +251,7 @@ function revisionDiff(current: Revision, previous: Revision): [string, string][]
       after.slice(start, end).forEach((line) => lines.push(['added', '+ ' + line]));
     }
   } else if (previous.content !== current.content) {
-    lines.push(...draftDiff(previous.content.split('\n'), after));
+    lines.push(...draftDiff(previous.content, current.content));
   }
   return lines;
 }
