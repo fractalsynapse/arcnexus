@@ -10,3 +10,8 @@ const dateTime = new Intl.DateTimeFormat(undefined, {
 export function recordedTime(timestamp: string) {
   return dateTime.format(new Date(timestamp));
 }
+
+/** Name an execution consistently in the selector and history details. */
+export function planRunLabel(timestamp: string | null, number: number) {
+  return timestamp ? recordedTime(timestamp) : 'Run ' + number;
+}

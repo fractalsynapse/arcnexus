@@ -54,6 +54,7 @@ function usePlanSelection(binding: CommandBinding) {
   return {
     project,
     root,
+    plans,
     history,
     entries,
     ...choice,

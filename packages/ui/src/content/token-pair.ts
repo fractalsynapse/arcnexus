@@ -7,6 +7,11 @@ export interface TokenUsage {
   output?: number | null;
 }
 
+export interface TokenDetails {
+  title: string;
+  content: ReactNode;
+}
+
 export const tokenPairHint = 'Input / output tokens';
 
 const fraction = new Intl.NumberFormat('en-US', {
@@ -23,15 +28,15 @@ export function formatTokenPair({ input, output }: TokenUsage) {
 }
 
 /** Show compact counts with their order available on hover and keyboard focus. */
-export function TokenPair({ details, ...usage }: TokenUsage & { details?: ReactNode }) {
+export function TokenPair({ details, ...usage }: TokenUsage & { details?: TokenDetails }) {
   const value = formatTokenPair(usage);
   if (details != null)
     return h(DialogButton, {
-      title: 'Reported tokens over time',
+      title: details.title,
       label: value,
       hint: tokenPairHint,
       className: 'arc-token-details',
-      children: details,
+      children: details.content,
     });
   return h(
     Tooltip,

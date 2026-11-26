@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
 import type { Locator, Page } from 'playwright';
 import { serveApi } from '../../../api/src/serve.js';
-import { browserPage, planData, project } from '../fixtures/plan-browser.js';
+import { browserPage, openPlanTokenHistory, planData, project } from '../fixtures/plan-browser.js';
 import { preferenceRoutes } from '../fixtures/preferences.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
@@ -112,10 +112,8 @@ test('elapsed clocks advance locally and token history uses recorded reports', a
   const tokens = metrics.getByRole('button', { name: /1\.0K \/ 0\.0K.*Reported tokens/ });
   assert.equal(await tokens.count(), 1);
   assert.equal(await metrics.getByText('Token history', { exact: true }).count(), 0);
-  await tokens.click();
-  const details = page.getByRole('dialog', { name: 'Reported tokens over time' });
-  const samples = details.getByRole('table', { name: 'Cumulative reported tokens' });
-  await samples.getByText('1.0K / 0.0K', { exact: true }).waitFor();
+  const { table } = await openPlanTokenHistory(page);
+  await table.getByRole('row', { name: /Run 1.*1\.0K \/ 0\.0K/ }).waitFor();
 });
 
 async function verifyReportTabs(page: Page, outcome: Locator) {

@@ -1,37 +1,58 @@
-import { createElement as h } from 'react';
+import { createElement as h, Fragment } from 'react';
 import { TokenPair, type TokenUsage } from './token-pair.js';
-import { LocalTime } from './local-time.js';
 
-export interface TokenSample extends TokenUsage {
-  sequence: string;
-  timestamp: string | null;
+export interface RunTokenReport extends TokenUsage {
+  id: string;
+  label: string;
+  unavailable?: boolean;
 }
 
-/** List timestamped cumulative provider reports without interpolating missing usage. */
-export function TokenHistory({ samples }: { samples: readonly TokenSample[] }) {
-  if (!samples.length) return h('p', null, 'No token reports recorded yet.');
+/** Show recorded usage per run and total each reported category independently. */
+export function TokenHistory({ label, runs }: { label: string; runs: readonly RunTokenReport[] }) {
   return h(
-    'table',
-    { className: 'arc-token-history', 'aria-label': 'Cumulative reported tokens' },
+    Fragment,
+    null,
+    h('p', null, 'Totals include recorded usage. A dash means no count was reported.'),
     h(
-      'thead',
-      null,
+      'table',
+      { className: 'arc-token-history', 'aria-label': label },
       h(
-        'tr',
+        'thead',
         null,
-        h('th', { scope: 'col' }, 'Time'),
-        h('th', { scope: 'col' }, 'Cumulative tokens'),
+        h(
+          'tr',
+          null,
+          h('th', { scope: 'col' }, 'Run'),
+          h('th', { scope: 'col' }, 'Reported tokens'),
+        ),
       ),
+      h('tbody', null, runs.map(reportRow)),
+      h('tfoot', null, totalsRow(runs)),
     ),
-    h('tbody', null, samples.map(sampleRow)),
   );
 }
 
-function sampleRow({ sequence, timestamp, input, output }: TokenSample) {
+function reportRow({ id, label, unavailable, input, output }: RunTokenReport) {
   return h(
     'tr',
-    { key: sequence },
-    h('td', null, timestamp ? h(LocalTime, { timestamp }) : '—'),
-    h('td', null, h(TokenPair, { input, output })),
+    { key: id },
+    h('th', { scope: 'row' }, label),
+    h('td', null, unavailable ? 'Could not load' : h(TokenPair, { input, output })),
   );
+}
+
+function totalsRow(runs: readonly RunTokenReport[]) {
+  return h(
+    'tr',
+    null,
+    h('th', { scope: 'row' }, 'Total reported'),
+    h('td', null, h(TokenPair, { input: total(runs, 'input'), output: total(runs, 'output') })),
+  );
+}
+
+function total(runs: readonly RunTokenReport[], kind: keyof TokenUsage) {
+  return runs.reduce<number | null>((sum, run) => {
+    const reported = run[kind];
+    return reported == null ? sum : (sum ?? 0) + reported;
+  }, null);
 }

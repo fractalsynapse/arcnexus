@@ -12,6 +12,7 @@ import {
   project,
   responses,
   selectProject,
+  verifyTokenTotals,
 } from '../fixtures/plan-browser.js';
 import { serveApi } from '../../../api/src/serve.js';
 import { serveWeb } from '../../src/serve.js';
@@ -63,24 +64,22 @@ test('Plan history keeps the header and all displays scoped to the selected proj
     timezoneId: 'America/New_York',
   });
   const requests = await responses(page, [project, otherProject]);
-  await historyResponses(page);
+  await historyResponses(page, requests);
   await page.goto(application.url);
   await selectProject(page);
   const selector = page.getByRole('combobox', { name: 'Plan run' });
   await page.getByText('Latest outcome', { exact: true }).waitFor();
   await assertRunRange(page, '11/25/2025: 12:01:23 PM - 12:04:23 PM');
-  const counts = page.getByText('853.6K / 15.2K', { exact: true });
-  await counts.hover();
-  await page
-    .locator('.arc-tooltip:popover-open')
-    .filter({ hasText: 'Input / output tokens' })
-    .waitFor();
+  await assertTokenTooltip(page);
   assert.equal(await selector.count(), 1);
   assert.equal(await selector.textContent(), 'Latest run');
   await chooseOption(page, 'Plan run', /11\/24\/2025/);
   await assertHistoricalPlan(page, requests);
+  assert.ok(!requests.some((path) => path.endsWith('/token-history')));
+  await verifyTokenTotals(page, '977.0K / 15.2K', 2, '123.4K / —');
   await selectProject(page, otherProject.id);
   await page.getByText('Other outcome', { exact: true }).waitFor();
+  await verifyTokenTotals(page, '7.0K / 1.0K', 1);
   assert.equal(await selector.textContent(), 'Latest run');
   const menu = await openSelect(page, 'Plan run');
   assert.equal(await menu.getByRole('option', { name: /11\/24\/2025/ }).count(), 0);
@@ -102,30 +101,54 @@ const latest = {
   updatedAt: '2025-11-25T17:04:23.000Z',
 };
 
-async function historyResponses(page: Page) {
-  await page.route('**/plan-executions**', (route) => {
+async function historyResponses(page: Page, requests: string[]) {
+  await page.route('**/plan-executions**', respondToPlanHistory);
+  await page.route('**/token-history', (route) => {
     const path = new URL(route.request().url()).pathname;
-    const other = path.includes('/other-project/');
-    const selected = path.includes('/earlier/') ? earlier : latest;
-    if (path.endsWith('/plan-executions'))
-      return route.fulfill({ json: { entries: other ? [latest] : [latest, earlier] } });
-    if (path.endsWith('/current')) return route.fulfill({ json: latest });
-    if (path.endsWith('/metrics'))
-      return route.fulfill({
-        json: { usage: { input_tokens: { reported: 853600 }, output_tokens: { reported: 15200 } } },
-      });
-    if (path.endsWith('/events'))
-      return route.fulfill({
-        contentType: 'text/event-stream',
-        body: timelineRecord('1', selected.execution + ' message'),
-      });
-    const summary = other
-      ? 'Other outcome'
-      : selected === earlier
-        ? 'Earlier outcome'
-        : 'Latest outcome';
-    return route.fulfill({ json: { ...selected, outcome: { kind: 'planned', summary } } });
+    requests.push(path);
+    const [input, output] = path.includes('/other-project/')
+      ? [7000, 1000]
+      : path.includes('/earlier/')
+        ? [123400, null]
+        : [853600, 15200];
+    const samples = [
+      { input: 500, output: output === null ? null : 40 },
+      { input, output },
+    ];
+    return route.fulfill({ json: { samples } });
   });
+}
+
+function respondToPlanHistory(route: Route) {
+  const path = new URL(route.request().url()).pathname;
+  const other = path.includes('/other-project/');
+  const selected = path.includes('/earlier/') ? earlier : latest;
+  if (path.endsWith('/plan-executions'))
+    return route.fulfill({ json: { entries: other ? [latest] : [latest, earlier] } });
+  if (path.endsWith('/current')) return route.fulfill({ json: latest });
+  if (path.endsWith('/metrics'))
+    return route.fulfill({
+      json: { usage: { input_tokens: { reported: 853600 }, output_tokens: { reported: 15200 } } },
+    });
+  if (path.endsWith('/events'))
+    return route.fulfill({
+      contentType: 'text/event-stream',
+      body: timelineRecord('1', selected.execution + ' message'),
+    });
+  const summary = other
+    ? 'Other outcome'
+    : selected === earlier
+      ? 'Earlier outcome'
+      : 'Latest outcome';
+  return route.fulfill({ json: { ...selected, outcome: { kind: 'planned', summary } } });
+}
+
+async function assertTokenTooltip(page: Page) {
+  await page.getByText('853.6K / 15.2K', { exact: true }).hover();
+  await page
+    .locator('.arc-tooltip:popover-open')
+    .filter({ hasText: 'Input / output tokens' })
+    .waitFor();
 }
 
 async function assertHistoricalPlan(page: Page, requests: string[]) {

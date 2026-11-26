@@ -1,4 +1,4 @@
-import { createElement as h, type ReactNode } from 'react';
+import { createElement as h } from 'react';
 import {
   Disclosure,
   elapsedTime,
@@ -6,6 +6,7 @@ import {
   TokenPair,
   Tooltip,
   useElapsedClock,
+  type TokenDetails,
 } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
 import { PlanTokenHistory } from './plan-token-history.js';
@@ -31,7 +32,7 @@ export function PlannerMetrics({
   running?: boolean;
 }) {
   const snapshot = useTickingTimes(value, running);
-  const tokens = h(PlanTokenHistory, { path: path + '/token-history', refresh });
+  const tokens = { title: 'Reported tokens across Plan runs', content: h(PlanTokenHistory) };
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -62,7 +63,7 @@ function useTickingTimes(value: PlanMetrics, running: boolean) {
 function metricRows(
   value: PlanMetrics,
   { wall, agent }: ReturnType<typeof useTickingTimes>,
-  details: ReactNode,
+  details: TokenDetails,
 ) {
   const input = value.usage?.input_tokens?.reported;
   const output = value.usage?.output_tokens?.reported;

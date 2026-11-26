@@ -1,7 +1,7 @@
 import { createElement as h } from 'react';
 import { SelectField } from '../../../../packages/ui/src/index.js';
 import { usePlanResource } from './plan-resource.js';
-import { recordedTime } from './recorded-time.js';
+import { planRunLabel } from './recorded-time.js';
 
 /** Choose a retained execution without fetching any of its details in the heading. */
 export function PlanRunSelector() {
@@ -15,7 +15,7 @@ export function PlanRunSelector() {
       { value: '', label: 'Latest run' },
       ...entries.map(({ execution, startedAt }, index) => ({
         value: execution,
-        label: startedAt ? recordedTime(startedAt) : 'Run ' + (entries.length - index),
+        label: planRunLabel(startedAt, entries.length - index),
       })),
     ],
     onChange: select,

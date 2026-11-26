@@ -64,3 +64,19 @@ export async function selectProject(page: Page, id = project.id) {
   await chooseOption(page, 'Active project', target.name);
   await page.getByRole('button', { name: 'Close' }).click();
 }
+
+export async function openPlanTokenHistory(page: Page) {
+  const title = 'Reported tokens across Plan runs';
+  await page.getByRole('button', { name: new RegExp(title) }).click();
+  const dialog = page.getByRole('dialog', { name: title });
+  return { dialog, table: dialog.getByRole('table', { name: 'Plan run token usage' }) };
+}
+
+export async function verifyTokenTotals(page: Page, value: string, runs: number, partial?: string) {
+  const { dialog, table } = await openPlanTokenHistory(page);
+  const total = table.getByRole('row').filter({ hasText: 'Total reported' });
+  await total.getByText(value, { exact: true }).waitFor();
+  assert.equal(await table.locator('tbody tr').count(), runs);
+  if (partial) await table.getByText(partial, { exact: true }).waitFor();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+}
