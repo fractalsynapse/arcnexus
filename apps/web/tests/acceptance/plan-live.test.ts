@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { serveApi } from '../../../api/src/serve.js';
 import { browserPage, planData, project } from '../fixtures/plan-browser.js';
 import { preferenceRoutes } from '../fixtures/preferences.js';
@@ -37,11 +37,40 @@ test('live metrics and the complete Planner report update with Event log disable
   assert.equal(await page.getByRole('log', { name: 'Planning events' }).count(), 0);
   await outcome.getByText(report.summary, { exact: true }).waitFor();
   await page.getByText('2.0K / 0.0K', { exact: true }).waitFor();
-  for (const section of ['Ratings', 'Comparison', 'Proposed changes', 'Goal links', 'Sources'])
-    assert.equal(await outcome.getByRole('heading', { name: section, exact: true }).count(), 1);
+  await verifyReportTabs(page, outcome);
   assert.equal(await outcome.getByRole('link', { name: 'Issue #746' }).count(), 1);
   assert.equal(await outcome.getByRole('link', { name: 'PR #747' }).count(), 1);
 });
+
+async function verifyReportTabs(page: Page, outcome: Locator) {
+  const tabs = outcome.getByRole('tablist', { name: 'Planner report' });
+  assert.equal(await tabs.count(), 1);
+  const ratings = tabs.getByRole('tab', { name: 'Ratings', exact: true });
+  assert.equal(await ratings.getAttribute('aria-selected'), 'true');
+  assert.equal(await outcome.getByRole('tabpanel').count(), 1);
+  await ratings.press('ArrowRight');
+  await outcome
+    .getByRole('tabpanel', { name: 'Comparison' })
+    .getByText('There is a gap in evidence.')
+    .waitFor();
+  await ratings.click();
+  await outcome.getByRole('button', { name: /Details.*fixture-goal/ }).click();
+  const rating = page.getByRole('dialog', { name: 'Rating for fixture-goal' });
+  await rating.getByText('Evidence was retained.', { exact: true }).waitFor();
+  await rating.getByRole('button', { name: 'Close' }).click();
+  await tabs.getByRole('tab', { name: 'Changes', exact: true }).click();
+  await outcome.getByRole('button', { name: /View proposal.*fixture-goal/ }).click();
+  const proposal = page.getByRole('dialog', { name: 'Proposed document fixture-goal' });
+  await proposal.getByText('# Revised goal').waitFor();
+  await proposal.getByRole('button', { name: 'Close' }).click();
+  await tabs.getByRole('tab', { name: 'Sources', exact: true }).click();
+  await outcome
+    .getByRole('tabpanel', { name: 'Sources' })
+    .getByText('Captured charter excerpt.')
+    .waitFor();
+  assert.equal(await outcome.locator('summary').count(), 0);
+  assert.equal(await outcome.getByText(report.summary, { exact: true }).isVisible(), true);
+}
 
 test('live event log follows the tail and lets the reader scroll back', async (t) => {
   const opening = Array.from({ length: 40 }, (_, index) => messageFrame(index + 1)).join('');

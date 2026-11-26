@@ -30,6 +30,8 @@
 
 ### Changed
 
+- Keep the Planner outcome summary visible above report tabs and open detailed ratings and proposed documents in the shared dialog (#746).
+
 - Follow new Plan events while the reader is at the bottom, and color operation rows by recorded status (#746).
 
 - Restore full-width header dividers and content spacing on shared display panels (#746).
@@ -43,6 +45,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Keep live gateway streams from blocking saved Plan reports in Firefox (#746).
 
 - Show Back on inner workspaces and keep Refine on the root workspaces (#746).
 

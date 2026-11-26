@@ -266,6 +266,7 @@ test('desktop stays docked and reports controlled active, waiting and failed com
 });
 
 async function assertDocked(page: Page) {
+  await page.getByRole('region', { name: 'Planning data' }).waitFor();
   await page.evaluate(() => window.scrollTo(0, innerHeight));
   const nav = await page.getByRole('navigation', { name: 'Workspace' }).boundingBox();
   const header = await page.getByRole('banner').boundingBox();
