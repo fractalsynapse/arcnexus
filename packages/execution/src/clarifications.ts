@@ -1,14 +1,17 @@
 import type { ActivitySelection, TaskContext } from '../../architecture/src/index.js';
-import { ClarificationRequired } from '../../workflow/src/index.js';
+import { ClarificationRequired, type TaskQuestion } from '../../workflow/src/index.js';
 import { InvalidCodexResponse } from './codex.js';
 import type { HostTask } from './index.js';
 import { inboxIdentity, verificationContext } from './research.js';
 
 type Assignment = Omit<TaskContext, 'goal' | 'worktree'>;
 
-export interface Clarification {
-  scope: string;
-  question: string;
+interface ReviewOptions {
+  accepts?: (answer: string) => boolean;
+  review?: TaskQuestion['review'];
+}
+
+export interface Clarification extends TaskQuestion {
   answer?: string;
   evidence?: string;
 }
@@ -27,20 +30,20 @@ export class Clarifications {
   async run(
     data: Assignment,
     invoke: (data: Assignment) => Promise<unknown>,
-    accepts?: (answer: string) => boolean,
+    options: ReviewOptions = {},
   ) {
     const scope = inboxIdentity(this.task, this.selection, data, this.revision);
     const answers = this.retained(scope);
     while (true) {
       for (const [question, gate] of answers)
-        if (gate.answer === undefined) answers.set(question, await this.ask(gate, accepts));
+        if (gate.answer === undefined) answers.set(question, await this.ask(gate, options.accepts));
       const reply = await invoke(withClarifications(data, [...answers.values()]));
       this.signal.throwIfAborted();
       const question = requestedQuestion(reply);
       if (question === undefined) return reply;
       if (answers.has(question))
         throw new InvalidCodexResponse(`Clarification already answered: ${question}`);
-      const clarification = this.openQuestion(scope, question);
+      const clarification = this.openQuestion({ scope, question, review: options.review });
       this.task.note({ clarification, ...verificationContext(this.task, this.selection, data) });
       answers.set(question, clarification);
     }
@@ -54,11 +57,11 @@ export class Clarifications {
   }
 
   /** Use the ordinary durable conversation for a host-owned approval question. */
-  async decide(data: Assignment, question: string, accepts?: (answer: string) => boolean) {
+  async decide(data: Assignment, question: string, options: ReviewOptions = {}) {
     await this.run(
       data,
       () => Promise.resolve(this.answers(data).length ? undefined : { kind: 'question', question }),
-      accepts,
+      options,
     );
     return this.answers(data)[0]!.answer;
   }
@@ -72,43 +75,46 @@ export class Clarifications {
   }
 
   /** Keep the exact open question available even before there is an answer. */
-  private openQuestion(scope: string, question: string) {
+  private openQuestion(gate: TaskQuestion) {
     const evidence = this.task.store(
       'clarification-question.json',
-      JSON.stringify({ ...this.selection, question }, null, 2),
+      JSON.stringify({ ...this.selection, ...gate }, null, 2),
     );
-    return { scope, question, evidence };
+    return { ...gate, evidence };
   }
 
   /** Persist a verbatim answer before the activation can continue. */
   private async ask(gate: Clarification, accepts?: (answer: string) => boolean) {
-    const { scope, question } = gate;
+    const { question } = gate;
     this.signal.throwIfAborted();
     const answer = await this.requestAnswer(gate, accepts);
     this.signal.throwIfAborted();
     if (!answer?.trim()) {
-      const retained = gate.evidence ? gate : this.openQuestion(scope, question);
+      const retained = gate.evidence ? gate : this.openQuestion(gate);
       if (retained !== gate) this.task.note({ clarification: retained });
-      throw new ClarificationRequired(question, [retained.evidence!]);
+      throw new ClarificationRequired(
+        gate.review ? 'Review objective recommendations.' : question,
+        [retained.evidence!],
+      );
     }
     const evidence = this.task.store(
       'clarification.json',
       JSON.stringify({ ...this.selection, question, answer }, null, 2),
     );
-    const clarification = { scope, question, answer, evidence };
+    const clarification = { ...gate, answer, evidence };
     this.task.note({ clarification });
     return clarification;
   }
 
   /** Ask again on invalid input without recording it as a decision. */
   private async requestAnswer(gate: Clarification, accepts?: (answer: string) => boolean) {
-    const { question, scope } = gate;
+    const { question, scope, review } = gate;
     let prompt = question;
     while (true) {
-      const answer = await this.task.ask?.(prompt, this.signal, { question, scope });
+      const answer = await this.task.ask?.(prompt, this.signal, { question, scope, review });
       this.signal.throwIfAborted();
       if (!answer?.trim() || !accepts || accepts(answer)) return answer;
-      prompt = `Unrecognized approval response. Enter approve or skip.\n\n${question}`;
+      prompt = `Invalid review response. Follow the review instructions.\n\n${question}`;
     }
   }
 }

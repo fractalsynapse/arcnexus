@@ -5,6 +5,7 @@ export interface ProjectSource extends GuidanceSource {
   readonly root: string;
   readonly revision: string;
   readonly remote: string;
+  readonly files?: readonly string[];
   fileHistory?(path: string): FileHistory;
   fileDates?(directory: string): ReadonlyMap<string, string>;
 }
@@ -25,8 +26,10 @@ export function openProject(directory: string, requested = 'HEAD'): ProjectSourc
     `${requested}^{commit}`,
   ).trim();
   const remote = git(root, 'config', '--get', 'remote.origin.url').trim();
-  const paths = Object.freeze(
-    git(root, 'ls-tree', '-rz', '--name-only', revision).split('\0').filter(Boolean),
+  const entries = git(root, 'ls-tree', '-rz', revision).split('\0').filter(Boolean);
+  const paths = Object.freeze(entries.map((entry) => entry.slice(entry.indexOf('\t') + 1)));
+  const files = Object.freeze(
+    paths.filter((_, index) => /^100(?:644|755) blob /.test(entries[index]!)),
   );
   const byPath = new Set(paths);
   return Object.freeze({
@@ -34,6 +37,7 @@ export function openProject(directory: string, requested = 'HEAD'): ProjectSourc
     revision,
     remote,
     paths,
+    files,
     ...capturedFiles(root, revision, byPath),
   });
 }
@@ -86,12 +90,17 @@ function capturedHistory(root: string, capture: string, path: string): FileHisto
 /** Run a local read and expose failures without leaking command output or credentials. */
 function git(directory: string, ...args: string[]): string {
   try {
-    return execFileSync('git', args, {
+    return execFileSync('/usr/bin/git', ['--no-replace-objects', ...args], {
       cwd: directory,
       encoding: 'utf8',
       maxBuffer: Infinity,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+      env: {
+        PATH: '/usr/bin:/bin',
+        GIT_OPTIONAL_LOCKS: '0',
+        GIT_CONFIG_NOSYSTEM: '1',
+        GIT_CONFIG_GLOBAL: '/dev/null',
+      },
     });
   } catch {
     throw new Error(`Cannot read Git project (${args[0]} ${args[1] ?? ''}) from ${directory}`);

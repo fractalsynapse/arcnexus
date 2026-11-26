@@ -36,12 +36,14 @@ export async function reconcileHosted(
   database: Client,
   project: string,
   confirmStopped: (owner: string) => boolean | Promise<boolean>,
+  documentationOnly = false,
 ) {
   const current = await database.query<{ id: string; lease: string | null }>(
     `SELECT id,lease FROM ${store}.runs
      WHERE project=$1 AND active=1 AND parent_id IS NULL
-       AND EXISTS (SELECT 1 FROM ${store}.hosted_projects WHERE project=$1)`,
-    [project],
+       AND documentation_only=$2
+       AND ($2 OR EXISTS (SELECT 1 FROM ${store}.hosted_projects WHERE project=$1))`,
+    [project, documentationOnly],
   );
   const run = current.rows[0];
   if (!run?.lease || !(await confirmStopped(worker(run.lease)))) return false;

@@ -31,7 +31,7 @@ async function inspect(ref: string) {
 /** Resolve an immutable image and prove it inherits the approved Host image. */
 export async function verifyHostImage(definition: Definition) {
   const base = await inspect(definition.base);
-  const image = await assignedImage(definition);
+  const image = definition.source === 'base' ? base : await assignedImage(definition);
   if (image.Id !== definition.approvedImage || base.Config.Labels['io.arcnexus.worker'] !== 'host')
     throw new Error('The Host image differs from the approved artifact');
   if (
@@ -42,7 +42,7 @@ export async function verifyHostImage(definition: Definition) {
   return image.Id;
 }
 
-async function assignedImage(definition: Definition) {
+async function assignedImage(definition: Exclude<Definition, { source: 'base' }>) {
   if (definition.source === 'registry') {
     try {
       return await inspect(definition.ref);

@@ -9,6 +9,7 @@ export function executionPluginFor(
   storage?: string,
   runtime?: RuntimeImage,
   github?: GitHubCredential,
+  discovery?: ConstructorParameters<typeof Execution>[5],
 ) {
   return {
     inject: ['architecture', 'coordination'],
@@ -22,6 +23,7 @@ export function executionPluginFor(
           storage ?? applicationStorage(),
           runtime,
           github,
+          discovery,
         ),
       );
     },

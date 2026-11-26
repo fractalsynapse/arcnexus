@@ -7,7 +7,7 @@ export function RefineButton({ binding }: { binding: CommandBinding }) {
   return h(RefineAction, {
     key: state.scope,
     start: binding.refine,
-    enabled: !!state.supported.length,
+    enabled: !!state.supported.length && !state.recommendationOnly,
   });
 }
 

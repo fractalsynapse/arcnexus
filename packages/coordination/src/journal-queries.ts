@@ -194,3 +194,16 @@ export function completedRefinementRounds(database: JournalReader): JournalEvent
       observation: JSON.parse(String(row.content)) as unknown,
     }));
 }
+
+export function onboardingSelections(database: JournalReader): unknown[] {
+  return database
+    .prepare(
+      `SELECT content FROM events WHERE json_type(content, '$.onboardingSelection') = 'object'
+     ORDER BY id`,
+    )
+    .all()
+    .map(
+      ({ content }) =>
+        (JSON.parse(String(content)) as { onboardingSelection: unknown }).onboardingSelection,
+    );
+}

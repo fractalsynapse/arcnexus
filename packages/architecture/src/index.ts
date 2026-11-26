@@ -1,10 +1,15 @@
 import type { Context } from 'cordis';
+import { openProject, type ProjectSource } from './source.js';
 import { captureProject, type Capture } from './catalog.js';
 import type { ActivitySelection } from './activity.js';
 import { buildCodexRequest, type TaskContext } from './request.js';
 import type { Agent } from '../../agent/src/index.js';
 import type { HostTask } from '../../execution/src/index.js';
 import { ArchitectureAssessment } from './assessment.js';
+
+export { projectCatalogPath } from './catalog.js';
+export { documentationCapture } from './documentation-capture.js';
+export { openProject, type ProjectSource } from './source.js';
 
 export type { ActivitySelection, Capture, TaskContext };
 export { revisionCitation, type RevisionCitation } from './revision-citation.js';
@@ -32,7 +37,12 @@ export class Architecture {
 
   /** Capture the committed project resolved from a working directory. */
   capture(directory: string, revision?: string): Capture {
-    return captureProject(directory, revision);
+    return this.resolve(openProject(directory, revision));
+  }
+
+  /** Resolve the catalog from an already verified immutable Git tree. */
+  resolve(source: ProjectSource): Capture {
+    return captureProject(source);
   }
 
   /** Prepare the request used by inspection and available to activation. */

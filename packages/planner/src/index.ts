@@ -1,4 +1,3 @@
-import { AgentActivityHold, InvalidAgentResponse } from '../../agent/src/index.js';
 import type { Context } from 'cordis';
 import { activities, type Plan, type Rejection } from '../../direction/src/index.js';
 import {
@@ -16,7 +15,10 @@ import { splitMarkdown } from '../../foundation/src/markdown-document.js';
 import { readGoal } from './inventory.js';
 import { guideDirectory, guideIndex, guideRecord, withGuideID } from './guide-index.js';
 import type { GuideDraft } from './guide-draft.js';
-import { plannerAssignment } from './assignment.js';
+import { ObjectiveRecommendations } from './objective-recommendation.js';
+import { generatePlannerResponse, validatePlannerResponse } from './model-response.js';
+import type { ObjectiveDraft } from './objective-review.js';
+import { plannerActivity as selection, plannerAssignment } from './assignment.js';
 import { decodeProposal, type Proposal } from './proposal.js';
 import {
   objectivePath,
@@ -36,7 +38,6 @@ declare module 'cordis' {
   }
 }
 
-const selection = { component: 'planner', activity: 'planning' };
 type HostTask = ReturnType<typeof hostTask>;
 type Mode = NonNullable<TaskInput['planning']>;
 interface PendingProposal {
@@ -47,6 +48,14 @@ interface PendingProposal {
 interface RetainedEdits {
   edits: CheckedEdit[];
   report: string;
+}
+
+interface Alignment {
+  objective: boolean;
+  approved: ObjectiveDraft[];
+  findings?: readonly Rejection[];
+  progress: TaskObserver['progress'];
+  signal: AbortSignal;
 }
 
 /** Map captured goals and prepare exact records for reviewed delivery. */
@@ -95,17 +104,36 @@ export class Planner {
     findings?: readonly Rejection[],
   ) {
     const task = hostTask(session);
-    const objective = mode === 'objective';
-    if (objective && session.capture.source.paths.includes(objectivePath(session)))
+    if (task.documentationOnly) return this.discover(task, progress, signal);
+    if (mode === 'objective' && session.capture.source.paths.includes(objectivePath(session)))
       return planned(task, 'The exact objective is already recorded.', [objectivePath(session)]);
+    const recommendations =
+      mode === 'recommendation'
+        ? await new ObjectiveRecommendations(task, this.agent, signal).review()
+        : undefined;
+    if (recommendations)
+      recordRecommendations(task, recommendations.batch, recommendations.selected, progress);
+    if (recommendations?.declined)
+      return planned(task, 'Objective recommendations were declined.', []);
     if (!task.branch) task.planningWorkspace(signal);
-    const run = verifiedGoalRun(task);
-    const data = assignment(task, objective, run, findings);
+    return this.align(task, {
+      objective: mode === 'objective',
+      approved: recommendations?.selected ?? [],
+      findings,
+      progress,
+      signal,
+    });
+  }
+
+  /** Feed exact human intent into normal goal alignment and checked delivery. */
+  private async align(task: HostTask, input: Alignment) {
+    const { objective, approved, findings, progress, signal } = input;
     const previous = findings ? appliedEdits(task) : undefined;
+    const data = assignment(task, objective, verifiedGoalRun(task), findings, approved);
     const { proposal, report } = await this.proposal(task, data, signal, previous);
     progress({
       phase: 'planning',
-      message: 'Planner mapped the captured project',
+      message: 'Planner assessed the project’s goals',
       evidence: [report],
     });
     const edits = goalPatches(task, proposal, previous);
@@ -114,7 +142,38 @@ export class Planner {
       !(await includeObjective(task, { proposal, edits, previous, data, signal, progress }))
     )
       return planned(task, 'The objective change was declined.', [report]);
+    edits.push(
+      ...approved.flatMap(({ path, before, content }) =>
+        previous?.get(path) === content ? [] : [{ path, before, content }],
+      ),
+    );
     return retainEdits(task, edits, report);
+  }
+
+  /** Retain selected onboarding drafts at their original source without starting delivery. */
+  private async discover(task: HostTask, progress: TaskObserver['progress'], signal: AbortSignal) {
+    const { batch, selected, declined } = await new ObjectiveRecommendations(
+      task,
+      this.agent,
+      signal,
+      true,
+    ).review();
+    const evidence = task.store(
+      'objective-discovery.json',
+      JSON.stringify({ ...batch, selected }, null, 2),
+    );
+    if (
+      selected.length &&
+      !task
+        .observations<{ onboardingSelection?: unknown }>()
+        .some((event) => event.onboardingSelection)
+    )
+      task.note({
+        onboardingSelection: { revision: task.capture.source.revision, drafts: selected },
+      });
+    recordRecommendations(task, batch, selected, progress);
+    const summary = declined ? 'Objective recommendations were declined.' : batch.summary;
+    return planned(task, summary, [evidence]);
   }
 
   /** Apply exactly the journaled edits, skipping files already recovered from checkpoints. */
@@ -159,7 +218,10 @@ export class Planner {
     const proposal = await this.generate(task, data, signal, previous);
     const report = task.store(
       'goal-mapping.md',
-      reportProposal(proposal, task.capture.source, goalPatches(task, proposal, previous)),
+      reportProposal(proposal, task.capture.source, [
+        ...goalPatches(task, proposal, previous),
+        ...data.assignment.approvedObjectives,
+      ]),
     );
     const plannerProposal = { proposal, report, feedback };
     task.note({ plannerProposal, revision });
@@ -174,28 +236,40 @@ export class Planner {
     previous?: Map<string, string | null>,
   ) {
     const ids = [...guideIndex(task.capture, 'goals', previous).keys()];
-    const seen = new Set<string>();
-    let diagnostic: string | undefined;
-    while (true) {
-      signal.throwIfAborted();
-      try {
-        const input = { ...data, assignment: { ...data.assignment, diagnostic } };
-        const reply = await task.activate(this.agent, selection, input, signal);
-        return validateReply(task, data, ids, reply);
-      } catch (error) {
-        signal.throwIfAborted();
-        if (!(error instanceof InvalidAgentResponse)) throw error;
-        if (seen.has(error.identity))
-          throw new AgentActivityHold(
-            `Planner repeated an unchanged finding: ${error.message}`,
-            task.evidence.slice(),
-          );
-        seen.add(error.identity);
-        diagnostic = error.message;
-        task.note({ plannerResponseRepair: diagnostic });
-      }
-    }
+    return generatePlannerResponse(task, signal, async (diagnostic) => {
+      const input = { ...data, assignment: { ...data.assignment, diagnostic } };
+      const reply = await task.activate(this.agent, selection, input, signal);
+      return validatePlannerResponse(() =>
+        decodeProposal(
+          reply,
+          task.capture,
+          ids,
+          data.assignment.mode === 'human objective',
+          data.assignment.verifiedRun,
+        ),
+      );
+    });
   }
+}
+
+/** Publish the source assessment even when there are no new objectives. */
+function recordRecommendations(
+  task: HostTask,
+  batch: { summary: string; drafts: ObjectiveDraft[] },
+  selected: ObjectiveDraft[],
+  progress: TaskObserver['progress'],
+) {
+  const observation = { revision: task.capture.source.revision, summary: batch.summary, selected };
+  if (
+    !task
+      .observations<{ recommendationAssessment?: typeof observation }>()
+      .some(
+        ({ recommendationAssessment }) =>
+          JSON.stringify(recommendationAssessment) === JSON.stringify(observation),
+      )
+  )
+    task.note({ recommendationAssessment: observation });
+  progress({ phase: 'planning', message: batch.summary });
 }
 
 /** Keep identity stable across an edit and enforce the selected collection's document rules. */
@@ -240,7 +314,7 @@ async function reviewObjective(
   const answer = await dialogue.decide(
     { milestone: `Objective review ${key}`, assignment: '', acceptance: [], evidence: [] },
     `Review this exact objective change. Reply approve to authorize it, or skip to decline.\n\n${patch}`,
-    (reply) => /^(approve|skip)$/i.test(reply.trim()),
+    { accepts: (reply) => /^(approve|skip)$/i.test(reply.trim()) },
   );
   const approved = answer.trim().toLowerCase() === 'approve';
   const evidence = task.store('objective-decision.md', `Decision: ${answer}\n\n${patch}\n`);
@@ -260,38 +334,19 @@ function retainEdits(task: HostTask, edits: GoalPatch[], report: string) {
   return deliveryPlan(task, edits, report);
 }
 
-/** Distinguish a repairable proposal from an execution or human gate failure. */
-class ProposalError extends InvalidAgentResponse {}
-
-/** Keep model validation failures eligible for the ordinary Planner repair. */
-function validateReply(
-  task: TaskSession,
-  data: ReturnType<typeof assignment>,
-  ids: string[],
-  reply: unknown,
-) {
-  try {
-    return decodeProposal(
-      reply,
-      task.capture,
-      ids,
-      data.assignment.mode === 'human objective',
-      data.assignment.verifiedRun,
-    );
-  } catch (error) {
-    throw new ProposalError((error as Error).message, { cause: error });
-  }
-}
-
 /** Derive complete Planner activity input once so dialogue resumes at the same position. */
 function assignment(
   task: TaskSession,
   objective: boolean,
   run?: VerifiedGoalRun,
   findings?: readonly Rejection[],
+  approvedObjectives: ObjectiveDraft[] = [],
 ) {
   return {
-    assignment: { ...plannerAssignment(task, objective, run), review: findings },
+    assignment: {
+      ...plannerAssignment(task, objective, run, approvedObjectives),
+      review: findings,
+    },
     milestone: 'Assess the standing goal inventory',
     acceptance: [],
     evidence: findings?.flatMap(({ evidence }) => evidence) ?? [],

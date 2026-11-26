@@ -5,6 +5,10 @@ import { z } from 'zod';
 import { dataOperation, type DataScope } from '../../../data/src/index.js';
 import type { JournalEvent } from '../journal-types.js';
 import type { ResolveJournalProject } from '../data.js';
+import {
+  recommendationAssessment,
+  type RecommendationAssessment,
+} from '../../../planner/src/objective-review.js';
 import { RunMeasurements } from '../measurements.js';
 import { listPlanReferences, planReference, readPlanReference } from './plan-records.js';
 import { loadPlanEvents } from './plan-events.js';
@@ -18,6 +22,7 @@ const currentSchema = planReference.extend({
 const outcomeSchema = planReference.extend({
   outcome: z.unknown().nullable(),
   report: z.unknown().optional(),
+  recommendation: recommendationAssessment.optional(),
   changedPaths: z.array(z.string()),
   issue: z.string().optional(),
   pull: z.object({ url: z.string(), state: z.string().optional() }).optional(),
@@ -94,16 +99,19 @@ async function projectFor(resolve: ResolveJournalProject, scope: DataScope) {
 function planResult(events: JournalEvent[], execution: string, attempt?: string) {
   let outcome: unknown = null;
   let report: unknown;
+  let recommendation: RecommendationAssessment | undefined;
   for (const frame of events) {
     if (frame.taskID !== execution) continue;
     const event = frame.observation as {
       outcome?: unknown;
       plannerProposal?: { proposal?: unknown };
+      recommendationAssessment?: RecommendationAssessment;
     } | null;
     if (event?.outcome !== undefined && String(frame.run) === attempt) outcome = event.outcome;
     if (event?.plannerProposal?.proposal !== undefined) report = event.plannerProposal.proposal;
+    if (event?.recommendationAssessment) recommendation = event.recommendationAssessment;
   }
-  return { outcome, report };
+  return { outcome, report, ...(recommendation && { recommendation }) };
 }
 
 function measured(events: JournalEvent[], execution: string) {

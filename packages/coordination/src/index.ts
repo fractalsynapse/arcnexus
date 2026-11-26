@@ -5,6 +5,7 @@ import type { JournalBackend, JournalStore } from './journal-store.js';
 import { journalPath } from './journal-path.js';
 import {
   completedRefinementRounds,
+  onboardingSelections,
   descendantEvents,
   researchReports,
   verifiedTerminal,
@@ -29,6 +30,7 @@ export { readImportedTimeline } from './postgres/read-timeline.js';
 export { hasPlanRevision } from './postgres/plan-records.js';
 export { planExecutionDataPlugin } from './postgres/plan-data.js';
 export { reconcileHosted } from './postgres/reconcile.js';
+export { documentationDiscoveryMigration } from './postgres/documentation-schema.js';
 export { hostedCoordinationMigration } from './postgres/hosted-schema.js';
 export { hostSessionMigration } from './postgres/session-schema.js';
 export { workflowRuntimeMigration } from './postgres/workflow-runtime-schema.js';
@@ -203,6 +205,11 @@ export class Journal {
         goal: goal_id,
         observation: JSON.parse(String(content)) as unknown,
       }));
+  }
+
+  /** Retrieve retained pre-admission recommendations in the same verified project journal. */
+  onboardingSelections() {
+    return onboardingSelections(this.database);
   }
 
   /** Read every completed refinement round across invocations in this verified project's event order. */

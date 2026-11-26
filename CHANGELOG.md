@@ -4,6 +4,8 @@
 
 ### Added
 
+- Recommend source-cited objectives from project documentation, review selected Markdown drafts, and retain discovery for read-only projects before admission (#746).
+
 - Add a timestamped Messages view, live elapsed clocks, cumulative token reports and captured startup context to Plan (#746).
 
 - Refresh mounted Plan panels on committed journal changes and show the retained Planner assessment in the outcome panel (#746).

@@ -1,8 +1,14 @@
+import type { ObjectiveReview } from '../../../../packages/planner/src/objective-review.js';
 import type { TimelineFrame } from './timeline-stream.js';
 import { AttemptWindow } from '../../../../packages/coordination/src/attempt-window.js';
 
 export type CheckResult = { id: string; status?: number | string; diagnostic?: string };
-export type Question = { scope?: string; question: string; answer?: string };
+export type Question = {
+  scope?: string;
+  question: string;
+  answer?: string;
+  review?: ObjectiveReview;
+};
 
 export type TimelineEntry = {
   key: string;

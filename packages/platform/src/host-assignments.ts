@@ -19,8 +19,8 @@ export function hostAssignments(
       while (!signal.aborted) {
         for (const { id, remote } of await catalog.list(binding.operator)) {
           if (!remotes.has(remote)) continue;
-          const revision = await requests.loadAssignment(remote);
-          if (!signal.aborted && revision) yield { project: id, revision };
+          const assignment = await requests.loadAssignment(remote);
+          if (!signal.aborted && assignment) yield { project: id, ...assignment };
         }
         if ((await notices.next()).done) break;
       }

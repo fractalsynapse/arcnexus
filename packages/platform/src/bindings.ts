@@ -1,6 +1,11 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { z } from 'zod';
-import { Architecture } from '../../architecture/src/index.js';
+import {
+  Architecture,
+  documentationCapture,
+  openProject,
+  projectCatalogPath,
+} from '../../architecture/src/index.js';
 import {
   githubAppReadToken,
   managedRepository,
@@ -24,6 +29,7 @@ const configuration = z.strictObject({
       directory: z.string().min(1),
       remote: importSchema.shape.remote,
       hosted: z.boolean().optional(),
+      documentationOnly: z.literal(true).optional(),
       managed: z.boolean().optional(),
       provider: z.uuid().optional(),
       evidence: evidenceRoots.optional(),
@@ -43,20 +49,28 @@ export function bindings(file: string) {
       verifyProject(architecture, projects.get(remote), reference),
     evidence: (remote: string) => projects.get(remote)?.evidence,
     hosted: (remote: string) => projects.get(remote)?.hosted === true,
+    documentationOnly: (remote: string) => projects.get(remote)?.documentationOnly === true,
     provider: (remote: string) => projects.get(remote)?.provider,
     assigned(provider: string) {
       return config.projects
-        .filter(({ provider: owner, hosted }) => hosted && owner === provider)
+        .filter(
+          ({ provider: owner, hosted, documentationOnly }) =>
+            (hosted || documentationOnly) && owner === provider,
+        )
         .map(({ remote }) => remote);
     },
-    capture(remote: string, revision?: string) {
-      const directory = projects.get(remote)?.directory;
-      if (!directory) return undefined;
-      const capture = architecture.capture(directory, revision);
-      if (capture.source.remote !== remote) throw new Error('Bound project remote changed');
-      return capture;
-    },
+    capture: (remote: string, revision?: string) =>
+      captureBinding(architecture, projects.get(remote), revision),
   };
+}
+
+function captureBinding(architecture: Architecture, project?: ProjectBinding, revision?: string) {
+  if (!project) return undefined;
+  const source = openProject(project.directory, revision);
+  if (source.remote !== project.remote) throw new Error('Bound project remote changed');
+  if (project.documentationOnly || !source.paths.includes(projectCatalogPath))
+    return documentationCapture(source);
+  return architecture.resolve(source);
 }
 
 function privateCredential(file: string) {
@@ -79,7 +93,9 @@ async function verifyProject(
     throw new Error('Repository provider binding unavailable');
   const token = github && (await repositoryToken(remote, github));
   const pinned = managed ? await managedRepository({ remote, directory, token }) : undefined;
-  const { source } = architecture.capture(directory, pinned);
+  const source = project.documentationOnly
+    ? openProject(directory, pinned)
+    : architecture.capture(directory, pinned).source;
   if (source.remote !== remote) throw new Error('Bound project remote changed');
   if (token) await verifyBoundCommit(remote, source.revision, { token });
   return { revision: source.revision, credential: github?.id };

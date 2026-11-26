@@ -1,3 +1,5 @@
+import type { ObjectiveReview } from '../../../planner/src/objective-review.js';
+import { ObjectiveReviewForm } from './objective-review-form.js';
 import { createElement as h, useState, type ChangeEvent, type SubmitEvent } from 'react';
 import { Button } from '../controls/button.js';
 import { useCommandAction } from './use-command-action.js';
@@ -8,22 +10,33 @@ interface Props {
   send(answer: string): Promise<void>;
   identity?: string;
   label?: string;
+  review?: ObjectiveReview;
 }
 
 const drafts = new Map<string, string>();
 
 /** Keep a draft with this gate even while its dialog is closed. */
-export function CommandQuestion({ question, send, identity, label = 'Answer question' }: Props) {
+export function CommandQuestion({ question, send, identity, label, review }: Props) {
   const [open, setOpen] = useState(false);
+  const title = review ? 'Review objective recommendations' : 'Answer question';
   const form = useAnswerForm({ question, send, identity }, setOpen);
   return h(
     'div',
     { className: 'arc-command-question' },
-    h(QuestionTrigger, { label, open: () => setOpen(true) }),
+    h(QuestionTrigger, { label: review ? title : (label ?? title), open: () => setOpen(true) }),
     h(
       Dialog,
-      { title: 'Answer question', open, onClose: () => setOpen(false) },
-      h(AnswerForm, form),
+      { title, open, onClose: () => setOpen(false) },
+      review
+        ? h(ObjectiveReviewForm, {
+            review,
+            identity,
+            send: async (answer) => {
+              await send(answer);
+              setOpen(false);
+            },
+          })
+        : h(AnswerForm, form),
     ),
   );
 }

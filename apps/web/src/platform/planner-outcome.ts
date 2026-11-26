@@ -16,7 +16,7 @@ export function PlannerOutcome({
   project: string;
   revision?: string;
 }) {
-  const { active, outcome, changedPaths, report } = value;
+  const { active, outcome, changedPaths, report, recommendation } = value;
   const merged = outcome?.kind === 'merged';
   return h(
     'div',
@@ -32,7 +32,7 @@ export function PlannerOutcome({
         null,
         changedPaths.length + (changedPaths.length === 1 ? ' file changed' : ' files changed'),
       ),
-    report && h(PlannerReport, { report, project, revision }),
+    (report || recommendation) && h(PlannerReport, { report, recommendation, project, revision }),
   );
 }
 

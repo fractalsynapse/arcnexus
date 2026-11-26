@@ -57,7 +57,7 @@ export class TaskRun {
 
   /** Execute accepted milestones, re-plan on feedback and publish only an accepted candidate. */
   async execute(): Promise<TaskOutcome> {
-    const resumed = await this.resumeDelivery();
+    const resumed = this.session.documentationOnly ? undefined : await this.resumeDelivery();
     if (resumed) return resumed;
     const setup = await this.prepare();
     if (setup) return setup;

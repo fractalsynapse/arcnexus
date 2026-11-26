@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
+import type { ProjectSource } from '../../architecture/src/index.js';
 import type { HostTask } from './index.js';
 import { deletedSource } from './deleted-source.js';
 
@@ -9,9 +10,34 @@ export function readToolFile(task: HostTask, path: string, offset: number) {
   const file = accessibleFile(task, path);
   const bytes = readFileSync(file);
   const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  return fileContents(path, text, offset);
+}
+
+/** Read the exact committed file without accessing its worktree or interpreting it. */
+export function capturedToolFile(source: ProjectSource, path: string, offset: number) {
+  if (!(source.files ?? source.paths).includes(path))
+    throw new Error(`File is not a regular captured file: ${path}`);
+  return fileContents(path, source.read(path), offset);
+}
+
+/** List only directories and regular files present in the pinned tree. */
+export function capturedToolDirectory(source: ProjectSource, path: string) {
+  const prefix = path === '.' ? '' : path + '/';
+  const entries = new Set<string>();
+  for (const file of source.files ?? source.paths) {
+    if (!file.startsWith(prefix)) continue;
+    const name = file.slice(prefix.length);
+    const slash = name.indexOf('/');
+    entries.add(slash < 0 ? name : name.slice(0, slash + 1));
+  }
+  if (!entries.size && prefix) throw new Error(`Missing captured directory: ${path}`);
+  return [...entries].sort();
+}
+
+function fileContents(path: string, text: string, offset: number) {
   return {
     path,
-    sha256: createHash('sha256').update(bytes).digest('hex'),
+    sha256: createHash('sha256').update(text).digest('hex'),
     text: text.slice(offset),
   };
 }

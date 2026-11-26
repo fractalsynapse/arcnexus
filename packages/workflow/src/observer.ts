@@ -24,7 +24,10 @@ export class RunObserver implements TaskObserver {
   /** Bind each session's questions and retain the original foreground entry time. */
   admittedSession(session: TaskSession) {
     session.ask = (question, signal, gate) => {
-      const prompt = { phase: 'question' as const, message: question };
+      const prompt = {
+        phase: 'question' as const,
+        message: gate?.review ? 'Objective recommendations are ready for review' : question,
+      };
       session.record(prompt);
       if (!session.listen) this.progress(prompt);
       signal.throwIfAborted();

@@ -14,7 +14,12 @@ import { materializeEdits } from './formatter.js';
 import type { HostTask } from './index.js';
 import { callerRevision, inboxIdentity, researchFields } from './research.js';
 import { decodeEdit } from './steward-response.js';
-import { listToolDirectory, readToolFile } from './tool-files.js';
+import {
+  capturedToolDirectory,
+  capturedToolFile,
+  listToolDirectory,
+  readToolFile,
+} from './tool-files.js';
 import { repairCheckExpectation, type StewardScope } from './steward-check.js';
 
 type Tool = Pick<AgentInspection['request']['options']['tools'][number], 'name' | 'handler'>;
@@ -35,6 +40,7 @@ type RequestEvidence = {
 export class ActivationTools {
   private readonly scope: string;
   private readonly milestone?: string;
+  private readonly capturedDocumentation: boolean;
   private handoff?: Request;
 
   /** Return whether a valid operation already requested a sequential handoff. */
@@ -51,7 +57,8 @@ export class ActivationTools {
   ) {
     this.scope = inboxIdentity(task, selection, input, callerRevision(task, selection));
     this.milestone = (input.milestone as { id?: string } | undefined)?.id;
-    this.handoff = this.pendingRequest();
+    this.capturedDocumentation = input.capturedDocumentation !== undefined;
+    this.handoff = this.capturedDocumentation ? undefined : this.pendingRequest();
   }
 
   /** Continue an acknowledged request if interruption occurred before its workflow recorded it. */
@@ -89,6 +96,7 @@ export class ActivationTools {
   async invoke(tool: Tool, args: Record<string, unknown>): Promise<unknown> {
     this.signal.throwIfAborted();
     if (this.handoff) throw new Error('This activation has already requested a handoff');
+    if (this.capturedDocumentation) return this.readCaptured(tool, args);
     this.assertAuthority(tool);
     switch (tool.handler) {
       case 'read':
@@ -104,6 +112,15 @@ export class ActivationTools {
       default:
         return this.request(tool.handler, args);
     }
+  }
+
+  /** Serve only revision-bound reads while discovering document evidence. */
+  private readCaptured(tool: Tool, args: Record<string, unknown>) {
+    const { source } = this.task.capture;
+    const path = String(args.path);
+    if (tool.handler === 'read') return capturedToolFile(source, path, Number(args.offset ?? 0));
+    if (tool.handler === 'list') return capturedToolDirectory(source, path);
+    throw new Error('This activation only permits captured document reads');
   }
 
   /** Preserve unresolved expectations before executing another request for the same operation. */

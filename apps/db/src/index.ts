@@ -12,6 +12,7 @@ import {
   workflowRequestsMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
+  documentationDiscoveryMigration,
   journalNotificationMigration,
 } from '../../../packages/coordination/src/index.js';
 import { migrate, verifyMigrations } from './migrations.js';
@@ -24,6 +25,7 @@ const modelMigrations = [
   workflowRequestsMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
+  documentationDiscoveryMigration,
   capacityMigration,
   catalogMigration,
   uiPreferencesMigration,

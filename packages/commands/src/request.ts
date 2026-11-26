@@ -12,11 +12,14 @@ export const workflowRequest = z.discriminatedUnion('command', [
     .strictObject({
       command: z.literal('task_plan'),
       objective: text.optional(),
+      mode: z.literal('recommend-objectives').optional(),
+      focus: text.optional(),
       draft: guideDraft.optional(),
     })
     .refine(
-      ({ objective, draft }) => !objective || !draft,
-      'Submit an objective or one exact guide edit',
+      ({ objective, draft, mode, focus }) =>
+        mode ? !objective && !draft : !focus && (!objective || !draft),
+      'Submit a recommendation focus, objective, or exact guide edit',
     ),
   z.strictObject({ command: z.literal('task_run'), goal: text.optional() }),
   z.strictObject({ command: z.literal('architecture_update'), feedback: text.optional() }),
@@ -24,6 +27,7 @@ export const workflowRequest = z.discriminatedUnion('command', [
 ]);
 
 export type WorkflowRequest = z.input<typeof workflowRequest>;
+type PlanRequest = Extract<WorkflowRequest, { command: 'task_plan' }>;
 
 /** Dispatch the same structured request for local CLI and trusted Host consumers. */
 export async function dispatchWorkflow(
@@ -32,14 +36,12 @@ export async function dispatchWorkflow(
   input: WorkflowRequest,
   observer: TaskObserver,
   signal: AbortSignal,
+  invocation?: string,
 ) {
   const selection = workflowRequest.parse(input);
   switch (selection.command) {
     case 'task_plan':
-      if (selection.draft) {
-        return dispatchGuideDraft(commands, directory, selection.draft, observer, signal);
-      }
-      return commands.planTask(directory, selection.objective, observer, signal);
+      return dispatchPlan(commands, directory, selection, observer, signal, invocation);
     case 'task_run':
       return selection.goal === undefined
         ? commands.runRound(directory, observer, signal)
@@ -49,6 +51,29 @@ export async function dispatchWorkflow(
     case 'refine':
       return commands.refine(directory, selection.rounds, observer, signal);
   }
+}
+
+function dispatchPlan(
+  commands: Context['commands'],
+  directory: string,
+  request: PlanRequest,
+  observer: TaskObserver,
+  signal: AbortSignal,
+  invocation?: string,
+) {
+  if (request.draft)
+    return dispatchGuideDraft(commands, directory, request.draft, observer, signal);
+  if (!request.mode) return commands.planTask(directory, request.objective, observer, signal);
+  return commands.runTask(
+    {
+      directory,
+      goal: request.focus ?? 'Find objectives in project documentation',
+      scope: ['plan:recommendation', invocation].filter(Boolean).join(':'),
+      planning: 'recommendation',
+    },
+    observer,
+    signal,
+  );
 }
 
 async function dispatchGuideDraft(

@@ -74,3 +74,5 @@ export type {
 } from './commands/command-binding.js';
 export type { DisplayRegistration, Workspace } from './registry/workspace.js';
 export { useCommandAction } from './commands/use-command-action.js';
+
+export { SourceCitations } from './content/source-citations.js';

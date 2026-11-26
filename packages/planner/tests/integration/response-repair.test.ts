@@ -56,7 +56,7 @@ class PlannerRepairScenario {
   }
 
   /** Exercise generation, validation and ordinary no-change reporting through the public capability. */
-  run(mode: 'exploration' | 'objective' = 'exploration') {
+  run(mode: 'exploration' | 'objective' | 'recommendation' = 'exploration') {
     return new Planner({} as Agent).propose(
       this.task,
       mode,
@@ -210,4 +210,130 @@ function draftFixture(t: TestContext) {
       content: content.replace('Previous', 'Updated'),
     },
   };
+}
+
+test('recommendations resume exact multi-draft review and align only the approved wording', async (t) => {
+  const path = 'handbook/operations/recovery.adoc';
+  const quote = 'Operators rehearse recovery from a failed deployment.';
+  const draft = (id: string) => ({
+    id,
+    category: 'delivery/recovery',
+    title: id,
+    gap: 'The documented rehearsal is not reflected in the objectives.',
+    content: '# Recovery\n\nRehearse recovery.\n',
+    sources: [{ path, quote }],
+  });
+  const scenario = new PlannerRepairScenario(t, [
+    { summary: 'Recovery gaps', drafts: [draft('rehearse-recovery'), draft('record-recovery')] },
+    valid,
+  ]);
+  Object.assign(scenario.task.capture.source, { paths: [path], read: () => quote });
+  await inspectRecommendationReview(scenario);
+});
+
+async function inspectRecommendationReview(scenario: PlannerRepairScenario) {
+  let prompts = 0;
+  scenario.task.ask = async (_question, _signal, gate) => {
+    const review = gate?.review;
+    assert.ok(review);
+    assert.equal(review.drafts.length, 2);
+    prompts++;
+    if (prompts === 1) return undefined;
+    const id = 'rehearse-recovery';
+    const content = review.drafts[0]!.content + '\nRecord recovery duration.\n';
+    if (prompts === 2) return JSON.stringify({ action: 'revise', edits: { [id]: content } });
+    assert.match(review.drafts[0]!.content, /Record recovery duration/);
+    return JSON.stringify({ action: 'approve', selected: [id] });
+  };
+  const run = () => scenario.run('recommendation');
+  await assert.rejects(run(), /Review objective recommendations/);
+  assert.ok('milestones' in (await run()));
+  assert.equal(prompts, 3);
+  assert.equal(scenario.requests.length, 2);
+  assert.match(JSON.stringify(scenario.requests[1]!.assignment), /Record recovery duration/);
+  assert.doesNotMatch(JSON.stringify(scenario.requests[1]!.assignment), /record-recovery/);
+}
+
+test('a read-only recommendation retains a draft without creating a delivery plan', async (t) => {
+  const { scenario, path, quote } = onboardingFixture(t);
+  Object.assign(scenario.task.config, { documentationOnly: true });
+  Object.assign(scenario.task.capture.source, { paths: [path], read: () => quote });
+  scenario.task.ask = async (_question, _signal, gate) => {
+    assert.equal(gate?.review?.readOnly, true);
+    return 'approve';
+  };
+  const outcome = await scenario.run('recommendation');
+  assert.ok('kind' in outcome && outcome.kind === 'planned');
+  assert.equal(scenario.requests.length, 1);
+  assert.ok(
+    scenario.task
+      .observations<{ onboardingSelection?: unknown }>()
+      .some(({ onboardingSelection }) => onboardingSelection),
+  );
+});
+
+function onboardingFixture(t: TestContext) {
+  const path = 'strategy/rationale.rst';
+  const quote = 'Preserve a human-readable decision history.';
+  const scenario = new PlannerRepairScenario(t, [
+    {
+      summary: 'The documentation describes auditability.',
+      drafts: [
+        {
+          id: 'preserve-decisions',
+          category: 'governance',
+          title: 'Preserve decisions',
+          gap: 'Nothing records a durable direction for decisions.',
+          content: '# Preserve decisions\n',
+          sources: [{ path, quote }],
+        },
+      ],
+    },
+  ]);
+  return { scenario, path, quote };
+}
+
+test('admission reviews reconciled wording when an onboarding citation changed', async (t) => {
+  const { scenario, draft, old, current } = reconciledOnboarding(t);
+  scenario.task.note({ onboardingSelection: { revision: 'before-admission', drafts: [draft] } });
+  scenario.task.ask = async (_question, _signal, gate) => {
+    const review = gate?.review;
+    assert.ok(review && !review.readOnly);
+    assert.deepEqual(review.sourceChanges, [{ ...old, revision: 'before-admission' }]);
+    assert.equal(review.drafts[0]?.sources[0]?.quote, current.quote);
+    assert.match(review.drafts[0]!.content, /quarterly/);
+    return 'approve';
+  };
+  assert.ok('milestones' in (await scenario.run('recommendation')));
+  assert.equal(scenario.requests.length, 2);
+  assert.match(JSON.stringify(scenario.requests[0]?.assignment), /Previous citation excerpts/);
+  assert.match(JSON.stringify(scenario.requests[1]?.assignment), /quarterly/);
+});
+
+function reconciledOnboarding(t: TestContext) {
+  const path = 'playbooks/contingency.txt';
+  const old = { path, quote: 'Exercise recovery annually.' };
+  const current = { path, quote: 'Exercise recovery quarterly.' };
+  const id = 'rehearse-recovery';
+  const candidate = {
+    id,
+    category: 'reliability',
+    title: 'Rehearse recovery',
+    gap: 'The project protocol is missing from the objective inventory.',
+    content: '# Rehearse recovery quarterly\n',
+    sources: [current],
+  };
+  const scenario = new PlannerRepairScenario(t, [
+    { summary: 'Recovery timing changed in the playbook.', drafts: [candidate] },
+    valid,
+  ]);
+  Object.assign(scenario.task.capture.source, { paths: [path], read: () => current.quote });
+  const draft = {
+    ...candidate,
+    sources: [old],
+    path: '.arc/objectives/reliability/' + id + '.md',
+    before: null,
+    content: '---\nid: ' + id + '\n---\n\n# Rehearse recovery annually\n',
+  };
+  return { scenario, draft, old, current };
 }

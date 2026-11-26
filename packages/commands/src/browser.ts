@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { runtimeImageSchema } from '../../foundation/src/runtime-image.js';
+import { objectiveReview } from '../../planner/src/objective-review.js';
 import { workflowRequest } from './request.js';
 
 export const workflowSelection = z.strictObject({ id: z.uuid() });
@@ -10,7 +11,9 @@ export const workflowReceipt = z.strictObject({
   runtime: runtimeImageSchema.nullable().optional(),
   state: z.enum(['queued', 'running', 'waiting', 'finished']),
   execution: z.string().nullable(),
-  gate: z.strictObject({ id: z.string(), question: z.string() }).nullable(),
+  gate: z
+    .strictObject({ id: z.string(), question: z.string(), review: objectiveReview.optional() })
+    .nullable(),
   outcome: z.unknown(),
 });
 
@@ -22,6 +25,7 @@ export const workflowAnswer = workflowSelection.extend({
 
 export const currentWorkflow = z.strictObject({
   canSubmit: z.boolean(),
+  recommendationOnly: z.literal(true).optional(),
   receipt: workflowReceipt.nullable(),
 });
 

@@ -2,7 +2,7 @@
 export type LauncherAssignments = (
   provider: string,
   signal: AbortSignal,
-) => AsyncIterable<{ project: string; revision: string }>;
+) => AsyncIterable<{ project: string; revision: string; documentationOnly?: boolean }>;
 
 type Presence = { signal: AbortSignal; close(): void };
 const encoder = new TextEncoder();

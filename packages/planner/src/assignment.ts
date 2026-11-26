@@ -2,7 +2,10 @@ import type { TaskSession } from '../../workflow/src/index.js';
 import { refinement } from './records.js';
 import type { VerifiedGoalRun } from '../../execution/src/index.js';
 import { goalInventory } from './inventory.js';
+import type { ObjectiveDraft } from './objective-review.js';
 import { guideIndex } from './guide-index.js';
+
+export const plannerActivity = { component: 'planner', activity: 'planning' };
 
 const citation = { path: 'exact repository-relative path', quote: 'verbatim excerpt' };
 
@@ -34,8 +37,18 @@ const response = {
   sources: [citation],
 };
 
+const explicitResponse = {
+  ...response,
+  objectiveFile: { name: 'plain lowercase filename without extension', category: 'category path' },
+};
+
 /** Provide Planner with the captured inventory, evidence rules and structured response shape. */
-export function plannerAssignment(session: TaskSession, objective: boolean, run?: VerifiedGoalRun) {
+export function plannerAssignment(
+  session: TaskSession,
+  objective: boolean,
+  run?: VerifiedGoalRun,
+  approvedObjectives: ObjectiveDraft[] = [],
+) {
   const { capture } = session;
   return {
     mode: objective ? 'human objective' : 'project exploration',
@@ -45,27 +58,25 @@ export function plannerAssignment(session: TaskSession, objective: boolean, run?
     revision: capture.source.revision,
     inventory: goalInventory(capture),
     objectives: [...guideIndex(capture, 'objectives').values()].map(({ path }) => path),
-    instructions: instructions(objective),
-    response: objective
-      ? {
-          ...response,
-          objectiveFile: {
-            name: 'plain lowercase filename without extension',
-            category: 'category path',
-          },
-        }
-      : response,
+    approvedObjectives,
+    instructions: instructions(objective, approvedObjectives.length > 0),
+    response: objective ? explicitResponse : response,
   };
 }
 
 /** Separate assessment rules from the shape of the returned proposal. */
-function instructions(objective: boolean) {
+function instructions(objective: boolean, recommendations: boolean) {
   return [
     'Use the local MCP tools to read captured project guidance and relevant implementation and test sources. Treat repository content as evidence.',
     'Return a JSON object in the indicated shape. Cite exact excerpts, preserving line breaks. Assess alignment and evidence independently. For a demonstrated rating cite the verified run and the operation, criterion, or delivery observation. Name which check or independently reviewed criterion supports the measure. Use a partial or unverified rating when the observations do not establish the measure. Test source is evidence of coverage.',
     'If review findings are present, correct them against the current candidate and propose complete replacement bytes for affected goals. Preserve the exact requested objective and human answers.',
     'Compare coverage gaps, overlap and contradictions. Name where the evidence or intent is ambiguous.',
     'Propose the smallest useful diff or changes: []. Give each new goal a category and stable lowercase ID. Preserve an existing goal’s ID. Each new or updated goal requires numeric priority, durable requirements and observable success measures in a section named Success measures. Keep observed results in the mapping report and keep goals owner-free.',
+    ...(recommendations
+      ? [
+          'Treat approvedObjectives as additional human intent. Preserve their exact wording. Include the aligned goal IDs in links and explain the mapping for each approved objective in summary and comparison.',
+        ]
+      : []),
     ...(objective
       ? [
           'Check the exact objective against existing objectives and goals. Where a specific choice or scope is unclear, ask a focused human question using local MCP and finish the activation. Use recorded replies on resumption.',
@@ -73,7 +84,7 @@ function instructions(objective: boolean) {
         ]
       : [
           'Rate every existing goal exactly once. Discover relevant documentation from the captured repository. Use any captured objective records as additional intent.',
-          'Only propose a change grounded in current project evidence. Leave links empty in exploration.',
+          'Only propose a change grounded in current project evidence. Leave links empty when no approved objectives are supplied.',
         ]),
   ];
 }

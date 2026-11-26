@@ -29,6 +29,24 @@ test('task plan validates explicit input before admission and does not fall back
   assert.match(result.stderr, /Usage: arcnexus task plan/);
 });
 
+test('the recommendation flag accepts one optional focus and refuses invalid operands before admission', (t) => {
+  const cwd = mkdtempSync(join(tmpdir(), 'arcnexus-plan-args-'));
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  const run = (...args: string[]) =>
+    spawnSync(process.execPath, [cli, 'task', 'plan', '--recommend-objectives', ...args], {
+      encoding: 'utf8',
+      cwd,
+    });
+  for (const args of [[' '], ['a focus', 'extra']]) {
+    const result = run(...args);
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /Usage: arcnexus task plan --recommend-objectives/);
+  }
+  const decision = run('Focus on project documentation');
+  assert.equal(decision.status, 2);
+  assert.match(decision.stderr, /Cannot read Git project/);
+});
+
 test('GW-2: task run validates the goal before task admission', () => {
   for (const args of [[''], ['goal', 'extra']]) {
     const result = spawnSync(process.execPath, [cli, 'task', 'run', ...args], { encoding: 'utf8' });

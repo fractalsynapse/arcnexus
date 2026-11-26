@@ -21,11 +21,13 @@ type Connection = {
   abort: AbortController;
   updates: number;
 };
-function launch({ operation, instruction }: CommandRequest): WorkflowRequest {
+function launch({ operation, instruction, recommendObjectives }: CommandRequest): WorkflowRequest {
   const input = instruction.trim() ? instruction : undefined;
   switch (operation) {
     case 'plan':
-      return { command: 'task_plan', objective: input };
+      return recommendObjectives
+        ? { command: 'task_plan', mode: 'recommend-objectives', focus: input }
+        : { command: 'task_plan', objective: input };
     case 'architect':
       return { command: 'architecture_update', feedback: input };
     case 'run':

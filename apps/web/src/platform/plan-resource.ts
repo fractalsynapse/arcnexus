@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { PlanReference } from '../../../../packages/coordination/src/postgres/plan-records.js';
+import type { RecommendationAssessment } from '../../../../packages/planner/src/objective-review.js';
 import type { Proposal } from '../../../../packages/planner/src/proposal.js';
 import type { CommandBinding, CommandState } from '../../../../packages/ui/src/index.js';
 import { useResource } from './resource.js';
@@ -17,6 +18,7 @@ import { usePlanChanges } from './plan-changes.js';
 export interface PlanOutcome {
   active: boolean;
   report?: Proposal;
+  recommendation?: RecommendationAssessment;
   changedPaths?: readonly string[];
   issue?: string;
   pull?: { url: string; state?: string } | null;

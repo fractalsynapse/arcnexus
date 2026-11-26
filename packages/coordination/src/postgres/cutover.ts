@@ -1,7 +1,8 @@
-import { statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import type { Client } from 'pg';
 import { journalPath } from '../journal-path.js';
+import { sqliteBackend } from '../sqlite-store.js';
 import { departed } from '../lease.js';
 import { verifyCutoverArtifacts } from './cutover-artifacts.js';
 import { importSqliteJournal } from './import.js';
@@ -51,7 +52,7 @@ function fence(database: DatabaseSync, digest: string, target: string) {
 /** Verify the source under a native write lock, fence native admission, and activate the target. */
 export async function cutoverSqliteJournal(database: Client, storage: string, project: string) {
   const path = journalPath(storage, project);
-  statSync(path);
+  if (!existsSync(path)) await initializeAfterDiscovery(database, storage, project);
   const native = new DatabaseSync(path);
   try {
     native.exec('BEGIN IMMEDIATE');
@@ -74,6 +75,17 @@ export async function cutoverSqliteJournal(database: Client, storage: string, pr
   } finally {
     native.close();
   }
+}
+
+/** Establish the empty native fence only for a project that already completed hosted discovery. */
+async function initializeAfterDiscovery(database: Client, storage: string, project: string) {
+  const verified = await database.query(
+    `SELECT 1 FROM arcnexus_coordination.workflow_requests
+     WHERE project=$1 AND documentation_only AND state='finished' AND outcome->>'kind'='planned'`,
+    [project],
+  );
+  if (!verified.rowCount) throw new Error('No native journal or completed documentation discovery');
+  sqliteBackend(storage).open(project).close();
 }
 
 function interruptedWriter(native: DatabaseSync): NativeWriter | undefined {

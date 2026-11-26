@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { Client } from 'pg';
 import { textDigest } from '../../../foundation/src/index.js';
 import { journalPath } from '../journal-path.js';
+import { lockHostedProject } from './session-schema.js';
 import { journalTables, type JournalRow, type JournalTable } from './schema.js';
 
 type Snapshot = Partial<Record<JournalTable, JournalRow[]>>;
@@ -28,8 +29,14 @@ function sqliteSnapshot(storage: string, remote: string) {
 async function postgresSnapshot(database: Client, project: string) {
   const snapshot: Snapshot = {};
   for (const [table, { projection }] of journalTables) {
+    const scope =
+      table === 'runs'
+        ? 'AND NOT documentation_only'
+        : table === 'events'
+          ? 'AND run IN (SELECT id FROM arcnexus_coordination.runs WHERE project=$1 AND NOT documentation_only)'
+          : '';
     const result = await database.query<JournalRow>(
-      `SELECT ${projection} FROM arcnexus_coordination.${table} WHERE project = $1 ORDER BY ${table}.id`,
+      `SELECT ${projection} FROM arcnexus_coordination.${table} WHERE project = $1 ${scope} ORDER BY ${table}.id`,
       [project],
     );
     snapshot[table] = result.rows;
@@ -74,6 +81,7 @@ export async function importSqliteJournal(database: Client, storage: string, rem
     await database.query('SELECT pg_advisory_xact_lock(hashtext($1)::bigint)', [
       'arc-import:' + remote,
     ]);
+    await database.query(lockHostedProject, [remote]);
     await verifiedCopy(database, remote, snapshot, digest);
     await database.query('COMMIT');
     return {

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { parse } from 'yaml';
-import { openProject, type ProjectSource } from './source.js';
+import type { ProjectSource } from './source.js';
 
 export const catalogRoot = '.arc/architecture';
+export const projectCatalogPath = `${catalogRoot}/project.yaml`;
 
 /** Locate a definition by its catalog family and declared identity. */
 export function definitionPath(family: string, id: string) {
@@ -109,6 +110,7 @@ interface Contract {
 }
 
 export interface Capture {
+  readonly documentationOnly?: boolean;
   readonly source: ProjectSource;
   readonly project: Readonly<Project>;
   readonly components: Readonly<Record<string, Component>>;
@@ -120,9 +122,8 @@ export interface Capture {
 }
 
 /** Read project authority and verify accepted contract bytes at the same revision. */
-export function captureProject(directory: string, revision?: string): Capture {
-  const source = openProject(directory, revision);
-  const project = read<Project>(source, `${catalogRoot}/project.yaml`);
+export function captureProject(source: ProjectSource): Capture {
+  const project = read<Project>(source, projectCatalogPath);
   if (!project.id || !sameRemote(project.remote, source.remote)) {
     throw new Error('Git origin does not match the captured project remote');
   }

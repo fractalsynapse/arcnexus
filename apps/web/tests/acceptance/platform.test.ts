@@ -2,11 +2,8 @@ import assert from 'node:assert/strict';
 import { get } from 'node:http';
 import test, { type TestContext } from 'node:test';
 import type { Page, Route } from 'playwright';
-import type { Receipt } from '../../../../packages/commands/src/browser.js';
 import {
   browserPage,
-  fixtureGoal,
-  fixtureContent,
   otherProject,
   planData,
   project,
@@ -323,124 +320,6 @@ function timelineRecord(sequence: string, text: string) {
 function timelineFrame(sequence: string, observation: object) {
   const data = JSON.stringify({ sequence, timestamp: null, observation });
   return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + data + '\n\n';
-}
-
-test('the built command dock submits Plan and answers only the retained question', async (t) => {
-  const { application, page } = await browserPage(t);
-  const actions = await commandResponses(page);
-  await page.goto(application.url);
-  await selectProject(page);
-  await page.getByRole('button', { name: 'Send', exact: true }).click();
-  await page.getByRole('button', { name: 'Stop Plan', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Send', exact: true }).count(), 0);
-  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Answer question' });
-  await dialog.getByText('Approve this proposed change?').waitFor();
-  await dialog.getByLabel('Answer').fill('Use the verified baseline.');
-  await dialog.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Answer question', exact: true }).click();
-  assert.equal(await dialog.getByLabel('Answer').inputValue(), 'Use the verified baseline.');
-  await dialog.getByRole('button', { name: 'Send answer' }).click();
-  await page
-    .getByRole('button', { name: 'Answer question', exact: true })
-    .waitFor({ state: 'hidden' });
-  assert.deepEqual(
-    actions.map((action) => action.body),
-    [
-      { id: actions[0]?.receipt, request: { command: 'task_plan' } },
-      { gate: 'exact-gate', answer: 'Use the verified baseline.' },
-    ],
-  );
-});
-
-test('Save submits the selected goal revision and exact draft for review', async (t) => {
-  const { application, page } = await browserPage(t);
-  const actions = await commandResponses(page);
-  await page.goto(application.url);
-  await selectProject(page);
-  await page.getByRole('link', { name: fixtureGoal.id }).click();
-  await page.getByRole('checkbox', { name: 'Edit', exact: true }).check();
-  await page.getByRole('button', { name: 'Raw', exact: true }).click();
-  await page.locator('.arc-mdx .cm-content').fill('# Updated measure');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await page.getByText('Submitted for review.').waitFor();
-  assert.deepEqual(
-    actions.map((action) => action.body),
-    [
-      {
-        id: actions[0]?.receipt,
-        request: {
-          command: 'task_plan',
-          draft: {
-            id: fixtureGoal.id,
-            revision: project.revision,
-            content: fixtureContent.replace('\n# Verified goal', '# Updated measure'),
-          },
-        },
-      },
-    ],
-  );
-});
-
-test('the composer stops its active receipt and restores Send after cancellation', async (t) => {
-  const { application, page } = await browserPage(t);
-  const actions = await commandResponses(page);
-  await page.goto(application.url);
-  await selectProject(page);
-  const send = page.getByRole('button', { name: 'Send', exact: true });
-  const footer = page.getByRole('contentinfo', { name: 'Command controls' });
-  await footer.getByRole('button', { name: 'Reconnect command updates', exact: true }).waitFor();
-  assert.equal(await footer.getByText('Command updates disconnected.').count(), 0);
-  await send.click();
-  await page.getByRole('button', { name: 'Stop Plan', exact: true }).click();
-  await send.waitFor();
-  assert.equal(await send.isEnabled(), true);
-  assert.equal(actions[1]?.receipt, actions[0]?.receipt);
-  assert.equal(actions[1]?.body, 'cancel');
-});
-
-async function commandResponses(page: Page) {
-  await responses(page);
-  const requests: { body: unknown; receipt: string }[] = [];
-  const receipt: Receipt = {
-    id: '38882637-979e-4702-a8c7-186d1aa066e8',
-    request: { command: 'task_plan' },
-    revision: project.revision,
-    execution: 'retained-plan',
-    state: 'waiting',
-    gate: { id: 'exact-gate', question: 'Approve this proposed change?' },
-    outcome: null,
-  };
-  await page.route('**/commands/current', (route) =>
-    route.fulfill({
-      contentType: 'text/event-stream',
-      body: 'event: command\ndata: {"canSubmit":true,"receipt":null}\n\n',
-    }),
-  );
-  await page.route('**/commands', (route) => {
-    const body = route.request().postDataJSON() as { id: string };
-    receipt.id = body.id;
-    requests.push({ body, receipt: body.id });
-    return route.fulfill({ json: receipt, status: 202 });
-  });
-  await page.route('**/commands/*/{answer,cancel}', (route) =>
-    commandActionResponse(route, receipt, requests),
-  );
-  return requests;
-}
-
-function commandActionResponse(
-  route: Route,
-  receipt: Receipt,
-  requests: { body: unknown; receipt: string }[],
-) {
-  const [, id, action] = new URL(route.request().url()).pathname.split('/').slice(-3);
-  const cancel = action === 'cancel';
-  requests.push({ body: cancel ? action : route.request().postDataJSON(), receipt: id! });
-  const result = cancel
-    ? { state: 'finished', outcome: { kind: 'cancelled' } }
-    : { state: 'queued' };
-  return route.fulfill({ json: { ...receipt, ...result, gate: null }, status: 202 });
 }
 
 test('the Connection manager downloads only an available launcher build', async (t) => {

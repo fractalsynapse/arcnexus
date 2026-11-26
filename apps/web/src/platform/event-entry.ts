@@ -1,3 +1,4 @@
+import { readObjectiveDecision } from '../../../../packages/planner/src/objective-review.js';
 import { createElement as h } from 'react';
 import {
   CommandQuestion,
@@ -64,15 +65,20 @@ function EventQuestion({ question, command, binding, execution }: QuestionProps)
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    h('p', { className: 'arc-plan-message' }, question.question),
+    h(
+      'p',
+      { className: 'arc-plan-message' },
+      question.review ? question.review.summary : question.question,
+    ),
     question.answer !== undefined
-      ? h(AnsweredQuestion, { answer: question.answer })
+      ? h(AnsweredQuestion, { answer: displayedAnswer(question, question.answer) })
       : gate &&
           binding.answer &&
           h(CommandQuestion, {
             identity: gate.key,
             label: 'Question',
             question: gate.question,
+            review: gate.review,
             send: (answer) => binding.answer!(gate.key, answer),
           }),
   );
@@ -80,4 +86,17 @@ function EventQuestion({ question, command, binding, execution }: QuestionProps)
 
 function AnsweredQuestion({ answer }: { answer: string }) {
   return h('p', { className: 'arc-plan-message' }, h('strong', null, 'Answered '), answer);
+}
+
+function displayedAnswer({ review }: Question, answer: string) {
+  if (!review) return answer;
+  try {
+    const choice = readObjectiveDecision(answer, review);
+    if (choice.action === 'approve')
+      return (review.readOnly ? 'Retained ' : 'Approved ') + choice.selected.join(', ');
+    if (choice.action === 'revise') return choice.feedback ?? 'Submitted revised wording';
+    return 'Declined';
+  } catch {
+    return answer;
+  }
 }

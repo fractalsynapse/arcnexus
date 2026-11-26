@@ -28,13 +28,18 @@ export function hostPlugin(storage = applicationStorage()) {
 /** Use a PostgreSQL writer with the same Execution and Workflow plugins. */
 export function hostedHostPlugin(
   storage: string,
-  assignment: HostedProject & { runtime?: RuntimeImage; github?: GitHubCredential },
+  assignment: HostedProject & {
+    runtime?: RuntimeImage;
+    github?: GitHubCredential;
+    discovery?: Parameters<typeof executionPluginFor>[3];
+  },
 ) {
   return mountHost(
     storage,
     (context) => context.provide('coordination', hostedProjectCoordination(assignment)),
     assignment.runtime,
     assignment.github,
+    assignment.discovery,
   );
 }
 
@@ -43,10 +48,11 @@ function mountHost(
   coordination: (context: Context) => unknown,
   runtime?: RuntimeImage,
   github?: GitHubCredential,
+  discovery?: Parameters<typeof executionPluginFor>[3],
 ) {
   return async (context: Context) => {
     await context.use(coordination);
-    await context.use(executionPluginFor(storage, runtime, github));
+    await context.use(executionPluginFor(storage, runtime, github, discovery));
     await context.use(plannerPlugin);
     await context.use(nativeWorkflow);
   };

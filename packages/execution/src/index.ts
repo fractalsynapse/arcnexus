@@ -1,4 +1,11 @@
-import { appendFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { Agent, ActivationInput } from '../../agent/src/index.js';
@@ -22,7 +29,6 @@ import {
   ownerReviewObservations,
   type OwnerObservation,
 } from './review-observations.js';
-
 import { Execution } from './execution.js';
 import { Clarifications, type Clarification } from './clarifications.js';
 import { readToolFile } from './tool-files.js';
@@ -72,6 +78,11 @@ export class HostTask implements TaskSession {
     this.evidence.push(
       ...new Set(closeEvidence.filter((path) => path.startsWith(prefix) && existsSync(path))),
     );
+  }
+
+  /** Distinguish the platform discovery binding from an admitted project. */
+  get documentationOnly() {
+    return this.config.documentationOnly === true;
   }
 
   /** Propagate hosted writer loss to every active provider and tool. */
@@ -153,11 +164,9 @@ export class HostTask implements TaskSession {
     question: string,
     signal: AbortSignal,
   ) {
-    await new Clarifications(this, selection, signal).decide(
-      decisionContext(proposal),
-      question,
-      (answer) => /^(approve|skip)$/i.test(answer.trim()),
-    );
+    await new Clarifications(this, selection, signal).decide(decisionContext(proposal), question, {
+      accepts: (answer) => /^(approve|skip)$/i.test(answer.trim()),
+    });
     const receipt = this.decisionRecord(selection, proposal, question);
     if (!receipt) throw new Error('The human decision has no retained host receipt');
     return receipt;
@@ -209,8 +218,16 @@ export class HostTask implements TaskSession {
     return [...(this.journal.retained?.events ?? []), ...this.journal.events()] as T[];
   }
 
+  /** Provide a neutral provider directory outside the repository. */
+  documentationWorkspace() {
+    const path = mkdtempSync(join(this.directory(), 'discovery-'));
+    git(path, 'init', '--quiet', '--template=');
+    return path;
+  }
+
   /** Materialize a read-only planning snapshot at the captured revision. */
   planningWorkspace(signal: AbortSignal) {
+    if (this.documentationOnly) throw new Error('Documentation discovery cannot create a worktree');
     signal.throwIfAborted();
     this.journal.assertWriter();
     const { source } = this.capture;
@@ -294,6 +311,7 @@ export class HostTask implements TaskSession {
 
   /** Protect uncommitted authorized edits, then remove only this attempt's worktree. */
   cleanup() {
+    if (this.documentationOnly) return;
     if (!this.worktree) this.removeRetainedPublicationWorkspace();
     saveCheckpoint(this);
     this.removeWorktree();
@@ -458,13 +476,11 @@ export class HostTask implements TaskSession {
     return join(this.config.storage, project, 'runs', String(run));
   }
 }
-
 /** Require the execution-owned session at a native service boundary. */
 export function hostTask(session: TaskSession): HostTask {
   if (!(session instanceof HostTask)) throw new Error('Task is not admitted by native execution');
   return session;
 }
-
 /** Author the stable scope of host-owned approval gates independently of model-provided questions. */
 function decisionContext(proposal: string) {
   return {

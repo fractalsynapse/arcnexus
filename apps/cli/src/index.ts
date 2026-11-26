@@ -140,18 +140,28 @@ async function runCommand(
     );
   }
   if (command === 'task') {
-    const usage = component === 'plan' ? 'plan ["<objective>"]' : 'run ["<goal>"]';
-    if (
-      (component !== 'run' && component !== 'plan') ||
-      (activity !== undefined && !activity.trim()) ||
-      extra.length
-    )
-      throw new Error(`Usage: arcnexus task ${usage}`);
-    return runTask(await mountCommands(true), taskRequest(component, activity), json);
+    const request = taskRequest(component, activity, extra);
+    return runTask(await mountCommands(true), request, json);
   }
 }
 
-function taskRequest(component: 'plan' | 'run', activity?: string) {
+function taskRequest(component: string | undefined, activity: string | undefined, extra: string[]) {
+  if (component === 'plan' && activity === '--recommend-objectives') {
+    const [focus] = extra;
+    if (extra.length > 1 || (focus !== undefined && !focus.trim()))
+      throw new Error('Usage: arcnexus task plan --recommend-objectives ["<focus>"]');
+    return { command: 'task_plan', mode: 'recommend-objectives', focus } as const;
+  }
+  if (
+    (component !== 'plan' && component !== 'run') ||
+    extra.length ||
+    (activity !== undefined && (!activity.trim() || activity.startsWith('--')))
+  )
+    throw new Error(
+      component === 'plan'
+        ? 'Usage: arcnexus task plan ["<objective>"] or task plan --recommend-objectives ["<focus>"]'
+        : 'Usage: arcnexus task run ["<goal>"]',
+    );
   return component === 'plan'
     ? ({ command: 'task_plan', objective: activity } as const)
     : ({ command: 'task_run', goal: activity } as const);

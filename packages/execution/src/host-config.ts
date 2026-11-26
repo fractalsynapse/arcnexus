@@ -15,6 +15,7 @@ export interface HostConfig {
   fresh: boolean;
   storage: string;
   runtime?: RuntimeImage;
+  documentationOnly?: boolean;
   github?: GitHubCredential;
 }
 

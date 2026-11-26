@@ -21,7 +21,7 @@ export interface TaskInput {
   goal: string;
   scope?: string;
   standing?: boolean;
-  planning?: 'exploration' | 'objective';
+  planning?: 'exploration' | 'objective' | 'recommendation';
   guideDraft?: import('../../planner/src/guide-draft.js').GuideDraft;
   architecture?: boolean;
   guide?: string;
@@ -37,6 +37,7 @@ export interface Observation {
 export interface TaskQuestion {
   scope: string;
   question: string;
+  review?: import('../../planner/src/objective-review.js').ObjectiveReview;
 }
 
 export interface TaskObserver {
@@ -93,6 +94,7 @@ export type TaskEvent =
   | { assessment: Extract<TaskOutcome, { kind: 'satisfied' | 'planned' }> };
 
 export interface TaskSession {
+  readonly documentationOnly?: boolean;
   readonly signal?: AbortSignal;
   readonly capture: Capture;
   readonly goal: string;

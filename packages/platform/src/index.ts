@@ -101,7 +101,8 @@ async function authorized(
   const resolved = await project(scope);
   if (!resolved) return false;
   if (resource === 'workflow-requests') {
-    if (!configuration.hosted(resolved.remote)) return false;
+    if (!configuration.hosted(resolved.remote) && !configuration.documentationOnly(resolved.remote))
+      return false;
     if (operation !== 'create') return true;
     const provider = configuration.provider(resolved.remote);
     return provider ? admittedProvider(database, scope.principal, provider) : false;
@@ -129,7 +130,11 @@ async function projectResources(
   await context.use(
     hostedCommandsDataPlugin(new WorkflowRequests(database), async (scope) => {
       const target = await project(scope);
-      return target && configuration.hosted(target.remote) ? target : undefined;
+      if (!target) return undefined;
+      const documentationOnly = configuration.documentationOnly(target.remote);
+      return configuration.hosted(target.remote) || documentationOnly
+        ? { ...target, documentationOnly }
+        : undefined;
     }),
   );
 }
@@ -152,7 +157,9 @@ async function mountProjectReads(
       const resolved = await project(scope);
       if (!resolved) return;
       const capture = configuration.capture(resolved.remote, resolved.revision);
-      return capture && { directory: capture.source.root, revision: capture.source.revision };
+      return capture && !capture.documentationOnly
+        ? { directory: capture.source.root, revision: capture.source.revision }
+        : undefined;
     }),
   );
 }

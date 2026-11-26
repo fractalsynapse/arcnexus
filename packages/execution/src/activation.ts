@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs';
 import type { Agent } from '../../agent/src/index.js';
 import type {
   ActivitySelection,
@@ -27,8 +28,12 @@ export function activateActor(
   signal: AbortSignal,
   refresh?: ContextRefresh,
 ) {
+  if (data.capturedDocumentation)
+    return activateCapturedDocuments(task, agent, selection, data, signal);
   const { capture } = task;
   const worktree = task.worktree ?? capture.source.root;
+  if (task.documentationOnly)
+    throw new Error('Documentation discovery only permits captured source reads');
   verifyNativeGuidance(capture, worktree);
   const diff =
     task.branch && selection.activity === 'review'
@@ -44,6 +49,37 @@ export function activateActor(
   return new Clarifications(task, selection, signal, revision).run({ ...data, evidence }, (input) =>
     inbox.run(selection, input),
   );
+}
+
+/** Run the recommendation against pinned Git objects from a neutral directory. */
+async function activateCapturedDocuments(
+  task: HostTask,
+  agent: Agent,
+  selection: ActivitySelection,
+  data: ActivityData,
+  signal: AbortSignal,
+) {
+  const worktree = task.documentationWorkspace();
+  const context = { ...data, worktree, goal: task.goal };
+  try {
+    return await agent.activate(
+      { capture: task.capture, selection, task: context },
+      (view, cancellation) => {
+        const options = view.request.options;
+        const tools = options.tools.filter(
+          ({ handler }) => handler === 'read' || handler === 'list',
+        );
+        const request = {
+          ...view.request,
+          options: { ...options, tools, webSearchMode: 'disabled' },
+        };
+        return invokeCodex(task, { ...view, request }, context, cancellation);
+      },
+      signal,
+    );
+  } finally {
+    rmSync(worktree, { recursive: true, force: true });
+  }
 }
 
 /** Refresh only the returning original caller while preserving inbox-owned answer enrichment. */

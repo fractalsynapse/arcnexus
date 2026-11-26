@@ -119,6 +119,10 @@ export async function requestPlan(
     ? await planner.proposeDraft!(session, draft, progress, signal)
     : await planner.propose(session, mode, progress, signal);
   if ('kind' in decision) session.record({ assessment: decision });
-  else validatePlan(session.capture, decision);
+  else {
+    if (session.documentationOnly)
+      throw new Error('Documentation discovery cannot deliver changes');
+    validatePlan(session.capture, decision);
+  }
   return decision;
 }

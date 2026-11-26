@@ -76,3 +76,25 @@ the new policy.
 Use the [gateway's GitHub App binding](../api/README.md#managed-project-bindings)
 for private managed reads. Supply a separate approved Host checkout when
 assigning execution.
+
+## Read-only Plan onboarding
+
+For a repository that only has documentation, set `"documentationOnly": true`
+on its trusted gateway binding and assign an admitted provider. Import it by its
+canonical GitHub remote. The gateway can verify a local pinned Git tree or fetch
+one through a managed read binding.
+
+Set `"documentationOnly": true` on the matching launcher assignment. Use the
+approved platform Host base image with `"source": "base"` and its digest for
+both `base` and `approvedImage`. Omit the Host's GitHub write credentials. The
+launcher mounts the checkout read-only. Plan reads pinned Git objects from a
+neutral Codex workspace through the existing read and list tools. Repository
+guidance, tools and executable bindings do not take effect.
+
+The operator can retain selected drafts, edit and re-review them, request a
+revision, or decline. The request and its review are stored with the project's
+Plan history. To admit the project, set up its catalog, normal verified staging
+workflow and Host binding. Cut over the journal, replace the discovery binding
+with an ordinary hosted binding for the same remote, and refresh the catalog
+revision. The next recommendation session reviews retained drafts at the
+admitted revision and identifies changed citations before asking for approval.

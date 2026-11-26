@@ -54,6 +54,7 @@
   display: block;
   resize: vertical;
 }
+.arc-recommend-objectives,
 .arc-composer-error {
   grid-column: 1 / -1;
 }

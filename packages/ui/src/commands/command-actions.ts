@@ -18,6 +18,7 @@ export function CommandActions({
         key: gate.key,
         identity: gate.key,
         question: gate.question,
+        review: gate.review,
         send: (answer) => binding.answer!(gate.key, answer),
       }),
     );

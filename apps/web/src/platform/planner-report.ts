@@ -1,22 +1,47 @@
 import { createElement as h } from 'react';
 import type { ReactNode } from 'react';
-import { AgentReport, DialogButton, WorkspaceLink } from '../../../../packages/ui/src/index.js';
-import type { RevisionCitation } from '../../../../packages/architecture/src/index.js';
+import {
+  AgentReport,
+  DialogButton,
+  SourceCitations,
+  WorkspaceLink,
+} from '../../../../packages/ui/src/index.js';
+import type { RecommendationAssessment } from '../../../../packages/planner/src/objective-review.js';
+import { RecommendedObjectives } from './recommended-objectives.js';
 import type { Proposal, Rating } from '../../../../packages/planner/src/proposal.js';
 import { guideLink } from './guide.js';
 
 type Scope = { project: string; revision?: string };
 
 /** Translate the retained Planner response into its named sections. */
-export function PlannerReport({ report, project, revision }: Scope & { report: Proposal }) {
+export function PlannerReport({
+  report,
+  recommendation,
+  project,
+  revision,
+}: Scope & {
+  report?: Proposal;
+  recommendation?: RecommendationAssessment;
+}) {
   const goal = (id: string) =>
-    revision && report.ratings.some((rating) => rating.id === id)
+    revision && report?.ratings.some((rating) => rating.id === id)
       ? h(WorkspaceLink, { href: guideLink('goals', id, project, revision) }, id)
       : h('code', null, id);
   return h(AgentReport, {
     label: 'Planner report',
-    summary: report.summary,
-    sections: reportSections(report, goal),
+    summary: report?.summary ?? recommendation?.summary ?? '',
+    sections: [
+      ...(recommendation
+        ? [
+            {
+              title: 'Objectives',
+              count: recommendation.selected.length,
+              content: h(RecommendedObjectives, { value: recommendation }),
+            },
+          ]
+        : []),
+      ...(report ? reportSections(report, goal) : []),
+    ],
   });
 }
 
@@ -33,7 +58,7 @@ function reportSections(report: Proposal, goal: (id: string) => ReactNode) {
     {
       title: 'Sources',
       count: report.sources.length,
-      content: h(Citations, { sources: report.sources }),
+      content: h(SourceCitations, { sources: report.sources }),
     },
   ];
 }
@@ -81,13 +106,13 @@ function RatingDetails({ rating }: { rating: Rating }) {
         runCitation(rating.run.selection),
       ),
     !!rating.sources.length &&
-      h('section', null, h('h3', null, 'Sources'), h(Citations, { sources: rating.sources })),
+      h('section', null, h('h3', null, 'Sources'), h(SourceCitations, { sources: rating.sources })),
     !!rating.observations.length &&
       h(
         'section',
         null,
         h('h3', null, 'Observations'),
-        h(Citations, { sources: rating.observations }),
+        h(SourceCitations, { sources: rating.observations }),
       ),
   );
 }
@@ -110,20 +135,6 @@ function proposedChange({ id, content }: Proposal['changes'][number]) {
           title: 'Proposed document ' + id,
           children: h('pre', { className: 'arc-report-text' }, content),
         }),
-  );
-}
-
-function Citations({ sources }: { sources: readonly RevisionCitation[] }) {
-  return items(
-    sources.map(({ path, quote }) =>
-      h(
-        'div',
-        { className: 'arc-report-source' },
-        h('code', null, path),
-        h('blockquote', { className: 'arc-report-text' }, quote),
-      ),
-    ),
-    'No sources cited.',
   );
 }
 
