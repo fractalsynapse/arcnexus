@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Add expandable YAML mappings and sequences to startup context with exact source available in a dialog (#746).
+
 - Center shared sub-tabs and use syntax-highlighted YAML and rendered Markdown in the Plan context view (#746).
 
 - Open the timestamped token breakdown from the Reported tokens value in Planner metrics (#746).

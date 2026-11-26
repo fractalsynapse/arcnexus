@@ -1,5 +1,6 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h } from 'react';
 import type { ReactElement } from 'react';
+import { StructuredBranch } from './structured-branch.js';
 
 /** Show structured tool and model data without executing embedded markup. */
 export function JsonView({
@@ -9,7 +10,6 @@ export function JsonView({
   value: unknown;
   expanded?: boolean;
 }): ReactElement {
-  const [open, setOpen] = useState(expanded);
   if (value === null || typeof value !== 'object')
     return h(
       'code',
@@ -18,29 +18,20 @@ export function JsonView({
     );
   const list = Array.isArray(value);
   const entries = Object.entries(value);
-  return h(
-    'details',
-    {
-      className: 'arc-json-section',
-      open,
-      onToggle: (event) => setOpen(event.currentTarget.hasAttribute('open')),
-    },
-    h('summary', null, (list ? '[' : '{') + entries.length + (list ? ']' : '}')),
-    open && h(JsonEntries, { entries, list }),
-  );
+  return h(StructuredBranch, {
+    expanded,
+    label: (list ? '[' : '{') + entries.length + (list ? ']' : '}'),
+    render: () => jsonEntries(entries, list),
+  });
 }
 
-function JsonEntries({ entries, list }: { entries: [string, unknown][]; list: boolean }) {
-  return h(
-    'div',
-    null,
-    entries.map(([key, child]) =>
-      h(
-        'div',
-        { key, className: 'arc-json-entry' },
-        h('code', { 'data-json': 'key' }, list ? key : JSON.stringify(key)),
-        h(JsonView, { value: child, expanded: false }),
-      ),
+function jsonEntries(entries: [string, unknown][], list: boolean) {
+  return entries.map(([key, child]) =>
+    h(
+      'div',
+      { key, className: 'arc-structured-entry' },
+      h('code', { 'data-json': 'key' }, list ? key : JSON.stringify(key)),
+      h(JsonView, { value: child, expanded: false }),
     ),
   );
 }

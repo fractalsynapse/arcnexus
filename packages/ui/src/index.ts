@@ -51,6 +51,7 @@ export { ModelRequestView } from './content/model-request-view.js';
 export { elapsedTime, useElapsedClock } from './hooks/elapsed-clock.js';
 export { TokenHistory, type TokenSample } from './content/token-history.js';
 export { MarkdownView } from './content/markdown-view.js';
+export { YamlView } from './content/yaml-view.js';
 export { MarkdownEditor } from './content/markdown-editor.js';
 export { Readouts } from './content/readouts.js';
 export { WebFrame } from './layouts/frame/web-frame.js';

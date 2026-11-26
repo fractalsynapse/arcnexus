@@ -108,31 +108,47 @@ ol.arc-report-list {
   background: var(--tint);
   border-color: var(--link);
 }
-.arc-json-section > div {
+.arc-structured-branch > div {
   padding-inline-start: 12px;
   border-inline-start: 1px solid var(--line);
 }
-.arc-json-entry {
+.arc-structured-entry {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
 }
-.arc-json-entry :is(code, details) {
+.arc-structured-entry :is(code, details) {
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
-.arc-json-section summary {
+.arc-structured-branch summary {
   cursor: pointer;
   color: var(--muted);
 }
-.arc-json-entry [data-json='key'] {
+.arc-structured-entry [data-json='key'] {
   color: var(--link);
 }
-.arc-json-entry [data-json='string'] {
+.arc-structured-entry [data-json='string'] {
   color: light-dark(#235c48, #ade2bc);
 }
-.arc-json-entry :is([data-json='number'], [data-json='boolean']) {
+.arc-structured-entry :is([data-json='number'], [data-json='boolean']) {
   color: light-dark(#733f13, #f6ce9a);
+}
+.arc-yaml-view {
+  display: grid;
+  gap: 6px;
+  min-inline-size: 0;
+}
+.arc-yaml-view-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.arc-yaml-view summary small {
+  margin-inline-start: 8px;
+}
+.arc-yaml-view code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 @media (max-width: 560px) {
   .arc-diff {

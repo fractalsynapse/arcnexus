@@ -54,12 +54,28 @@ async function verifyContextFormatting(page: Page) {
   await page.getByRole('tab', { name: 'Task', exact: true }).click();
   await page.getByText('Recorded Planner instruction.', { exact: true }).waitFor();
   await page.getByRole('tab', { name: 'Activity', exact: true }).click();
-  await page
-    .locator('code.language-yaml .hljs-attr')
-    .filter({ hasText: /^component:$/ })
-    .waitFor();
+  await verifyYamlDisclosure(page);
   await page.getByRole('tab', { name: 'Standards', exact: true }).click();
   await page.getByRole('heading', { name: 'Recorded quality standard', exact: true }).waitFor();
+}
+
+async function verifyYamlDisclosure(page: Page) {
+  const yaml = page.getByRole('tabpanel', { name: 'Activity', exact: true });
+  const settings = yaml.locator('summary').filter({ hasText: 'settings' });
+  assert.equal(await settings.count(), 1);
+  assert.equal(await yaml.getByText('Verify rubric', { exact: true }).count(), 0);
+  await settings.click();
+  await yaml.locator('summary').filter({ hasText: 'steps' }).click();
+  await yaml.getByText('Verify rubric', { exact: true }).waitFor();
+  await settings.click();
+  await yaml.getByText('Verify rubric', { exact: true }).waitFor({ state: 'detached' });
+  await yaml.getByRole('button', { name: /View source.*YAML source/ }).click();
+  const source = page.getByRole('dialog', { name: 'YAML source' });
+  await source
+    .locator('code.language-yaml')
+    .getByText('# Keep this comment', { exact: true })
+    .waitFor();
+  await source.getByRole('button', { name: 'Close' }).click();
 }
 
 test('live metrics and the complete Planner report update with Event log disabled', async (t) => {
@@ -278,7 +294,7 @@ const capturedContext = {
   request: {
     input: [
       '## Task\nSource: Task inputs supplied at activation\n\nRecorded Planner instruction.',
-      '## Activity\nSource: planner.yaml (activities.planning)\n\ncomponent: planner\nactivity: planning',
+      '## Activity\nSource: planner.yaml (activities.planning)\n\n# Keep this comment\ncomponent: planner\nsettings:\n  steps:\n    - Verify rubric',
       '## Standards\nSource: planner.yaml\n\nSource: docs/quality.md\n--- BEGIN docs/quality.md ---\n# Recorded quality standard\n--- END docs/quality.md ---',
     ].join('\n\n'),
     options: { model: 'fixture-model' },

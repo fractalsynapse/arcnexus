@@ -1,8 +1,8 @@
 import { createElement as h, Fragment } from 'react';
 import { isMap, parseDocument } from 'yaml';
 import { capturedDocuments } from './captured-documents.js';
-import { CodeView } from './code-view.js';
 import { MarkdownView } from './markdown-view.js';
+import { YamlView } from './yaml-view.js';
 
 /** Render captured documents and structured values with their shared viewers. */
 export function ModelSection({ source, text }: { source: string; text: string }) {
@@ -25,9 +25,7 @@ function documentBlocks(text: string, documents: ReturnType<typeof capturedDocum
       { key: start },
       preceding && h(MarkdownView, { content: preceding }),
       h('small', null, path),
-      /\.ya?ml$/i.test(path)
-        ? h(CodeView, { content, language: 'yaml' })
-        : h(MarkdownView, { content }),
+      /\.ya?ml$/i.test(path) ? h(YamlView, { content }) : h(MarkdownView, { content }),
     );
   });
   const trailing = text.slice(previous).trim();
@@ -38,6 +36,6 @@ function documentBlocks(text: string, documents: ReturnType<typeof capturedDocum
 function formattedSection(text: string) {
   const yaml = parseDocument(text);
   return !yaml.errors.length && isMap(yaml.contents)
-    ? h(CodeView, { content: text, language: 'yaml' })
+    ? h(YamlView, { content: text, document: yaml })
     : h(MarkdownView, { content: text });
 }
