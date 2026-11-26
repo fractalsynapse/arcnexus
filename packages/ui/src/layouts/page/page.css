@@ -44,7 +44,7 @@
   overflow-wrap: anywhere;
 }
 .arc-page-settings,
-.arc-display {
+.arc-display > :is(.arc-surface-heading, .arc-display-body) {
   padding: 14px 15px;
 }
 .arc-page-settings,

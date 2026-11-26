@@ -13,7 +13,7 @@
   margin-inline-start: auto;
 }
 .arc-display > .arc-surface-heading {
-  padding-block-end: 6px;
+  border-block-end: 1px solid var(--line);
 }
 .arc-display > .arc-surface-heading h2 {
   margin: 0;

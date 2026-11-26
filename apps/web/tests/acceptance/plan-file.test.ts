@@ -134,8 +134,14 @@ async function verifyFullWidthDiff(page: Page) {
   await diff.waitFor();
   const panel = page.locator('.arc-display-body').filter({ has: diff });
   assert.equal(await panel.getByRole('list', { name: 'Changed files' }).count(), 0);
-  const [content, body] = await Promise.all([diff.boundingBox(), panel.boundingBox()]);
-  assert.ok(content && body && Math.abs(content.width - body.width) < 1);
+  const [content, available] = await Promise.all([
+    diff.boundingBox(),
+    panel.evaluate((body) => {
+      const { paddingInlineStart, paddingInlineEnd } = getComputedStyle(body);
+      return body.clientWidth - parseFloat(paddingInlineStart) - parseFloat(paddingInlineEnd);
+    }),
+  ]);
+  assert.ok(content && Math.abs(content.width - available) < 1);
 }
 
 test('Plan File shows numbered change hunks with three context lines on either side', async (t) => {
@@ -287,6 +293,7 @@ async function verifySinglePanelToggle(page: Page) {
   );
   for (const width of [1180, 390]) {
     await page.setViewportSize({ width, height: 800 });
+    await verifyDisplayDividers(page);
     assert.equal(await expand.getAttribute('aria-expanded'), 'false');
     await expand.click();
     assert.equal(await collapse.getAttribute('aria-expanded'), 'true');
@@ -296,4 +303,25 @@ async function verifySinglePanelToggle(page: Page) {
     await information.waitFor();
     await changes.waitFor();
   }
+}
+
+async function verifyDisplayDividers(page: Page) {
+  const dividers = await page.locator('.arc-display').evaluateAll((panels) =>
+    panels.map((panel) => {
+      const heading = panel.querySelector(':scope > .arc-surface-heading')!;
+      const body = panel.querySelector(':scope > .arc-display-body:not([hidden])')!;
+      const style = getComputedStyle(heading);
+      return {
+        divider: style.borderBlockEndStyle === 'solid' && style.borderBlockEndWidth === '1px',
+        themed: style.borderBlockEndColor === getComputedStyle(panel).borderBlockEndColor,
+        inset:
+          parseFloat(style.paddingBlockEnd) > 0 &&
+          parseFloat(getComputedStyle(body).paddingBlockStart) > 0,
+        spansPanel: Math.abs(heading.getBoundingClientRect().width - panel.clientWidth) < 1,
+      };
+    }),
+  );
+  assert.equal(dividers.length, 3);
+  for (const display of dividers)
+    assert.deepEqual(display, { divider: true, themed: true, inset: true, spansPanel: true });
 }

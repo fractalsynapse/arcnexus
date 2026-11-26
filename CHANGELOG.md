@@ -28,6 +28,8 @@
 
 ### Changed
 
+- Restore full-width header dividers and content spacing on shared display panels (#746).
+
 - Show numbered unified diffs with three lines of context, and give the read-only Markdown viewer the editor's frame and padding (#746).
 
 - Increase desktop reading sizes across the browser UI and use the ArcNexus brain logo as the favicon (#746).
