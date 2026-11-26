@@ -1,4 +1,5 @@
-import { createElement as h } from 'react';
+import { createElement as h, type ReactNode } from 'react';
+import { DialogButton } from '../controls/dialog-button.js';
 import { Tooltip } from '../controls/tooltip.js';
 
 export interface TokenUsage {
@@ -22,8 +23,16 @@ export function formatTokenPair({ input, output }: TokenUsage) {
 }
 
 /** Show compact counts with their order available on hover and keyboard focus. */
-export function TokenPair(usage: TokenUsage) {
+export function TokenPair({ details, ...usage }: TokenUsage & { details?: ReactNode }) {
   const value = formatTokenPair(usage);
+  if (details != null)
+    return h(DialogButton, {
+      title: 'Reported tokens over time',
+      label: value,
+      hint: tokenPairHint,
+      className: 'arc-token-details',
+      children: details,
+    });
   return h(
     Tooltip,
     { label: tokenPairHint },

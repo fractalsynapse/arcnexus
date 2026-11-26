@@ -195,6 +195,15 @@ ol.arc-report-list {
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
+.arc-token-details.arc-button {
+  min-block-size: auto;
+  padding: 0 4px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
 .arc-token-history :is(th, td) {
   padding: 5px 4px;
   border-block-end: 1px solid var(--line);

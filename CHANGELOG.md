@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Open the timestamped token breakdown from the Reported tokens value in Planner metrics (#746).
+
 - Let live Plan events grow with the page, put Stop in the command composer during execution, and move reconnect into the compact round controls (#746).
 
 - Keep the Planner outcome summary visible above report tabs and open detailed ratings and proposed documents in the shared dialog (#746).

@@ -1,4 +1,4 @@
-import { createElement as h } from 'react';
+import { createElement as h, type ReactNode } from 'react';
 import {
   Disclosure,
   elapsedTime,
@@ -18,7 +18,7 @@ export interface PlanMetrics {
   usage?: { input_tokens?: Reported; output_tokens?: Reported; cached_input_tokens?: Reported };
 }
 
-/** Render the measured values and fetch tool counts only when requested. */
+/** Render the current measurements with on-demand details. */
 export function PlannerMetrics({
   value,
   path,
@@ -31,15 +31,11 @@ export function PlannerMetrics({
   running?: boolean;
 }) {
   const snapshot = useTickingTimes(value, running);
+  const tokens = h(PlanTokenHistory, { path: path + '/token-history', refresh });
   return h(
     'div',
     { className: 'arc-platform-stack' },
-    h(Readouts, { values: metricRows(value, snapshot) }),
-    h(
-      Disclosure,
-      { label: 'Token history' },
-      h(PlanTokenHistory, { path: path + '/token-history', refresh }),
-    ),
+    h(Readouts, { values: metricRows(value, snapshot, tokens) }),
     h(
       Disclosure,
       { label: 'Tools by frequency' },
@@ -63,7 +59,11 @@ function useTickingTimes(value: PlanMetrics, running: boolean) {
   };
 }
 
-function metricRows(value: PlanMetrics, { wall, agent }: ReturnType<typeof useTickingTimes>) {
+function metricRows(
+  value: PlanMetrics,
+  { wall, agent }: ReturnType<typeof useTickingTimes>,
+  details: ReactNode,
+) {
   const input = value.usage?.input_tokens?.reported;
   const output = value.usage?.output_tokens?.reported;
   const cached = value.usage?.cached_input_tokens?.reported;
@@ -74,7 +74,7 @@ function metricRows(value: PlanMetrics, { wall, agent }: ReturnType<typeof useTi
   return [
     ['Wall time', elapsedTime(wall)],
     ['Agent elapsed', h(AgentElapsed, { milliseconds: agent })],
-    ['Reported tokens', h(TokenPair, { input, output })],
+    ['Reported tokens', h(TokenPair, { input, output, details })],
     ['Token cache rate', rate],
   ] as const;
 }

@@ -78,8 +78,12 @@ test('elapsed clocks advance locally and token history uses recorded reports', a
   await page.clock.runFor(1000);
   await metrics.getByText('00:01:01', { exact: true }).waitFor();
   await metrics.getByText('00:00:16', { exact: true }).waitFor();
-  await metrics.getByText('Token history', { exact: true }).click();
-  const samples = metrics.getByRole('table', { name: 'Cumulative reported tokens' });
+  const tokens = metrics.getByRole('button', { name: /1\.0K \/ 0\.0K.*Reported tokens/ });
+  assert.equal(await tokens.count(), 1);
+  assert.equal(await metrics.getByText('Token history', { exact: true }).count(), 0);
+  await tokens.click();
+  const details = page.getByRole('dialog', { name: 'Reported tokens over time' });
+  const samples = details.getByRole('table', { name: 'Cumulative reported tokens' });
   await samples.getByText('1.0K / 0.0K', { exact: true }).waitFor();
 });
 
