@@ -8,7 +8,7 @@ type PlanReadout = 'outcome' | 'metrics';
 
 /** Mount one Plan projection against the stable execution selected for the current project. */
 export function PlanDisplay({ kind }: { kind: PlanReadout }) {
-  const { project, history, execution, plan, refresh, recorded } = usePlanResource();
+  const { project, history, execution, plan, refresh, recorded, command } = usePlanResource();
   const result = useResource<PlanOutcome & PlanMetrics>(
     plan && plan + '/' + kind,
     refresh,
@@ -29,7 +29,8 @@ export function PlanDisplay({ kind }: { kind: PlanReadout }) {
     : h(PlannerMetrics, {
         key: recorded?.attempt,
         value: result.value,
-        path: plan + '/tool-counts',
+        path: plan,
         refresh,
+        running: recorded?.active && command.status !== 'Waiting',
       });
 }

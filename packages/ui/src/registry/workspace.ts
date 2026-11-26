@@ -1,5 +1,6 @@
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
 import type { ColumnCount, PanelRegion } from '../layouts/panels/presets/index.js';
+import type { TabSection } from '../controls/tabs.js';
 
 export interface DisplayRegistration {
   id: string;
@@ -13,6 +14,7 @@ export interface Workspace {
   label: string;
   titleAction?: ReactNode;
   content?: ReactNode;
+  sections?: readonly TabSection[];
   headerAction?: ReactNode;
   parent?: string;
   match?: (path: string) => boolean;

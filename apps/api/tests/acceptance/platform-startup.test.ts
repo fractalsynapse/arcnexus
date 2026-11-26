@@ -46,7 +46,7 @@ test(
   },
 );
 
-async function fixture(t: TestContext, withAgent = false) {
+async function fixture(t: TestContext, withAgent = false, withEvidence = false) {
   const root = mkdtempSync(join(tmpdir(), 'arc-platform-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const repository = 'https://github.com/arcnexus-fixtures/' + randomUUID() + '.git';
@@ -60,7 +60,10 @@ async function fixture(t: TestContext, withAgent = false) {
   const file = join(root, 'bindings.json');
   writeFileSync(
     file,
-    JSON.stringify({ operator: randomUUID(), projects: [{ directory, remote: repository }] }),
+    JSON.stringify({
+      operator: randomUUID(),
+      projects: [{ directory, remote: repository, ...(withEvidence && { evidence: root }) }],
+    }),
   );
   const database = new Client({ connectionString: url });
   await database.connect();
@@ -430,4 +433,54 @@ async function verifyPlanPanelResponses(
   const metrics = await context.api(new Request(address + execution + '/metrics', { headers }));
   assert.equal(metrics.status, 200);
   assert.equal((await metrics.json()).usage.input_tokens.reported, 2000);
+  const tokens = await context.api(
+    new Request(address + execution + '/token-history', { headers }),
+  );
+  assert.equal(tokens.status, 200);
+  assert.deepEqual((await tokens.json()).samples, [
+    { sequence: '4', timestamp: null, input: 2000, output: null },
+  ]);
+}
+
+test(
+  'Plan context reads the exact request from its own retained artifact',
+  { skip: !url },
+  async (t) => {
+    const { token, platform, repository, root } = await fixture(t, false, true);
+    const headers = { authorization: 'Bearer ' + token };
+    const operator = await platform.authenticate(
+      new Request('http://arc.test/', { headers }),
+      'platform',
+    );
+    assert.ok(operator);
+    const project = await platform.context.catalog.add(operator.principal, { remote: repository });
+    const { execution, request } = await seedPlanContext(repository, project.revision, root);
+    await platform.context.use(apiPlugin(platform.authenticate));
+    const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
+    const captured = await platform.context.api(
+      new Request(address + execution + '/context', { headers }),
+    );
+    assert.equal(captured.status, 200);
+    assert.deepEqual(await captured.json(), { timestamp: null, component: 'planner', request });
+    const outside = await platform.context.api(
+      new Request(address + randomUUID() + '/context', { headers }),
+    );
+    assert.notEqual(outside.status, 200);
+  },
+);
+
+async function seedPlanContext(repository: string, revision: string, root: string) {
+  const execution = randomUUID();
+  const path = join(root, 'native-request.json');
+  const request = {
+    input: '## Task\nSource: captured assignment\n\nRecorded objective',
+    options: { model: 'live-model' },
+  };
+  writeFileSync(path, JSON.stringify(request));
+  await append(repository, execution, 1, 'started', { planningExecution: { revision } });
+  await append(repository, execution, 2, 'stored', { artifact: path });
+  await append(repository, execution, 3, 'activated', {
+    nativeStarted: { request: path, component: 'planner' },
+  });
+  return { execution, request };
 }

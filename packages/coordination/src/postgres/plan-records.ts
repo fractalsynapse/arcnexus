@@ -21,14 +21,18 @@ const plan = `
       AND COALESCE(e.content::jsonb#>>'{planningExecution,revision}', e.content::jsonb->>'revision') IS NOT NULL
       AND (e.content::jsonb ? 'planningExecution' OR e.content::jsonb ? 'plannerProposal')
     ORDER BY r.task_id,r.id DESC,e.id DESC
+  ), latest AS (
+    SELECT DISTINCT ON (task_id) task_id, id, active
+    FROM arcnexus_coordination.runs
+    WHERE project=$1 AND task_id IS NOT NULL
+    ORDER BY task_id, id DESC
   )
-  SELECT captured.*, max(r.id)::text AS attempt, bool_or(r.active = 1) AS active,
+  SELECT captured.*, latest.id::text AS attempt, (latest.active = 1) AS active,
          min(e.recorded_at) AS "startedAt", max(e.recorded_at) AS "updatedAt"
-  FROM captured JOIN arcnexus_coordination.runs r
-    ON r.project=$1 AND r.task_id=captured.execution
-  LEFT JOIN arcnexus_coordination.events e ON e.project=r.project AND e.run=r.id
-  GROUP BY captured.execution,captured.revision
-  ORDER BY max(r.id) DESC
+  FROM captured JOIN latest ON latest.task_id=captured.execution
+  LEFT JOIN arcnexus_coordination.events e ON e.project=$1 AND e.run=latest.id
+  GROUP BY captured.execution,captured.revision,latest.id,latest.active
+  ORDER BY latest.id DESC
   LIMIT $3
 `;
 

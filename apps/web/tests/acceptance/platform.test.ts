@@ -166,6 +166,7 @@ test('the browser keeps native messages and resumes an interrupted event log', a
   await selectProject(page);
   const timeline = page.getByRole('log', { name: 'Planning events' });
   await timeline.getByText('Opening café 🛠', { exact: true }).waitFor();
+  await page.getByRole('tab', { name: 'Full log', exact: true }).click();
   await timeline.getByText('1 operation', { exact: true }).click();
   await timeline.getByText('Passed', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
@@ -199,6 +200,7 @@ test('an open tool inspector loads input on demand and refreshes when the live r
   await page.goto(application.url);
   await selectProject(page);
   const timeline = page.getByRole('log', { name: 'Planning events' });
+  await page.getByRole('tab', { name: 'Full log', exact: true }).click();
   await timeline.getByText('1 operation', { exact: true }).click();
   assert.equal(fixture.reads(), 0);
   await timeline.getByRole('button', { name: 'read-file inputs and outputs' }).click();

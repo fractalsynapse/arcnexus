@@ -11,14 +11,19 @@ export function PlanContext() {
     { className: 'arc-platform-inline', role: 'status' },
     h(ActiveProject),
     recorded?.startedAt &&
-      h('time', { dateTime: recorded.startedAt }, new Date(recorded.startedAt).toLocaleString()),
+      h(
+        'time',
+        { dateTime: recorded.startedAt },
+        'Started ',
+        new Date(recorded.startedAt).toLocaleString(),
+      ),
     active
       ? 'Active'
       : recorded?.updatedAt &&
           h(
             'time',
             { dateTime: recorded.updatedAt },
-            '– ' + new Date(recorded.updatedAt).toLocaleTimeString(),
+            'Ended ' + new Date(recorded.updatedAt).toLocaleTimeString(),
           ),
     active &&
       updates.disconnected &&

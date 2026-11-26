@@ -25,6 +25,31 @@ const report = {
   sources: [{ path: 'docs/charter.md', quote: 'Captured charter excerpt.' }],
 };
 
+test('Plan can switch from a messages-only timeline to its full log and startup context', async (t) => {
+  const opening =
+    messageFrame(1) +
+    messageFrame(2, undefined, { message: undefined, operation: { name: 'list-files' } });
+  const fixture = await gateway(t, opening);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  await preferenceRoutes(page);
+  await page.goto(application.url);
+  const log = page.getByRole('log', { name: 'Planning events' });
+  await log.getByText('Message 1', { exact: true }).waitFor();
+  const tabs = page.getByRole('tablist', { name: 'Event log' });
+  assert.equal(
+    await tabs.getByRole('tab', { name: 'Messages' }).getAttribute('aria-selected'),
+    'true',
+  );
+  assert.equal(await log.getByText('1 operation', { exact: true }).count(), 0);
+  await tabs.getByRole('tab', { name: 'Full log' }).click();
+  await log.getByText('1 operation', { exact: true }).click();
+  await log.getByText('list-files', { exact: true }).waitFor();
+  await page.getByRole('tab', { name: 'Context', exact: true }).click();
+  await page.getByText('Captured model request', { exact: true }).waitFor();
+  await page.getByRole('tab', { name: 'Task', exact: true }).click();
+  await page.getByText('Recorded Planner instruction.', { exact: true }).waitFor();
+});
+
 test('live metrics and the complete Planner report update with Event log disabled', async (t) => {
   const fixture = await gateway(t);
   const { application, page } = await browserPage(t, new URL(fixture.url));
@@ -40,6 +65,22 @@ test('live metrics and the complete Planner report update with Event log disable
   await verifyReportTabs(page, outcome);
   assert.equal(await outcome.getByRole('link', { name: 'Issue #746' }).count(), 1);
   assert.equal(await outcome.getByRole('link', { name: 'PR #747' }).count(), 1);
+});
+
+test('elapsed clocks advance locally and token history uses recorded reports', async (t) => {
+  const fixture = await gateway(t);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  await preferenceRoutes(page);
+  await page.clock.install();
+  await page.goto(application.url);
+  const metrics = page.getByRole('region', { name: 'Planner metrics' });
+  await metrics.getByText('00:01:00', { exact: true }).waitFor();
+  await page.clock.runFor(1000);
+  await metrics.getByText('00:01:01', { exact: true }).waitFor();
+  await metrics.getByText('00:00:16', { exact: true }).waitFor();
+  await metrics.getByText('Token history', { exact: true }).click();
+  const samples = metrics.getByRole('table', { name: 'Cumulative reported tokens' });
+  await samples.getByText('1.0K / 0.0K', { exact: true }).waitFor();
 });
 
 async function verifyReportTabs(page: Page, outcome: Locator) {
@@ -204,7 +245,22 @@ function planFixture(path: string, finished: boolean) {
     };
   if (path.endsWith('/metrics'))
     return {
+      wallElapsedMs: 60000,
+      nativeElapsedMs: 15000,
+      profiles: [{ activeActivations: 1 }],
       usage: { input_tokens: { reported: finished ? 2000 : 1000 }, output_tokens: { reported: 0 } },
     };
+  if (path.endsWith('/token-history'))
+    return {
+      samples: [{ sequence: '6', timestamp: '2026-11-26T02:30:49.000Z', input: 1000, output: 0 }],
+    };
+  if (path.endsWith('/context')) return capturedContext;
   return planData('/api' + path);
 }
+
+const capturedContext = {
+  request: {
+    input: '## Task\nSource: Task inputs supplied at activation\n\nRecorded Planner instruction.',
+    options: { model: 'fixture-model' },
+  },
+};

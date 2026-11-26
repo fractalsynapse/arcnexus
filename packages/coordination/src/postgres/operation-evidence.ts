@@ -1,9 +1,9 @@
-import { lstat, readFile, realpath } from 'node:fs/promises';
-import { isAbsolute, relative, sep } from 'node:path';
 import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { z } from 'zod';
 import { dataOperation, type DataScope } from '../../../data/src/index.js';
+import { readHostEvidence, type EvidenceRoots } from './host-evidence.js';
+import { planContextSchema, readPlanContext } from './plan-context.js';
 
 const references = `
   WITH RECURSIVE tasks(id) AS (
@@ -33,31 +33,6 @@ const references = `
   ORDER BY operations.id
 `;
 
-type EvidenceRoots = string | readonly string[];
-
-function contains(root: string, path: string) {
-  const location = relative(root, path);
-  return location && location !== '..' && !location.startsWith('..' + sep);
-}
-
-async function readArtifact(roots: readonly string[], path: string) {
-  if (
-    !isAbsolute(path) ||
-    !roots.some((root) => contains(root, path)) ||
-    (await realpath(path)) !== path
-  )
-    throw new Error('Recorded operation evidence is outside the mounted Host storage');
-  const file = await lstat(path);
-  if (!file.isFile() || file.nlink !== 1)
-    throw new Error('Recorded operation evidence is unavailable');
-  return JSON.parse(await readFile(path, 'utf8')) as unknown;
-}
-
-async function canonicalRoot(root: string) {
-  if ((await realpath(root)) !== root) throw new Error('An evidence root is an alias');
-  return root;
-}
-
 /** Read exact tool observations only through a recorded execution event and approved mounts. */
 export async function readOperationEvidence(
   database: Client,
@@ -72,11 +47,12 @@ export async function readOperationEvidence(
     sequence,
   ]);
   if (!rows.length) throw new Error('Operation evidence is not retained in this execution');
-  const directories = await Promise.all(
-    (typeof roots === 'string' ? [roots] : roots).map(canonicalRoot),
-  );
-  const entries = await Promise.all(rows.map(({ source }) => readArtifact(directories, source)));
-  return { entries };
+  return {
+    entries: await readHostEvidence(
+      roots,
+      rows.map(({ source }) => source),
+    ),
+  };
 }
 
 type Resolve = (scope: DataScope) => Promise<{ remote: string; roots: EvidenceRoots } | undefined>;
@@ -84,26 +60,36 @@ type Resolve = (scope: DataScope) => Promise<{ remote: string; roots: EvidenceRo
 export function operationEvidenceDataPlugin(database: Client, resolve: Resolve) {
   return {
     inject: ['data'],
-    /** Keep bulk tool data out of the timeline and authorize it only on demand. */
+    /** Keep bulk evidence out of timeline responses and authorize it on demand. */
     apply(context: Context) {
-      const read = dataOperation(
-        z.strictObject({ execution: z.string(), sequence: z.string().regex(/^[1-9][0-9]*$/) }),
-        z.strictObject({ entries: z.array(z.unknown()) }),
-        async (scope, input) => {
-          const project = await resolve(scope);
-          if (!project) throw new Error('This project has no mounted Host evidence');
-          return readOperationEvidence(
-            database,
-            project.remote,
-            input.execution,
-            input.sequence,
-            project.roots,
-          );
-        },
-      );
-      context.effect(() =>
-        context.data.register({ id: 'operation-evidence', operations: { read } }),
-      );
+      const operations = evidenceOperations(database, resolve);
+      context.effect(() => context.data.register({ id: 'operation-evidence', operations }));
     },
+  };
+}
+
+function evidenceOperations(database: Client, resolve: Resolve) {
+  const projectFor = async (scope: DataScope) => {
+    const project = await resolve(scope);
+    if (!project) throw new Error('This project has no mounted Host evidence');
+    return project;
+  };
+  return {
+    read: dataOperation(
+      z.strictObject({ execution: z.string(), sequence: z.string().regex(/^[1-9][0-9]*$/) }),
+      z.strictObject({ entries: z.array(z.unknown()) }),
+      async (scope, { execution, sequence }) => {
+        const { remote, roots } = await projectFor(scope);
+        return readOperationEvidence(database, remote, execution, sequence, roots);
+      },
+    ),
+    context: dataOperation(
+      z.strictObject({ execution: z.string() }),
+      planContextSchema,
+      async (scope, { execution }) => {
+        const { remote, roots } = await projectFor(scope);
+        return readPlanContext(database, remote, execution, roots);
+      },
+    ),
   };
 }

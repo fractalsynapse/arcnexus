@@ -7,8 +7,8 @@ import type { JournalEvent } from '../journal-types.js';
 import type { ResolveJournalProject } from '../data.js';
 import { RunMeasurements } from '../measurements.js';
 import { listPlanReferences, planReference, readPlanReference } from './plan-records.js';
-import { readImportedTimeline } from './read-timeline.js';
-import { AttemptWindow } from '../attempt-window.js';
+import { loadPlanEvents } from './plan-events.js';
+import { tokenHistory, tokenHistorySchema } from './token-history.js';
 
 const selection = z.strictObject({ execution: z.string().min(1) });
 const currentSchema = planReference.extend({
@@ -33,8 +33,8 @@ const metrics = z
 
 function projections(database: Client, resolve: ResolveJournalProject) {
   const remoteFor = (scope: DataScope) => projectFor(resolve, scope);
-  const load = (scope: DataScope, execution: string) =>
-    planEvents(database, remoteFor, scope, execution);
+  const load = async (scope: DataScope, execution: string) =>
+    loadPlanEvents(database, await remoteFor(scope), execution);
   return {
     current: currentPlan(database, remoteFor),
     list: dataOperation(
@@ -48,6 +48,9 @@ function projections(database: Client, resolve: ResolveJournalProject) {
     }),
     'tool-counts': dataOperation(selection, toolCountsSchema, async (scope, { execution }) =>
       frequencies((await load(scope, execution)).events),
+    ),
+    'token-history': dataOperation(selection, tokenHistorySchema, async (scope, { execution }) =>
+      tokenHistory((await load(scope, execution)).events),
     ),
     metrics: dataOperation(selection, metrics, async (scope, { execution }) => {
       const { events } = await load(scope, execution);
@@ -86,28 +89,6 @@ async function projectFor(resolve: ResolveJournalProject, scope: DataScope) {
   const remote = await resolve(scope);
   if (!remote) throw new Error('Project unavailable');
   return remote;
-}
-
-async function planEvents(
-  database: Client,
-  resolve: (scope: DataScope) => Promise<string>,
-  scope: DataScope,
-  execution: string,
-) {
-  const remote = await resolve(scope);
-  const task = await readPlanReference(database, remote, execution);
-  if (!task) throw new Error('Planning execution unavailable');
-  const { events } = await readImportedTimeline(database, remote, execution);
-  return { task, events: currentAttemptEvents(events, execution, task.attempt) };
-}
-
-function currentAttemptEvents(events: JournalEvent[], execution: string, attempt?: string) {
-  const window = new AttemptWindow();
-  let start = 0;
-  for (const [index, event] of events.entries()) {
-    if (window.advance(event, execution)) start = index;
-  }
-  return window.includes(attempt) ? events.slice(start) : [];
 }
 
 function planResult(events: JournalEvent[], execution: string, attempt?: string) {

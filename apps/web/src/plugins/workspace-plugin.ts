@@ -4,6 +4,7 @@ import { RefineButton } from '../refine-button.js';
 import { PlanContext } from '../platform/plan-context.js';
 import { PlanScope } from '../platform/plan-resource.js';
 import { PlanRunSelector } from '../platform/plan-run-selector.js';
+import { PlanStartupContext } from '../platform/plan-startup-context.js';
 import type { PropsWithChildren } from 'react';
 
 const workspaces = [
@@ -28,6 +29,7 @@ export function workspacePlugin() {
             headerAction,
             ...(item.path === '/plan/' && {
               context: h(PlanContext),
+              sections: [{ title: 'Context', content: h(PlanStartupContext) }],
               titleAction: h(PlanRunSelector),
               scope,
             }),

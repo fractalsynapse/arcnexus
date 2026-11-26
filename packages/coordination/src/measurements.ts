@@ -53,6 +53,9 @@ export class RunMeasurements {
   private endedAt: number | null = null;
   private historicalUnmeasuredActivations = 0;
 
+  /** Optionally expose a cumulative snapshot at each actual provider usage report. */
+  constructor(private readonly report?: (frame: JournalEvent, usage: Usage) => void) {}
+
   /** Consume ordered durable events once, retaining missing measurements as unknown. */
   accept(frame: JournalEvent) {
     const sequence = BigInt(frame.sequence);
@@ -65,7 +68,8 @@ export class RunMeasurements {
     this.endedAt = record?.outcome && frame.parent === undefined ? at : null;
     if (record?.nativeInvocation) this.historicalUnmeasuredActivations++;
     if (record?.nativeStarted) this.start(record.nativeStarted, at, frame.run);
-    if (record?.nativeEvent?.event?.type === 'turn.completed') this.usage(record.nativeEvent);
+    if (record?.nativeEvent?.event?.type === 'turn.completed' && this.usage(record.nativeEvent))
+      this.report?.(frame, totalUsage([...this.profiles.values()].map(({ usage }) => usage)));
     if (record?.nativeFinished) this.finish(record.nativeFinished);
     if (record?.outcome) this.interrupt(frame.run);
     return true;
@@ -136,6 +140,7 @@ export class RunMeasurements {
         tally.reported = (tally.reported ?? 0) + value;
       else tally.missingTurns++;
     }
+    return event.event?.usage != null;
   }
 
   /** Retain actual failures and explicitly count invocations whose provider supplied no usage. */

@@ -6,13 +6,17 @@ export function TimelineMessage({ message }: { message: string }) {
   const value = readObject(message);
   return value
     ? h(Disclosure, { label: 'Final model response' }, h(JsonView, { value }))
-    : h(
-        'p',
-        { className: 'arc-plan-message' },
-        message === 'Planner mapped the captured project'
-          ? 'Planning assessment ready. The Planner compared the project’s objectives and goals.'
-          : message,
-      );
+    : h('p', { className: 'arc-plan-message' }, messageText(message));
+}
+
+export function plainTimelineMessage(message: string | undefined) {
+  return message && !readObject(message) ? messageText(message) : undefined;
+}
+
+function messageText(message: string) {
+  return message === 'Planner mapped the captured project'
+    ? 'Planning assessment ready. The Planner compared the project’s objectives and goals.'
+    : message;
 }
 
 function readObject(text: string): object | undefined {

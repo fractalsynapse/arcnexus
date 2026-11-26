@@ -53,6 +53,7 @@
   gap: var(--gap);
 }
 .arc-page-settings,
+.arc-workspace-tabs,
 .arc-panel-layout {
   margin-block-start: var(--gap);
 }

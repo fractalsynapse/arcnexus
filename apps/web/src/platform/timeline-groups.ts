@@ -4,7 +4,7 @@ import { AttemptWindow } from '../../../../packages/coordination/src/attempt-win
 export type CheckResult = { id: string; status?: number | string; diagnostic?: string };
 export type Question = { scope?: string; question: string; answer?: string };
 
-type Entry = {
+export type TimelineEntry = {
   key: string;
   timestamp: string | null;
   message?: string;
@@ -44,10 +44,10 @@ type Observation = {
 
 /** Incrementally group committed frames as the same retained stream grows. */
 class TimelineProjection {
-  readonly entries: Entry[] = [];
+  readonly entries: TimelineEntry[] = [];
   private readonly calls = new Map<string, Operation>();
-  private readonly questions = new Map<string, Entry>();
-  private readonly messages = new Map<string, Entry>();
+  private readonly questions = new Map<string, TimelineEntry>();
+  private readonly messages = new Map<string, TimelineEntry>();
   private count = 0;
   private readonly window = new AttemptWindow();
 

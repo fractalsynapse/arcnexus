@@ -68,13 +68,20 @@ export const routes: readonly Route[] = [
     operation: 'current',
     query: [],
   },
-  ...['outcome', 'metrics', 'tool-counts'].map((operation) => ({
+  ...['outcome', 'metrics', 'tool-counts', 'token-history'].map((operation) => ({
     path: '/plan-executions/{execution}/' + operation,
     resource: 'plan-executions',
     operation,
     parameter: 'execution',
     query: [],
   })),
+  {
+    path: '/plan-executions/{execution}/context',
+    resource: 'operation-evidence',
+    operation: 'context',
+    parameter: 'execution',
+    query: [],
+  },
   {
     path: '/plan-executions/{execution}/events',
     resource: 'execution-events',

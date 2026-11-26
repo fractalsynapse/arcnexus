@@ -134,6 +134,9 @@
   min-inline-size: 0;
   gap: 8px;
 }
+.arc-context-view {
+  padding: var(--gap);
+}
 .arc-plan-event {
   padding: 9px;
   background: var(--quiet);

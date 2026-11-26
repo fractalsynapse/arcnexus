@@ -155,3 +155,68 @@ ol.arc-report-list {
 .arc-readouts dd {
   font-variant-numeric: tabular-nums;
 }
+.arc-message-timeline {
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding-inline-start: var(--gap);
+  border-inline-start: 1px solid var(--line);
+  list-style: none;
+}
+.arc-message-timeline > li {
+  position: relative;
+  display: grid;
+  gap: 4px;
+}
+.arc-message-timeline > li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--gap) - 4px);
+  inset-block-start: 6px;
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: var(--link);
+}
+.arc-message-timeline time {
+  color: var(--muted);
+  font-size: var(--font-label);
+}
+.arc-message-timeline p {
+  padding: 9px var(--gap);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--quiet);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.arc-token-history {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.arc-token-history :is(th, td) {
+  padding: 5px 4px;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+}
+.arc-token-history :is(th, td):last-child {
+  text-align: end;
+}
+.arc-model-section {
+  display: grid;
+  gap: 6px;
+}
+.arc-model-section small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.arc-model-request {
+  margin: 0;
+  padding: var(--gap);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--quiet);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

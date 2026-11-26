@@ -5,6 +5,7 @@ import { PageSettings } from '../../settings/page/page-settings.js';
 import { PanelLayout } from '../panels/panel-layout.js';
 import { PageHeading } from './page-heading.js';
 import { useLayoutPreference } from './page-preferences.js';
+import { Tabs } from '../../controls/tabs.js';
 
 interface PageLayoutProps {
   workspace: Workspace;
@@ -31,7 +32,22 @@ export function PageLayout({ workspace, path, context }: PageLayoutProps) {
     { className: 'arc-main' },
     h('header', { className: 'arc-page-header' }, workspace.breadcrumbs, titleRow),
     settings && h(PageAppearance, { page }),
-    h(PageDisplays, { workspace, page }),
+    pageBody(workspace, page),
+  );
+}
+
+function pageBody(workspace: Workspace, page: ReturnType<typeof usePageLayout>) {
+  const { sections } = workspace;
+  const content = h(PageDisplays, { workspace, page });
+  return h(
+    'div',
+    { hidden: page.settings, className: sections ? 'arc-workspace-tabs' : undefined },
+    sections
+      ? h(Tabs, {
+          label: workspace.label + ' views',
+          sections: [{ title: 'Information', content }, ...sections],
+        })
+      : content,
   );
 }
 
@@ -93,10 +109,10 @@ function PageDisplays({
   workspace: Workspace;
   page: ReturnType<typeof usePageLayout>;
 }) {
-  const { settings, panels, preferences, save } = page;
+  const { panels, preferences, save } = page;
   return h(
     'div',
-    { hidden: settings },
+    null,
     workspace.content,
     page.ready &&
       h(PanelLayout, {
