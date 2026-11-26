@@ -62,10 +62,8 @@ export class RunMeasurements {
     if (this.sequence !== undefined && sequence <= this.sequence) return false;
     this.sequence = sequence;
     const at = frame.timestamp === null ? null : Date.parse(frame.timestamp);
-    if (this.startedAt === null && at !== null) this.startedAt = at;
     const record = frame.observation as NativeRecord | null;
-    if (record?.invocation) this.startedAt = Date.parse(record.invocation.startedAt);
-    this.endedAt = record?.outcome && frame.parent === undefined ? at : null;
+    this.measureWall(at, frame.parent === undefined ? record : null);
     if (record?.nativeInvocation) this.historicalUnmeasuredActivations++;
     if (record?.nativeStarted) this.start(record.nativeStarted, at, frame.run);
     if (record?.nativeEvent?.event?.type === 'turn.completed' && this.usage(record.nativeEvent))
@@ -73,6 +71,17 @@ export class RunMeasurements {
     if (record?.nativeFinished) this.finish(record.nativeFinished);
     if (record?.outcome) this.interrupt(frame.run);
     return true;
+  }
+
+  /** Preserve the original start when the same run resumes after an approval pause. */
+  private measureWall(at: number | null, root: NativeRecord | null) {
+    if (this.startedAt === null && at !== null) this.startedAt = at;
+    if (root?.invocation) {
+      const invoked = Date.parse(root.invocation.startedAt);
+      if (Number.isFinite(invoked) && (this.startedAt === null || invoked < this.startedAt))
+        this.startedAt = invoked;
+    }
+    this.endedAt = root?.outcome ? at : null;
   }
 
   /** Render an independent current snapshot with inclusive native time separated from run wall time. */

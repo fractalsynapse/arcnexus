@@ -136,6 +136,7 @@ test('a single read-only objective uses direct retain and decline actions', asyn
   await (await timelineReview(page)).click();
   const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
   await dialog.getByRole('button', { name: 'Decline draft' }).waitFor();
+  await dialog.getByText('This read-only run ends after retaining the draft.').waitFor();
   assert.equal(await dialog.getByRole('checkbox').count(), 0);
   await dialog.getByRole('button', { name: 'Retain draft' }).click();
   await dialog.waitFor({ state: 'hidden' });
@@ -158,6 +159,7 @@ async function retainedDraftResponse(
         active: false,
         outcome: retained ? { kind: 'planned', summary: review.summary } : { kind: 'blocked' },
         ...(retained && {
+          retainedForOnboarding: true,
           recommendation: {
             revision: review.revision,
             summary: review.summary,
@@ -172,9 +174,9 @@ async function retainedDraftResponse(
 async function assertRetainedDraft(page: Page, title: string) {
   const outcome = page.getByRole('region', { name: 'Planner outcome' });
   await outcome.getByRole('status').filter({ hasText: 'Objective draft retained' }).waitFor();
-  await outcome.getByText('Saved to this project’s onboarding history.', { exact: true }).waitFor();
+  await outcome.getByText('Saved to onboarding history. Goal refinement was skipped.').waitFor();
   await outcome.getByRole('button', { name: new RegExp(title) }).click();
-  const saved = page.getByRole('dialog', { name: title });
+  const saved = page.getByRole('dialog', { name: 'Objective draft' });
   await saved
     .getByRole('region', { name: 'Objective wording' })
     .getByRole('heading', { name: 'Recovery' })
@@ -218,6 +220,7 @@ async function selectObjectiveSubset(page: Page) {
   await review.click();
   const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
   await assertObjectiveWording(dialog);
+  await dialog.getByText('Approving continues this run into goal refinement.').waitFor();
   const selection = dialog.getByRole('group', { name: 'Drafts to approve' });
   assert.equal(await selection.getByRole('checkbox').count(), 2);
   assert.equal(

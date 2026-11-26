@@ -16,7 +16,12 @@ export interface OutcomeProps {
 /** Present the recorded Plan disposition and its GitHub references. */
 export function PlannerOutcome({ value, remote, project, revision }: OutcomeProps): ReactElement {
   const { active, outcome, changedPaths, report, recommendation } = value;
-  if (!active && outcome?.kind === 'planned' && !report && recommendation?.selected.length)
+  if (
+    !active &&
+    outcome?.kind === 'planned' &&
+    value.retainedForOnboarding &&
+    recommendation?.selected.length
+  )
     return h(RetainedRecommendations, { value: recommendation });
   const merged = outcome?.kind === 'merged';
   return h(
@@ -49,7 +54,7 @@ function RetainedRecommendations({ value }: { value: RecommendationAssessment })
       value.selected.length === 1 ? 'Objective draft retained' : 'Objective drafts retained',
     ),
     h(RecommendedObjectives, { value }),
-    h('small', null, 'Saved to this project’s onboarding history.'),
+    h('small', null, 'Saved to onboarding history. Goal refinement was skipped.'),
     h(ObjectiveReviewSummary, value),
   );
 }

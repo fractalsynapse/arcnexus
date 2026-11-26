@@ -73,8 +73,17 @@ function metricRows(
       ? ((cached / input) * 100).toFixed(1) + '%'
       : 'Unavailable';
   return [
-    ['Wall time', elapsedTime(wall)],
-    ['Agent elapsed', h(AgentElapsed, { milliseconds: agent })],
+    [
+      'Wall time',
+      h(MeasuredTime, {
+        milliseconds: wall,
+        label: 'Time from Plan start, including review pauses',
+      }),
+    ],
+    [
+      'Agent elapsed',
+      h(MeasuredTime, { milliseconds: agent, label: 'Time spent in recorded agent activations' }),
+    ],
     ['Reported tokens', h(TokenPair, { input, output, details })],
     ['Token cache rate', rate],
   ] as const;
@@ -89,10 +98,6 @@ function ToolFrequency({ path, refresh }: { path: string; refresh?: string }) {
     : h('p', null, 'No tool calls recorded.');
 }
 
-function AgentElapsed({ milliseconds }: { milliseconds?: number | null }) {
-  return h(
-    Tooltip,
-    { label: 'Sum of recorded agent activation durations across execution profiles' },
-    h('span', { tabIndex: 0 }, elapsedTime(milliseconds)),
-  );
+function MeasuredTime({ milliseconds, label }: { milliseconds?: number | null; label: string }) {
+  return h(Tooltip, { label }, h('span', { tabIndex: 0 }, elapsedTime(milliseconds)));
 }

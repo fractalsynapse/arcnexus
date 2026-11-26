@@ -5,13 +5,14 @@ import { usePlanResource } from './plan-resource.js';
 
 /** Give the selected Plan its recording time beside the workspace title. */
 export function PlanContext() {
-  const { recorded, updates, active } = usePlanResource();
+  const { recorded, updates, active, command } = usePlanResource();
   return h(
     'span',
     { className: 'arc-platform-inline', role: 'status' },
     h(ActiveProject),
+    command.recommendationOnly && h('small', { className: 'arc-status' }, 'Read-only onboarding'),
     h(TimeRange, { start: recorded?.startedAt, end: active ? undefined : recorded?.updatedAt }),
-    active && h('span', null, 'Active'),
+    active && h('span', null, command.status === 'Waiting' ? 'Awaiting review' : 'Active'),
     active &&
       updates.disconnected &&
       h(Button, { onClick: updates.reconnect }, 'Reconnect live updates'),

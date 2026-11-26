@@ -34,7 +34,7 @@ export function RecommendedObjectives({
 function ObjectiveDocument({ draft }: { draft: ObjectiveDraft }) {
   return h(DialogButton, {
     label: draft.title,
-    title: draft.title,
+    title: 'Objective draft',
     children: h(
       'section',
       { className: 'arc-objective-review' },

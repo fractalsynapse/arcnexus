@@ -28,9 +28,22 @@ const plan = `
     ORDER BY task_id, id DESC
   )
   SELECT captured.*, latest.id::text AS attempt, (latest.active = 1) AS active,
-         min(e.recorded_at) AS "startedAt", max(e.recorded_at) AS "updatedAt"
+         LEAST(min(e.recorded_at), min(e.content::jsonb#>>'{invocation,startedAt}')) AS "startedAt",
+         max(e.recorded_at) AS "updatedAt"
   FROM captured JOIN latest ON latest.task_id=captured.execution
-  LEFT JOIN arcnexus_coordination.events e ON e.project=$1 AND e.run=latest.id
+  LEFT JOIN LATERAL (
+    SELECT max(prior.run) AS run
+    FROM arcnexus_coordination.runs r
+    JOIN arcnexus_coordination.events prior ON prior.project=r.project AND prior.run=r.id
+    WHERE r.project=$1 AND r.task_id=latest.task_id AND r.id<latest.id
+      AND jsonb_typeof(prior.content::jsonb#>'{outcome,kind}')='string'
+      AND prior.content::jsonb#>>'{outcome,kind}'<>'blocked'
+  ) previous ON true
+  LEFT JOIN arcnexus_coordination.runs recorded
+    ON recorded.project=$1 AND recorded.task_id=latest.task_id
+    AND (previous.run IS NULL OR recorded.id>previous.run)
+    AND recorded.id<=latest.id
+  LEFT JOIN arcnexus_coordination.events e ON e.project=$1 AND e.run=recorded.id
   GROUP BY captured.execution,captured.revision,latest.id,latest.active
   ORDER BY latest.id DESC
   LIMIT $3

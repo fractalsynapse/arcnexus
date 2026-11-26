@@ -19,6 +19,7 @@ export interface PlanOutcome {
   active: boolean;
   report?: Proposal;
   recommendation?: RecommendationAssessment;
+  retainedForOnboarding?: boolean;
   changedPaths?: readonly string[];
   issue?: string;
   pull?: { url: string; state?: string } | null;

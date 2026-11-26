@@ -42,11 +42,18 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
     h(ReviewDrafts, { review, ...draftState }),
     h(ObjectiveReviewSummary, review),
     h(RevisionFeedback, draftState),
-    review.readOnly && h('small', null, 'Retained drafts are available after project admission.'),
+    h('small', null, reviewConsequence(review)),
     review.drafts.length > 1 && h(DraftSelections, { review, ...draftState }),
     h(ReviewActions, { review, input, pending, submit }),
     error && h('p', { role: 'alert' }, error),
   );
+}
+
+function reviewConsequence({ readOnly, drafts }: ObjectiveReview) {
+  if (!readOnly) return 'Approving continues this run into goal refinement.';
+  return drafts.length === 1
+    ? 'This read-only run ends after retaining the draft.'
+    : 'This read-only run ends after retaining the selected drafts.';
 }
 
 function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveReview }) {

@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Measure the whole Plan across approval pauses and identify read-only onboarding in the page header (#746).
+
 - Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog. Select multiple drafts beside the decision actions and confirm retained drafts in the outcome and timeline (#746).
 
 - Keep human approval for Plan objective changes, route goal edits to independent review, and resolve categorized guide files by stable ID (#746).

@@ -23,6 +23,7 @@ const outcomeSchema = planReference.extend({
   outcome: z.unknown().nullable(),
   report: z.unknown().optional(),
   recommendation: recommendationAssessment.optional(),
+  retainedForOnboarding: z.boolean().optional(),
   changedPaths: z.array(z.string()),
   issue: z.string().optional(),
   pull: z.object({ url: z.string(), state: z.string().optional() }).optional(),
@@ -100,18 +101,21 @@ function planResult(events: JournalEvent[], execution: string, attempt?: string)
   let outcome: unknown = null;
   let report: unknown;
   let recommendation: RecommendationAssessment | undefined;
+  let retainedForOnboarding: true | undefined;
   for (const frame of events) {
     if (frame.taskID !== execution) continue;
     const event = frame.observation as {
       outcome?: unknown;
       plannerProposal?: { proposal?: unknown };
       recommendationAssessment?: RecommendationAssessment;
+      onboardingSelection?: unknown;
     } | null;
     if (event?.outcome !== undefined && String(frame.run) === attempt) outcome = event.outcome;
     if (event?.plannerProposal?.proposal !== undefined) report = event.plannerProposal.proposal;
     if (event?.recommendationAssessment) recommendation = event.recommendationAssessment;
+    if (event?.onboardingSelection) retainedForOnboarding = true;
   }
-  return { outcome, report, ...(recommendation && { recommendation }) };
+  return { outcome, report, recommendation, retainedForOnboarding };
 }
 
 function measured(events: JournalEvent[], execution: string) {
