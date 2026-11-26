@@ -25,3 +25,8 @@ export interface Workspace {
   defaultColumns?: ColumnCount;
   displays?: readonly DisplayRegistration[];
 }
+
+export type WorkspaceFeature = Pick<
+  Workspace,
+  'titleAction' | 'content' | 'sections' | 'context' | 'scope'
+>;

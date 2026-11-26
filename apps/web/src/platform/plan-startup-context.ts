@@ -1,5 +1,5 @@
 import { createElement as h, Fragment, type ReactNode } from 'react';
-import { ModelRequestView } from '../../../../packages/ui/src/index.js';
+import { LocalTime, ModelRequestView } from '../../../../packages/ui/src/index.js';
 import type { ModelRequest } from '../../../../packages/foundation/src/model-request.js';
 import { usePlanResource } from './plan-resource.js';
 import { useResource } from './resource.js';
@@ -40,7 +40,7 @@ function capturedRequest({ request, timestamp, component, activity }: Capture) {
       'div',
       { className: 'arc-platform-inline' },
       [component, activity].filter(Boolean).join(' / '),
-      timestamp && h('time', { dateTime: timestamp }, new Date(timestamp).toLocaleString()),
+      h(LocalTime, { timestamp, date: true }),
     ),
     request,
   );

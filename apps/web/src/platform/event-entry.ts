@@ -2,6 +2,7 @@ import { createElement as h } from 'react';
 import {
   CommandQuestion,
   Disclosure,
+  LocalTime,
   type CommandBinding,
   type CommandState,
 } from '../../../../packages/ui/src/index.js';
@@ -27,7 +28,7 @@ export function EventEntry({ entry, execution, command, binding }: EntryProps) {
   return h(
     'article',
     { className: 'arc-plan-event' },
-    timestamp && h('time', { dateTime: timestamp }, new Date(timestamp).toLocaleTimeString()),
+    h(LocalTime, { timestamp }),
     message && h(TimelineMessage, { message }),
     question && h(EventQuestion, { question, command, binding, execution }),
     !!operations.length && h(OperationGroup, { operations, execution }),

@@ -1,4 +1,5 @@
 import { createElement as h } from 'react';
+import { LocalTime } from './local-time.js';
 
 export interface MessagePoint {
   key: string;
@@ -13,12 +14,7 @@ export function MessageTimeline({ messages }: { messages: readonly MessagePoint[
     'ol',
     { className: 'arc-message-timeline' },
     messages.map(({ key, timestamp, text }) =>
-      h(
-        'li',
-        { key },
-        timestamp && h('time', { dateTime: timestamp }, new Date(timestamp).toLocaleTimeString()),
-        h('p', null, text),
-      ),
+      h('li', { key }, h(LocalTime, { timestamp }), h('p', null, text)),
     ),
   );
 }

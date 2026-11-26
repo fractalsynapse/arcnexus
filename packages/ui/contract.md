@@ -8,7 +8,9 @@ Workspace plugins register navigation in order and contribute their own
 content and header actions. Each path has one registration and a disposal
 callback. Trusted feature plugins can register displays against a workspace
 and dispose their registrations independently. The mounted frame observes
-the registry for changes.
+the registry for changes. A feature can attach its scope, heading context and
+content to a registered navigation route. Disposing that feature restores the
+base workspace while preserving navigation order.
 
 A command binding supplies stable snapshots, subscription, and an optional
 structured submission function. The frame uses the binding for status,

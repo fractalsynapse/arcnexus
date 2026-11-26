@@ -7,8 +7,9 @@ import {
   SelectField,
 } from '../../../../packages/ui/src/index.js';
 import type { Project } from './session.js';
-import { projectName, setSession, usePlatformSession } from './session.js';
-import { api, useResource } from './resource.js';
+import { projectName, usePlatformSession } from './session.js';
+import { useBrowserPlatform } from './browser-platform.js';
+import { useResource } from './resource.js';
 import { ImportProject } from './project-import.js';
 
 export function ProjectManager() {
@@ -20,11 +21,13 @@ export function ProjectManager() {
 }
 
 function Projects() {
-  const { session, projects, change, error, loaded } = useProjects();
+  const { session } = useBrowserPlatform();
+  const { project } = usePlatformSession();
+  const { projects, change, error, loaded } = useProjects();
   return h(ProjectRows, {
     projects,
-    select: (project) => setSession({ ...session, project }),
-    selected: session.project?.id,
+    select: (project) => session.select(project),
+    selected: project?.id,
     error,
     change,
     loaded,
@@ -32,7 +35,7 @@ function Projects() {
 }
 
 function useProjects() {
-  const session = usePlatformSession();
+  const { gateway, session } = useBrowserPlatform();
   const [refresh, reload] = useState(0);
   const [error, showError] = useState('');
   const result = useResource<{ entries: Project[] }>('/projects', refresh);
@@ -40,15 +43,15 @@ function useProjects() {
   const change = async (project?: Project, remote?: string) => {
     try {
       if (project) {
-        await api('/projects/' + project.id, { method: 'DELETE' });
-        if (project.id === session.project?.id)
-          setSession({ ...session, project: projects.find((item) => item.id !== project.id) });
+        await gateway.read('/projects/' + project.id, { method: 'DELETE' });
+        if (project.id === session.getSnapshot().project?.id)
+          session.select(projects.find((item) => item.id !== project.id));
       } else {
-        const added = await api<Project>('/projects', {
+        const added = await gateway.read<Project>('/projects', {
           method: 'POST',
           body: JSON.stringify({ remote }),
         });
-        setSession({ ...session, project: added });
+        session.select(added);
       }
       showError('');
       reload((index) => index + 1);
@@ -58,7 +61,7 @@ function useProjects() {
       return false;
     }
   };
-  return { session, projects, change, error: error || result.error, loaded: !!result.value };
+  return { projects, change, error: error || result.error, loaded: !!result.value };
 }
 
 interface ProjectRowsProps {
@@ -136,12 +139,13 @@ function ProjectRow({ project, remove }: ProjectRowProps) {
 }
 
 function useProjectProbe(id: string) {
+  const { gateway } = useBrowserPlatform();
   const [probe, setProbe] = useState<Probe>();
   const [checking, setChecking] = useState(false);
   async function check() {
     setChecking(true);
     try {
-      setProbe(await api<Probe>('/projects/' + id + '/reachability'));
+      setProbe(await gateway.read<Probe>('/projects/' + id + '/reachability'));
     } catch {
       setProbe({ reachable: false, diagnostic: 'The gateway could not check this project.' });
     } finally {

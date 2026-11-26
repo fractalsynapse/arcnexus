@@ -1,32 +1,12 @@
-import { Subscriptions } from '../../../../packages/ui/src/index.js';
 import { useSyncExternalStore } from 'react';
-
-export interface Project {
-  id: string;
-  remote: string;
-  name?: string;
-  revision: string;
-}
-
-type Session = { project?: Project };
-
-let session: Session = {};
-const subscriptions = new Subscriptions();
-
-export function setSession(value: Session) {
-  session = value;
-  subscriptions.publish();
-}
-
-export const subscribeSession = subscriptions.subscribe;
+import { useBrowserPlatform } from './browser-platform.js';
+import type { Project } from './project-session.js';
+export type { Project } from './project-session.js';
 
 /** Share the active project across workspace routes. */
 export function usePlatformSession() {
-  return useSyncExternalStore(subscribeSession, activeSession);
-}
-
-export function activeSession() {
-  return session;
+  const { session } = useBrowserPlatform();
+  return useSyncExternalStore(session.subscribe, session.getSnapshot);
 }
 
 export function projectName(project: Project) {

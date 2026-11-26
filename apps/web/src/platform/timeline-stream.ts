@@ -1,4 +1,5 @@
 import { followGatewayEvents } from './gateway-events.js';
+import type { GatewayClient } from './gateway-client.js';
 
 export interface TimelineFrame {
   sequence: string;
@@ -15,12 +16,13 @@ interface TimelineEvent {
 
 /** Decode ordered SSE frames without truncating split UTF-8 characters or message lines. */
 export async function followTimeline(
+  gateway: GatewayClient,
   path: string,
   signal: AbortSignal,
   cursor: string | undefined,
   receive: (event: TimelineEvent) => void,
 ) {
-  await followGatewayEvents(path, {
+  await followGatewayEvents(gateway, path, {
     kind: 'observation',
     signal,
     cursor,

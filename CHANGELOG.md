@@ -32,6 +32,8 @@
 
 ### Changed
 
+- Share expansion controls and their right inset across displays and the command dock, and isolate platform state by browser composition (#746).
+
 - Frame the Context viewer and add a subtle divider beneath its section tabs (#746).
 
 - Add expandable YAML mappings and sequences to startup context with exact source available in a dialog (#746).

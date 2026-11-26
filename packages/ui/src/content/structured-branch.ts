@@ -1,4 +1,5 @@
-import { createElement as h, useState, type ReactNode } from 'react';
+import { createElement as h, type ReactNode } from 'react';
+import { Disclosure } from '../controls/disclosure.js';
 
 /** Mount a structured value's children only while its disclosure is open. */
 export function StructuredBranch({
@@ -10,15 +11,10 @@ export function StructuredBranch({
   expanded?: boolean;
   render: () => ReactNode;
 }) {
-  const [open, setOpen] = useState(expanded);
-  return h(
-    'details',
-    {
-      className: 'arc-structured-branch',
-      open,
-      onToggle: (event) => setOpen(event.currentTarget.hasAttribute('open')),
-    },
-    h('summary', null, label),
-    open && h('div', null, render()),
-  );
+  return h(Disclosure, {
+    label,
+    defaultOpen: expanded,
+    className: 'arc-structured-branch',
+    children: () => h('div', null, render()),
+  });
 }

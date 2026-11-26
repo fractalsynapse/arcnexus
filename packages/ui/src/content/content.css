@@ -122,7 +122,6 @@ ol.arc-report-list {
   overflow-wrap: anywhere;
 }
 .arc-structured-branch summary {
-  cursor: pointer;
   color: var(--muted);
 }
 .arc-structured-entry [data-json='key'] {

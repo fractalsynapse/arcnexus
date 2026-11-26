@@ -2,7 +2,8 @@ import { isLauncherTarget, launcherTargets } from '../../../launcher/src/targets
 import { LauncherSetup } from './launcher-setup.js';
 import { createElement as h, useState } from 'react';
 import { Button, DialogButton, ManagementRow } from '../../../../packages/ui/src/index.js';
-import { api, useResource } from './resource.js';
+import { useResource } from './resource.js';
+import { useBrowserPlatform } from './browser-platform.js';
 
 interface Provider {
   id: string;
@@ -54,6 +55,7 @@ function ProviderList({
 }
 
 function useProviders(onCode: ConnectionsProps['onCode']) {
+  const { gateway } = useBrowserPlatform();
   const [refresh, reload] = useState(0);
   const [error, showError] = useState('');
   const root = '/capacity-providers';
@@ -61,11 +63,12 @@ function useProviders(onCode: ConnectionsProps['onCode']) {
   const change = async (provider?: Provider) => {
     try {
       if (provider) {
-        await api(root + '/' + provider.id, {
+        await gateway.read(root + '/' + provider.id, {
           method: 'PATCH',
           body: JSON.stringify({ state: provider.state === 'pending' ? 'admitted' : 'revoked' }),
         });
-      } else onCode((await api<{ code: string }>(root + '/codes', { method: 'POST' })).code);
+      } else
+        onCode((await gateway.read<{ code: string }>(root + '/codes', { method: 'POST' })).code);
       showError('');
       reload((index) => index + 1);
     } catch (error) {

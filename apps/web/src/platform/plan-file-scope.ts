@@ -3,8 +3,9 @@ import type { PropsWithChildren } from 'react';
 import { useWorkspaceRoute } from '../../../../packages/ui/src/index.js';
 import { capturedVersion, useFileRevisions } from './file-revisions.js';
 import { guideRoute, type GuideFile } from './guide.js';
-import { activeSession, setSession, usePlatformSession, type Project } from './session.js';
-import { api, useResource } from './resource.js';
+import { usePlatformSession, type Project } from './session.js';
+import { useBrowserPlatform } from './browser-platform.js';
+import { useResource } from './resource.js';
 import { draftContent, type GuideFields } from './goal-content.js';
 
 const fileScope = createContext<ReturnType<typeof usePlanFileState> | undefined>(undefined);
@@ -53,20 +54,23 @@ function usePlanFileState() {
 
 /** Reopen a pinned file in its verified catalog project before reading or editing it. */
 function useLinkedProject(path: string, id?: string) {
+  const { gateway, session } = useBrowserPlatform();
   const { project } = usePlatformSession();
   useEffect(() => {
-    const initial = activeSession();
+    const initial = session.getSnapshot();
     if (!id || initial.project?.id === id) return;
     const controller = new AbortController();
-    void api<Project>('/projects/' + encodeURIComponent(id), { signal: controller.signal }).then(
-      (record) => {
-        if (!controller.signal.aborted && initial === activeSession() && record.id === id)
-          setSession({ project: record });
-      },
-      () => {},
-    );
+    void gateway
+      .read<Project>('/projects/' + encodeURIComponent(id), { signal: controller.signal })
+      .then(
+        (record) => {
+          if (!controller.signal.aborted && initial === session.getSnapshot() && record.id === id)
+            session.select(record);
+        },
+        () => {},
+      );
     return () => controller.abort();
-  }, [path, id]);
+  }, [gateway, session, path, id]);
   return id && id !== project?.id ? undefined : project;
 }
 

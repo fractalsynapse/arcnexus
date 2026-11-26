@@ -1,5 +1,6 @@
 import { createElement as h } from 'react';
 import { TokenPair, type TokenUsage } from './token-pair.js';
+import { LocalTime } from './local-time.js';
 
 export interface TokenSample extends TokenUsage {
   sequence: string;
@@ -30,13 +31,7 @@ function sampleRow({ sequence, timestamp, input, output }: TokenSample) {
   return h(
     'tr',
     { key: sequence },
-    h(
-      'td',
-      null,
-      timestamp
-        ? h('time', { dateTime: timestamp }, new Date(timestamp).toLocaleTimeString())
-        : '—',
-    ),
+    h('td', null, timestamp ? h(LocalTime, { timestamp }) : '—'),
     h('td', null, h(TokenPair, { input, output })),
   );
 }

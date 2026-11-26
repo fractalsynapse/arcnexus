@@ -5,6 +5,7 @@ import {
 } from '../../../../packages/commands/src/browser.js';
 import type { CommandState, Operation } from '../../../../packages/ui/src/index.js';
 import { followGatewayEvents } from './gateway-events.js';
+import type { GatewayClient } from './gateway-client.js';
 
 export const unavailable: CommandState = { status: 'Unavailable', supported: [] };
 const supported: readonly Operation[] = ['plan', 'architect', 'run'];
@@ -18,11 +19,12 @@ const labels: Record<Receipt['request']['command'], string> = {
 
 /** Follow the latest scoped receipt through the same browser API transport as other displays. */
 export async function followCommands(
+  gateway: GatewayClient,
   path: string,
   signal: AbortSignal,
   receive: (data: CurrentWorkflow) => void,
 ) {
-  await followGatewayEvents(path + '/current', {
+  await followGatewayEvents(gateway, path + '/current', {
     kind: 'command',
     signal,
     unavailable: 'Command updates are unavailable.',

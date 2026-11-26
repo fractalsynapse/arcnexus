@@ -12,8 +12,8 @@ import type {
   CommandState,
 } from '../../../../packages/ui/src/index.js';
 import { dockState, followCommands, unavailable } from './command-stream.js';
-import { api, GatewayFailure } from './resource.js';
-import { activeSession, subscribeSession } from './session.js';
+import { GatewayFailure } from './gateway-client.js';
+import type { BrowserPlatform } from './browser-platform.js';
 
 type Connection = {
   base: string;
@@ -44,9 +44,12 @@ class PlatformCommands implements CommandBinding {
   private submission?: { id: string; fingerprint: string };
   private sequence = 0;
 
+  /** Bind commands to the same active project and client as the browser displays. */
+  constructor(private readonly platform: BrowserPlatform) {}
+
   /** Observe the active browser scope until the Cordis plugin is disposed. */
   mount() {
-    const unsubscribe = subscribeSession(this.connect);
+    const unsubscribe = this.platform.session.subscribe(this.connect);
     this.connect();
     return () => {
       unsubscribe();
@@ -100,7 +103,7 @@ class PlatformCommands implements CommandBinding {
 
   /** Close the previous project's subscription before opening the new scope. */
   private connect = (retry = false) => {
-    const { project } = activeSession();
+    const { project } = this.platform.session.getSnapshot();
     const base = project && '/projects/' + encodeURIComponent(project.id) + '/commands';
     const prior = this.connection;
     const same = Boolean(prior && prior.base === base);
@@ -125,7 +128,7 @@ class PlatformCommands implements CommandBinding {
       if (this.connection !== scope || scope.abort.signal.aborted) return;
       this.publish({ ...this.snapshot, canReconnect: true });
     };
-    void followCommands(scope.base, scope.abort.signal, (value) => {
+    void followCommands(this.platform.gateway, scope.base, scope.abort.signal, (value) => {
       if (this.connection !== scope) return;
       scope.updates += 1;
       this.current = value;
@@ -152,7 +155,7 @@ class PlatformCommands implements CommandBinding {
   private async post(scope: Connection, path: string, input?: object) {
     try {
       return workflowReceipt.parse(
-        await api(scope.base + path, {
+        await this.platform.gateway.read(scope.base + path, {
           method: 'POST',
           body: input && JSON.stringify(input),
         }),
@@ -176,9 +179,10 @@ class PlatformCommands implements CommandBinding {
 }
 
 export const platformCommandsPlugin = {
+  inject: ['webPlatform'],
   /** Publish the REST-backed command binding only in the operator platform composition. */
   apply(context: Context) {
-    const commands = new PlatformCommands();
+    const commands = new PlatformCommands(context.webPlatform);
     context.provide('webCommands', commands);
     context.effect(() => commands.mount());
   },

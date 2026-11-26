@@ -5,7 +5,7 @@ import {
   uiPreferencesResource,
   type UiPreference,
 } from '../../../../packages/ui/src/preferences/schema.js';
-import { api } from '../platform/resource.js';
+import type { GatewayClient } from '../platform/gateway-client.js';
 import { legacyPreferences } from '../platform/legacy-preferences.js';
 
 declare module 'cordis' {
@@ -16,28 +16,34 @@ declare module 'cordis' {
 
 const path = '/' + uiPreferencesResource;
 
-async function save(entries: UiPreference[], preserveExisting?: boolean) {
+async function save(gateway: GatewayClient, entries: UiPreference[], preserveExisting?: boolean) {
   return preferencesSnapshot.parse(
-    await api(path, {
+    await gateway.read(path, {
       method: 'PATCH',
       body: JSON.stringify({ entries, preserveExisting }),
     }),
   );
 }
 
-const operatorPreferences: UiPreferencesBinding = {
-  async load() {
-    const snapshot = preferencesSnapshot.parse(await api(path, { cache: 'no-store' }));
-    if (snapshot.entries.length) return snapshot;
-    const legacy = legacyPreferences();
-    return legacy.length ? save(legacy, true) : snapshot;
-  },
-  save: (entry) => save([entry]),
-};
+function operatorPreferences(gateway: GatewayClient): UiPreferencesBinding {
+  return {
+    async load() {
+      const snapshot = preferencesSnapshot.parse(await gateway.read(path, { cache: 'no-store' }));
+      if (snapshot.entries.length) return snapshot;
+      const legacy = legacyPreferences();
+      return legacy.length ? save(gateway, legacy, true) : snapshot;
+    },
+    save: (entry) => save(gateway, [entry]),
+  };
+}
 
 export const preferencesPlugin = {
+  inject: ['webPlatform'],
   /** Bind the reusable UI settings service to the current operator's gateway. */
   apply(context: Context) {
-    context.provide('uiPreferences', new UiPreferences(operatorPreferences));
+    context.provide(
+      'uiPreferences',
+      new UiPreferences(operatorPreferences(context.webPlatform.gateway)),
+    );
   },
 };

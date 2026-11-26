@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import { followTimeline, type TimelineFrame } from './timeline-stream.js';
-
-type Snapshot = { frames: TimelineFrame[]; cursor?: string };
-const retained = new Map<string, Snapshot>();
+import { useBrowserPlatform, type BrowserPlatform } from './browser-platform.js';
 
 /** Keep the applied cursor when a panel closes or its network connection ends. */
 export function useTimeline(path?: string) {
+  const platform = useBrowserPlatform();
   const [revision, refresh] = useState(0);
   const [live, setLive] = useState<{ key: string; error: string }>();
   useEffect(() => {
     if (!path) return;
-    return subscribeTimeline(path, (error) => setLive({ key: path, error }));
-  }, [path, revision]);
+    return subscribeTimeline(platform, path, (error) => setLive({ key: path, error }));
+  }, [platform, path, revision]);
   return {
-    frames: (path && retained.get(path)?.frames) || [],
+    frames: (path && platform.timelines.get(path)?.frames) || [],
     error: live?.key === path ? live?.error : undefined,
     reconnect: () => {
       setLive(undefined);
@@ -22,11 +21,15 @@ export function useTimeline(path?: string) {
   };
 }
 
-function subscribeTimeline(path: string, notify: (error: string) => void) {
+function subscribeTimeline(
+  { gateway, timelines }: BrowserPlatform,
+  path: string,
+  notify: (error: string) => void,
+) {
   const controller = new AbortController();
-  const snapshot = retained.get(path) ?? { frames: [] };
-  retained.set(path, snapshot);
-  void followTimeline(path, controller.signal, snapshot.cursor, ({ id, frame }) => {
+  const snapshot = timelines.get(path) ?? { frames: [] };
+  timelines.set(path, snapshot);
+  void followTimeline(gateway, path, controller.signal, snapshot.cursor, ({ id, frame }) => {
     if (controller.signal.aborted || !nextSequence(snapshot.frames, frame.sequence)) return;
     snapshot.cursor = id;
     snapshot.frames.push(frame);

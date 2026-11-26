@@ -1,5 +1,6 @@
 import { useId, createElement as h } from 'react';
 import { IconButton } from '../controls/icon-button.js';
+import { ExpansionButton } from '../controls/expansion-button.js';
 import type { CommandState } from './command-binding.js';
 import { RoundValues } from './round-values.js';
 
@@ -47,10 +48,10 @@ function roundActions({
     { className: 'arc-round-tools' },
     reconnect &&
       h(IconButton, { icon: 'refine', label: 'Reconnect command updates', onClick: reconnect }),
-    h(IconButton, {
-      icon: collapsed ? 'up' : 'down',
-      label: collapsed ? 'Expand command panel' : 'Collapse command panel',
-      'aria-expanded': !collapsed,
+    h(ExpansionButton, {
+      label: 'command panel',
+      expanded: !collapsed,
+      direction: 'vertical',
       'aria-controls': body + ' ' + details,
       onClick: toggle,
     }),

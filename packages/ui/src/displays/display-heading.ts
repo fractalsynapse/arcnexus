@@ -1,5 +1,6 @@
 import { createElement as h, useLayoutEffect, useRef, type ReactElement } from 'react';
 import { IconButton } from '../controls/icon-button.js';
+import { ExpansionButton } from '../controls/expansion-button.js';
 import { SurfaceHeading } from './surface-heading.js';
 
 interface DisplayHeadingProps {
@@ -36,11 +37,10 @@ function DisplayToggle({
     if (control.current === document.activeElement)
       control.current?.scrollIntoView({ block: 'nearest' });
   }, [expanded]);
-  return h(IconButton, {
+  return h(ExpansionButton, {
     ref: control,
-    icon: expanded ? 'restore' : 'expand',
-    label: (expanded ? 'Collapse ' : 'Expand ') + label,
-    'aria-expanded': expanded,
+    label,
+    expanded,
     onClick: toggleFocus,
   });
 }

@@ -9,6 +9,7 @@ import { serveWeb } from '../../src/serve.js';
 import type {} from '../fixtures/browser.js';
 import { chooseOption, openSelect } from '../fixtures/browser-select.js';
 import { preferenceRoutes } from '../fixtures/preferences.js';
+import { assertDocked } from '../fixtures/docked-frame.js';
 import { fixturePreferences } from '../../previews/platform/fixture-preferences.js';
 
 export const suite = { owner: 'web-app', level: 'acceptance', tags: ['browser'] } as const;
@@ -265,17 +266,6 @@ test('desktop stays docked and reports controlled active, waiting and failed com
     .waitFor();
 });
 
-async function assertDocked(page: Page) {
-  await page.getByRole('region', { name: 'Planning data' }).waitFor();
-  await page.evaluate(() => window.scrollTo(0, innerHeight));
-  const nav = await page.getByRole('navigation', { name: 'Workspace' }).boundingBox();
-  const header = await page.getByRole('banner').boundingBox();
-  const footer = await page.getByRole('contentinfo', { name: 'Command controls' }).boundingBox();
-  assert.ok(nav && nav.y === 0, 'the links are pinned');
-  assert.ok(header && header.y + header.height < 0, 'the brand scrolls away');
-  assert.ok(footer && footer.y + footer.height === 800, 'the command dock stays in view');
-}
-
 async function submitFixtureCommand(page: Page) {
   const instruction = page.getByRole('textbox', { name: 'Instruction optional' });
   await instruction.fill('Keep this draft if the command fails.');
@@ -363,6 +353,17 @@ function fieldPalette(element: Element) {
   return [style.backgroundColor, style.borderColor, style.color];
 }
 
+test('platform compositions isolate the gateway, active project, and timeline cursor', async (t) => {
+  const page = await browser.newPage();
+  t.after(() => page.close());
+  await page.goto(fixture.url);
+  assert.deepEqual(await page.evaluate(() => window.frameFixture.platformIsolation()), {
+    received: ['left', 'right'],
+    rightProject: 'right',
+    rightCursor: undefined,
+  });
+});
+
 test('page settings save layout and panel placement, while plugin contributions update mounted pages', async (t) => {
   const page = await browser.newPage({ viewport: { width: 1180, height: 800 } });
   t.after(() => page.close());
@@ -371,9 +372,12 @@ test('page settings save layout and panel placement, while plugin contributions 
   await page.getByRole('heading', { name: 'Planning data' }).waitFor();
   await page.evaluate(() => window.frameFixture.toggleDisplay?.());
   const evidence = page.getByRole('heading', { name: 'Supporting evidence' });
+  const workspace = page.getByText('Fixture workspace content', { exact: true });
   await evidence.waitFor();
+  await workspace.waitFor();
   await page.evaluate(() => window.frameFixture.toggleDisplay?.());
   await evidence.waitFor({ state: 'detached' });
+  await workspace.waitFor({ state: 'detached' });
 
   await configureLayout(page);
   await assertResize(page);
