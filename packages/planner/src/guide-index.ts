@@ -40,8 +40,8 @@ export function guideRecord(capture: GuideCapture, kind: GuideKind, path: string
   const parts = path.slice(prefix.length, -3).split('/');
   if (parts.some((part) => !recordID.test(part))) throw new Error(`Invalid ${kind} path: ${path}`);
   const category = parts.slice(0, -1).join('/') || undefined;
-  const fields = parse(splitMarkdown(content).metadata) as { id?: unknown } | null;
-  const id = fields?.id === undefined && !category ? parts[0] : fields?.id;
+  const explicit = guideMetadataID(splitMarkdown(content).metadata);
+  const id = explicit === undefined && !category ? parts[0] : explicit;
   if (typeof id !== 'string' || !recordID.test(id))
     throw new Error(`Invalid or missing ${kind} record ID: ${path}`);
   return { id, path, category, content } satisfies GuideRecord;
@@ -55,10 +55,15 @@ export function guideCategory(category: unknown): category is string {
 /** Preserve the original Markdown and insert a stable ID when a new record needs one. */
 export function withGuideID(content: string, id: string) {
   const { frontmatter, metadata, body } = splitMarkdown(content);
-  const fields = parse(metadata) as { id?: unknown } | null;
-  if (fields?.id === id) return content;
-  if (fields?.id !== undefined) throw new Error(`A guide edit must preserve its record ID: ${id}`);
+  const explicit = guideMetadataID(metadata);
+  if (explicit === id) return content;
+  if (explicit !== undefined) throw new Error(`A guide edit must preserve its record ID: ${id}`);
   const field = `id: ${JSON.stringify(id)}`;
   if (!frontmatter) return `---\n${field}\n---\n\n${body}`;
   return frontmatter.replace(/\r?\n/, (newline) => `${newline}${field}${newline}`) + body;
+}
+
+/** Read the exact declared identity without assuming that the YAML value is valid. */
+export function guideMetadataID(metadata: string): unknown {
+  return (parse(metadata) as { id?: unknown } | null)?.id;
 }

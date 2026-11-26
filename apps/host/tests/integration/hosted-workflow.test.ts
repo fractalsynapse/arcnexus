@@ -26,6 +26,7 @@ import { apiPlugin } from '../../../api/src/index.js';
 import { databaseSetupPlugin } from '../../../db/src/index.js';
 import { operatorMcpPlugin } from '../../../mcp/src/index.js';
 import { hostedHostPlugin, runHostedRequest } from '../../src/index.js';
+import type { ObjectiveReview } from '../../../../packages/planner/src/objective-review.js';
 
 export const suite = { owner: 'host-app', level: 'integration', tags: ['postgresql'] } as const;
 
@@ -146,6 +147,74 @@ test(
 );
 
 type Api = (request: Request) => Promise<Response>;
+
+test(
+  'an invalid objective edit leaves the review open and returns its diagnostic',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const receipts = new WorkflowRequests(database);
+    const { api } = await gateway(t, receipts, remote, revision);
+    const { id, review } = await holdObjectiveReview(receipts, remote, revision);
+    const call = commandClient(api);
+    const submit = (content: string) =>
+      call('/' + id + '/answer', 'POST', {
+        gate: review.id,
+        answer: JSON.stringify({ action: 'revise', edits: { recovery: content } }),
+      });
+    const rejected = await submit('---\nid: recovery\n---\n');
+    assert.equal(rejected.status, 422);
+    assert.match((await rejected.json()).error, /recovery.*Markdown body/i);
+    const changedID = await submit('---\nid: different\n---\n# Recovery');
+    assert.equal(changedID.status, 422);
+    assert.match((await changedID.json()).error, /original objective ID/);
+    const current = await (await call('/' + id)).json();
+    assert.equal(current.state, 'waiting');
+    assert.equal(current.gate.id, review.id);
+    assert.equal((await submit('---\nid: recovery\n---\n# Corrected body')).status, 202);
+  },
+);
+
+async function holdObjectiveReview(receipts: WorkflowRequests, remote: string, revision: string) {
+  const owner = { remote, revision, worker: 'isolated-host' };
+  const id = randomUUID();
+  const review = objectiveGate(revision);
+  await receipts.submit(
+    { remote, principal: 'isolated-operator' },
+    id,
+    { command: 'task_plan', mode: 'recommend-objectives' },
+    revision,
+  );
+  assert.equal((await receipts.claim(owner))?.id, id);
+  await receipts.settle(
+    owner,
+    id,
+    { kind: 'blocked' },
+    { id: review.id, question: 'Review?', review },
+  );
+  return { id, review };
+}
+
+function objectiveGate(revision: string): ObjectiveReview {
+  return {
+    id: 'exact-objective',
+    revision,
+    readOnly: false,
+    summary: 'Review recovery',
+    drafts: [
+      {
+        id: 'recovery',
+        category: 'delivery',
+        title: 'Recovery',
+        gap: 'Recovery intent',
+        path: '.arc/objectives/delivery/recovery.md',
+        before: null,
+        content: '---\nid: recovery\n---\n# Recovery',
+        sources: [{ path: 'docs/recovery.md', quote: 'Rehearse recovery' }],
+      },
+    ],
+  };
+}
 
 async function verifyContract(api: Api) {
   const spec = await (

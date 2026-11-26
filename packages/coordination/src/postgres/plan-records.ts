@@ -1,5 +1,6 @@
 import type { Client } from 'pg';
 import { z } from 'zod';
+import { projectJournals } from './retired-discovery.js';
 
 export const planReference = z.strictObject({
   execution: z.string(),
@@ -13,39 +14,39 @@ export type PlanReference = z.infer<typeof planReference>;
 
 const plan = `
   WITH captured AS (
-    SELECT DISTINCT ON (r.task_id) r.task_id AS execution,
+    SELECT DISTINCT ON (r.task_id) r.project, r.task_id AS execution,
            COALESCE(e.content::jsonb#>>'{planningExecution,revision}', e.content::jsonb->>'revision') AS revision
     FROM arcnexus_coordination.events e JOIN arcnexus_coordination.runs r
       ON r.project=e.project AND r.id=e.run
-    WHERE r.project=$1 AND r.task_id IS NOT NULL AND ($2::text IS NULL OR r.task_id=$2)
+    WHERE r.project IN ${projectJournals} AND r.task_id IS NOT NULL AND ($2::text IS NULL OR r.task_id=$2)
       AND COALESCE(e.content::jsonb#>>'{planningExecution,revision}', e.content::jsonb->>'revision') IS NOT NULL
       AND (e.content::jsonb ? 'planningExecution' OR e.content::jsonb ? 'plannerProposal')
-    ORDER BY r.task_id,r.id DESC,e.id DESC
+    ORDER BY r.task_id,(r.project=$1) DESC,r.id DESC,e.id DESC
   ), latest AS (
-    SELECT DISTINCT ON (task_id) task_id, id, active
+    SELECT DISTINCT ON (project,task_id) project, task_id, id, active
     FROM arcnexus_coordination.runs
-    WHERE project=$1 AND task_id IS NOT NULL
-    ORDER BY task_id, id DESC
+    WHERE project IN ${projectJournals} AND task_id IS NOT NULL
+    ORDER BY project,task_id,id DESC
   )
-  SELECT captured.*, latest.id::text AS attempt, (latest.active = 1) AS active,
+  SELECT captured.execution, captured.revision, latest.id::text AS attempt, (latest.active = 1) AS active,
          LEAST(min(e.recorded_at), min(e.content::jsonb#>>'{invocation,startedAt}')) AS "startedAt",
          max(e.recorded_at) AS "updatedAt"
-  FROM captured JOIN latest ON latest.task_id=captured.execution
+  FROM captured JOIN latest ON latest.project=captured.project AND latest.task_id=captured.execution
   LEFT JOIN LATERAL (
     SELECT max(prior.run) AS run
     FROM arcnexus_coordination.runs r
     JOIN arcnexus_coordination.events prior ON prior.project=r.project AND prior.run=r.id
-    WHERE r.project=$1 AND r.task_id=latest.task_id AND r.id<latest.id
+    WHERE r.project=latest.project AND r.task_id=latest.task_id AND r.id<latest.id
       AND jsonb_typeof(prior.content::jsonb#>'{outcome,kind}')='string'
       AND prior.content::jsonb#>>'{outcome,kind}'<>'blocked'
   ) previous ON true
   LEFT JOIN arcnexus_coordination.runs recorded
-    ON recorded.project=$1 AND recorded.task_id=latest.task_id
+    ON recorded.project=latest.project AND recorded.task_id=latest.task_id
     AND (previous.run IS NULL OR recorded.id>previous.run)
     AND recorded.id<=latest.id
-  LEFT JOIN arcnexus_coordination.events e ON e.project=$1 AND e.run=recorded.id
-  GROUP BY captured.execution,captured.revision,latest.id,latest.active
-  ORDER BY latest.id DESC
+  LEFT JOIN arcnexus_coordination.events e ON e.project=latest.project AND e.run=recorded.id
+  GROUP BY captured.execution,captured.revision,latest.project,latest.id,latest.active
+  ORDER BY (latest.project=$1) DESC,latest.id DESC
   LIMIT $3
 `;
 
@@ -65,7 +66,7 @@ export async function hasPlanRevision(database: Client, project: string, revisio
   const { rows } = await database.query<{ allowed: boolean }>(
     `SELECT EXISTS (
        SELECT 1 FROM arcnexus_coordination.events e
-       WHERE project=$1 AND (
+       WHERE project IN ${projectJournals} AND (
          content::jsonb#>>'{planningExecution,revision}'=$2 OR
          (content::jsonb ? 'plannerProposal' AND content::jsonb->>'revision'=$2)
          OR (content::jsonb#>>'{outcome,kind}'='merged' AND content::jsonb#>>'{outcome,commit}'=$2

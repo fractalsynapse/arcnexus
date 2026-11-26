@@ -4,31 +4,32 @@ import { z } from 'zod';
 import { dataOperation, type DataScope } from '../../../data/src/index.js';
 import { readHostEvidence, type EvidenceRoots } from './host-evidence.js';
 import { planContextSchema, readPlanContext } from './plan-context.js';
+import { executionJournal } from './retired-discovery.js';
 
 const references = `
-  WITH RECURSIVE tasks(id) AS (
+  WITH RECURSIVE selected AS (${executionJournal}), tasks(id) AS (
     SELECT $2::text
     UNION
     SELECT child.task_id FROM arcnexus_coordination.runs child
     JOIN arcnexus_coordination.runs parent ON parent.project=child.project AND parent.id=child.parent_id
-    JOIN tasks ON tasks.id=parent.task_id WHERE child.project=$1
+    JOIN tasks ON tasks.id=parent.task_id WHERE child.project=(SELECT project FROM selected)
   ), requested AS (
     SELECT e.run, e.content::jsonb#>>'{operation,call}' AS call
     FROM arcnexus_coordination.events e JOIN arcnexus_coordination.runs r
       ON r.project=e.project AND r.id=e.run
     JOIN tasks ON tasks.id=r.task_id
-    WHERE e.project=$1 AND e.id=$3::bigint
+    WHERE e.project=(SELECT project FROM selected) AND e.id=$3::bigint
   ), operations AS (
     SELECT e.id,e.run,e.content::jsonb#>>'{operation,source}' AS source
     FROM arcnexus_coordination.events e JOIN requested r ON e.run=r.run
-    WHERE e.project=$1 AND (
+    WHERE e.project=(SELECT project FROM selected) AND (
       e.id=$3::bigint OR (r.call IS NOT NULL AND e.content::jsonb#>>'{operation,call}'=r.call)
     )
   )
   SELECT source FROM operations
   WHERE EXISTS (
     SELECT 1 FROM arcnexus_coordination.events e
-    WHERE e.project=$1 AND e.run=operations.run AND e.content::jsonb->>'artifact'=source
+    WHERE e.project=(SELECT project FROM selected) AND e.run=operations.run AND e.content::jsonb->>'artifact'=source
   )
   ORDER BY operations.id
 `;

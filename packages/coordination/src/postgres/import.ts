@@ -4,6 +4,7 @@ import { textDigest } from '../../../foundation/src/index.js';
 import { journalPath } from '../journal-path.js';
 import { lockHostedProject } from './session-schema.js';
 import { journalTables, type JournalRow, type JournalTable } from './schema.js';
+import { preserveRetiredDiscovery } from './retired-discovery.js';
 
 type Snapshot = Partial<Record<JournalTable, JournalRow[]>>;
 
@@ -61,7 +62,10 @@ async function verifiedCopy(database: Client, remote: string, snapshot: Snapshot
   );
   if (rows[0] && rows[0].digest !== digest)
     throw new Error('Another SQLite snapshot is already imported');
-  if (!rows[0]) await copy(database, remote, snapshot);
+  if (!rows[0]) {
+    await preserveRetiredDiscovery(database, remote);
+    await copy(database, remote, snapshot);
+  }
   const candidate = await postgresSnapshot(database, remote);
   if (textDigest(JSON.stringify(candidate)) !== digest)
     throw new Error('Imported journal differs from its captured SQLite source');

@@ -143,6 +143,34 @@ const objectiveReviewFixture: ObjectiveReview = {
   })),
 };
 
+test('an invalid objective edit keeps its review open and is retained when reopened', async (t) => {
+  const { application, page } = await browserPage(t);
+  await commandResponses(page, objectiveReviewFixture);
+  const diagnostic = 'measure-recovery: Include a Markdown body.';
+  await page.route('**/commands/*/answer', (route) =>
+    route.fulfill({ status: 422, json: { error: diagnostic } }),
+  );
+  await page.goto(application.url);
+  await selectProject(page);
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  const open = await timelineReview(page);
+  await open.click();
+  const review = page.getByRole('dialog', { name: 'Review objective recommendations' });
+  const editor = await editObjectiveSource(review);
+  await editor.fill('   ');
+  await review.getByRole('button', { name: 'Review revisions' }).click();
+  await review.getByRole('alert').getByText(diagnostic).waitFor();
+  await review.getByRole('button', { name: 'Close' }).click();
+  await open.click();
+  assert.equal(await (await editObjectiveSource(review)).textContent(), '   ');
+});
+
+async function editObjectiveSource(review: Locator) {
+  await review.getByRole('tab', { name: 'Edit wording' }).click();
+  await review.getByRole('button', { name: 'Raw', exact: true }).click();
+  return review.locator('.arc-mdx .cm-content');
+}
+
 async function assertPlanOptions(page: Page) {
   const options = page.getByRole('group', { name: 'Plan options' });
   const recommend = options.getByRole('checkbox', { name: 'Recommend objectives' });

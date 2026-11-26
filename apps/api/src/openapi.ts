@@ -49,6 +49,17 @@ function projectOperation(route: Route, definition: Definition) {
           ...(route.stream && { 'text/event-stream': { schema: string } }),
         },
       },
+      ...(route.resource === 'workflow-requests' &&
+        route.operation === 'answer' && {
+          422: {
+            description: 'Objective Markdown is invalid. The review remains open.',
+            content: {
+              'application/json': {
+                schema: { type: 'object', required: ['error'], properties: { error: string } },
+              },
+            },
+          },
+        }),
     },
   };
 }

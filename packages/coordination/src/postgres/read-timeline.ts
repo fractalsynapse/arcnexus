@@ -1,9 +1,10 @@
 import type { Client } from 'pg';
 import type { TimelineSlice, TimelineWindow } from '../journal-queries.js';
 import type { JournalEvent } from '../journal-types.js';
+import { executionJournal } from './retired-discovery.js';
 
 const retained = `
-  WITH RECURSIVE descendants(task_id) AS (
+  WITH RECURSIVE selected AS (${executionJournal}), descendants(task_id) AS (
     SELECT $2::text
     UNION
     SELECT child.task_id
@@ -11,7 +12,7 @@ const retained = `
     JOIN arcnexus_coordination.runs AS parent
       ON child.project = parent.project AND child.parent_id = parent.id
     JOIN descendants ON descendants.task_id = parent.task_id
-    WHERE child.project = $1
+    WHERE child.project = (SELECT project FROM selected)
   ), retained AS (
     SELECT events.id, events.run, runs.task_id, runs.goal_id, runs.parent_id,
            events.recorded_at, events.content
@@ -19,7 +20,7 @@ const retained = `
     JOIN arcnexus_coordination.runs AS runs
       ON events.project = runs.project AND events.run = runs.id
     JOIN descendants ON descendants.task_id = runs.task_id
-    WHERE events.project = $1
+    WHERE events.project = (SELECT project FROM selected)
   ), bounds AS (
     SELECT
       COALESCE($3::bigint, 0) AS low,

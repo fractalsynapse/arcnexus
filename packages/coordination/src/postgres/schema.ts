@@ -28,7 +28,7 @@ export const coordinationMigration = {
   `,
 };
 
-const tables = {
+export const journalSchema = {
   runs: {
     projection:
       'CAST(id AS text) AS id, goal_id, task_id, goal, CAST(active AS text) AS active, lease, CAST(parent_id AS text) AS parent_id',
@@ -48,10 +48,10 @@ const tables = {
   },
 } as const;
 
-export type JournalTable = keyof typeof tables;
+export type JournalTable = keyof typeof journalSchema;
 export type JournalRow = Record<string, string | null>;
 
-export const journalTables = Object.entries(tables) as [
+export const journalTables = Object.entries(journalSchema) as [
   JournalTable,
-  (typeof tables)[JournalTable],
+  (typeof journalSchema)[JournalTable],
 ][];

@@ -60,31 +60,48 @@ function capturedFileDates(root: string, revision: string, directory: string) {
 
 /** Read only the file revisions reachable from this captured tree. */
 function capturedHistory(root: string, capture: string, path: string): FileHistory {
-  const revisions = git(
+  const history = git(
     root,
     '--literal-pathspecs',
     'log',
+    '--follow',
+    '--find-renames',
     '--diff-filter=AMRT',
-    '--format=%H%x09%cI',
+    '--format=format:%x00%H%x09%cI%x00',
+    '--name-status',
+    '-z',
     capture,
     '--',
     path,
-  )
-    .trim()
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [revision, updated] = line.split('\t') as [string, string];
-      return { revision, updated };
-    });
+  );
+  const entries = historyEntries(history);
   return {
-    revisions,
+    revisions: [...entries].map(([revision, { updated }]) => ({ revision, updated })),
     read(revision) {
-      if (!revisions.some((entry) => entry.revision === revision))
-        throw new Error('File revision unavailable at the captured revision');
-      return git(root, 'show', `${revision}:${path}`);
+      const entry = entries.get(revision);
+      if (!entry) throw new Error('File revision unavailable at the captured revision');
+      return git(root, 'show', `${revision}:${entry.path}`);
     },
   };
+}
+
+/** Keep the destination path at a rename commit and the original path for its earlier commits. */
+function historyEntries(history: string) {
+  const fields = history.split('\0');
+  const entries = new Map<string, { updated: string; path: string }>();
+  let index = 0;
+  while (index < fields.length) {
+    const header = fields[index++];
+    if (!header) continue;
+    const [revision, updated] = header.split('\t');
+    const status = fields[index++]?.trim();
+    const source = fields[index++];
+    const path = status?.startsWith('R') ? fields[index++] : source;
+    if (!revision || !updated || !status || !path)
+      throw new Error('Cannot read the captured Git file history');
+    entries.set(revision, { updated, path });
+  }
+  return entries;
 }
 
 /** Run a local read and expose failures without leaking command output or credentials. */

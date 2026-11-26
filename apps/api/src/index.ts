@@ -2,6 +2,7 @@ import type { TimelineChanges } from '../../../packages/coordination/src/index.j
 import type { Context } from 'cordis';
 import { ZodError } from 'zod';
 import { InvalidDocumentationDirectories } from '../../../packages/architecture/src/index.js';
+import { InvalidObjectiveEdits } from '../../../packages/planner/src/objective-review.js';
 import type { Data, DataScope, ResolveDataScope } from '../../../packages/data/src/index.js';
 import { matchPlatform, platformRequest } from './platform-routes.js';
 import { openApi } from './openapi.js';
@@ -22,7 +23,8 @@ function problem(status: number, message: string) {
 }
 
 function apiError(error: unknown) {
-  if (error instanceof InvalidDocumentationDirectories) return problem(422, error.message);
+  if (error instanceof InvalidDocumentationDirectories || error instanceof InvalidObjectiveEdits)
+    return problem(422, error.message);
   if (error instanceof URIError || error instanceof SyntaxError || error instanceof ZodError)
     return problem(400, 'Invalid resource request');
   if (error instanceof Error && error.message === 'Data operation not authorized')

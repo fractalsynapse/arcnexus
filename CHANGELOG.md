@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Preserve retired Plan history through SQLite cutover, keep invalid objective edits open with validation feedback, and follow guide history across Git renames (#746).
+
 - Open newly delivered goals from Planner outcome at the merged revision and retain links to removed goals at their captured revision (#746).
 
 - Keep Plan objective batches evidence-driven, show the recorded actor and activity in both timelines, and label Explorer entries with their relative file paths (#746).

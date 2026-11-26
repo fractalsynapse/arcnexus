@@ -3,18 +3,11 @@ import {
   validateDocumentationDirectories,
 } from '../../architecture/src/index.js';
 import { Clarifications, type HostTask } from '../../execution/src/index.js';
-import { splitMarkdown } from '../../foundation/src/markdown-document.js';
 import type { Context } from 'cordis';
 import { z } from 'zod';
 import { plannerActivity as selection } from './assignment.js';
 import { recordID } from './guide-data.js';
-import {
-  guideCategory,
-  guideDirectory,
-  guideIndex,
-  guideRecord,
-  withGuideID,
-} from './guide-index.js';
+import { guideCategory, guideDirectory, guideIndex, withGuideID } from './guide-index.js';
 import { generatePlannerResponse, validatePlannerResponse } from './model-response.js';
 import {
   objectiveCandidate,
@@ -89,8 +82,7 @@ export class ObjectiveRecommendations {
   /** Leave a decision open when its selection or Markdown cannot be applied. */
   private validDecision(reply: string, review: ObjectiveReview) {
     try {
-      const choice = readObjectiveDecision(reply, review);
-      if (choice.action === 'revise') applyHumanEdits(this.task, review, choice.edits);
+      readObjectiveDecision(reply, review);
       return true;
     } catch {
       return false;
@@ -102,7 +94,7 @@ export class ObjectiveRecommendations {
     review: ObjectiveReview,
     change: Extract<ObjectiveDecision, { action: 'revise' }>,
   ) {
-    const drafts = applyHumanEdits(this.task, review, change.edits);
+    const drafts = applyHumanEdits(review, change.edits);
     if (!change.feedback)
       return { summary: review.summary, drafts, sourceChanges: review.sourceChanges };
     return this.generate({
@@ -207,21 +199,10 @@ function decodeBatch(task: HostTask, reply: unknown, prior?: readonly ObjectiveD
   };
 }
 
-function applyHumanEdits(
-  task: HostTask,
-  review: ObjectiveReview,
-  edits: Record<string, string> = {},
-) {
-  return review.drafts.map((draft) => {
-    if (!Object.hasOwn(edits, draft.id)) return draft;
-    const content = edits[draft.id]!;
-    if (
-      !splitMarkdown(content).body.trim() ||
-      guideRecord(task.capture, 'objectives', draft.path, content).id !== draft.id
-    )
-      throw new Error(`Preserve the objective ID and include text: ${draft.id}`);
-    return { ...draft, content };
-  });
+function applyHumanEdits(review: ObjectiveReview, edits: Record<string, string> = {}) {
+  return review.drafts.map((draft) =>
+    Object.hasOwn(edits, draft.id) ? { ...draft, content: edits[draft.id]! } : draft,
+  );
 }
 
 function reviewPrompt(review: ObjectiveReview) {

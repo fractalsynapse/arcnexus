@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { splitMarkdown } from '../../foundation/src/markdown-document.js';
+import { guideMetadataID } from './guide-index.js';
 
 export const objectiveReviewLabel = 'Review objective recommendations';
 export const objectiveReviewReady = 'Objective recommendations are ready for review';
@@ -31,7 +33,7 @@ export const objectiveDecision = z.discriminatedUnion('action', [
   z.strictObject({ action: z.literal('decline') }),
   z.strictObject({
     action: z.literal('revise'),
-    edits: z.record(prose, prose).optional(),
+    edits: z.record(prose, z.string()).optional(),
     feedback: prose.optional(),
   }),
 ]);
@@ -45,6 +47,9 @@ export const recommendationAssessment = z.strictObject({
 });
 export type RecommendationAssessment = z.output<typeof recommendationAssessment>;
 export type ObjectiveDecision = z.output<typeof objectiveDecision>;
+
+/** Explain invalid edits while allowing callers to keep the exact review open. */
+export class InvalidObjectiveEdits extends Error {}
 
 /** Decode the terminal shortcuts and structured clients through one review contract. */
 export function readObjectiveDecision(answer: string, review: ObjectiveReview): ObjectiveDecision {
@@ -62,5 +67,23 @@ export function readObjectiveDecision(answer: string, review: ObjectiveReview): 
     throw new Error('Select distinct objective drafts from this review');
   if (choice.action === 'revise' && !ids.length && !choice.feedback)
     throw new Error('Provide edits or feedback to revise recommendations');
+  if (choice.action === 'revise') validateObjectiveEdits(review, choice.edits);
   return choice;
+}
+
+function validateObjectiveEdits(review: ObjectiveReview, edits: Record<string, string> = {}) {
+  for (const draft of review.drafts)
+    if (Object.hasOwn(edits, draft.id)) validateObjectiveEdit(draft.id, edits[draft.id]!);
+}
+
+function validateObjectiveEdit(id: string, content: string) {
+  const { body, metadata } = splitMarkdown(content);
+  if (!body.trim()) throw new InvalidObjectiveEdits(`${id}: Include a Markdown body.`);
+  let declared: unknown;
+  try {
+    declared = guideMetadataID(metadata);
+  } catch {
+    throw new InvalidObjectiveEdits(`${id}: Supply valid YAML frontmatter.`);
+  }
+  if (declared !== id) throw new InvalidObjectiveEdits(`${id}: Keep the original objective ID.`);
 }

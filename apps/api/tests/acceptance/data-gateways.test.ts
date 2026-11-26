@@ -151,7 +151,28 @@ test('a moved categorized guide keeps its stable endpoint and its original pinne
   const result = await pinned.json();
   assert.equal(result.entry.path, '.arc/goals/first.md');
   assert.equal(result.content, firstGoal);
+  await verifyMovedGuideHistory(context.api, revision, original);
 });
+
+async function verifyMovedGuideHistory(
+  api: (request: Request) => Promise<Response>,
+  revision: string,
+  previous: string,
+) {
+  const base = 'http://arc.test/projects/fixture/goals/first';
+  const list = await api(new Request(base + '/revisions?revision=' + revision, { headers }));
+  assert.equal(list.status, 200);
+  const { revisions } = await list.json();
+  assert.deepEqual(
+    revisions.map((entry: { revision: string }) => entry.revision),
+    [revision, previous],
+  );
+  const historical = await api(
+    new Request(base + '?revision=' + revision + '&fileRevision=' + previous, { headers }),
+  );
+  assert.equal(historical.status, 200);
+  assert.equal((await historical.json()).content, firstGoal);
+}
 
 test('a REST cursor replays the same committed timeline through MCP', async (t) => {
   const { context } = await gateway(t);
