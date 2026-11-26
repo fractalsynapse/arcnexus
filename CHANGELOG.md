@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Carry retained objective approvals straight into goal alignment with instructions scoped to standing goals (#746).
+
 - Save Plan documentation directories directly in Project Settings and show readable labels for older objective files (#746).
 
 - Add project documentation directory settings and use one Plan flow for objective review and goal refinement (#746).

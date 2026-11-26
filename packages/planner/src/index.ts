@@ -55,7 +55,7 @@ interface RetainedEdits {
 }
 
 interface Alignment {
-  objective: boolean;
+  mode: Mode;
   approved: ObjectiveDraft[];
   findings?: readonly Rejection[];
   progress: TaskObserver['progress'];
@@ -121,7 +121,7 @@ export class Planner {
     if (recommendations?.selected.length) progress(aligningGoals);
     if (!task.branch) task.planningWorkspace(signal);
     return this.align(task, {
-      objective: mode === 'objective',
+      mode,
       approved: recommendations?.selected ?? [],
       findings,
       progress,
@@ -131,9 +131,9 @@ export class Planner {
 
   /** Feed exact human intent into normal goal alignment and checked delivery. */
   private async align(task: HostTask, input: Alignment) {
-    const { objective, approved, findings, progress, signal } = input;
+    const { mode, approved, findings, progress, signal } = input;
     const previous = findings ? appliedEdits(task) : undefined;
-    const data = assignment(task, objective, verifiedGoalRun(task), findings, approved);
+    const data = assignment(task, mode, verifiedGoalRun(task), findings, approved);
     const { proposal, report } = await this.proposal(task, data, signal, previous);
     progress({
       phase: 'planning',
@@ -142,7 +142,7 @@ export class Planner {
     });
     const edits = goalPatches(task, proposal, previous);
     if (
-      objective &&
+      mode === 'objective' &&
       !(await includeObjective(task, { proposal, edits, previous, data, signal, progress }))
     )
       return planned(task, 'The objective change was declined.', [report]);
@@ -315,14 +315,16 @@ function retainEdits(task: HostTask, edits: GoalPatch[], report: string) {
 /** Derive complete Planner activity input once so dialogue resumes at the same position. */
 function assignment(
   task: TaskSession,
-  objective: boolean,
+  mode: Mode,
   run?: VerifiedGoalRun,
   findings?: readonly Rejection[],
   approvedObjectives: ObjectiveDraft[] = [],
 ) {
   return {
+    goal:
+      mode === 'recommendation' ? 'Align standing goals with the project’s objectives.' : undefined,
     assignment: {
-      ...plannerAssignment(task, objective, run, approvedObjectives),
+      ...plannerAssignment(task, mode === 'objective', run, approvedObjectives),
       review: findings,
     },
     milestone: 'Assess the standing goal inventory',

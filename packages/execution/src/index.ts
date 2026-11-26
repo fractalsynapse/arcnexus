@@ -383,7 +383,7 @@ export class HostTask implements TaskSession {
   activate(
     agent: Agent,
     selection: ActivationInput['selection'],
-    data: Omit<TaskContext, 'goal' | 'worktree'>,
+    data: Omit<TaskContext, 'worktree'>,
     signal: AbortSignal,
     refresh?: ContextRefresh,
   ) {

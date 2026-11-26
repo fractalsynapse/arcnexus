@@ -74,7 +74,7 @@ function instructions(objective: boolean, recommendations: boolean) {
     'Propose the smallest useful diff or changes: []. Give each new goal a category and stable lowercase ID. Preserve an existing goal’s ID. Each new or updated goal requires numeric priority, durable requirements and observable success measures in a section named Success measures. Keep observed results in the mapping report and keep goals owner-free.',
     ...(recommendations
       ? [
-          'Treat approvedObjectives as additional human intent. Preserve their exact wording. Include the aligned goal IDs in links and explain the mapping for each approved objective in summary and comparison.',
+          'The architect already approved the exact bytes in approvedObjectives. The host delivers those bytes. Evaluate standing goals using these objectives and put only goal files in changes. No further objective decision is needed. Include the aligned goal IDs in links and explain each objective’s mapping in summary and comparison.',
         ]
       : []),
     ...(objective

@@ -283,6 +283,7 @@ async function inspectRecommendationReview(scenario: PlannerRepairScenario) {
 function assertBatchAlignment(scenario: PlannerRepairScenario) {
   assert.equal(scenario.requests.length, 2);
   assert.ok(scenario.progress.includes('Planner is aligning goals with the approved objectives.'));
+  assert.equal(scenario.requests[1]!.goal, 'Align standing goals with the project’s objectives.');
   const assignment = scenario.requests[1]!.assignment as {
     approvedObjectives: { id: string; content: string }[];
   };
