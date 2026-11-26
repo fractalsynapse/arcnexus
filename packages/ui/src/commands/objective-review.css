@@ -1,0 +1,67 @@
+.arc-objective-review,
+.arc-review-drafts,
+.arc-review-draft,
+.arc-review-context,
+.arc-review-feedback,
+.arc-review-source-change {
+  display: grid;
+  gap: var(--gap);
+  min-inline-size: 0;
+}
+.arc-objective-review {
+  gap: calc(1.5 * var(--gap));
+}
+.arc-review-draft > .arc-checkbox {
+  justify-self: end;
+}
+.arc-review-selection-count {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--font-label);
+}
+.arc-objective-review .arc-tab {
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.arc-objective-review .arc-md-view {
+  line-height: 1.6;
+}
+.arc-objective-review .arc-disclosure {
+  padding: var(--gap);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--quiet);
+}
+.arc-objective-review .arc-disclosure[open] > summary {
+  padding-block-end: var(--gap);
+  border-block-end: 1px solid var(--line);
+  margin-block-end: var(--gap);
+}
+.arc-review-context :is(h3, p, dl, dd),
+.arc-review-source-change h3 {
+  margin: 0;
+}
+.arc-review-context h3 {
+  margin-block-end: 5px;
+  font-size: var(--font-body);
+}
+.arc-review-context dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 5px var(--gap);
+}
+.arc-review-context dt {
+  color: var(--muted);
+}
+.arc-review-context :is(code, dd, p) {
+  overflow-wrap: anywhere;
+}
+.arc-review-feedback {
+  padding-block-start: var(--gap);
+  border-block-start: 1px solid var(--line);
+}
+.arc-review-feedback textarea {
+  resize: vertical;
+}

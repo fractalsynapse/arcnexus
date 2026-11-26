@@ -152,6 +152,19 @@
   padding: 0;
   margin: 6px 0 0;
 }
+.arc-plan-question {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  min-inline-size: 0;
+  padding: 9px var(--gap);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--quiet);
+}
+.arc-plan-question[data-waiting] {
+  border-inline-start: 3px solid var(--link);
+}
 .arc-timeline-operation {
   display: flex;
   align-items: center;

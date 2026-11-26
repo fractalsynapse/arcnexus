@@ -4,6 +4,7 @@ import { Button } from './button.js';
 import { tabDestination } from './tab-navigation.js';
 
 export interface TabSection {
+  id?: string;
   title: string;
   content: ReactNode;
   count?: number;
@@ -20,10 +21,10 @@ export function Tabs({
   className?: string;
 }) {
   const id = useId();
-  const [selected, select] = useState(sections[0]?.title);
+  const [selected, select] = useState(sections[0] && sectionID(sections[0]));
   const current = Math.max(
     0,
-    sections.findIndex(({ title }) => title === selected),
+    sections.findIndex((section) => sectionID(section) === selected),
   );
   return h(
     'div',
@@ -37,42 +38,42 @@ export function Tabs({
   );
 }
 
-function tabPanel({ title, content }: TabSection, id: string, active: boolean) {
+function tabPanel(section: TabSection, id: string, active: boolean) {
   return h(
     'div',
     {
-      key: title,
+      key: sectionID(section),
       id: id + '-panel',
       role: 'tabpanel',
       'aria-labelledby': id + '-tab',
       tabIndex: 0,
       hidden: !active,
     },
-    active ? content : null,
+    active ? section.content : null,
   );
 }
 
-function tab(
-  { title, count }: TabSection,
-  id: string,
-  active: boolean,
-  select: (title: string) => void,
-) {
+function tab(section: TabSection, id: string, active: boolean, select: (title: string) => void) {
+  const { title, count } = section;
   return h(
     Button,
     {
-      key: title,
+      key: sectionID(section),
       id: id + '-tab',
       role: 'tab',
       className: 'arc-tab',
       'aria-controls': id + '-panel',
       'aria-selected': active,
       tabIndex: active ? 0 : -1,
-      onClick: () => select(title),
+      onClick: () => select(sectionID(section)),
     },
     title,
     count !== undefined && h('span', { className: 'arc-tab-count', 'aria-hidden': true }, count),
   );
+}
+
+function sectionID({ id, title }: TabSection) {
+  return id ?? title;
 }
 
 function moveTab(event: KeyboardEvent<HTMLDivElement>) {

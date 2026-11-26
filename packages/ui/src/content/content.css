@@ -200,7 +200,7 @@ ol.arc-report-list {
   color: var(--muted);
   font-size: var(--font-label);
 }
-.arc-message-timeline p {
+.arc-message-timeline > li > p {
   padding: 9px var(--gap);
   border: 1px solid var(--line);
   border-radius: 8px;

@@ -4,6 +4,8 @@ import type {
   ObjectiveDraft,
   ObjectiveReview,
 } from '../../../planner/src/objective-review.js';
+import { MarkdownView } from '../content/markdown-view.js';
+import { Disclosure } from '../controls/disclosure.js';
 import { MarkdownEditor } from '../content/markdown-editor.js';
 import { splitMarkdown } from '../../../foundation/src/markdown-document.js';
 import { SourceCitations } from '../content/source-citations.js';
@@ -32,21 +34,54 @@ export function ObjectiveReviewForm({ review, identity = review.id, send }: Revi
   const draftState = { input, change, pending };
   return h(
     'div',
-    { className: 'arc-answer-form' },
-    h('p', null, review.summary),
-    h('p', null, 'Captured revision ', h('code', null, review.revision)),
-    review.readOnly && h('p', null, 'Selected drafts will be retained for onboarding.'),
+    { className: 'arc-objective-review' },
     review.sourceChanges && h(ChangedSources, { sources: review.sourceChanges }),
-    h(Tabs, {
-      label: 'Objective drafts',
-      sections: review.drafts.map((draft) => ({
-        title: draft.id,
-        content: h(DraftReview, { draft, ...draftState }),
-      })),
-    }),
+    h(ReviewDrafts, { review, ...draftState }),
+    h(ReviewContext, { review }),
     h(RevisionFeedback, draftState),
+    review.readOnly && h('small', null, 'Selected drafts are retained for onboarding.'),
     h(ReviewActions, { review, input, pending, submit }),
     error && h('p', { role: 'alert' }, error),
+  );
+}
+
+function ReviewDrafts({ review, ...state }: DraftState & { review: ObjectiveReview }) {
+  const drafts = review.drafts;
+  if (drafts.length === 1) return h(DraftReview, { draft: drafts[0]!, ...state });
+  return h(
+    'section',
+    { className: 'arc-review-drafts', 'aria-label': 'Objective drafts' },
+    h(
+      'p',
+      { className: 'arc-review-selection-count' },
+      `${state.input.selected.length} of ${drafts.length} selected`,
+    ),
+    h(Tabs, {
+      label: 'Objective drafts',
+      sections: drafts.map((draft) => ({
+        id: draft.id,
+        title: draft.title,
+        content: h(DraftReview, { draft, ...state }),
+      })),
+    }),
+  );
+}
+
+function ReviewContext({ review }: Pick<ReviewProps, 'review'>) {
+  return h(
+    Disclosure,
+    { label: 'Planning summary' },
+    h(
+      'div',
+      { className: 'arc-review-context' },
+      h('p', null, review.summary),
+      h(
+        'dl',
+        null,
+        h('dt', null, 'Captured revision'),
+        h('dd', null, h('code', null, review.revision)),
+      ),
+    ),
   );
 }
 
@@ -78,7 +113,7 @@ type DraftState = { input: DraftInput; change(patch: Partial<DraftInput>): void;
 function RevisionFeedback({ input, change, pending }: DraftState) {
   return h(
     'label',
-    null,
+    { className: 'arc-review-feedback' },
     'Feedback for a revised proposal',
     h('textarea', {
       value: input.feedback,
@@ -123,16 +158,38 @@ function ReviewActions({ review, input, pending, submit }: ReviewActionProps) {
 type DraftProps = DraftState & { draft: ObjectiveDraft };
 
 function DraftReview(props: DraftProps) {
-  const { title, path, gap, sources } = props.draft;
   return h(
     'section',
-    { className: 'arc-answer-form' },
-    h('strong', null, title),
-    h('code', null, path),
-    h('p', null, gap),
-    h(SourceCitations, { sources }),
-    h(DraftSelection, props),
+    { className: 'arc-review-draft' },
     h(DraftWording, props),
+    h(DraftSelection, props),
+    h(DraftContext, { draft: props.draft }),
+  );
+}
+
+function DraftContext({ draft }: { draft: ObjectiveDraft }) {
+  return h(
+    Disclosure,
+    { label: 'Supporting information' },
+    h(
+      'div',
+      { className: 'arc-review-context' },
+      h('section', null, h('h3', null, 'Why this objective'), h('p', null, draft.gap)),
+      h(
+        'section',
+        null,
+        h('h3', null, 'Source excerpts'),
+        h(SourceCitations, { sources: draft.sources }),
+      ),
+      h(
+        'dl',
+        null,
+        h('dt', null, 'Category'),
+        h('dd', null, draft.category),
+        h('dt', null, 'Draft file'),
+        h('dd', null, h('code', null, draft.path)),
+      ),
+    ),
   );
 }
 
@@ -156,11 +213,19 @@ function DraftWording({ draft, input, change }: DraftProps) {
     label: 'Objective wording',
     sections: [
       {
-        title: 'Changes',
-        content: h(DiffView, {
-          file: { path: draft.path, before: draft.before ?? '', after: content },
-        }),
+        title: 'Proposed objective',
+        content: h('section', { 'aria-label': 'Proposed objective' }, h(MarkdownView, { content })),
       },
+      ...(draft.before === null
+        ? []
+        : [
+            {
+              title: 'Changes',
+              content: h(DiffView, {
+                file: { path: draft.path, before: draft.before, after: content },
+              }),
+            },
+          ]),
       {
         title: 'Edit wording',
         content: h(DraftEditor, {
@@ -182,8 +247,8 @@ function changedDraft(previous: Record<string, string>, draft: ObjectiveDraft, c
 function ChangedSources({ sources }: { sources: NonNullable<ObjectiveReview['sourceChanges']> }) {
   return h(
     'section',
-    null,
-    h('strong', null, 'Previously cited evidence changed'),
+    { className: 'arc-review-source-change' },
+    h('h3', null, 'Previously cited evidence changed'),
     h(SourceCitations, { sources }),
   );
 }

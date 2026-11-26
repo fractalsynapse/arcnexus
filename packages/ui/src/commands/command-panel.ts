@@ -61,6 +61,8 @@ function DockControls({
       { id: body, hidden: collapsed, key: 'composer' },
       h(Composer, { state, binding, workspace, key: state.scope }),
     ),
-    state.gate && h(CommandActions, { state, binding, key: 'actions:' + state.scope }),
+    state.gate &&
+      !state.gate.review &&
+      h(CommandActions, { state, binding, key: 'actions:' + state.scope }),
   ];
 }

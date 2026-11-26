@@ -52,7 +52,8 @@ function commandOptions(state: CommandState): readonly Operation[] {
 
 function useRecommendation(operation: Operation, state: CommandState) {
   const [recommend, setRecommend] = useState(true);
-  if (operation !== 'plan' || !state.canRecommendObjectives) return;
+  if (operation !== 'plan' || !state.canRecommendObjectives || !state.supported.includes(operation))
+    return;
   return {
     checked: recommend || !!state.recommendationOnly,
     disabled: state.recommendationOnly,

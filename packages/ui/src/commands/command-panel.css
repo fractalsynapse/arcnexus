@@ -54,9 +54,15 @@
   display: block;
   resize: vertical;
 }
-.arc-recommend-objectives,
+.arc-operation-options,
 .arc-composer-error {
   grid-column: 1 / -1;
+}
+.arc-operation-options {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .arc-command-readout {
   display: grid;

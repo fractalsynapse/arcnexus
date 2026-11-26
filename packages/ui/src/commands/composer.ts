@@ -26,7 +26,7 @@ export function Composer(props: ComposerProps) {
     recommendation &&
       h(
         'div',
-        { className: 'arc-recommend-objectives' },
+        { className: 'arc-operation-options', role: 'group', 'aria-label': 'Plan options' },
         h(CheckboxField, { label: 'Recommend objectives', ...recommendation }),
       ),
     error && h('p', { role: 'alert', className: 'arc-composer-error' }, error),

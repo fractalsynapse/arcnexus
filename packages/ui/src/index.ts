@@ -7,6 +7,7 @@ import './controls/tabs.css';
 import './controls/tooltip.css';
 import './layouts/frame/frame.css';
 import './commands/command-panel.css';
+import './commands/objective-review.css';
 import './controls/dialog.css';
 import './controls/management-row.css';
 import './commands/round-metrics.css';

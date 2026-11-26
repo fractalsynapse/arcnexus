@@ -4,6 +4,7 @@ import {
   type CommandBinding,
   type CommandState,
 } from '../../../../packages/ui/src/index.js';
+import { EventQuestion } from './event-question.js';
 import { EventEntry } from './event-entry.js';
 import type { TimelineEntry } from './timeline-groups.js';
 import { plainTimelineMessage } from './timeline-message.js';
@@ -36,14 +37,23 @@ export function EventTimeline({
     'div',
     { role: 'log', 'aria-label': 'Planning events', className: 'arc-plan-timeline', ...tail },
     messagesOnly
-      ? h(MessageTimeline, { messages: entries.flatMap(messagePoint) })
+      ? h(MessageTimeline, {
+          messages: entries.flatMap((entry) =>
+            messagePoint(entry, { execution, command, binding }),
+          ),
+        })
       : entries.map((entry) =>
           h(EventEntry, { key: entry.key, entry, execution, command, binding }),
         ),
   );
 }
 
-function messagePoint({ key, timestamp, message, question }: TimelineEntry) {
-  const text = plainTimelineMessage(message) ?? question?.question;
-  return text ? [{ key, timestamp, text }] : [];
+function messagePoint(
+  { key, timestamp, message, question }: TimelineEntry,
+  scope: Pick<TimelineProps, 'execution' | 'command' | 'binding'>,
+) {
+  const content = question
+    ? h(EventQuestion, { ...scope, question })
+    : plainTimelineMessage(message);
+  return content ? [{ key, timestamp, content }] : [];
 }

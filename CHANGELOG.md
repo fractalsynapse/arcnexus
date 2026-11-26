@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Put objective review requests in the Plan timeline and separate draft wording from its evidence in the review dialog (#746).
+
 - Keep human approval for Plan objective changes, route goal edits to independent review, and resolve categorized guide files by stable ID (#746).
 
 - Show per-run token usage and a reported total for the active project in the Plan metrics popup (#746).

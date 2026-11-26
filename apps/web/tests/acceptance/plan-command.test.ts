@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { Page, Route } from 'playwright';
+import type { Locator, Page, Route } from 'playwright';
+import { chooseOption } from '../fixtures/browser-select.js';
 import type { ObjectiveReview } from '../../../../packages/planner/src/objective-review.js';
 import type { Receipt } from '../../../../packages/commands/src/browser.js';
 import {
@@ -100,6 +101,7 @@ test('Plan defaults to recommendations and reviews selected source-backed drafts
     await page.getByRole('checkbox', { name: 'Recommend objectives' }).isChecked(),
     true,
   );
+  await assertPlanOptions(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await selectObjectiveSubset(page);
   const submitted = actions[0]!;
@@ -141,14 +143,25 @@ const objectiveReviewFixture: ObjectiveReview = {
   })),
 };
 
+async function assertPlanOptions(page: Page) {
+  const options = page.getByRole('group', { name: 'Plan options' });
+  const recommend = options.getByRole('checkbox', { name: 'Recommend objectives' });
+  await recommend.waitFor();
+  await chooseOption(page, 'Operation', 'Architect');
+  await options.waitFor({ state: 'hidden' });
+  await chooseOption(page, 'Operation', 'Plan');
+  assert.equal(await recommend.isChecked(), true);
+}
+
 async function selectObjectiveSubset(page: Page) {
-  await page.getByRole('button', { name: 'Review objective recommendations', exact: true }).click();
+  const review = await timelineReview(page);
+  await review.click();
   const dialog = page.getByRole('dialog', { name: 'Review objective recommendations' });
-  await dialog.getByText('Practice recovery and measure downtime.').waitFor();
+  await assertObjectiveWording(dialog);
   await dialog.getByRole('tab', { name: 'rehearse-recovery' }).click();
   await dialog.getByRole('checkbox', { name: 'Select rehearse-recovery' }).uncheck();
   await dialog.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Review objective recommendations', exact: true }).click();
+  await review.click();
   await dialog.getByRole('tab', { name: 'rehearse-recovery' }).click();
   assert.equal(
     await dialog.getByRole('checkbox', { name: 'Select rehearse-recovery' }).isChecked(),
@@ -156,6 +169,43 @@ async function selectObjectiveSubset(page: Page) {
   );
   await dialog.getByRole('button', { name: 'Approve selected' }).click();
   await dialog.waitFor({ state: 'hidden' });
+}
+
+async function timelineReview(page: Page) {
+  const timeline = page.getByRole('log', { name: 'Planning events' });
+  const review = timeline.getByRole('button', {
+    name: 'Review objective recommendations',
+    exact: true,
+  });
+  await review.waitFor();
+  await page.getByRole('tab', { name: 'Full log' }).click();
+  await review.waitFor();
+  await page.getByRole('tab', { name: 'Messages' }).click();
+  assert.equal(
+    await page
+      .getByRole('contentinfo', { name: 'Command controls' })
+      .getByRole('button', { name: 'Review objective recommendations' })
+      .count(),
+    0,
+  );
+  assert.equal(await page.getByRole('checkbox', { name: 'Recommend objectives' }).count(), 0);
+  return review;
+}
+
+async function assertObjectiveWording(dialog: Locator) {
+  const wording = dialog.getByRole('region', { name: 'Proposed objective' });
+  await wording.getByRole('heading', { name: 'Recovery' }).waitFor();
+  assert.equal(await wording.getByText('handbook/operations/recovery.adoc').count(), 0);
+  assert.equal(await dialog.getByRole('tab', { name: 'Changes' }).count(), 0);
+  await dialog.getByText('Supporting information', { exact: true }).click();
+  await dialog.getByText('Practice recovery and measure downtime.').waitFor();
+  const feedback = dialog.getByLabel('Feedback for a revised proposal');
+  const revisions = dialog.getByRole('button', { name: 'Review revisions' });
+  assert.equal(await revisions.isEnabled(), false);
+  await feedback.fill('Explain how the review is measured.');
+  assert.equal(await revisions.isEnabled(), true);
+  assert.equal(await dialog.getByRole('button', { name: 'Approve selected' }).isEnabled(), false);
+  await feedback.clear();
 }
 
 async function commandResponses(page: Page, review?: ObjectiveReview) {
@@ -175,6 +225,7 @@ async function commandResponses(page: Page, review?: ObjectiveReview) {
     outcome: null,
   };
   await commandStreamFixture(page);
+  if (review) await objectiveTimeline(page, receipt);
   await page.route('**/commands', (route) => {
     const body = route.request().postDataJSON() as { id: string };
     receipt.id = body.id;
@@ -185,6 +236,27 @@ async function commandResponses(page: Page, review?: ObjectiveReview) {
     commandActionResponse(route, receipt, requests),
   );
   return requests;
+}
+
+async function objectiveTimeline(page: Page, receipt: Receipt) {
+  const execution = receipt.execution;
+  await page.route('**/plan-executions', (route) =>
+    route.fulfill({
+      json: { entries: [{ execution, revision: receipt.revision, active: false }] },
+    }),
+  );
+  await page.route('**/plan-executions/retained-plan/events', (route) => {
+    const { question, review } = receipt.gate!;
+    const frame = {
+      sequence: '1',
+      timestamp: null,
+      observation: { clarification: { question, review } },
+    };
+    return route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: review-start\nevent: observation\ndata: ' + JSON.stringify(frame) + '\n\n',
+    });
+  });
 }
 
 async function commandStreamFixture(page: Page) {
