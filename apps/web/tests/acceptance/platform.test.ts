@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { get } from 'node:http';
 import test, { type TestContext } from 'node:test';
-import type { Page } from 'playwright';
+import type { Page, Route } from 'playwright';
+import type { Receipt } from '../../../../packages/commands/src/browser.js';
 import {
   browserPage,
   fixtureGoal,
@@ -292,6 +293,8 @@ test('the built command dock submits Plan and answers only the retained question
   await page.goto(application.url);
   await selectProject(page);
   await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await page.getByRole('button', { name: 'Stop Plan', exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Send', exact: true }).count(), 0);
   await page.getByRole('button', { name: 'Answer question', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Answer question' });
   await dialog.getByText('Approve this proposed change?').waitFor();
@@ -341,10 +344,27 @@ test('Save submits the selected goal revision and exact draft for approval', asy
   );
 });
 
+test('the composer stops its active receipt and restores Send after cancellation', async (t) => {
+  const { application, page } = await browserPage(t);
+  const actions = await commandResponses(page);
+  await page.goto(application.url);
+  await selectProject(page);
+  const send = page.getByRole('button', { name: 'Send', exact: true });
+  const footer = page.getByRole('contentinfo', { name: 'Command controls' });
+  await footer.getByRole('button', { name: 'Reconnect command updates', exact: true }).waitFor();
+  assert.equal(await footer.getByText('Command updates disconnected.').count(), 0);
+  await send.click();
+  await page.getByRole('button', { name: 'Stop Plan', exact: true }).click();
+  await send.waitFor();
+  assert.equal(await send.isEnabled(), true);
+  assert.equal(actions[1]?.receipt, actions[0]?.receipt);
+  assert.equal(actions[1]?.body, 'cancel');
+});
+
 async function commandResponses(page: Page) {
   await responses(page);
   const requests: { body: unknown; receipt: string }[] = [];
-  const receipt = {
+  const receipt: Receipt = {
     id: '38882637-979e-4702-a8c7-186d1aa066e8',
     request: { command: 'task_plan' },
     revision: project.revision,
@@ -365,11 +385,24 @@ async function commandResponses(page: Page) {
     requests.push({ body, receipt: body.id });
     return route.fulfill({ json: receipt, status: 202 });
   });
-  await page.route('**/commands/*/answer', (route) => {
-    requests.push({ body: route.request().postDataJSON(), receipt: receipt.id });
-    return route.fulfill({ json: { ...receipt, state: 'queued', gate: null }, status: 202 });
-  });
+  await page.route('**/commands/*/{answer,cancel}', (route) =>
+    commandActionResponse(route, receipt, requests),
+  );
   return requests;
+}
+
+function commandActionResponse(
+  route: Route,
+  receipt: Receipt,
+  requests: { body: unknown; receipt: string }[],
+) {
+  const [, id, action] = new URL(route.request().url()).pathname.split('/').slice(-3);
+  const cancel = action === 'cancel';
+  requests.push({ body: cancel ? action : route.request().postDataJSON(), receipt: id! });
+  const result = cancel
+    ? { state: 'finished', outcome: { kind: 'cancelled' } }
+    : { state: 'queued' };
+  return route.fulfill({ json: { ...receipt, ...result, gate: null }, status: 202 });
 }
 
 test('the Connection manager downloads only an available launcher build', async (t) => {

@@ -32,6 +32,7 @@ export function CommandPanel({ binding, workspace }: DockProps) {
       state,
       collapsed,
       body,
+      reconnect: state.canReconnect ? binding.reconnect : undefined,
       toggle: () => setOverride(!collapsed),
       showMetrics: () => setMetrics(true),
     }),
@@ -60,7 +61,6 @@ function DockControls({
       { id: body, hidden: collapsed, key: 'composer' },
       h(Composer, { state, binding, workspace, key: state.scope }),
     ),
-    (state.gate || state.canCancel || state.canReconnect) &&
-      h(CommandActions, { state, binding, key: 'actions:' + state.scope }),
+    state.gate && h(CommandActions, { state, binding, key: 'actions:' + state.scope }),
   ];
 }

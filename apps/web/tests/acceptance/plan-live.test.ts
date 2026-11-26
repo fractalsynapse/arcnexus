@@ -72,7 +72,7 @@ async function verifyReportTabs(page: Page, outcome: Locator) {
   assert.equal(await outcome.getByText(report.summary, { exact: true }).isVisible(), true);
 }
 
-test('live event log follows the tail and lets the reader scroll back', async (t) => {
+test('the event log grows with the page and follows new entries only at the tail', async (t) => {
   const opening = Array.from({ length: 40 }, (_, index) => messageFrame(index + 1)).join('');
   const fixture = await gateway(t, opening);
   const { application, page } = await browserPage(t, new URL(fixture.url));
@@ -80,29 +80,48 @@ test('live event log follows the tail and lets the reader scroll back', async (t
   await page.goto(application.url);
   const log = page.getByRole('log', { name: 'Planning events' });
   await log.getByText('Message 40', { exact: true }).waitFor();
-  const atTail = () =>
-    log.evaluate((item) => Math.ceil(item.scrollTop + item.clientHeight) >= item.scrollHeight);
-  assert.equal(await atTail(), true);
+  assert.equal(await log.evaluate((item) => getComputedStyle(item).overflowY), 'visible');
+  await scrollPage(page, 'end');
+  const previous = await page.evaluate(() => scrollY);
   fixture.event(messageFrame(41));
   await log.getByText('Message 41', { exact: true }).waitFor();
-  assert.equal(await atTail(), true);
-  await log.evaluate(
-    (item) =>
-      new Promise<void>((resolve) => {
-        item.addEventListener('scroll', () => resolve(), { once: true });
-        item.scrollTop = 0;
-      }),
-  );
+  await page.waitForFunction((position) => scrollY > position, previous);
+  await scrollPage(page, 'start');
   fixture.event(messageFrame(42));
   await log.getByText('Message 42', { exact: true }).waitFor();
-  assert.equal(await log.evaluate((item) => item.scrollTop), 0);
+  assert.equal(await page.evaluate(() => scrollY), 0);
 });
 
-function messageFrame(sequence: number) {
+function scrollPage(page: Page, edge: 'start' | 'end') {
+  return page.evaluate(
+    (position) =>
+      new Promise<void>((resolve) => {
+        window.addEventListener('scroll', () => resolve(), { once: true });
+        window.scrollTo(0, position === 'start' ? 0 : document.documentElement.scrollHeight);
+      }),
+    edge,
+  );
+}
+
+test('the same Plan execution gets a fresh timeline on retry', async (t) => {
+  const fixture = await gateway(t, messageFrame(1, 201, { outcome: { kind: 'failed' } }));
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  await preferenceRoutes(page);
+  await page.goto(application.url);
+  const log = page.getByRole('log', { name: 'Planning events' });
+  await log.getByText('Message 1', { exact: true }).waitFor();
+  fixture.event(messageFrame(2, 202));
+  await log.getByText('Message 2', { exact: true }).waitFor();
+  assert.equal(await log.getByText('Message 1', { exact: true }).count(), 0);
+});
+
+function messageFrame(sequence: number, run?: number, detail?: object) {
   const frame = {
     sequence: String(sequence),
+    run,
+    taskID: 'plan-live',
     timestamp: null,
-    observation: { message: 'Message ' + sequence },
+    observation: { message: 'Message ' + sequence, ...detail },
   };
   return 'id: cursor-' + sequence + '\nevent: observation\ndata: ' + JSON.stringify(frame) + '\n\n';
 }

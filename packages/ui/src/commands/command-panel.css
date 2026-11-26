@@ -42,6 +42,14 @@
 .arc-send {
   grid-area: send;
 }
+.arc-command-panel .arc-stop {
+  color: #fff;
+  background: #a72735;
+  border-color: #d55562;
+}
+.arc-command-panel .arc-stop:hover:not(:disabled) {
+  background: #bd3443;
+}
 .arc-composer textarea {
   display: block;
   resize: vertical;
@@ -64,7 +72,8 @@
   padding: 0;
 }
 .arc-round-values,
-.arc-round-details {
+.arc-round-details,
+.arc-round-tools {
   display: flex;
   align-items: center;
   flex-wrap: wrap;

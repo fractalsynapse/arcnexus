@@ -1,4 +1,5 @@
 import type { TimelineFrame } from './timeline-stream.js';
+import { AttemptWindow } from '../../../../packages/coordination/src/attempt-window.js';
 
 export type CheckResult = { id: string; status?: number | string; diagnostic?: string };
 export type Question = { scope?: string; question: string; answer?: string };
@@ -48,12 +49,24 @@ class TimelineProjection {
   private readonly questions = new Map<string, Entry>();
   private readonly messages = new Map<string, Entry>();
   private count = 0;
+  private readonly window = new AttemptWindow();
 
   /** Process every new observation once, retaining its display position. */
-  update(frames: readonly TimelineFrame[]) {
-    for (const frame of frames.slice(this.count)) this.append(frame);
+  update(frames: readonly TimelineFrame[], execution?: string, expected?: string) {
+    for (const frame of frames.slice(this.count)) {
+      if (this.window.advance(frame, execution)) this.reset();
+      this.append(frame);
+    }
     this.count = frames.length;
-    return this.entries;
+    return this.window.includes(expected) ? this.entries : [];
+  }
+
+  /** Reset after an unsuccessful attempt and preserve context across an approval pause. */
+  private reset() {
+    this.entries.length = 0;
+    this.calls.clear();
+    this.questions.clear();
+    this.messages.clear();
   }
 
   /** Route status messages, questions and check results to their shared timeline. */
@@ -123,11 +136,15 @@ class TimelineProjection {
 
 const projections = new WeakMap<readonly TimelineFrame[], TimelineProjection>();
 
-export function groupTimeline(frames: readonly TimelineFrame[]) {
+export function groupTimeline(
+  frames: readonly TimelineFrame[],
+  execution?: string,
+  expected?: string,
+) {
   let projection = projections.get(frames);
   if (!projection) {
     projection = new TimelineProjection();
     projections.set(frames, projection);
   }
-  return projection.update(frames);
+  return projection.update(frames, execution, expected);
 }

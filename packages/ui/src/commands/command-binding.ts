@@ -19,10 +19,10 @@ export interface CommandState {
   status: 'Unavailable' | 'Idle' | 'Active' | 'Waiting' | 'Failed' | 'Completed' | 'Cancelled';
   scope?: string;
   gate?: { id: string; key: string; question: string };
-  connectionError?: string;
   canReconnect?: boolean;
   canCancel?: boolean;
   supported: readonly Operation[];
+  requestId?: string;
   command?: string;
   execution?: string;
   metrics?: ReadonlyArray<readonly [label: string, value: string | TokenUsage]>;

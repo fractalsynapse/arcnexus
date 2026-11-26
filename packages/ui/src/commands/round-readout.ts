@@ -9,9 +9,17 @@ interface ReadoutProps {
   body: string;
   toggle: () => void;
   showMetrics: () => void;
+  reconnect?: () => void;
 }
 
-export function RoundReadout({ state, collapsed, body, toggle, showMetrics }: ReadoutProps) {
+export function RoundReadout({
+  state,
+  collapsed,
+  body,
+  toggle,
+  showMetrics,
+  reconnect,
+}: ReadoutProps) {
   const details = useId();
   return h(
     'div',
@@ -23,6 +31,22 @@ export function RoundReadout({ state, collapsed, body, toggle, showMetrics }: Re
       onClick: showMetrics,
     }),
     h(RoundValues, { state, collapsed, details }),
+    roundActions({ collapsed, body, details, toggle, reconnect }),
+  );
+}
+
+function roundActions({
+  collapsed,
+  body,
+  details,
+  toggle,
+  reconnect,
+}: Pick<ReadoutProps, 'collapsed' | 'body' | 'toggle' | 'reconnect'> & { details: string }) {
+  return h(
+    'div',
+    { className: 'arc-round-tools' },
+    reconnect &&
+      h(IconButton, { icon: 'refine', label: 'Reconnect command updates', onClick: reconnect }),
     h(IconButton, {
       icon: collapsed ? 'up' : 'down',
       label: collapsed ? 'Expand command panel' : 'Collapse command panel',

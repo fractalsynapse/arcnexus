@@ -9,7 +9,11 @@ type PlanReadout = 'outcome' | 'metrics';
 /** Mount one Plan projection against the stable execution selected for the current project. */
 export function PlanDisplay({ kind }: { kind: PlanReadout }) {
   const { project, history, execution, plan, refresh, recorded } = usePlanResource();
-  const result = useResource<PlanOutcome & PlanMetrics>(plan && plan + '/' + kind, refresh);
+  const result = useResource<PlanOutcome & PlanMetrics>(
+    plan && plan + '/' + kind,
+    refresh,
+    recorded?.attempt,
+  );
   const unavailable = history.error ?? result.error;
   if (!project) return h('p', null, 'Select a project to view Planner ' + kind + '.');
   if (unavailable) return h('p', { role: 'alert' }, unavailable);
@@ -22,5 +26,10 @@ export function PlanDisplay({ kind }: { kind: PlanReadout }) {
         project: project.id,
         revision: recorded?.revision,
       })
-    : h(PlannerMetrics, { value: result.value, path: plan + '/tool-counts', refresh });
+    : h(PlannerMetrics, {
+        key: recorded?.attempt,
+        value: result.value,
+        path: plan + '/tool-counts',
+        refresh,
+      });
 }

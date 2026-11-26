@@ -121,22 +121,16 @@ class PlatformCommands implements CommandBinding {
 
   /** Apply only receipt snapshots belonging to the current stream. */
   private listen(scope: Connection) {
-    const fail = (error: unknown) => {
+    const disconnected = () => {
       if (this.connection !== scope || scope.abort.signal.aborted) return;
-      const message =
-        error instanceof GatewayFailure && error.status === 403
-          ? undefined
-          : error instanceof Error
-            ? error.message
-            : 'Command updates disconnected.';
-      this.publish({ ...this.snapshot, connectionError: message, canReconnect: true });
+      this.publish({ ...this.snapshot, canReconnect: true });
     };
     void followCommands(scope.base, scope.abort.signal, (value) => {
       if (this.connection !== scope) return;
       scope.updates += 1;
       this.current = value;
       this.publish(dockState(value, scope.id));
-    }).then(() => fail(undefined), fail);
+    }).then(disconnected, disconnected);
   }
 
   /** Post to the captured scope and keep a newer streamed receipt if it already arrived. */

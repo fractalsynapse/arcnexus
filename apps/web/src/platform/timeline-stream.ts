@@ -3,6 +3,7 @@ import { followGatewayEvents } from './gateway-events.js';
 export interface TimelineFrame {
   sequence: string;
   run?: number;
+  taskID?: string;
   timestamp: string | null;
   observation: unknown;
 }

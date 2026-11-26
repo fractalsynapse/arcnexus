@@ -30,6 +30,8 @@
 
 ### Changed
 
+- Let live Plan events grow with the page, put Stop in the command composer during execution, and move reconnect into the compact round controls (#746).
+
 - Keep the Planner outcome summary visible above report tabs and open detailed ratings and proposed documents in the shared dialog (#746).
 
 - Follow new Plan events while the reader is at the bottom, and color operation rows by recorded status (#746).
@@ -45,6 +47,8 @@
 - Organize the web UI into individual layout, React component, and Cordis plugin files. Separate theme preferences from color calculations (#704).
 
 ### Fixed
+
+- Reset Plan displays for a fresh journal attempt while preserving previous attempts in the retained timeline (#746).
 
 - Keep live gateway streams from blocking saved Plan reports in Firefox (#746).
 

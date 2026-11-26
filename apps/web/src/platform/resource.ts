@@ -32,14 +32,14 @@ export async function api<T>(path: string, init: RequestInit = {}) {
 type Pending = { controller: AbortController; value: Promise<unknown>; users: number };
 const reads = new Map<string, Pending>();
 
-function sharedRead(path: string) {
-  let pending = reads.get(path);
+function sharedRead(path: string, key: string) {
+  let pending = reads.get(key);
   if (!pending) {
     const controller = new AbortController();
     pending = { controller, value: api(path, { signal: controller.signal }), users: 0 };
-    reads.set(path, pending);
+    reads.set(key, pending);
     const complete = () => {
-      if (reads.get(path) === pending) reads.delete(path);
+      if (reads.get(key) === pending) reads.delete(key);
     };
     void pending.value.then(complete, complete);
   }
@@ -50,27 +50,28 @@ function sharedRead(path: string) {
     release() {
       request.users -= 1;
       if (request.users) return;
-      if (reads.get(path) === request) reads.delete(path);
+      if (reads.get(key) === request) reads.delete(key);
       request.controller.abort();
     },
   };
 }
 
 /** Fetch only while a visible consumer holds this project-scoped resource. */
-export function useResource<T>(path: string | undefined, refresh?: unknown) {
+export function useResource<T>(path: string | undefined, refresh?: unknown, identity?: string) {
   const [state, setState] = useState<Resource<T>>({});
   const reader = useRef<ResourceReader<T> | undefined>(undefined);
+  const key = path && (identity ? JSON.stringify([path, identity]) : path);
   useEffect(() => {
-    if (!path) return;
-    const observe = new ResourceReader<T>(path, setState);
+    if (!path || !key) return;
+    const observe = new ResourceReader<T>(path, key, setState);
     reader.current = observe;
     return () => {
       reader.current = undefined;
       observe.close();
     };
-  }, [path]);
-  useEffect(() => reader.current?.reload(), [path, refresh]);
-  return state.path === path ? state : {};
+  }, [path, key]);
+  useEffect(() => reader.current?.reload(), [key, refresh]);
+  return state.path === key ? state : {};
 }
 
 /** Coalesce notices during a read and fetch again afterwards so bursts cannot starve updates. */
@@ -82,6 +83,7 @@ class ResourceReader<T> {
   /** Publish only snapshots for the path this consumer mounted. */
   constructor(
     private readonly path: string,
+    private readonly key: string,
     private readonly publish: (state: Resource<T>) => void,
   ) {}
 
@@ -91,12 +93,12 @@ class ResourceReader<T> {
       this.dirty = true;
       return;
     }
-    const read = sharedRead(this.path);
+    const read = sharedRead(this.path, this.key);
     this.pending = read;
     this.dirty = false;
     void read.value.then(
-      (value) => this.complete({ path: this.path, value: value as T }),
-      (error: Error) => this.complete({ path: this.path, error: error.message }),
+      (value) => this.complete({ path: this.key, value: value as T }),
+      (error: Error) => this.complete({ path: this.key, error: error.message }),
     );
   }
 

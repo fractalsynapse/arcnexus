@@ -73,7 +73,7 @@ function useGuideCollection(
   filter: GuideFilter,
 ) {
   const search = useDeferredValue(filter.search);
-  const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh);
+  const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh, recorded?.attempt);
   const delivered =
     outcome.value?.outcome?.kind === 'merged' ? outcome.value.outcome.commit : undefined;
   const revision = delivered ?? recorded?.revision ?? (!execution ? project?.revision : undefined);

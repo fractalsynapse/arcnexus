@@ -8,6 +8,7 @@ import type { ResolveJournalProject } from '../data.js';
 import { RunMeasurements } from '../measurements.js';
 import { listPlanReferences, planReference, readPlanReference } from './plan-records.js';
 import { readImportedTimeline } from './read-timeline.js';
+import { AttemptWindow } from '../attempt-window.js';
 
 const selection = z.strictObject({ execution: z.string().min(1) });
 const currentSchema = planReference.extend({
@@ -43,7 +44,7 @@ function projections(database: Client, resolve: ResolveJournalProject) {
     ),
     outcome: dataOperation(selection, outcomeSchema, async (scope, { execution }) => {
       const { task, events } = await load(scope, execution);
-      return { ...task, ...planResult(events, execution), ...guideChanges(events) };
+      return { ...task, ...planResult(events, execution, task.attempt), ...guideChanges(events) };
     }),
     'tool-counts': dataOperation(selection, toolCountsSchema, async (scope, { execution }) =>
       frequencies((await load(scope, execution)).events),
@@ -96,10 +97,20 @@ async function planEvents(
   const remote = await resolve(scope);
   const task = await readPlanReference(database, remote, execution);
   if (!task) throw new Error('Planning execution unavailable');
-  return { task, events: (await readImportedTimeline(database, remote, execution)).events };
+  const { events } = await readImportedTimeline(database, remote, execution);
+  return { task, events: currentAttemptEvents(events, execution, task.attempt) };
 }
 
-function planResult(events: JournalEvent[], execution: string) {
+function currentAttemptEvents(events: JournalEvent[], execution: string, attempt?: string) {
+  const window = new AttemptWindow();
+  let start = 0;
+  for (const [index, event] of events.entries()) {
+    if (window.advance(event, execution)) start = index;
+  }
+  return window.includes(attempt) ? events.slice(start) : [];
+}
+
+function planResult(events: JournalEvent[], execution: string, attempt?: string) {
   let outcome: unknown = null;
   let report: unknown;
   for (const frame of events) {
@@ -108,7 +119,7 @@ function planResult(events: JournalEvent[], execution: string) {
       outcome?: unknown;
       plannerProposal?: { proposal?: unknown };
     } | null;
-    if (event?.outcome !== undefined) outcome = event.outcome;
+    if (event?.outcome !== undefined && String(frame.run) === attempt) outcome = event.outcome;
     if (event?.plannerProposal?.proposal !== undefined) report = event.plannerProposal.proposal;
   }
   return { outcome, report };

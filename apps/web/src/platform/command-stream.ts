@@ -51,6 +51,7 @@ export function dockState({ receipt, canSubmit }: CurrentWorkflow, scope: string
   return {
     scope,
     status: status(receipt, canSubmit),
+    requestId: receipt?.id,
     supported: canSubmit && !busy ? supported : [],
     canCancel: Boolean(busy),
     command: receipt ? labels[receipt.request.command] : undefined,

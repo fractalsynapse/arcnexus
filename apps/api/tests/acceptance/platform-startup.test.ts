@@ -289,18 +289,56 @@ test(
     assert.ok(operator);
     const project = await platform.context.catalog.add(operator.principal, { remote: repository });
     const execution = randomUUID();
-    await append(repository, execution, 1, 'started', {
-      planningExecution: { revision: project.revision },
-    });
-    await append(repository, execution, 2, 'finished', {
-      outcome: { kind: 'planned', summary: 'Targets mapped' },
-      plannerProposal: { proposal: { summary: 'Compared the accepted goals.' } },
-    });
+    await seedPlanRetry(repository, execution, project.revision);
     await platform.context.use(apiPlugin(platform.authenticate));
     const address = 'http://arc.test/projects/' + project.id + '/plan-executions/';
+    await verifyPlanRetry(platform.context, address + execution, headers);
+    await append(
+      repository,
+      execution,
+      3,
+      'finished',
+      {
+        outcome: { kind: 'planned', summary: 'Targets mapped' },
+        plannerProposal: { proposal: { summary: 'Compared the accepted goals.' } },
+      },
+      2,
+    );
     await verifyPlanPanelResponses(platform.context, address, headers, execution);
   },
 );
+
+async function seedPlanRetry(repository: string, execution: string, revision: string) {
+  await append(
+    repository,
+    execution,
+    1,
+    'failed',
+    {
+      planningExecution: { revision },
+      plannerProposal: { proposal: { summary: 'Previous proposal' } },
+      outcome: { kind: 'failed', reason: 'First attempt failed' },
+    },
+    1,
+    0,
+  );
+  await append(repository, execution, 2, 'retry started', {}, 2);
+}
+
+async function verifyPlanRetry(context: Context, address: string, headers: Record<string, string>) {
+  const outcome = await context.api(new Request(address + '/outcome', { headers }));
+  assert.equal(outcome.status, 200);
+  const plan = await outcome.json();
+  assert.equal(plan.outcome, null);
+  assert.equal(plan.report, undefined);
+  assert.equal(plan.attempt, '2');
+  const timeline = await context.api(new Request(address + '/events', { headers }));
+  const { events } = await timeline.json();
+  assert.deepEqual(
+    events.map((event: { run: number }) => event.run),
+    [1, 2],
+  );
+}
 
 test(
   'Plan history lists distinct project executions and recognizes older proposal markers',

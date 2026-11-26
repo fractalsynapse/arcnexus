@@ -8,7 +8,7 @@ import { useTimelineTail } from './timeline-tail.js';
 
 /** Follow the selected Plan and display only its ordered, retained observations. */
 export function EventDisplay({ binding }: { binding: CommandBinding }) {
-  const { project, history, events, execution, command, active } = usePlanResource();
+  const { project, history, events, execution, command, active, recorded } = usePlanResource();
   const timeline = useTimeline(events && events + '/events');
   const tail = useTimelineTail(events, active, timeline.frames.at(-1)?.sequence);
   if (!project) return h('p', null, 'Select a project to see planning events.');
@@ -27,7 +27,7 @@ export function EventDisplay({ binding }: { binding: CommandBinding }) {
         tabIndex: 0,
         ...tail,
       },
-      groupTimeline(timeline.frames).map((entry) =>
+      groupTimeline(timeline.frames, execution, recorded?.attempt).map((entry) =>
         h(EventEntry, { key: entry.key, entry, execution, command, binding }),
       ),
     ),

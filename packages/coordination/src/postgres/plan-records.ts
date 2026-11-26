@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const planReference = z.strictObject({
   execution: z.string(),
+  attempt: z.string().optional(),
   revision: z.string(),
   active: z.boolean(),
   startedAt: z.string().nullable(),
@@ -21,7 +22,7 @@ const plan = `
       AND (e.content::jsonb ? 'planningExecution' OR e.content::jsonb ? 'plannerProposal')
     ORDER BY r.task_id,r.id DESC,e.id DESC
   )
-  SELECT captured.*, bool_or(r.active = 1) AS active,
+  SELECT captured.*, max(r.id)::text AS attempt, bool_or(r.active = 1) AS active,
          min(e.recorded_at) AS "startedAt", max(e.recorded_at) AS "updatedAt"
   FROM captured JOIN arcnexus_coordination.runs r
     ON r.project=$1 AND r.task_id=captured.execution

@@ -134,11 +134,6 @@
   min-inline-size: 0;
   gap: 8px;
 }
-.arc-plan-timeline {
-  max-block-size: calc(100dvh - var(--nav-height) - var(--pad));
-  overflow: auto;
-  overscroll-behavior: contain;
-}
 .arc-plan-event {
   padding: 9px;
   background: var(--quiet);
