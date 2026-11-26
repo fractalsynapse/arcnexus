@@ -1,6 +1,7 @@
 import type { TimelineChanges } from '../../../packages/coordination/src/index.js';
 import type { Context } from 'cordis';
 import { ZodError } from 'zod';
+import { InvalidDocumentationDirectories } from '../../../packages/architecture/src/index.js';
 import type { Data, DataScope, ResolveDataScope } from '../../../packages/data/src/index.js';
 import { matchPlatform, platformRequest } from './platform-routes.js';
 import { openApi } from './openapi.js';
@@ -21,6 +22,7 @@ function problem(status: number, message: string) {
 }
 
 function apiError(error: unknown) {
+  if (error instanceof InvalidDocumentationDirectories) return problem(422, error.message);
   if (error instanceof URIError || error instanceof SyntaxError || error instanceof ZodError)
     return problem(400, 'Invalid resource request');
   if (error instanceof Error && error.message === 'Data operation not authorized')
@@ -104,7 +106,7 @@ async function invokeResource(
   input: Record<string, unknown>,
 ) {
   const { resource, operation } = route;
-  const content = route.method === 'POST' ? await request.text() : '';
+  const content = route.method ? await request.text() : '';
   const body: unknown = content ? JSON.parse(content) : {};
   const value =
     typeof body === 'object' && body !== null && !Array.isArray(body)

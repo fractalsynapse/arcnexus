@@ -30,7 +30,10 @@ export async function runHostedRequest(
   const observer = new RequestObserver(requests, owner, request.id, request);
   const command = workflowRequest.parse(request.request);
   const outcome = await withCancellation(requests, owner, request.id, signal, async (active) =>
-    dispatchWorkflow(commands, owner.directory, command, observer, active, request.id),
+    dispatchWorkflow(commands, owner.directory, command, observer, active, {
+      invocation: request.id,
+      documentationDirectories: request.documentationDirectories ?? undefined,
+    }),
   );
   await observer.bind;
   if (outcome.kind === 'cancelled' && observer.bind && !observer.terminal) return true;

@@ -49,6 +49,12 @@ const tools = {
     operation: 'read',
     description: 'Read the documentation directories at the project’s captured revision.',
   },
+  save_project_settings: {
+    resource: 'project-settings',
+    operation: 'update',
+    description:
+      'Save documentation directories for the next Plan run at the current project revision.',
+  },
   probe_project: {
     resource: 'projects',
     operation: 'probe',

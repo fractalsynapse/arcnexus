@@ -205,6 +205,23 @@ async function declineSettings(call: ReturnType<typeof commandClient>, id: strin
   assert.equal((await call('/' + id + '/answer', 'POST', { gate, answer: 'skip' })).status, 202);
 }
 
+test(
+  'a queued Plan retains its folder selection across retries',
+  { skip: !connectionString },
+  async (t) => {
+    const { database, remote, revision } = await fixture(t);
+    const requests = new WorkflowRequests(database);
+    const operator = { remote, principal: 'isolated-operator' };
+    const owner = { remote, revision, worker: 'isolated-host' };
+    const id = randomUUID();
+    const plan = { command: 'task_plan', mode: 'recommend-objectives' };
+    await requests.submit(operator, id, plan, revision, []);
+    await requests.submit(operator, id, plan, revision, ['.arc/goals']);
+    const claimed = await requests.claim(owner);
+    assert.deepEqual(claimed?.documentationDirectories, []);
+  },
+);
+
 async function verifyAdmission(call: ReturnType<typeof commandClient>, id: string) {
   assert.equal((await call('', 'POST', { id, request: { command: 'task_plan' } })).status, 202);
   assert.equal(

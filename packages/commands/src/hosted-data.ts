@@ -13,7 +13,14 @@ import {
 
 const resource = 'workflow-requests';
 
-type Resolve = (scope: DataScope) => Promise<{ remote: string; revision: string } | undefined>;
+type Resolve = (scope: DataScope) => Promise<
+  | {
+      remote: string;
+      revision: string;
+      documentationDirectories?: () => Promise<string[] | undefined>;
+    }
+  | undefined
+>;
 
 async function caller(scope: DataScope, resolve: Resolve) {
   const project = await resolve(scope);
@@ -61,8 +68,12 @@ function submitOperation(requests: WorkflowRequests, resolve: Resolve) {
           : undefined;
     if (draft && draft.revision !== binding.revision)
       throw new Error('Refresh the project before submitting an edit from a different revision');
+    const directories =
+      request.command === 'task_plan' && request.mode
+        ? await binding.documentationDirectories?.()
+        : undefined;
     return workflowReceipt.parse(
-      await requests.submit(binding, input.id, request, binding.revision),
+      await requests.submit(binding, input.id, request, binding.revision, directories),
     );
   });
 }

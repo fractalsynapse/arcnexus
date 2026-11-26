@@ -233,11 +233,12 @@ test('one approved batch reaches goal alignment with exactly the selected object
   ]);
   Object.assign(scenario.task.capture.source, { paths: [path], read: () => quote });
   Object.assign(scenario.task.capture.project, { documentationDirectories: ['handbook'] });
+  Object.assign(scenario.task.config, { documentationDirectories: ['handbook/operations'] });
   await inspectRecommendationReview(scenario);
   assert.deepEqual(
     (scenario.requests[0]!.assignment as { documentationDirectories: string[] })
       .documentationDirectories,
-    ['handbook'],
+    ['handbook/operations'],
   );
 });
 

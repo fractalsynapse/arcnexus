@@ -43,10 +43,12 @@ test(
         .revision,
       record.revision,
     );
-    assert.deepEqual(await platform.context.data.invoke(project, 'project-settings', 'read', {}), {
-      revision: record.revision,
-      directories: [],
-    });
+    const settings = { revision: record.revision, directories: ['.arc/goals'] };
+    await platform.context.data.invoke(project, 'project-settings', 'update', settings);
+    assert.deepEqual(
+      await platform.context.data.invoke(project, 'project-settings', 'read', {}),
+      settings,
+    );
   },
 );
 

@@ -18,7 +18,7 @@ export interface Workspace {
   headerAction?: ReactNode;
   parent?: string;
   match?: (path: string) => boolean;
-  title?: (path: string) => string;
+  title?: ComponentType;
   breadcrumbs?: ReactNode;
   context?: ReactNode;
   scope?: ComponentType<PropsWithChildren>;

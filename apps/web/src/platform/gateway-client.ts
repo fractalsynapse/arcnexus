@@ -4,10 +4,22 @@ type Pending = { controller: AbortController; value: Promise<unknown>; users: nu
 
 /** Preserve HTTP status for callers that can recover from a refused request. */
 export class GatewayFailure extends Error {
-  /** Keep the gateway status without retaining the response body. */
-  constructor(readonly status: number) {
-    super('Gateway request failed (' + status + ')');
+  /** Keep the gateway status and optionally an actionable input validation message. */
+  constructor(
+    readonly status: number,
+    message?: string,
+  ) {
+    super(message ?? 'Gateway request failed (' + status + ')');
   }
+}
+
+async function rejection(response: Response) {
+  if (response.status !== 422) return new GatewayFailure(response.status);
+  const body = (await response.json().catch(() => null)) as { error?: unknown } | null;
+  return new GatewayFailure(
+    response.status,
+    typeof body?.error === 'string' ? body.error : undefined,
+  );
 }
 
 /** Own the transport and shared in-flight reads for one browser composition. */
@@ -22,7 +34,7 @@ export class GatewayClient {
     const headers = new Headers(init.headers);
     if (init.body) headers.set('Content-Type', 'application/json');
     const response = await this.transport(path, { ...init, headers, redirect: 'error' });
-    if (!response.ok) throw new GatewayFailure(response.status);
+    if (!response.ok) throw await rejection(response);
     return response;
   }
 

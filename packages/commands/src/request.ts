@@ -46,12 +46,12 @@ export async function dispatchWorkflow(
   input: WorkflowRequest,
   observer: TaskObserver,
   signal: AbortSignal,
-  invocation?: string,
+  retained?: { invocation: string; documentationDirectories?: string[] },
 ) {
   const selection = workflowRequest.parse(input);
   switch (selection.command) {
     case 'task_plan':
-      return dispatchPlan(commands, directory, selection, observer, signal, invocation);
+      return dispatchPlan(commands, directory, selection, observer, signal, retained);
     case 'task_run':
       return selection.goal === undefined
         ? commands.runRound(directory, observer, signal)
@@ -74,7 +74,7 @@ function dispatchPlan(
   request: PlanRequest,
   observer: TaskObserver,
   signal: AbortSignal,
-  invocation?: string,
+  retained?: { invocation: string; documentationDirectories?: string[] },
 ) {
   if (request.draft)
     return dispatchGuideDraft(commands, directory, request.draft, observer, signal);
@@ -83,8 +83,9 @@ function dispatchPlan(
     {
       directory,
       goal: request.focus ?? 'Find objectives in project documentation',
-      scope: ['plan:recommendation', invocation].filter(Boolean).join(':'),
+      scope: ['plan:recommendation', retained?.invocation].filter(Boolean).join(':'),
       planning: 'recommendation',
+      documentationDirectories: retained?.documentationDirectories,
     },
     observer,
     signal,

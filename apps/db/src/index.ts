@@ -1,7 +1,10 @@
 import type { Context } from 'cordis';
 import type { Client } from 'pg';
 import { capacityMigration } from '../../../packages/capacity/src/index.js';
-import { catalogMigration } from '../../../packages/catalog/src/index.js';
+import {
+  catalogMigration,
+  projectDocumentationMigration,
+} from '../../../packages/catalog/src/index.js';
 import { uiPreferencesMigration } from '../../../packages/ui/src/preferences/server.js';
 import {
   coordinationMigration,
@@ -10,6 +13,7 @@ import {
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowDocumentationMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
   documentationDiscoveryMigration,
@@ -24,12 +28,14 @@ const modelMigrations = [
   hostedCoordinationMigration,
   hostSessionMigration,
   workflowRequestsMigration,
+  workflowDocumentationMigration,
   workflowReceiptsMigration,
   workflowRuntimeMigration,
   documentationDiscoveryMigration,
   retireDocumentationDiscoveryMigration,
   capacityMigration,
   catalogMigration,
+  projectDocumentationMigration,
   uiPreferencesMigration,
 ];
 

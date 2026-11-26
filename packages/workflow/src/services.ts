@@ -26,6 +26,7 @@ export interface TaskInput {
   scope?: string;
   standing?: boolean;
   planning?: 'exploration' | 'objective' | 'recommendation';
+  documentationDirectories?: string[];
   guideDraft?: import('../../planner/src/guide-draft.js').GuideDraft;
   architecture?: boolean;
   guide?: string;

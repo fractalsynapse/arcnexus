@@ -374,7 +374,7 @@ test('the Project manager keeps reachability with status and uses a compact impo
   assert.equal(await dialog.getByRole('button', { name: 'Remove plan', exact: true }).count(), 1);
 });
 
-test('a project row opens its own documentation settings and submits a revision-bound change', async (t) => {
+test('a project saves documentation folders immediately without starting a workflow', async (t) => {
   const { application, page } = await browserPage(t);
   await responses(page);
   const changes = await documentationSettingsRoutes(page);
@@ -385,24 +385,28 @@ test('a project row opens its own documentation settings and submits a revision-
   const directories = settings.getByLabel('Documentation directories');
   assert.equal(await directories.inputValue(), 'handbook');
   await directories.fill('handbook\ndesign/decisions');
-  await settings.getByRole('button', { name: 'Submit for review', exact: true }).click();
-  await settings.getByText('Submitted for architecture review.').waitFor();
+  await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await settings.getByText('Documentation directories saved.').waitFor();
   assert.deepEqual(changes, [
     {
-      command: 'architecture_update',
-      documentation: { revision: project.revision, directories: ['handbook', 'design/decisions'] },
+      revision: project.revision,
+      directories: ['handbook', 'design/decisions'],
     },
   ]);
 });
 
 async function documentationSettingsRoutes(page: Page) {
   const submitted: unknown[] = [];
-  await page.route('**/projects/' + project.id + '/settings', (route) =>
-    route.fulfill({ json: { revision: project.revision, directories: ['handbook'] } }),
-  );
+  await page.route('**/projects/' + project.id + '/settings', (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { revision: project.revision, directories: ['handbook'] } });
+    assert.equal(route.request().method(), 'PATCH');
+    const settings = route.request().postDataJSON();
+    submitted.push(settings);
+    return route.fulfill({ json: settings });
+  });
   await page.route('**/projects/' + project.id + '/commands', (route) => {
-    submitted.push(route.request().postDataJSON().request);
-    return route.fulfill({ status: 202, json: {} });
+    throw new Error('Saving documentation folders started a workflow: ' + route.request().url());
   });
   return submitted;
 }

@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Save Plan documentation directories directly in Project Settings and show readable labels for older objective files (#746).
+
 - Add project documentation directory settings and use one Plan flow for objective review and goal refinement (#746).
 
 - Show Plan processing time without approval waits. Group recommendation notices in the objective review dialog and label the draft preview in the page header (#746).

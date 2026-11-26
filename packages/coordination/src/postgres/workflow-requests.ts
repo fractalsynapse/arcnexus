@@ -61,20 +61,26 @@ export class WorkflowRequests {
   }
 
   /** Admit one request and return exact duplicate submissions idempotently. */
-  async submit(caller: Caller, id: string, request: unknown, revision: string) {
+  async submit(
+    caller: Caller,
+    id: string,
+    request: unknown,
+    revision: string,
+    documentationDirectories?: string[],
+  ) {
     const content = JSON.stringify(request);
     const values = [caller.remote, caller.principal, id, content, revision];
     const entered = await this.database.query<WorkflowReceipt>(
       `
-      INSERT INTO ${store} (project,principal,id,request,revision,state)
-      SELECT $1,$2,$3,$4::jsonb,$5,'queued'
+      INSERT INTO ${store} (project,principal,id,request,revision,state,documentation_directories)
+      SELECT $1,$2,$3,$4::jsonb,$5,'queued',$6::jsonb
       WHERE EXISTS (SELECT 1 FROM arcnexus_coordination.hosted_projects WHERE project=$1)
         AND NOT EXISTS (
           SELECT 1 FROM arcnexus_coordination.runs WHERE project=$1 AND active=1 AND NOT documentation_only
         )
       ON CONFLICT DO NOTHING RETURNING ${columns}
       `,
-      values,
+      [...values, JSON.stringify(documentationDirectories ?? null)],
     );
     if (entered.rows[0]) return entered.rows[0];
     const existing = await this.database.query<WorkflowReceipt>(
@@ -121,10 +127,13 @@ export class WorkflowRequests {
   /** Transfer the pending request to a Host with the verified revision and retained image. */
   async claim(owner: Worker & { revision: string }) {
     const runtime = owner.runtime ? JSON.stringify(owner.runtime) : null;
-    const { rows } = await this.database.query<WorkflowReceipt & { reply: string | null }>(
+    const { rows } = await this.database.query<
+      WorkflowReceipt & { reply: string | null; documentationDirectories: string[] | null }
+    >(
       `UPDATE ${store} SET state='running',worker=$2,runtime=COALESCE(runtime,$4::jsonb)
        WHERE project=$1 AND revision=$3 AND state='queued' AND NOT cancellation
-         AND NOT documentation_only AND (runtime IS NULL OR runtime=$4::jsonb) RETURNING ${columns},reply`,
+         AND NOT documentation_only AND (runtime IS NULL OR runtime=$4::jsonb)
+       RETURNING ${columns},reply,documentation_directories AS "documentationDirectories"`,
       [owner.remote, owner.worker, owner.revision, runtime],
     );
     if (!rows[0]) await this.verifyQueuedImage(owner, runtime);

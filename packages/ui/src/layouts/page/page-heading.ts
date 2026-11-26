@@ -4,7 +4,7 @@ import { IconButton } from '../../controls/icon-button.js';
 import { SurfaceHeading } from '../../displays/surface-heading.js';
 
 interface PageHeadingProps {
-  label: string;
+  label: ReactNode;
   title: string;
   heading: Ref<HTMLHeadingElement>;
   gear: Ref<HTMLButtonElement>;

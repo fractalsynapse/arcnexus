@@ -2,7 +2,7 @@ type Route = {
   path: string;
   resource: string;
   operation: string;
-  method?: 'POST';
+  method?: 'POST' | 'PATCH';
   parameter?: string;
   stream?: 'timeline' | 'commands' | 'plan-changes';
   query?: readonly string[];
@@ -10,6 +10,13 @@ type Route = {
 
 export const routes: readonly Route[] = [
   { path: '/settings', resource: 'project-settings', operation: 'read', query: [] },
+  {
+    method: 'PATCH',
+    path: '/settings',
+    resource: 'project-settings',
+    operation: 'update',
+    query: [],
+  },
   {
     path: '/operation-evidence/{sequence}',
     resource: 'operation-evidence',

@@ -4,7 +4,7 @@
 
 ## Project settings
 
-Open the gear beside **Remove** on the project's row in **Project Manager**. Enter the optional **Documentation directories** as repository-relative paths, one per line. Submit the change for review as an exact edit to the project definition. Web, CLI, REST, and MCP use the same settings at the captured revision. An empty list lets Planner discover documentation across the repository. The instruction can point a single run to other authorized files or directories at the same revision. Show invalid paths before discovery and name the directory to correct.
+Open the gear beside **Remove** on the project's row in **Project Manager**. Enter optional **Documentation directories** as repository-relative paths, one per line. **Save** validates the folders against the captured revision and records the source selection for the project. The next hosted recommendation run captures the saved selection, including a saved empty list for repository-wide discovery. Until a selection is saved, Plan uses the repository definition's defaults. The instruction can point a single run to other authorized files or directories at the same revision. Name invalid paths before saving or discovery. Only proposed objective wording needs a human decision during Plan.
 
 For example, a project can select `handbook` and `design/decisions`. Guide storage continues to use the existing knowledge root.
 

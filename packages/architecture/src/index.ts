@@ -66,6 +66,9 @@ export const architecturePlugin = {
 
 export { prepareArchitectureProposal } from './decode-proposal.js';
 export { documentationSettings, type DocumentationSettings } from './documentation-settings.js';
-export { validateDocumentationDirectories } from './documentation-proposal.js';
+export {
+  InvalidDocumentationDirectories,
+  validateDocumentationDirectories,
+} from './documentation-proposal.js';
 export { operationID, resolveOperation } from './operation.js';
 export { validateCapture } from './validation.js';

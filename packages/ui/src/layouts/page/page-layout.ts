@@ -18,7 +18,7 @@ export function PageLayout({ workspace, path, context }: PageLayoutProps) {
   const page = usePageLayout(workspace, path);
   const { heading, gear, settings, toggle, title, label } = page;
   const titleRow = h(PageHeading, {
-    label,
+    label: workspace.title ? h(workspace.title) : label,
     title,
     heading,
     gear,
@@ -69,7 +69,7 @@ function usePageLayout(workspace: Workspace, path: string) {
   const gear = useRef<HTMLButtonElement>(null);
   const [settings, open] = useState(false);
   const { ready, preferences, save } = useLayoutPreference(workspace);
-  const label = workspace.title?.(path) ?? workspace.label;
+  const label = workspace.label;
   usePageFocus(heading, label, path);
   const close = () => {
     open(false);

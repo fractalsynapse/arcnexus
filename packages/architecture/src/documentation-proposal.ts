@@ -5,13 +5,18 @@ import { documentationDirectories, type DocumentationSettings } from './document
 
 const field = 'documentationDirectories';
 
+/** Report invalid folder choices without exposing the host checkout or Git diagnostics. */
+export class InvalidDocumentationDirectories extends Error {}
+
 /** Check that each configured directory actually exists at the authorized commit. */
 export function validateDocumentationDirectories(capture: Capture, input: unknown) {
   const directories = documentationDirectories.parse(input);
   const paths = capture.source.files ?? capture.source.paths;
   for (const directory of directories) {
     if (!paths.some((path) => path.startsWith(directory + '/')))
-      throw new Error('Documentation directory is missing at the captured revision: ' + directory);
+      throw new InvalidDocumentationDirectories(
+        'Documentation directory is missing at the captured revision: ' + directory,
+      );
   }
   return directories;
 }

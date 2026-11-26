@@ -42,8 +42,8 @@ function projectOperation(route: Route, definition: Definition) {
       requestBody: { required: true, content: { 'application/json': { schema: body } } },
     }),
     responses: {
-      [route.method ? 202 : 200]: {
-        description: route.method ? 'Accepted workflow request' : 'Scoped data',
+      [route.method === 'POST' ? 202 : 200]: {
+        description: route.method === 'POST' ? 'Accepted workflow request' : 'Scoped data',
         content: {
           'application/json': { schema: definition.output },
           ...(route.stream && { 'text/event-stream': { schema: string } }),

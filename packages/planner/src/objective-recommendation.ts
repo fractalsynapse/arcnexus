@@ -159,7 +159,7 @@ function recommendationAssignment(task: HostTask, revision: unknown) {
   const { capture } = task;
   const directories = validateDocumentationDirectories(
     capture,
-    capture.project.documentationDirectories ?? [],
+    task.config.documentationDirectories ?? capture.project.documentationDirectories ?? [],
   );
   return {
     mode: 'recommend objectives',

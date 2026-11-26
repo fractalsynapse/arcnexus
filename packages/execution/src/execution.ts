@@ -79,6 +79,7 @@ export class Execution {
     const selected = fresh ? stagingCapture(this.architecture, capture) : capture;
     return {
       ...preflight(selected, this.storage, fresh),
+      documentationDirectories: input.documentationDirectories,
       runtime: this.runtime,
       github: this.github,
     };

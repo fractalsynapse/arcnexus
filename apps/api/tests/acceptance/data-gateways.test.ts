@@ -139,7 +139,13 @@ test('a moved categorized guide keeps its stable endpoint and its original pinne
   const current = await context.api(new Request(address + revision, { headers }));
   assert.equal(current.status, 200);
   const { entry } = await current.json();
-  assert.deepEqual(entry, { id: 'first', path, category: 'quality', priority: 1 });
+  assert.deepEqual(entry, {
+    id: 'first',
+    path,
+    category: 'quality',
+    name: 'First goal',
+    priority: 1,
+  });
   const pinned = await context.api(new Request(address + original, { headers }));
   assert.equal(pinned.status, 200);
   const result = await pinned.json();

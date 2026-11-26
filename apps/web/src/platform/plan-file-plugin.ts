@@ -8,8 +8,8 @@ import { FileInformation } from './file-information.js';
 import { FileContext } from './file-context.js';
 import { FilePath } from './file-path.js';
 import { FileRevisionSelector } from './file-revision-selector.js';
-import { guideRoute, planFilesPath } from './guide.js';
-import { PlanFileScope } from './plan-file-scope.js';
+import { guideName, guideRoute, planFilesPath } from './guide.js';
+import { PlanFileScope, usePlanFile } from './plan-file-scope.js';
 
 export const planFilePlugin = {
   inject: ['ui', 'webCommands'],
@@ -22,7 +22,7 @@ export const planFilePlugin = {
         label: 'Plan file',
         defaultColumns: 2,
         match: (path) => !!guideRoute(path),
-        title: (path) => guideRoute(path)?.id ?? 'Plan file',
+        title: FileTitle,
         scope: PlanFileScope,
         breadcrumbs: h(FileBreadcrumbs),
         titleAction: h(FileRevisionSelector),
@@ -34,6 +34,11 @@ export const planFilePlugin = {
       context.effect(() => context.ui.registerDisplay(planFilesPath, display));
   },
 };
+
+function FileTitle() {
+  const { detail } = usePlanFile();
+  return detail.value ? guideName(detail.value.entry) : 'Plan file';
+}
 
 const fileDisplays = [
   {

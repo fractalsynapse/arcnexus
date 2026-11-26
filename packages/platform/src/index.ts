@@ -130,8 +130,12 @@ async function projectResources(
   await context.use(
     hostedCommandsDataPlugin(new WorkflowRequests(database), async (scope) => {
       const target = await project(scope);
-      if (!target) return undefined;
-      return configuration.hosted(target.remote) ? target : undefined;
+      if (!target || !configuration.hosted(target.remote)) return undefined;
+      return {
+        ...target,
+        documentationDirectories: () =>
+          context.catalog.documentationDirectories(scope.principal, target.id),
+      };
     }),
   );
 }

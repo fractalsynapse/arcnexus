@@ -43,6 +43,8 @@ export function guideType(kind: GuideKind) {
 }
 
 /** Present the file name while links retain the guide's stable record ID. */
-export function guideName({ id, path }: Guide) {
-  return path.split('/').at(-1)?.replace(/\.md$/, '') || id;
+export function guideName({ path, name }: Guide) {
+  const basename = path.split('/').at(-1)?.replace(/\.md$/, '') ?? '';
+  if (/^[a-f0-9]{64}$/.test(basename)) return name ?? 'Untitled guide';
+  return basename || name || 'Untitled guide';
 }

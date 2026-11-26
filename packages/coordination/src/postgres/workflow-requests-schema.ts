@@ -32,3 +32,9 @@ export const workflowRequestsMigration = {
       FOR EACH ROW EXECUTE FUNCTION arcnexus_coordination.notify_workflow_request();
   `,
 };
+
+/** Preserve the operator's source selection across Host claims and approval resumes. */
+export const workflowDocumentationMigration = {
+  id: 'coordination/workflow-documentation-directories',
+  sql: `ALTER TABLE arcnexus_coordination.workflow_requests ADD COLUMN documentation_directories jsonb;`,
+};
