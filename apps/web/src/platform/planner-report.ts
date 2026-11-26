@@ -8,31 +8,26 @@ import {
 } from '../../../../packages/ui/src/index.js';
 import type { RecommendationAssessment } from '../../../../packages/planner/src/objective-review.js';
 import { RecommendedObjectives } from './recommended-objectives.js';
-import type { Proposal, Rating } from '../../../../packages/planner/src/proposal.js';
+import type { GoalChange, Proposal, Rating } from '../../../../packages/planner/src/proposal.js';
 import { guideLink } from './guide.js';
 
-type Scope = { project: string; revision?: string };
+type Scope = { project: string; revision?: string; delivered?: string };
 
 /** Translate the retained Planner response into its named sections. */
 export function PlannerReport({
   report,
   recommendation,
-  project,
-  revision,
+  ...scope
 }: Scope & {
   report?: Proposal;
   recommendation?: RecommendationAssessment;
 }) {
-  const goal = (id: string) =>
-    revision && report?.ratings.some((rating) => rating.id === id)
-      ? h(WorkspaceLink, { href: guideLink('goals', id, project, revision) }, id)
-      : h('code', null, id);
   return h(AgentReport, {
     label: 'Planner report',
     summary: report?.summary ?? recommendation?.summary ?? '',
     sections: [
       ...(recommendation ? [objectivesSection(recommendation, report)] : []),
-      ...(report ? reportSections(report, goal) : []),
+      ...(report ? reportSections(report, scope) : []),
     ],
   });
 }
@@ -48,22 +43,48 @@ function objectivesSection(recommendation: RecommendationAssessment, report?: Pr
   };
 }
 
-function reportSections(report: Proposal, goal: (id: string) => ReactNode) {
+function reportSections(report: Proposal, scope: Scope) {
+  const changes = new Map(report.changes.map((change) => [change.id, change]));
+  const rated = new Set(report.ratings.map(({ id }) => id));
+  const { project, revision } = scope;
   return [
     listSection(
       'Ratings',
-      report.ratings.map((rating) => h(GoalRating, { rating, goal: goal(rating.id) })),
+      report.ratings.map((rating) =>
+        h(GoalRating, { rating, goal: goalFile(rating.id, project, revision) }),
+      ),
       'No goal ratings recorded.',
     ),
     listSection('Comparison', report.comparison, 'No comparison recorded.', 'ol'),
     listSection('Changes', report.changes.map(proposedChange), 'No changes proposed.'),
-    listSection('Goal links', report.links.map(goal), 'No goal links proposed.'),
+    listSection(
+      'Goal links',
+      report.links.map((id) => goalReference(id, scope, changes.get(id), rated.has(id))),
+      'No goal links proposed.',
+    ),
     {
       title: 'Sources',
       count: report.sources.length,
       content: h(SourceCitations, { sources: report.sources }),
     },
   ];
+}
+
+/** Open the published goal, its captured preimage, or the retained proposal before delivery. */
+function goalReference(
+  id: string,
+  { project, revision, delivered }: Scope,
+  change?: GoalChange,
+  rated?: boolean,
+) {
+  if (!delivered && !rated && change?.content != null) return goalProposal(id, change.content, id);
+  return goalFile(id, project, change?.content === null ? revision : (delivered ?? revision));
+}
+
+function goalFile(id: string, project: string, revision?: string) {
+  return revision
+    ? h(WorkspaceLink, { href: guideLink('goals', id, project, revision) }, id)
+    : h('code', null, id);
 }
 
 function listSection(title: string, entries: readonly ReactNode[], empty: string, element?: 'ol') {
@@ -131,14 +152,16 @@ function proposedChange({ id, content }: Proposal['changes'][number]) {
     'div',
     { className: 'arc-report-item-heading' },
     h('strong', null, id),
-    content === null
-      ? h('small', null, 'Remove goal')
-      : h(DialogButton, {
-          label: 'View proposal',
-          title: 'Proposed document ' + id,
-          children: h('pre', { className: 'arc-report-text' }, content),
-        }),
+    content === null ? h('small', null, 'Remove goal') : goalProposal(id, content, 'View proposal'),
   );
+}
+
+function goalProposal(id: string, content: string, label: string) {
+  return h(DialogButton, {
+    label,
+    title: 'Proposed document ' + id,
+    children: h('pre', { className: 'arc-report-text' }, content),
+  });
 }
 
 function items(entries: readonly ReactNode[], empty: string, element: 'ol' | 'ul' = 'ul') {

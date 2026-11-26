@@ -1,7 +1,7 @@
 import { createElement as h, type ReactElement } from 'react';
 import { ExternalLink, ObjectiveReviewSummary } from '../../../../packages/ui/src/index.js';
 import { CommitLink, issueLink, pullLink } from './github-links.js';
-import type { PlanOutcome } from './plan-resource.js';
+import { deliveredPlanRevision, type PlanOutcome } from './plan-resource.js';
 import { RecommendedObjectives } from './recommended-objectives.js';
 import type { RecommendationAssessment } from '../../../../packages/planner/src/objective-review.js';
 import { PlannerReport } from './planner-report.js';
@@ -23,7 +23,7 @@ export function PlannerOutcome({ value, remote, project, revision }: OutcomeProp
     recommendation?.selected.length
   )
     return h(RetainedRecommendations, { value: recommendation });
-  const merged = outcome?.kind === 'merged';
+  const delivered = deliveredPlanRevision(value);
   return h(
     'div',
     { className: 'arc-platform-stack' },
@@ -33,14 +33,15 @@ export function PlannerOutcome({ value, remote, project, revision }: OutcomeProp
       outcome.summary !== (report?.summary ?? recommendation?.summary) &&
       h('p', null, outcome.summary),
     outcome?.reason && h('p', null, outcome.reason),
-    merged && h('p', null, 'Merged ', h(CommitLink, { remote, revision: outcome.commit })),
+    delivered && h('p', null, 'Merged ', h(CommitLink, { remote, revision: delivered })),
     !!changedPaths?.length &&
       h(
         'small',
         null,
         changedPaths.length + (changedPaths.length === 1 ? ' file changed' : ' files changed'),
       ),
-    (report || recommendation) && h(PlannerReport, { report, recommendation, project, revision }),
+    (report || recommendation) &&
+      h(PlannerReport, { report, recommendation, project, revision, delivered }),
   );
 }
 

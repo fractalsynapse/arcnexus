@@ -34,6 +34,8 @@
 
 ### Changed
 
+- Open newly delivered goals from Planner outcome at the merged revision and retain links to removed goals at their captured revision (#746).
+
 - Keep Plan objective batches evidence-driven, show the recorded actor and activity in both timelines, and label Explorer entries with their relative file paths (#746).
 
 - Reconnect live Plan metrics after a dropped change stream and keep elapsed time scoped to the selected run (#746).

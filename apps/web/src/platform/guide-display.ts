@@ -2,7 +2,7 @@ import { createElement as h, useDeferredValue, useState } from 'react';
 import { GuideFilters, type GuideFilter } from './guide-filters.js';
 import { GuideList } from './guide-list.js';
 import { guideRelativePath, type Guide, type GuideCollection } from './guide.js';
-import { usePlanResource, type PlanOutcome } from './plan-resource.js';
+import { deliveredPlanRevision, usePlanResource, type PlanOutcome } from './plan-resource.js';
 import { useResource } from './resource.js';
 
 const initial: GuideFilter = {
@@ -74,8 +74,7 @@ function useGuideCollection(
 ) {
   const search = useDeferredValue(filter.search);
   const outcome = useResource<PlanOutcome>(plan && plan + '/outcome', refresh, recorded?.attempt);
-  const delivered =
-    outcome.value?.outcome?.kind === 'merged' ? outcome.value.outcome.commit : undefined;
+  const delivered = deliveredPlanRevision(outcome.value);
   const revision = delivered ?? recorded?.revision ?? (!execution ? project?.revision : undefined);
   const query = new URLSearchParams({ revision: revision ?? '', ...(search.trim() && { search }) });
   const files = useResource<GuideCollection>(

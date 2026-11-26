@@ -26,6 +26,11 @@ export interface PlanOutcome {
   outcome?: { kind?: string; commit?: string; summary?: string; reason?: string } | null;
 }
 
+/** Resolve the verified guide revision recorded by a completed delivery. */
+export function deliveredPlanRevision(value?: PlanOutcome) {
+  return value?.outcome?.kind === 'merged' ? value.outcome.commit : undefined;
+}
+
 const planScope = createContext<ReturnType<typeof usePlanSelection> | undefined>(undefined);
 
 /** Reset the run selection when the operator switches projects. */

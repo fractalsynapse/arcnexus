@@ -120,6 +120,53 @@ test('live metrics and the complete Planner report update with Event log disable
   assert.equal(await outcome.getByRole('link', { name: 'PR #747' }).count(), 1);
 });
 
+test('Planner goal links open new and existing files at delivery and removed files at capture', async (t) => {
+  const delivered = 'd'.repeat(40);
+  const { page, goals } = await goalLinksView(t, { kind: 'merged', commit: delivered });
+  for (const [id, revision] of [
+    ['new-goal', delivered],
+    ['fixture-goal', delivered],
+    ['removed-goal', project.revision],
+  ]) {
+    const link = goals.getByRole('link', { name: id, exact: true });
+    await link.waitFor();
+    assert.equal(
+      new URL((await link.getAttribute('href'))!, page.url()).searchParams.get('revision'),
+      revision,
+    );
+  }
+});
+
+test('a proposed goal opens its retained draft while delivery is pending', async (t) => {
+  const { page, goals } = await goalLinksView(t, { kind: 'blocked' });
+  assert.equal(await goals.getByRole('link', { name: 'new-goal' }).count(), 0);
+  await goals.getByRole('button', { name: /new-goal/ }).click();
+  await page
+    .getByRole('dialog', { name: 'Proposed document new-goal' })
+    .getByText('# New goal')
+    .waitFor();
+});
+
+async function goalLinksView(t: TestContext, outcome: { kind: string; commit?: string }) {
+  const fixture = await gateway(t);
+  const { application, page } = await browserPage(t, new URL(fixture.url));
+  const goalLinksReport = {
+    ...report,
+    links: ['fixture-goal', 'new-goal', 'removed-goal'],
+    changes: [
+      { id: 'new-goal', content: '# New goal' },
+      { id: 'removed-goal', content: null },
+    ],
+  };
+  await preferenceRoutes(page);
+  await page.route('**/outcome', (route) =>
+    route.fulfill({ json: { active: false, outcome, report: goalLinksReport } }),
+  );
+  await page.goto(application.url);
+  await page.getByRole('tab', { name: /Goal links/ }).click();
+  return { page, goals: page.getByRole('tabpanel', { name: /Goal links/ }) };
+}
+
 test('elapsed clocks advance locally and token history uses recorded reports', async (t) => {
   const fixture = await gateway(t);
   const { application, page } = await browserPage(t, new URL(fixture.url));
