@@ -1,7 +1,56 @@
 id: db-app
 kind: app
 purpose: |
-  Apply owner-authored PostgreSQL migrations and verify imported project stores.
+  # Database application purpose
+
+  ## Prepare and recover stores without redefining their models
+
+  DB owns the operator entry points that apply trusted owner-authored PostgreSQL
+  migrations and verify imported or restored platform stores. It composes the
+  schema contributions of the model owners, records their applied identity and
+  reports whether the deployment is ready. It does not define those owners'
+  domain records or create an alternate execution journal.
+
+  Setup uses its designated migration authority. Runtime gateways and Hosts use
+  their own narrower database roles. A repeated setup recognizes already applied
+  migrations and checks their exact identity; a changed digest or incompatible
+  series is a diagnostic rather than permission to rewrite accepted history.
+  Dependent applications must receive actual readiness or failure.
+
+  Import rehearsal and cutover are distinct operator actions. Rehearsal copies
+  and verifies the selected source while leaving it intact. Verification covers
+  retained observations and registered evidence identity, not merely row counts.
+  Cutover establishes the intended authoritative store and write fence through
+  the existing owner services. A successful copy alone cannot authorize competing
+  writers or project execution.
+
+  ## Keep database and Host recovery causally matched
+
+  Backup and restore operate on a quiesced deployment with a common identity for
+  the database archive and separately retained Host state. The archive digest,
+  migration series and original records must be checked before gateways or Hosts
+  resume. Host worktrees and artifacts retain their recorded mount relationships.
+  Credentials remain separate and runtime privileges are reapplied from trusted
+  deployment secret files.
+
+  Coordination owns observation schema, journal transactions and writer rules.
+  Other model owners supply their migrations and verification semantics. Host
+  owns native state and resumption. DB coordinates maintenance through those
+  public boundaries; its operator procedures must not replace an approval,
+  discard a retained checkpoint or repair a journal by inventing new records.
+
+  The steward maintains DB commands, composition, documentation and app-local
+  regressions. A model migration defect requires its owner's contribution. A
+  maintenance-command defect belongs here. Keep this distinction visible in
+  diagnostics so an operator can identify the real missing prerequisite without
+  granting runtime services setup privileges.
+
+  Characteristic failures include accepting an archive with altered bytes,
+  restoring against mismatched Host state, losing artifact references and
+  reporting readiness before verification. Success requires exact retained
+  identity and safe repeat behavior through the maintenance entry, with source
+  preservation on rehearsal or refusal. Isolated import and restore observations
+  remain distinct from actual resumed workflow qualification and delivery.
 objectives:
   - measure: A rehearsal preserves and verifies every retained Coordination row while leaving its source intact.
 constraints:
@@ -9,14 +58,128 @@ constraints:
 owns:
   - apps/db
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named migration, import, cutover or archive-recovery
+        uncertainty through the DB entry and the relevant owner's public storage
+        interface. Read actual migration identities, verification records and
+        source/target relationships. Separate schema setup from writer admission
+        and a rehearsed copy from an authoritative cutover.
+
+        For recovery questions, follow the database archive, Host snapshot pairing
+        and evidence mount paths together. Identify what verifies exact content
+        and what merely reports availability. Consult primary PostgreSQL tooling
+        documentation when its behavior is the deciding uncertainty, preserving
+        the actual version and retained diagnostic.
+
+        Return the required complete report with the safe supported conclusion,
+        responsible owner and missing observation. Reading a migration or archive
+        manifest is not proof that it executed or restored. Research cannot run
+        maintenance commands, access deployment secrets, alter a write fence or
+        declare a store ready.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Write the operator procedure for the accepted maintenance behavior,
+        distinguishing migration, rehearsal, cutover, backup and restore. State
+        required source and target identity, quiescence, trusted credentials,
+        verification and the observation that establishes readiness. Link model
+        schema rules to their owners instead of copying migration policy.
+
+        Explain the decisions on failure: preserve the source, retain the exact
+        diagnostic, refuse mismatched archive or snapshot identity and keep runtime
+        services stopped when readiness is unresolved. Describe how separately
+        retained Host state and artifact paths match the database. Do not present
+        a row count or successful archive-tool exit as complete recovery proof.
+
+        Record changed intent before command behavior changes. Validate examples
+        against actual public arguments and owner interfaces without touching live
+        stores. Keep secret files and setup authority out of sample payloads.
+        Distinguish an isolated rehearsal from a resumed real workflow and request
+        owner-authored schema documentation when its meaning must change.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise the maintenance entry against isolated stores and artifacts with
+        distinguishable retained observations. Verify exact records, identifiers,
+        migration digests and registered evidence references, including unfinished
+        work or an approval when relevant. Retain an independent observation that
+        rehearsal and refusal leave the source intact.
+
+        Test the actual failure boundary named by acceptance: incompatible
+        migration identity, altered archive bytes, mismatched Host snapshot,
+        missing evidence or an unavailable target. Repeat setup through its real
+        path and inspect durable outcomes. Use the real database or archive tool
+        where transaction or restore semantics are being claimed; service fakes
+        establish only delegation.
+
+        Observe a meaningful behavioral red separately from invalid setup and
+        required passing quality operations. Keep copy verification, cutover and
+        successful workflow resumption as distinct claims. A missing model schema
+        or verifier is concrete supplier work; do not repair it by inventing domain
+        rows or weakening verification in the DB fixture.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Apply only trusted model migrations. Verify exact source and copied
-        evidence before returning readiness. Keep cutover separate from import.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted maintenance behavior by composing trusted migration
+        and verification services from their owners. Preserve migration identity
+        checks, serialized setup and repeat recognition. Keep setup privileges
+        separate from runtime roles and do not redefine a model schema to make
+        an import or restore command convenient.
+
+        Preserve exact source and copied evidence through rehearsal. Apply cutover
+        only through its accepted public fence and readiness semantics. For backup
+        or restore, validate archive bytes and matched Host snapshot identity
+        before declaring the target ready. Preserve original paths and retained
+        approvals; credentials come from deployment configuration outside archives
+        and project source.
+
+        Correct owned command, argument and fixture defects locally and obtain
+        applicable mapped checks. Request an owner migration or journal correction
+        when that is the actual dependency. Report maintenance evidence with its
+        real scope, including any unavailable native prerequisite. A successful
+        isolated restore does not itself establish resumed execution, independent
+        acceptance or production readiness.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Trace the changed maintenance command through owner migrations,
+        verification and its actual readiness result. Inspect source preservation,
+        migration history, archive validation, Host snapshot pairing and runtime
+        privilege separation. Confirm that copying data cannot silently authorize
+        a new writer or bypass project admission.
+
+        Review exact retained records and artifact assertions. Reject evidence
+        based solely on equal counts, a generic success message or a mocked
+        restore tool when real restore behavior is claimed. Check negative cases
+        preserve their source and do not conceal partial work behind a later pass.
+        Identify whether workflow resumption was actually observed.
+
+        Return precise local repairs or a concrete owner dependency with the
+        original criterion intact. This review cannot run maintenance, change
+        credentials, alter a journal or waive missing recovery evidence. Leave the
+        independent verdict and any production cutover decision with their
+        authorized services and architect.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]

@@ -1,7 +1,53 @@
 id: mcp-app
 kind: app
 purpose: |
-  Adapt project-scoped Data resources to the trusted platform mcp transport.
+  # MCP application purpose
+
+  ## Adapt the shared platform contract to operator MCP clients
+
+  MCP owns the operator-facing protocol adapter for trusted platform resources
+  and workflow requests. It publishes tool descriptions and schemas from Data
+  registrations and translates calls into the same authorized owner operations
+  used by HTTP. Clients should receive equivalent project data, retained receipts
+  and cursor semantics without a second domain implementation.
+
+  Platform authenticates the caller and resolves verified project scope before
+  constructing the session. Tool names and arguments select among already
+  available operations; they cannot choose an arbitrary repository path,
+  credential or journal. Listing a tool and invoking it must use consistent
+  authorization so hidden resources are not reachable by guessed names.
+
+  The adapter owns MCP protocol representation, including structured results,
+  readable content and error signaling. Data owns runtime schemas and dispatch;
+  model owners retain domain validation and persistence. Keep the schema clients
+  inspect consistent with the actual invocation path instead of maintaining
+  independent protocol-only definitions.
+
+  ## Preserve workflow and evidence identity across calls
+
+  Workflow tools submit, read, answer and cancel through the existing Commands
+  resources. Submission returns the retained request identity, not a guarantee
+  that execution finished. Answering refers to the exact open gate. Recovery and
+  repeated reads use the existing receipt rather than starting another workflow
+  or interpreting a model-authored reply as approval.
+
+  Event reads preserve scoped cursor identity, ordered complete observations and
+  their operation correlations. Evidence details remain available through the
+  authorized resource. A disconnected MCP client does not own the Host writer
+  or cancel execution merely by ending its transport session.
+
+  This operator server is different from the activity-scoped MCP tools exposed
+  inside an Agent activation. Those tools are resolved from captured activity
+  grants and enforced by Execution. Operator authentication cannot silently
+  replace an Agent's selected capabilities, and the operator server must not
+  provide a bypass for checked editing or trusted publication.
+
+  Characteristic failures include tool discovery drifting from invocation,
+  structured results losing fields, cross-project access, altered cursors and
+  duplicate workflow submission after reconnect. Verify through the registered
+  protocol server with explicit scope and real Data registrations. Success means
+  an authorized MCP client reaches the same owner behavior and can distinguish
+  unavailable, pending, failed and completed results with preserved identity.
 objectives:
   - measure: Authorized callers read the same owner-defined resources and cursor through the gateway.
 constraints:
@@ -9,14 +55,123 @@ constraints:
 owns:
   - apps/mcp
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named MCP discovery, schema, result, scope or cursor
+        uncertainty through the registered server and Data operation it invokes.
+        Read the authenticated session construction and actual client-visible
+        definition. Distinguish protocol translation from domain policy and from
+        the separate activity-scoped Agent tool server.
+
+        Compare listed input/output schemas with runtime validation and returned
+        structured content. For workflow questions, follow retained receipt and
+        exact question identity through Commands. Consult primary MCP documentation
+        for a consequential protocol uncertainty and record its applicability to
+        the installed SDK rather than assuming the newest example matches it.
+
+        Return the complete report with direct findings, source references and
+        unresolved observations. A schema declaration alone does not establish
+        invocation or parity with HTTP. Research cannot open a live workflow,
+        answer an approval, add project tools or change session authority.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Explain the accepted operator MCP behavior from the client's perspective:
+        authenticated project session, available tools, declared arguments,
+        structured results and protocol errors. Derive model shapes from Data and
+        explain the corresponding Commands lifecycle where a tool controls work.
+
+        Describe the decisions clients must make after submission, pending gates,
+        reconnect and cancellation. Preserve exact request, gate and cursor
+        identity in examples and distinguish an unavailable resource from an
+        execution that has not finished. Explain why this operator surface does
+        not grant the tools of an Agent's current activity.
+
+        Record changed intent before implementation and verify examples against
+        real tool names and registrations. Link shared transport parity and owner
+        rules instead of copying HTTP or domain procedures. Label controlled
+        protocol examples separately from observed Host execution and request a
+        concrete owner contribution when the underlying resource contract changes.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise list and call behavior through the registered MCP protocol server
+        backed by real Data registrations. Supply explicit principals and projects
+        with distinguishable resources. Compare advertised schemas and availability
+        with actual invocation, asserting exact structured results and meaningful
+        error behavior rather than only a successful protocol exchange.
+
+        Cover unauthorized and unknown names, malformed input and relevant output
+        validation. For workflow changes, distinguish submission, retained receipt,
+        exact gate answer and terminal outcome; reconnect must not create another
+        submission. For event reads, assert complete ordered values and unchanged
+        cursor representation. Compare shared owner results with HTTP only through
+        the accepted public seam or an assembled contribution.
+
+        Identify the wrong adapter implementation each assertion would reject.
+        Preserve the intended red and applicable passing quality observations.
+        A controlled domain handler proves protocol delegation, not real journal
+        persistence or live workflow execution. Request a genuinely missing owner
+        behavior rather than constructing a permissive fake and calling it parity.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Reuse the Data SDK for declarations and handlers. Authenticate and bind
-        project context before any resource access.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted protocol change through MCP's existing server and
+        trusted Platform session. Reuse Data schemas and invocation for resource
+        tools and Commands resources for workflow actions. Keep tool descriptions,
+        runtime behavior and structured results aligned without copying domain
+        validation into the adapter.
+
+        Preserve authenticated project scope throughout asynchronous calls and
+        return actual pending, unavailable and failed outcomes. Keep receipt,
+        question and cursor identities intact. Do not create a task lane, directly
+        edit a protected guide, launch a model or expose Agent activity operations
+        as a fallback for an unavailable operator resource.
+
+        Obtain applicable mapped quality and protocol observations and inspect
+        the actual server registration. Repair owned result or fixture defects
+        locally. Route an underlying resource or shared authentication correction
+        to its owner with the exact public need. Report protocol evidence distinctly
+        from real persisted workflow results and live qualification.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Compare tool discovery with the actual runtime dispatch and result
+        construction. Follow authenticated session scope to the owner operation.
+        Inspect structured content, input/output schema agreement and refusal
+        behavior, including guessed tool names and cross-project requests.
+
+        Review whether fixtures assert exact payloads, complete event identity
+        and retained workflow gates. A generic error or successful call can hide
+        dropped values and duplicate submission. Keep operator protocol evidence
+        distinct from activity-scoped tool enforcement, real persistence and live
+        model execution; none is established merely by a valid MCP response.
+
+        Return precise local repair findings and the earliest applicable target,
+        preserving original acceptance. A required Data or Platform behavior is
+        concrete supplier work. This read-only self-review cannot answer a real
+        approval, execute checks, edit the candidate or issue the task's final
+        independent verdict.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]

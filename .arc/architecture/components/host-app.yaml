@@ -1,7 +1,55 @@
 id: host-app
 kind: app
 purpose: |
-  Compose trusted project execution once for native CLI and qualified Host deployments.
+  # Host application purpose
+
+  ## Compose the trusted execution application once
+
+  Host owns the trusted composition used by native CLI and qualified hosted
+  deployment consumers. It mounts the public owner services that perform task
+  admission, Agent activation, persistence, verification and delivery. A gateway
+  should dispatch through this application rather than constructing another
+  workflow loop or importing private execution internals.
+
+  Trusted composition selects executable services and native bindings. Project
+  architecture supplies captured guidance and scoped operations as data. External
+  request payloads cannot select arbitrary handlers, replace the runtime or turn
+  a target repository declaration into privileged executable code. The Host must
+  preserve that distinction while making the same Commands behavior available
+  through its legitimate application entries.
+
+  In hosted operation, the worker consumes an authorized durable request under
+  the assigned project and runtime identity. Coordination retains the single
+  writer and request state. Workflow retains phase position and recovery, while
+  Execution owns confinement and checked effects. Host wires those boundaries
+  together and surfaces actual startup or admission failure before claiming work.
+
+  ## Preserve native state across deployment lifecycle
+
+  Startup must verify the runtime prerequisites on which safe execution depends,
+  including confinement and database compatibility. An image label or a mocked
+  dependency is not proof that the deployed Host can enforce its operations.
+  Launcher supplies approved local assignments and container lifecycle; Host
+  validates its own operating environment and captured project before execution.
+
+  Restart reuses durable receipts, pending questions, checkpoints and actual
+  candidate identities. A recovered worker must not repeat a completed workflow
+  merely because its process is new. Image, engineering base, active approved
+  architecture and candidate identity serve different purposes and remain
+  attributable through the existing evidence path.
+
+  Credentials, mounted state and repository bindings belong to trusted deployment
+  configuration outside project source. Delivery still requires independent
+  acceptance and the configured staging gates. Host composition must not grant a
+  gateway permission to publish or turn an isolated test deployment into
+  operator-facing qualification.
+
+  Characteristic failures include shallow plugin wiring, request-selected native
+  capabilities, claiming work before confinement is ready and replaying effects
+  after restart. Verify composition through real public injection and the built
+  entry, then use native observations for runtime claims. Success means legitimate
+  consumers reach the same owner services and recovery path, while trusted
+  executable authority remains separate from project requests and candidate code.
 objectives:
   - measure: Application adapters reuse the same Workflow, Coordination and Execution composition.
 constraints:
@@ -9,14 +57,127 @@ constraints:
 owns:
   - apps/host
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the concrete composition, startup, dispatch or recovery
+        question through Host's public entry and actual CLI or worker consumer.
+        Identify the owning public service for admission, sequence, persistence,
+        confinement and delivery. Follow trusted binding resolution separately
+        from project request data.
+
+        Read the relevant startup observations and retained runtime identity when
+        availability is disputed. Determine whether evidence shows a registered
+        plugin, an invoked service, a confined native operation or live execution.
+        For recovery, follow the durable request and original candidate or round
+        result rather than reasoning only from the current worker process.
+
+        Return the complete report with the responsible seam, supported conclusion
+        and missing observation. Consult primary runtime documentation only for a
+        named external uncertainty. Research cannot launch containers, install
+        bindings, claim a writer lane or treat candidate code as a trusted runtime
+        update.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Explain the accepted Host composition and deployment behavior for its
+        actual operator or adapter consumer. Identify trusted inputs, project
+        capture, startup readiness, durable request dispatch and the public owners
+        of execution effects. Link their contracts rather than copying a second
+        workflow or recovery procedure into Host documentation.
+
+        Describe what happens on unavailable confinement, incompatible database,
+        interrupted request, pending approval and runtime replacement. Make image,
+        project revision, engineering base and retained candidate identity clear
+        where the operator must distinguish them. Explain which credentials and
+        state mounts remain outside the checkout.
+
+        Record changed application intent before behavioral implementation and
+        validate examples against the real entry and trusted assignment shape.
+        Label isolated fixture execution and qualified real-project operation
+        distinctly. Request Launcher, Commands or owner-service documentation only
+        for a concrete changed interface; routine composition choices within the
+        accepted model need no additional agreement gate.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise the public Host composition through actual Cordis injection and
+        the consumer entry affected by acceptance. Verify the selected owner
+        services receive exact admitted inputs. A cast context or a stubbed
+        application method cannot establish installed composition or shared native
+        and hosted behavior.
+
+        For startup and authority changes, distinguish trusted bindings from
+        adversarial request fields and assert unavailable prerequisites prevent
+        claiming work. For recovery, use retained requests with distinguishable
+        original and resumed observations, complete questions and durable results.
+        Assert resumption reuses acknowledged work and does not create another
+        workflow or publication effect.
+
+        Use real confinement or database observations where those boundaries are
+        claimed, with isolated fixtures and explicit runtime identity. Keep such
+        evidence separate from controlled service wiring and live inference.
+        Establish the intended red and current quality checks without requiring
+        future high-level orchestration to pass its own new regression first.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Mount the owner services directly. Preserve task admission, execution
-        confinement and the approved delivery path when adding a Host consumer.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Mount owner services directly through their public plugin entries and
+        preserve the shared composition for legitimate consumers. Keep application
+        wiring in Host, phase sequencing in Workflow, writer state in Coordination
+        and native enforcement in Execution. Remove superseded assembly rather
+        than wrapping it with another execution manager.
+
+        Validate trusted startup and assignment inputs before taking work. External
+        requests select supported application actions; they cannot rewrite native
+        capabilities, filesystem bindings or provider credentials. Preserve durable
+        receipt and captured runtime identity across continuation and restart,
+        forwarding the existing cancellation and recovery lifecycle.
+
+        Obtain applicable mapped checks and observe built-entry behavior for the
+        changed seam. Repair owned assembly fixtures locally and request concrete
+        owner-service corrections when necessary. Report controlled composition,
+        real confinement and live workflow observations separately. Do not enable
+        unqualified project operation or claim staging delivery merely because
+        the Host builds and its injected dependencies resolve.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Inspect the production composition and actual consumer entry against the
+        accepted Host outcome. Follow startup readiness, trusted bindings,
+        request dispatch and recovery. Look for private cross-owner imports,
+        another workflow store or a request field promoted into native authority.
+
+        Review whether evidence exercises real plugin injection and the claimed
+        native boundary. Recovery assertions must distinguish resumed work from
+        a new request and verify retained complete results. A successful startup
+        helper does not prove confinement, and a controlled provider does not
+        establish real model behavior or live qualification.
+
+        Return specific local findings with the relevant runtime or candidate
+        observation and earliest useful repair target. A genuine missing service
+        remains its owner's contribution. This read-only review cannot install a
+        runtime, start a Host, claim a lane, approve publication or substitute for
+        the final assembled assessment.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]

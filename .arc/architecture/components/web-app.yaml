@@ -1,9 +1,54 @@
 id: web-app
 kind: app
 purpose: |
-  Compose the local ArcNexus browser application from trusted Cordis plugins.
-  Own the web boot, workspace bindings and acceptance through the built browser
-  entry. Route reusable layouts and displays through the UI package.
+  # Web application purpose
+
+  ## Compose the browser application through reusable public plugins
+
+  Web owns browser boot, trusted plugin composition, workspace bindings and
+  acceptance through the built application entry. It assembles UI's public frame,
+  layouts and controls with feature registrations and application data bindings.
+  Shared presentation remains in UI so the deployed application and controlled
+  previews exercise the same components rather than similar copies.
+
+  The browser entry and its local server expose the supported application surface.
+  A standalone composition reports unavailable commands honestly; a configured
+  gateway binding can present authorized resources and retained workflow receipts.
+  Web supplies transport and binding lifecycle without admitting a native task,
+  launching a model or creating another workflow store in the browser shell.
+
+  Project selection, captured revision and execution identity must remain attached
+  to the data each workspace displays. Switching projects closes obsolete
+  subscriptions and prevents late responses from replacing current state.
+  Enabled displays own their request lifecycle; rearranging presentation must
+  preserve useful shared requests and cursors without fetching disabled content.
+
+  ## Make command and review states usable
+
+  Command presentation follows the existing receipt through submission, pending
+  question, answer, cancellation and completion. Exact gate and request identity
+  remain with the owning service. The browser preserves relevant unsent input and
+  shows the actual outcome rather than inferring completion from a successful
+  transport response. File review retains its source revision and reviewed
+  delivery meaning.
+
+  Web owns browser acceptance of this composition. Tests use the built entry and
+  can supply a controlled command or resource binding through the same plugin
+  path. They observe concrete user interaction, network lifecycle and responsive
+  presentation. A controlled binding proves the browser behavior it exercises;
+  live gateway and Host behavior require their separate integration observations.
+
+  UI owns reusable component changes, API owns HTTP adaptation and domain services
+  own schema, authority and durable state. Web requests those contributions when
+  necessary and composes their public outcomes. It must not hide a missing public
+  interface behind a copied control, private import or preview-only implementation.
+
+  Characteristic failures include a test serving different code from production,
+  stale project responses, duplicate command submission, lost approval drafts and
+  visual success with unavailable controls misrepresented. Success means the built
+  desktop and mobile application presents truthful state through shared components
+  and provides discriminating browser evidence without claiming native execution,
+  staging integration or production availability from a fixture.
 objectives:
   - measure: The compiled application exposes the approved frame on desktop and mobile.
   - measure: The browser acceptance suite observes the same web composition with a controlled command binding.
@@ -13,27 +58,129 @@ constraints:
 owns:
   - apps/web
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named browser boot, composition, binding or acceptance
+        question through the built-entry source and UI public consumer. Follow
+        workspace registration and the actual data or command binding rather than
+        assuming the preview and application use the same path.
+
+        For lifecycle questions, trace project and execution selection, request
+        sharing, cancellation and cursor retention. For command or file review,
+        inspect the exact receipt, question and source revision presented to the
+        user. Consult primary browser or library documentation only when an
+        external behavior could change the architectural decision.
+
+        Return the complete report with source-backed conclusions, a concrete
+        browser observation that would settle uncertainty and the responsible
+        owner for any missing public behavior. Distinguish static composition,
+        controlled browser interaction and real gateway integration. Research
+        cannot launch live agent work or turn a fixture's apparent success into
+        evidence of qualified execution.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Describe the accepted browser behavior and operator decision before
+        implementation changes. Explain boot, trusted plugin composition,
+        workspace registration and the relevant command or resource binding.
+        Reference UI's canonical layouts and controls instead of documenting a
+        competing presentation implementation.
+
+        Specify visible loading, empty, unavailable, pending, failed and completed
+        states where they matter. Explain selected project/revision identity,
+        reconnect behavior, draft retention and the exact question being answered.
+        Distinguish local design preview, controlled acceptance binding and
+        configured gateway behavior without implying the shell owns admission.
+
+        Validate examples against the actual browser entry and public interfaces.
+        Record how the built acceptance scenario will distinguish the intended
+        behavior from stale data or a superficial render. Request reusable UI or
+        API documentation from its owner when required; completion supplies
+        reader-facing intent and decision walkthroughs rather than unobserved
+        claims of native workflow or production availability.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
   testing:
     role: designer
     profile: gpt-sol
     instructions:
       - |
-        Verify the built browser entry and its shared frame. Exercise another
-        command binding through the same composition for command behavior. Keep
-        browser acceptance scoped to local data and observable UI states.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Exercise the built browser entry and the same public plugin composition
+        used by the application. Supply a controlled binding only at the declared
+        seam, keeping shared UI components unchanged. Assert concrete interactions,
+        resulting state, keyboard/focus behavior and responsive placement relevant
+        to the accepted criterion rather than only page text or screenshots.
+
+        Use distinguishable projects, revisions, receipts and events for lifecycle
+        scenarios. Observe actual requests while enabling, disabling or rearranging
+        displays and switching selection. Verify late responses and reconnects
+        preserve current scope, ordered cursors and existing command identity.
+        For approval or file review, assert exact draft, gate and revision behavior
+        instead of accepting any successful dialog submission.
+
+        Retain a meaningful behavioral red separately from required passing
+        quality checks. A missing browser executable or invalid fixture is setup
+        feedback, not that red. Request reusable UI changes from its owner and
+        keep browser acceptance owned here. Label controlled bindings and real
+        gateway observations distinctly; neither alone proves live Host execution
+        or independent staging acceptance.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Compose workspace registrations and command bindings through public
-        plugin boundaries. Use the existing repository build and test entry.
-        Preserve the local shell scope and report runtime availability directly.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted browser composition or binding change through the
+        existing boot and public plugin entries. Reuse UI layouts, displays and
+        controls. Keep app-local request and workspace wiring here while domain
+        schema, trusted task admission and persistence remain with their services.
+        Do not duplicate a shared component to avoid its owning contribution.
+
+        Preserve project, revision, execution and receipt identity throughout
+        asynchronous updates. Cancel obsolete readers and subscriptions without
+        cancelling unrelated work, retain relevant unsent drafts and represent
+        runtime availability honestly. Controlled previews use the same component
+        and composition seam with explicit fixture bindings.
+
+        Obtain applicable mapped quality and built-browser observations for the
+        changed behavior. Correct owned acceptance fixtures and binding defects
+        locally, consuming concrete UI or API supplier results where required.
+        Report the actual browser outcome and remaining integration evidence.
+        A built shell or controlled command response does not authorize live task
+        admission, publication or a claim that staging delivery already occurred.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Trace the built application entry, workspace registrations and changed
+        binding through their public UI and gateway interfaces. Inspect scope
+        retention, subscription disposal, draft behavior and availability. Look
+        for a preview-only path, duplicated reusable control or browser code
+        acquiring trusted execution responsibility.
+
+        Review actual browser assertions and request observations. They must
+        reject stale project responses, duplicate submission, lost gate identity
+        or incorrect responsive interaction when those risks are part of
+        acceptance. Confirm the controlled binding reaches the same composition
+        and identify which results still require real gateway or Host evidence.
+
+        Return specific local findings to the earliest applicable activity and
+        request another owner's concrete contribution only when necessary.
+        Preserve original criteria and unaffected evidence. This read-only
+        self-review cannot edit the browser, run checks, answer real approvals,
+        issue the assembled verdict or authorize staging and production delivery.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]

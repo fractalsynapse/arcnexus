@@ -1,7 +1,56 @@
 id: capacity
 kind: plugin
 purpose: |
-  Manage the registration, admission, and revocation of trusted platform launchers.
+  # Capacity component purpose
+
+  ## Maintain the identity and admission of trusted launchers
+
+  Capacity owns launcher enrollment, operator admission, credential revocation
+  and the runtime presence associated with an admitted provider. Its public
+  service lets trusted applications distinguish a provider that registered from
+  one allowed to serve work. Connection-manager presentation and gateway routes
+  consume those decisions; they do not independently redefine them.
+
+  Enrollment begins with an operator-issued single-use code. Claiming that code
+  creates a pending provider identity and returns its credential through the
+  intended enrollment response. Persistent records retain secret digests rather
+  than raw enrollment codes or provider tokens. Consuming a code and creating its
+  provider must agree atomically so concurrent or repeated claims cannot create
+  additional identities from the same authorization.
+
+  Admission is a deliberate operator decision under the owning principal. A
+  pending identity can exist and be recognized without receiving permission to
+  start project work. Revocation removes authorization and closes its active
+  presence. Queries must not disclose another operator's providers or turn a
+  state label supplied by a caller into a trusted transition.
+
+  ## Separate durable permission from current connectivity
+
+  Presence describes whether an admitted provider is connected now. Durable
+  admission survives a dropped connection; an online-looking connection cannot
+  override pending or revoked state. Capacity makes this distinction available
+  to consumers so presentation, routing and authentication do not each invent a
+  competing interpretation of readiness.
+
+  Platform uses provider admission when resolving trusted assignments. Launcher
+  owns its local credential storage and approved runtime configuration. Host,
+  Workflow and Coordination retain execution admission, task state and the single
+  project writer. Capacity's provider decision is a prerequisite for those
+  services, not a substitute for their project and candidate authority.
+
+  The steward maintains the public service, persistence schema and transition
+  behavior within this component. Database setup applies owner-authored
+  migrations. Changes to API enrollment transport, launcher storage or Host
+  execution remain contributions by those accountable owners. Public interfaces
+  carry the necessary state without exposing credential material.
+
+  Characteristic failures include duplicate code consumption, an operator acting
+  on another operator's registration, revoked credentials remaining usable and
+  presence accidentally granting admission. Verify durable transitions against
+  isolated persisted state and observe the consumer distinction between pending,
+  admitted, revoked and disconnected. Success means each identity has an
+  attributable admission history and consumers receive a consistent current
+  decision without acquiring project execution authority from registration alone.
 objectives:
   - measure: A single-use enrollment code identifies one pending launcher and an operator can revoke its credential.
 constraints:
@@ -9,14 +58,128 @@ constraints:
 owns:
   - packages/capacity
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Resolve the specific enrollment, transition, authentication or presence
+        question through Capacity's public service and actual consumers. Read the
+        persisted state and transition conditions alongside the gateway and
+        launcher call sites. Determine which fact is durable authorization and
+        which is an observation of connectivity.
+
+        For a credential question, follow where the secret is created, returned,
+        digested, stored and checked without reading live operator credentials.
+        For a concurrency question, inspect the real persistence statement rather
+        than inferring atomicity from a service method name. Identify the exact
+        observation that would distinguish safe code consumption or revocation.
+
+        Return the required report with source-backed conclusions, configuration
+        applicability and unresolved information. Explain which consumer must use
+        the public decision and which responsibility remains with execution
+        admission. A source inspection is not evidence that a real launcher
+        connected, and research cannot issue credentials or admit a provider.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Document the accepted provider lifecycle and the operator decision it
+        supports. Explain issuing and claiming an enrollment code, the resulting
+        pending identity, admission, revocation and disconnection. Describe public
+        response fields and refusal conditions without copying raw credentials
+        into examples, logs or maintained source.
+
+        Make the important distinction actionable: a recognized pending provider
+        is not admitted, an admitted disconnected provider retains its durable
+        state, and a revoked provider cannot regain permission through presence.
+        Link launcher credential storage and project execution admission to their
+        actual owners rather than implying Capacity starts tasks.
+
+        Record changed transition intent before behavioral implementation. Check
+        examples against the public service and persisted schema, including which
+        operator can make each decision. Retain the difference between proposed
+        behavior, isolated verification and demonstrated deployment. Request
+        consumer documentation changes through their owners when the accepted
+        transition requires them.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise enrollment and provider transitions through the public service
+        with isolated persistence. Use different operators and distinguishable
+        provider identities. Assert that a claimed code cannot produce another
+        provider, that stored secret fields contain digests, and that a refused
+        action leaves the relevant durable state intact.
+
+        Cover the transition affected by acceptance with exact observations:
+        pending registration does not authorize a connection for work, admitted
+        state permits the intended presence, revocation disconnects and refuses
+        later use, and a network disconnect does not rewrite durable admission.
+        Where atomic code consumption is claimed, use the actual database path;
+        a sequential in-memory fake cannot prove competing claims are exclusive.
+
+        Keep service transition proof separate from end-to-end launcher execution.
+        Establish the intended behavioral red with valid fixtures and retain
+        required passing quality observations. Request a foreign integration
+        assertion only when it is genuinely part of another owner's contribution,
+        leaving Capacity's lower-level regression able to complete before its
+        future implementation.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Retain only secret digests. Keep admission policy distinguishable
-        from runtime presence and coordinate authentication with API.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Change the canonical Capacity service and owner-authored schema for the
+        accepted lifecycle outcome. Preserve atomic enrollment consumption and
+        operator-scoped transitions. Retain only secret digests in persistence and
+        expose credential material solely through the intended enrollment return
+        path. Do not broaden the public provider projection to simplify a consumer.
+
+        Keep presence subordinate to durable admission. Recheck actual state where
+        authentication or connection depends on it, and ensure revocation affects
+        an existing connection as well as later requests. Reuse the existing
+        service and presence responsibility rather than adding a second provider
+        registry, task scheduler or credential store.
+
+        Obtain the applicable mapped checks and inspect the public transition
+        evidence. Correct owned fixtures and schema failures locally. A required
+        API, Launcher or Platform change is a concrete supplier contribution with
+        its actual owner. Report provider lifecycle evidence without presenting
+        it as proof of Host confinement, successful project admission or production
+        launcher availability.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Follow each changed provider transition from the public call to persisted
+        state and presence. Verify operator isolation, secret handling and the
+        conditions for admission and revocation. Inspect whether a consumer could
+        mistake recognition or connectivity for permission to serve project work.
+
+        Assess the actual regression fixtures and observations. Tests must
+        distinguish pending, admitted, revoked and disconnected behavior and reject
+        repeated enrollment consumption. A database-shaped fake does not establish
+        atomic persistence, and a returned provider record does not establish a
+        connected or confined launcher. Preserve those evidence boundaries.
+
+        Route an inaccurate lifecycle explanation to Documentation, a weak fixture
+        to Testing and a transition defect to Implementation when those targets
+        are applicable. Name any concrete consumer correction through its owner.
+        This self-review cannot issue enrollment codes, admit a provider, edit the
+        candidate or replace the final independent verdict.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]

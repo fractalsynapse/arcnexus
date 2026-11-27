@@ -1,9 +1,54 @@
 id: ui
 kind: plugin
 purpose: |
-  Own ArcNexus's reusable browser layouts, displays, theme and visual assets.
-  Provide the shared UI registration service through Cordis. Render the same
-  components for web application data and controlled fixture data.
+  # UI component purpose
+
+  ## Give browser consumers one reusable presentation system
+
+  UI owns ArcNexus's reusable browser layouts, displays, controls, theme and
+  visual assets. Its public Cordis registration service composes workspace
+  navigation and independently contributed displays. Web and controlled previews
+  render the same exported components, so a fixture changes supplied state rather
+  than maintaining another implementation of the frame or interaction.
+
+  Workspace and display registrations have stable identity, ordering and disposal.
+  The mounted frame observes changes without losing the meaning of navigation.
+  Removing a feature restores its base workspace while preserving unaffected
+  registrations. Layout definitions are shared by settings and rendering; mobile
+  presentation follows the same declared display order through its own styling.
+
+  Command and preferences bindings provide public application state. UI renders
+  stable snapshots, subscriptions, availability and supported submission actions.
+  It owns transient presentation and unsent input, while the application service
+  owns durable requests, approvals and results. A control must not imply that an
+  unavailable operation ran or interpret closing a dialog as answering a gate.
+
+  ## Preserve usable interaction and honest evidence
+
+  Shared dialogs, editors and diff viewers support objective decisions and
+  revision-bound file review. They must preserve the relevant draft, source and
+  pending-state meaning while allowing keyboard use, predictable focus and
+  responsive layout. Data fetching or durable mutation belongs to the supplied
+  binding and feature owner rather than hidden trusted calls inside a control.
+
+  Theme preferences supply the selected site scheme and presentation tokens.
+  Reuse canonical components, hooks and styles for live application data and
+  fixture data. A visual improvement should not introduce a second display,
+  parallel layout registry or special preview behavior that conceals a real
+  application's unavailable or failed state.
+
+  UI's steward maintains the reusable public behavior and owned regressions.
+  Web owns application boot and composed browser acceptance. A required assertion
+  in Web's suite is a concrete supplier contribution, not permission to move
+  ownership or duplicate its test harness. An absent UI suite affects the suite
+  operation's applicability without waiving other applicable checks.
+
+  Characteristic failures include disposed displays remaining mounted, duplicated
+  subscriptions, lost drafts, stale project presentation and controls that send
+  another command when reconnecting. Verify exact state and interaction through
+  the public registry or consumer. Success combines consistent reuse, accessible
+  interaction and truthful presentation; screenshots or controlled fixtures alone
+  cannot establish gateway integration or live workflow qualification.
 objectives:
   - measure: The web frame and its controls are reusable through the UI plugin's public entry.
   - measure: One selected theme supplies the site background and default presentation across registered workspaces.
@@ -13,14 +58,127 @@ constraints:
 owns:
   - packages/ui
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named registry, display, layout, theme or interaction
+        uncertainty through UI's public exports and actual browser consumer. Read
+        the binding and feature contract alongside the component. Identify which
+        state is transient presentation, which belongs to a durable application
+        service and which consumer owns the deciding observation.
+
+        For lifecycle questions, follow registration, subscription and disposal
+        together. For interaction questions, examine keyboard behavior, focus,
+        draft retention and availability rather than only static appearance.
+        Consult primary browser or library documentation when an external semantic
+        uncertainty affects the proposed correction, recording applicability.
+
+        Return the complete report with concrete findings, source provenance and
+        unresolved browser evidence. Distinguish a preview, inspected component,
+        controlled interaction and live gateway result. Research cannot change
+        preferences, submit a command or use a trusted Host to compensate for a
+        missing browser binding.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Explain the reusable public behavior affected by the assignment: workspace
+        or display contribution, layout, shared control, theme or application
+        binding. Describe the consumer's inputs, lifecycle and visible states,
+        including disposal and unavailable behavior. Link canonical definitions
+        rather than reproducing layout or command configuration in prose.
+
+        Record intended interactions before implementation. Make keyboard use,
+        focus, responsive placement, draft retention and pending decisions concrete
+        where affected. Explain what a controlled binding demonstrates and what
+        still depends on Web or a gateway. An illustration must not imply a command
+        or approval has actually completed.
+
+        Validate examples against public exports and real component reuse. Keep
+        UI material within its ownership and request Web's application explanation
+        or browser acceptance contribution when needed. Completion supplies a
+        usable component explanation and reader walkthrough, leaving runtime and
+        visual observations attributed to the actual consumer that produced them.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Design regressions against UI's public registry, binding or exported
+        component responsibility. Use distinguishable workspaces, displays and
+        state snapshots. Assert exact ordering, disposal, subscription ownership
+        and affected user interaction rather than merely finding rendered text or
+        checking a registration count.
+
+        For controls and layout, specify the visible state, keyboard/focus result,
+        draft behavior and responsive relationship that reject the relevant bad
+        implementation. Live and fixture state must reach the same component.
+        A browser assertion in Web's composed acceptance suite belongs to Web;
+        request that concrete contribution through Direction instead of editing
+        its files or creating a duplicate harness in UI.
+
+        Use owned regressions where appropriate and interpret absent owner suites
+        through declared applicability. Preserve meaningful behavioral red and
+        required quality observations. Record which behavior is established at
+        the reusable seam and which needs assembled browser evidence; a visual
+        preview or mocked command result does not prove real workflow operation.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Work through the browser UI plugin's public entry. Keep shared structure,
-        visual tokens and interactions in UI. Respect the command binding's
-        availability and preserve keyboard use, focus and responsive layout.
-    operations: [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types]
+        Implement the accepted reusable browser behavior through UI's public
+        components and registry. Reuse canonical layout definitions, controls,
+        hooks, tokens and styles. Keep one implementation for fixture and
+        application data, and preserve registration identity, ordering and disposal
+        rather than adding a special path for the current screen.
+
+        Respect command and preferences binding availability. Preserve keyboard
+        interaction, focus, responsive behavior and relevant unsent drafts. Durable
+        requests, revision checks and approvals remain with their services; UI
+        renders their actual state and invokes only the supported binding action.
+        Do not import trusted Host services or conceal unavailable capability.
+
+        Obtain applicable mapped quality and owned behavioral observations. If
+        composed browser coverage or application wiring must change, request the
+        precise Web contribution and consume its evidence. Correct owned fixtures
+        locally and report suite applicability honestly. Completion identifies
+        what the reusable component and actual browser observations establish
+        without claiming independent acceptance or staging integration.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Inspect the changed reusable component and actual consumers together.
+        Verify shared implementation, registry lifecycle, theme/layout reuse and
+        binding availability. Follow subscription disposal and transient draft
+        state across the affected navigation or dialog transition rather than
+        judging a static screenshot alone.
+
+        Read the relevant owned and Web-supplied evidence. Assertions must reject
+        duplicated handlers, lost input, stale scope or the wrong responsive order
+        when those are the accepted risks. Check keyboard and focus behavior where
+        changed. An absent UI suite is not a generic pass, and a controlled browser
+        binding does not establish a real gateway or Host result.
+
+        Return precise local findings or the concrete Web contribution needed for
+        assembled evidence. Preserve ownership and do not duplicate another
+        consumer's suite to obtain a local green result. This read-only self-review
+        cannot edit controls, run browser checks, answer approvals or authorize
+        the assembled task's delivery.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
