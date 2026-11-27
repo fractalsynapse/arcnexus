@@ -1,4 +1,6 @@
 id: repository-lint
+purpose: >
+  Lint applicable maintained repository files and report their selected scope and diagnostics.
 kind: command
 category: lint
 command: npm
