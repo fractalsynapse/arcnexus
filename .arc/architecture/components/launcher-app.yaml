@@ -1,7 +1,55 @@
 id: launcher-app
 kind: app
 purpose: |
-  Run the local launcher executable and establish the platform provider identity.
+  # Launcher application purpose
+
+  ## Connect an approved local runtime to platform assignments
+
+  Launcher owns the local executable that configures platform endpoints, enrolls
+  a provider and establishes its authenticated connection. It receives authorized
+  project assignments and resolves them against locally approved runtime
+  configuration. Operators use it to connect their machine to the platform
+  without disclosing local credentials or granting remote requests arbitrary
+  command execution.
+
+  Capacity owns the registration code, pending identity, admission and revocation.
+  Launcher stores the returned provider credential outside project source and
+  presents the identity through the intended connection. A successful enrollment
+  is not admission, and a reconnect must respect the current provider decision.
+  Non-secret endpoint settings and secret storage have distinct handling.
+
+  A remote assignment identifies a verified project and pinned revision. Local
+  trusted configuration determines the checkout, state, credentials, network and
+  approved image that may serve it. Remote input must not choose an unchecked
+  path, container image or executable. Provisioning an absent checkout must
+  preserve canonical repository and exact committed source identity.
+
+  ## Reconcile runtime effects before repeating them
+
+  Launcher starts or reuses the approved Host container through its existing
+  runtime adapter. Reconnection and repeated assignment inspect the current
+  container and its assignment before creating another effect. The actual image,
+  inherited Host entry and deployment confinement policy matter; a mutable image
+  name or merely running container is not sufficient proof of readiness.
+
+  Host performs startup checks and project execution. Coordination retains the
+  project writer; Workflow and Commands retain durable request lifecycle.
+  Launcher reports the real container and readiness result without creating a
+  separate task loop or replacing Host recovery. A changed or unavailable local
+  assignment must remain an explicit prerequisite rather than silently selecting
+  another image or credential.
+
+  The app also owns native launcher packaging and its runtime-policy resources.
+  Staged binaries and checksums identify actual build artifacts. API serves only
+  trusted staged distribution; external publication and real-project activation
+  remain governed by the existing qualification and release authority.
+
+  Characteristic failures include leaked credentials, duplicate containers after
+  reconnect, wrong committed source, remote-selected mounts and readiness reported
+  before Host checks. Verify configuration and assignment decisions independently
+  from real native container behavior. Success means a legitimate assignment
+  reaches the approved local Host with attributable identity, preserved state and
+  no unchecked capability derived from network input.
 objectives:
   - measure: A launcher can be configured and enrolled without exposing its token to the user interface or project source.
 constraints:
@@ -9,14 +57,126 @@ constraints:
 owns:
   - apps/launcher
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Resolve the named enrollment, local configuration, assignment, container
+        reconciliation or packaging uncertainty through the Launcher entry and
+        its public Capacity and Host consumers. Trace which values arrive from
+        the network and which are selected by trusted local configuration.
+
+        Read actual retained runtime observations when the question concerns image
+        identity, mounts, policy or readiness. Consult primary Docker, compiler
+        or operating-system documentation only for the precise external semantic
+        gap, preserving versions and configuration. A container name or simulated
+        runtime response cannot establish that confinement is active.
+
+        Return the complete report with a direct answer, source-backed reasoning
+        and the native observation still required. Distinguish enrollment from
+        admission and launch dispatch from Host readiness. Research cannot read
+        real secret files, start a container, enroll a provider or publish a native
+        binary through operations that are unavailable to this activity.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Document the operator path affected by acceptance: configuration,
+        enrollment, admission, connection, approved assignment, Host startup or
+        artifact verification. Explain endpoint precedence and secret handling
+        using the actual public input shape. Keep tokens, database credentials
+        and provider login state outside the checkout and sample output.
+
+        Make consequential decisions explicit. A pending launcher waits for
+        admission, a repeated assignment reconciles its existing container and a
+        changed image requires the accepted runtime procedure. Explain source
+        revision, approved image and retained state without suggesting a remote
+        assignment may supply arbitrary local paths or raw commands.
+
+        Record intended behavior before implementation and walk examples against
+        the executable and policy resources. Distinguish a staged artifact from a
+        published download and isolated native verification from qualified
+        real-project operation. Coordinate changed enrollment, download or Host
+        procedures with their accountable owners instead of duplicating policy.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise the public executable or exported application seam with isolated
+        configuration and credential locations. Use distinguishable trusted local
+        assignments and remote project requests. Assert exact selected repository,
+        revision, image and bindings, and refusal of remote attempts to replace
+        local paths, credentials or executable behavior.
+
+        For reconnect and repeated launch, observe the existing container result
+        and assert the same accepted effect is reused. Cover actual readiness
+        refusal rather than accepting any container status. Packaging assertions
+        compare the produced artifact with its checksum. A controlled runtime can
+        prove argument and reconciliation decisions; real Docker and confinement
+        evidence are required for native enforcement claims.
+
+        Keep fixtures independent of live operator credentials and unrelated
+        containers. Preserve meaningful red and required quality observations,
+        correcting fixture paths or missing dependencies before attributing a
+        failure to behavior. A necessary Capacity or Host contribution is named
+        through its owner, not simulated and reported as assembled success.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Reuse the platform enrollment lifecycle and keep local settings
-        and credentials outside the project checkout.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted Launcher behavior through its existing executable,
+        local assignment model and runtime adapter. Reuse Capacity enrollment and
+        Host readiness rather than introducing another provider registry or task
+        manager. Preserve non-secret configuration precedence and keep credentials
+        in trusted local storage outside project source.
+
+        Resolve incoming project identity and revision against locally approved
+        images, mounts and credentials. Reconcile the actual managed container
+        before repeating a launch. Preserve the accepted runtime policy and
+        attributable image identity; do not fall back to a convenient image,
+        unchecked path or raw command when a prerequisite is unavailable.
+
+        Obtain applicable mapped quality and behavioral observations and inspect
+        the built executable where that boundary changed. Repair owned packaging
+        and runtime fixtures locally and request foreign public behavior when
+        needed. Report staged artifacts, controlled runtime results and real
+        native observations distinctly, leaving publication and qualified
+        deployment authority with their existing owners.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Follow the changed executable path from configuration and enrollment to
+        trusted assignment resolution and actual launch or reuse. Inspect secret
+        projections, canonical source identity, image selection, policy resources
+        and readiness. Look for remote values being promoted into unchecked local
+        capability or broad cleanup affecting unrelated containers.
+
+        Review assertions for reconnect, repeated launch and refused prerequisites.
+        They must distinguish reuse from duplicate creation and verify exact
+        bindings rather than only a successful runtime call. Check artifact bytes
+        against their checksum when packaging changed. Label simulated runtime
+        evidence separately from actual confinement and live execution.
+
+        Return local repair findings with the violated criterion and concrete
+        missing observation. A changed Capacity or Host contract remains its
+        owner's contribution. This read-only review cannot launch or remove
+        containers, expose credentials, admit a provider or authorize distribution
+        and production deployment.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
