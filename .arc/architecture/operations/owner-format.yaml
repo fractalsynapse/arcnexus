@@ -1,4 +1,6 @@
 id: owner-format
+purpose: >
+  Check formatting of applicable maintained files owned by the current component without rewriting source.
 kind: command
 tool: check
 category: lint
