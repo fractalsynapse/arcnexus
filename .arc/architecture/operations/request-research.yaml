@@ -1,4 +1,6 @@
 id: request-research
+purpose: >
+  Record an optional research question and the decision it informs, then hand control back to the host to obtain the report.
 kind: tool
 category: project-tool
 tool: research
