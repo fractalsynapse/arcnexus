@@ -1,7 +1,55 @@
 id: catalog
 kind: plugin
 purpose: |
-  Retain verified project identities and manage operator project selection.
+  # Catalog component purpose
+
+  ## Preserve verified project identity for operator selection
+
+  Catalog owns the platform records that let an operator select a verified Git
+  project. It records stable identity, canonical repository, verified revision
+  and the binding information needed by trusted consumers. Its public Cordis
+  service and Data resource support discovery, import, reachability checks,
+  revision refresh and retirement under the initiating operator's scope.
+
+  Verification is delegated to the trusted repository boundary. An entered URL
+  or an existing local directory does not establish that the expected repository
+  and commit are available. Catalog retains the verified result and exposes a
+  usable project only after the responsible verifier succeeds. Credentials remain
+  with trusted bindings; public projections must not disclose secret material or
+  credential references simply because a record uses them internally.
+
+  Reachability and registration answer different questions. A probe can explain
+  whether the repository is currently accessible without changing its selected
+  revision. Refresh verifies new source and applies the expected-revision rule so
+  a stale caller cannot silently replace a newer selection. Previously captured
+  tasks and reads retain their original source identities.
+
+  ## Selection does not authorize execution
+
+  Platform resolves project selection into authenticated scope. Architecture
+  captures and validates the project's versioned definitions. Commands, Host and
+  Coordination perform workflow admission under their own authority. Catalog
+  inclusion supplies a verified identity to those services; it cannot install
+  trusted code, grant publication credentials or admit a task by itself.
+
+  Retirement removes a project from active selection and routing while retaining
+  its stable identity and associated history. It is not deletion of Git objects,
+  journal observations, approvals or execution evidence. Repeated discovery and
+  refresh must not manufacture unrelated identities for the same retained record
+  or make historical references point at today's mutable revision.
+
+  The steward maintains the catalog model, persistence and public resource
+  definitions. Repository transport and credential verification remain with their
+  public providers. Browser selection belongs to UI and Web, while API and MCP
+  adapt the same Data registration. Keep these consumers aligned through the
+  canonical service instead of duplicating catalog policy in every transport.
+
+  Characteristic failures include enabling an unverified import, losing a
+  compare-and-set conflict, exposing another operator's entries and treating
+  retirement as permission to discard history. Success is observable through
+  isolated persisted records, exact verified revisions and consistent public
+  projections. Controlled verifier evidence establishes catalog behavior; actual
+  repository verification requires its own real source and provider observation.
 objectives:
   - measure: Only independently verified GitHub projects enter an operator's catalog.
 constraints:
@@ -9,14 +57,127 @@ constraints:
 owns:
   - packages/catalog
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named project identity, verification, refresh or retirement
+        uncertainty through Catalog's public service and Data registration. Trace
+        the trusted verifier's input and result, then follow how Platform consumes
+        the retained project. Separate repository reachability from accepted
+        revision and selection eligibility from execution admission.
+
+        Examine the actual persistence and expected-revision condition when the
+        question concerns stale updates or stable identity. Identify which fields
+        are public and which exist only for trusted binding resolution. Read
+        applicable retained findings before recommending another verification
+        mechanism or catalog store.
+
+        Return a complete report with source-backed conclusions and a precise
+        evidence gap. A controlled verifier can establish caller behavior but
+        cannot prove access to a real private repository. Explain that distinction
+        and the responsible public contribution without reading credentials,
+        importing projects or changing their selected revisions during research.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Explain how an operator imports, selects, probes, refreshes and retires a
+        verified project. Describe the stable ID and pinned revision visible to
+        consumers, the expected-revision requirement for refresh, and the
+        diagnostic returned when verification is unavailable or refused.
+
+        Make retirement's consequence explicit: selection changes while retained
+        project and execution history remain attributable. Explain why discovery
+        cannot authorize a Host, supply publication credentials or replace a task's
+        captured source. Reference the trusted verifier and public Data schemas
+        rather than copying their implementations into examples.
+
+        Record intended model changes before implementation and validate examples
+        against actual public projections. Keep credential references and secrets
+        out of reader-facing sample responses. Distinguish an isolated fixture
+        import from real repository verification and coordinate necessary gateway
+        or selector documentation through its accountable owner.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise the public Catalog service and resource using isolated persisted
+        state and an explicit verifier. Give different operators distinguishable
+        entries and use distinct verified revisions. Assert exact retained and
+        projected identity, refusal of unavailable verification and absence of an
+        eligible project after a failed import.
+
+        Test the affected refresh and retirement decisions through their real
+        persistence path. A stale expected revision must not overwrite current
+        selection; a probe must not change it; retirement must remove eligibility
+        while preserving the record's identity and historical references. Assert
+        public output omits credential references rather than merely checking a
+        successful result.
+
+        Use a real committed Git layout when the claim includes repository or
+        revision verification. Label controlled verifier coverage separately.
+        Preserve the intended red and applicable quality observations without
+        requiring future Host admission to finish this lower-level test. Request
+        a supplier only for a real missing verifier or consumer behavior required
+        by the accepted criterion.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Delegate repository verification and retain the stable project identity
-        when its selection is retired. Expose the resource through Data.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted change in the canonical Catalog service, schema
+        and Data registration. Delegate repository verification through its public
+        seam and persist only the verified outcome. Preserve operator ownership,
+        stable project identity and exact revision checks rather than trusting
+        client-supplied reachability or a convenient local checkout.
+
+        Keep probe, refresh and retirement effects distinct. Refresh must respect
+        its expected revision, while retirement changes selection without deleting
+        retained execution evidence. Build public projections deliberately so
+        internal credential bindings do not leak. Do not add task admission,
+        runtime installation or publication authority to catalog operations.
+
+        Resolve local persistence and fixture failures through the mapped owned
+        path and obtain applicable quality and behavioral checks. If verification
+        or a transport consumer must change, request its concrete public outcome
+        from the actual owner. Completion reports the resulting catalog behavior
+        and distinguishes controlled verification from real repository access and
+        subsequent project execution.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Compare the changed public catalog behavior with persisted identity and
+        the trusted verifier result. Inspect operator isolation, exact revision
+        handling, public field projection and retirement effects. Follow the
+        Platform consumer to ensure catalog membership is not being promoted into
+        execution authority.
+
+        Review assertions that could conceal a defect: generic verification
+        success, identical revision values, retirement checked only by list length
+        or a stale refresh that never competes with current state. Require the
+        actual identity and refusal observations relevant to acceptance. A fake
+        verifier remains a scoped fixture even when every Catalog test passes.
+
+        Return precise local repair findings with the criterion and affected
+        observation. A missing verifier implementation belongs to its owner;
+        ordinary Catalog code and fixture corrections stay within this milestone.
+        This read-only self-review cannot import or retire a real project, alter
+        its trusted binding, accept the assembled task or authorize delivery.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
