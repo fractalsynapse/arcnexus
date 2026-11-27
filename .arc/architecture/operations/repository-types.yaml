@@ -1,4 +1,6 @@
 id: repository-types
+purpose: >
+  Type-check project source, tests, fixtures and tooling without emitting build output.
 kind: command
 tool: check
 category: build

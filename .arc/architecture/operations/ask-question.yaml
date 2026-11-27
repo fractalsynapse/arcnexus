@@ -1,4 +1,6 @@
 id: ask-question
+purpose: >
+  Record a human clarification request and hand control back to the host to resume with the answer.
 kind: tool
 category: project-tool
 tool: question

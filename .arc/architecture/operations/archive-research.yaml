@@ -1,4 +1,6 @@
 id: archive-research
+purpose: >
+  Archive a retained reusable research report through the current component's checked edit path.
 kind: tool
 category: project-tool
 tool: archive

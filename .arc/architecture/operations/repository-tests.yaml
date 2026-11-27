@@ -1,4 +1,6 @@
 id: repository-tests
+purpose: >
+  Build the project and run all registered built test suites across component owners.
 kind: command
 category: integration-test
 command: npm

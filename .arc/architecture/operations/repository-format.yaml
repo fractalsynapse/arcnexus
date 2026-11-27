@@ -1,4 +1,6 @@
 id: repository-format
+purpose: >
+  Check formatting across applicable maintained repository files without rewriting source.
 kind: command
 category: lint
 command: npm

@@ -1,4 +1,6 @@
 id: request-supplier
+purpose: >
+  Request another component's contribution through Direction, linking the accepted supplier milestone when known.
 kind: tool
 category: project-tool
 tool: supplier

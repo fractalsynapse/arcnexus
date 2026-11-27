@@ -1,4 +1,6 @@
 id: read-file
+purpose: >
+  Read a complete permitted project file or retained evidence artifact with its path and content digest.
 kind: tool
 category: project-tool
 tool: read

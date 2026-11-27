@@ -1,4 +1,7 @@
 id: owner-tests
+purpose: >
+  Run built test suites owned by the current component, optionally narrowed by
+  declared tags, levels and literal source or built paths.
 kind: command
 tool: check
 category: integration-test

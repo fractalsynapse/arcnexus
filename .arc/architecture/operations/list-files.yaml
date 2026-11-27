@@ -1,4 +1,6 @@
 id: list-files
+purpose: >
+  List the files and directories in one permitted project directory.
 kind: tool
 category: project-tool
 tool: list
