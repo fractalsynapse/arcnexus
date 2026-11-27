@@ -1,7 +1,59 @@
 id: api-app
 kind: app
 purpose: |
-  Adapt project-scoped Data resources to the trusted platform api transport.
+  # API application purpose
+
+  ## Give authorized HTTP callers the shared platform services
+
+  API adapts the trusted platform's Data resources and Commands operations to
+  HTTP. It owns request routing, HTTP representations, OpenAPI presentation,
+  response status and streaming behavior. Browser clients and programmatic
+  callers should observe the same owner-defined resources and workflow receipts
+  available through the other application adapters. A new route must expose an
+  existing public responsibility rather than create a second implementation of
+  the model behind it.
+
+  Authentication establishes the initiating principal. Platform resolves that
+  principal's verified project and trusted bindings before resource access.
+  API carries this scope through discovery, invocation, receipt reads and event
+  subscriptions. A project identifier in a URL is a selection to validate, not
+  authority to read an arbitrary checkout or journal. The browser proxy's trusted
+  credential arrangement must remain distinguishable from direct authenticated
+  programmatic access.
+
+  Data supplies registered schemas and one authorization path for discovery and
+  invocation. Commands and its owning services retain workflow admission,
+  questions, cancellation and recovery. API translates those public outcomes into
+  HTTP without interpreting a pending approval as permission or treating an
+  accepted request as a completed workflow. Adapter reconnection must recover
+  the existing receipt rather than submit the work again.
+
+  ## Preserve complete scoped observations
+
+  Event transport preserves the journal's event identities, order, payloads and
+  cursor semantics. Replay and live follow must agree at their handoff. A
+  disconnected reader leaves the executing workflow and its writer with their
+  existing owners. Keep cursor values in their declared representation rather
+  than losing identity through numeric conversion. Raw operation artifacts are
+  obtained through the authorized evidence resource when requested.
+
+  Enrollment and launcher downloads are additional HTTP surfaces whose domain
+  decisions remain with Capacity and trusted artifact configuration. API must
+  not turn a provider's connection into admission or let a download request select
+  an arbitrary filesystem path. Database setup, project verification and native
+  execution are composed through their public owners.
+
+  Characteristic failures include OpenAPI describing a different schema from
+  invocation, cross-project data leakage, replay gaps, duplicated command
+  submission and optimistic success responses that hide unavailable services.
+  Verify these at the registered HTTP entry with explicit principals, projects,
+  resources and retained events. A route helper or successful status alone cannot
+  establish the resulting payload or authority.
+
+  Success means an authorized caller can discover and use the same services
+  through HTTP, recover observations after reconnect and distinguish pending,
+  unavailable, failed and completed work. Isolated adapter evidence remains
+  distinct from real Host execution, live qualification and production release.
 objectives:
   - measure: Authorized callers read the same owner-defined resources and cursor through the gateway.
 constraints:
@@ -9,14 +61,130 @@ constraints:
 owns:
   - apps/api
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named HTTP uncertainty from the registered request entry
+        through authentication, Platform scope and the relevant Data or Commands
+        operation. Read the actual input/output schemas and consumer expectations.
+        Identify whether the deciding behavior belongs to HTTP translation,
+        resource policy, workflow execution or journal transport.
+
+        For a stream question, trace replay, its cursor and the transition to live
+        observations. For an authorization question, compare discovery with actual
+        invocation under explicit principals and projects. Consult primary external
+        protocol documentation only when its semantics could change the decision,
+        recording applicability to the installed implementation.
+
+        Return the required complete research report with a direct answer, source
+        paths, supported implications and remaining uncertainty. Distinguish an
+        inspected route, a controlled transport test and an observed running
+        deployment. Research does not make HTTP requests through an unmapped tool,
+        change trusted configuration or authorize project execution.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Explain the public HTTP behavior affected by the assignment before its
+        implementation changes. Describe authentication, project selection,
+        request and response schemas, status meanings and relevant reconnect
+        behavior. Derive resource descriptions from Data and link workflow
+        authority to Commands instead of publishing a competing domain contract.
+
+        Make operator decisions concrete: distinguish submission from completion,
+        a retained approval from an answered one, and a disconnected stream from
+        cancelled execution. Explain how the caller resumes the selected receipt
+        or cursor without repeating an effect. Keep trusted deployment bindings
+        and credential handling separate from public request parameters.
+
+        Use API-owned documentation and verify examples against actual routes and
+        registered schemas. Label isolated review and unavailable runtime behavior
+        honestly. If another owner's public explanation must change, request that
+        specific contribution rather than placing contradictory policy in API.
+        Completion supplies the documented intent and its reader walkthroughs,
+        leaving engineering observations to their corresponding activities.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Build the regression through real Cordis registration and the HTTP entry
+        used by callers. Supply explicit authenticated identities, distinguishable
+        projects and owner-defined resources. Assert the exact response payload,
+        schema and status affected by the criterion; accepting any successful
+        response or counting handler calls does not establish correct scope.
+
+        Where streaming changes, use distinct retained and newly committed events.
+        Assert their order, complete content, cursor identities and reconnect
+        behavior across the replay-to-live handoff. Where commands change, retain
+        the receipt and exact question identity and prove reconnect or answer
+        handling does not duplicate submission. Exercise refusals without reading
+        another project's journal or exposing trusted paths.
+
+        Identify the plausible faulty adapter that each assertion rejects. Repair
+        setup and schema defects locally before interpreting a failure as the
+        intended regression. Preserve the meaningful red separately from required
+        passing quality checks and let Implementation supply green. Coordinate
+        genuine owner-service gaps through a concrete supplier contribution;
+        this activity does not need a completed live Host to prove HTTP translation.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Reuse the Data SDK for declarations and handlers. Authenticate and bind
-        project context before any resource access.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted HTTP change at its actual transport boundary.
+        Reuse Data declarations and Platform authentication and project resolution.
+        Delegate workflow actions to their public Commands resources. Keep HTTP
+        route selection, representation and lifecycle in API without copying
+        domain validation, creating another writer or launching a native task.
+
+        Preserve scope through asynchronous reads and streaming. Maintain the
+        declared cursor representation and cancellation of the reader without
+        cancelling unrelated execution. Map actual owner outcomes to honest HTTP
+        responses; preserve pending gates and existing receipt identity. Trusted
+        artifact paths and credentials must come from deployment bindings rather
+        than caller-selected executable configuration.
+
+        Resolve owned route, fixture and check failures through the current
+        engineering path. Obtain applicable mapped quality and behavioral checks
+        and inspect actual entry wiring. A required change to Platform, Data or
+        Commands becomes a named supplier outcome. Report what the adapter now
+        demonstrates and any remaining integration gap without claiming live
+        workflow qualification or staging delivery from local HTTP evidence.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Trace the changed request through the production HTTP registration,
+        authenticated scope, public service call and response. Compare OpenAPI
+        with invocation schemas and inspect whether unavailable, pending and
+        failed outcomes remain distinguishable. Check that URL or body data
+        cannot select another project's journal, trusted path or native capability.
+
+        Read the actual regression observations. Streaming assertions must reject
+        dropped or duplicated events and altered cursor identity, not merely find
+        a generic message. Command assertions must distinguish resumed receipt
+        handling from another submission. Inspect whether a controlled owner
+        fixture is being presented as real persistence or Host execution.
+
+        Return precise findings to the earliest applicable local activity, naming
+        the violated criterion and faulty alternative. Request another owner only
+        for its concrete missing responsibility. This read-only self-review
+        assesses the API contribution; it cannot run checks, change the candidate,
+        accept the assembled task or authorize publication.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
