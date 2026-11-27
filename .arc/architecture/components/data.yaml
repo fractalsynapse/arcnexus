@@ -1,8 +1,54 @@
 id: data
 kind: plugin
 purpose: |
-  Expose typed data operations contributed by ArcNexus model owners.
-  Apply caller scope and publish the same operation schemas to each gateway.
+  # Data component purpose
+
+  ## Publish owner-defined model operations through one interface
+
+  Data is the transport-neutral Cordis service for registered model resources.
+  Owners contribute operation definitions with input and output schemas and real
+  handlers. Trusted callers supply authenticated principal and verified project
+  scope. API, MCP and other consumers discover and invoke those definitions
+  without reconstructing each owner's model or knowing its storage implementation.
+
+  A resource has one active registration. Its supported operations are explicit;
+  a model need not implement every CRUD verb. Registration must reject ambiguous
+  ownership and unavailable definitions rather than silently replacing another
+  resource. Disposing a registration removes its discovery and invocation
+  availability so a detached plugin cannot leave a stale executable surface.
+
+  Discovery and invocation use the same authorization decision. A hidden operation
+  must not become callable by guessing its runtime name. A visible description
+  must correspond to the schema and handler used at execution. Validate caller
+  input and owner output through the canonical operation path, preserving the
+  scope passed to the responsible model.
+
+  ## Share validation while retaining domain authority
+
+  Typed SDK invocation and runtime resource/operation lookup are two ways to reach
+  the same registered behavior. Typed callers must not substitute an unrelated
+  resource object with a matching name to escape registration identity. Runtime
+  callers receive equally meaningful refusal for unavailable operations. Schema
+  descriptions supplied to transports derive from those same definitions.
+
+  Model owners retain domain rules, storage, migrations and conditional updates.
+  Planner retains guide decisions, Coordination retains journal semantics and
+  Commands retains workflow effects. Data coordinates registration, shared
+  validation and access; it does not introduce another store or reinterpret an
+  owner's pending approval as a completed mutation.
+
+  Platform supplies trusted scope and owner composition. HTTP status mapping and
+  MCP protocol results remain with their adapters. A schema improvement belongs
+  in the canonical owner or shared Data responsibility according to its actual
+  meaning, with affected owners contributing through their public interfaces.
+  Avoid copies of the same validation rule in SDK and transport code.
+
+  Characteristic failures include discovery/invocation disagreement, output that
+  bypasses its declared schema, stale disposed handlers and a typed path that
+  resolves a different object from runtime lookup. Verify them through the real
+  Cordis service using explicit resource registrations and distinct scopes.
+  Success means consumers see the same authorized operation contract and exact
+  validated result while each owner remains accountable for its model and effects.
 objectives:
   - measure: An authorized caller can discover and execute each supported owner operation through the Cordis Data service.
 constraints:
@@ -10,15 +56,129 @@ constraints:
 owns:
   - packages/data
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Resolve the named registration, schema, authorization or invocation-parity
+        uncertainty from Data's public service. Read the resource definition and
+        real adapter or model consumer together. Determine whether the issue is
+        shared registration/validation behavior, domain policy or transport
+        representation before recommending its responsible correction.
+
+        Trace both discovery and invocation where availability or access matters.
+        Compare typed resource identity with runtime name resolution and follow
+        registration disposal when lifecycle is involved. Use primary schema or
+        Cordis documentation only for an external semantic uncertainty that could
+        change the conclusion, recording the relevant installed version.
+
+        Return the complete report with direct findings, source provenance and
+        implications for affected owners. Distinguish an exported type, actual
+        registration and observed handler execution. A proposed declaration does
+        not provide its handler, and research cannot register a new executable
+        resource, mutate a model or broaden a caller's scope.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Describe the public registration and invocation contract for its actual
+        producer and adapter consumers. Explain supported operations, input/output
+        schemas, authenticated scope, authorization, duplicate registration refusal
+        and disposal. Show how a typed call and runtime lookup reach the same
+        owner-defined operation without maintaining parallel examples of policy.
+
+        Make responsibility decisions explicit. Data validates and dispatches;
+        the model owner decides domain transitions and persistence; adapters
+        represent results for their protocols. Describe an unavailable operation
+        and an owner-returned proposal honestly rather than suggesting a generic
+        CRUD action can bypass a guide or workflow approval.
+
+        Record changed intent before behavior changes and validate examples
+        against the actual public exports and registrations. Request an affected
+        owner's schema or documentation contribution when necessary. Completion
+        supplies a usable reference and decision walkthroughs, not a claim that
+        documenting a registration installed its handler or demonstrated gateway
+        integration.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Register explicit resources through the real Data Cordis plugin and call
+        the resulting service. Use distinct scopes and distinguishable values so
+        authorization or payload loss cannot hide behind a generic success. Assert
+        exact validated input passed to the owner and exact validated output
+        returned to the caller.
+
+        Compare discovery with both typed and runtime invocation. Cover the
+        relevant unauthorized, unknown, duplicate and disposed cases; a caller
+        must not invoke a hidden operation or replace a registered resource by
+        supplying another same-named object. Where schema description changes,
+        compare it with the schema used by execution rather than checking only
+        that a schema object exists.
+
+        Keep model-specific persistence and HTTP/MCP translation outside the
+        claim of a Data unit fixture. Identify the faulty dispatch or validation
+        alternative each assertion rejects, observe the intended red and preserve
+        applicable passing quality checks. A required foreign model contribution
+        is sequenced through its owner instead of being reimplemented in Data's
+        fixture or becoming a circular prerequisite to this test.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Keep registration, scope and transport-neutral validation in Data.
-        Delegate storage and domain mutations to the accountable owner.
-        Verify that discovery and invocation expose the same authorized operations.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted shared registration, authorization or validation
+        behavior in Data's canonical public path. Preserve one registered owner
+        per resource and agreement between description and invocation. Keep typed
+        and runtime access on the same operation semantics instead of fixing one
+        caller with a separate permissive dispatch path.
+
+        Validate declared input and output while preserving principal and project
+        scope for the owner. Keep domain transitions, revision checks and storage
+        with that owner. Registration disposal must remove callable availability
+        as well as the discovery entry. Do not promote imported schema text or
+        a model response into host authority.
+
+        Obtain applicable mapped quality and behavioral observations, including
+        real Cordis wiring where registration behavior changed. Correct owned
+        fixtures locally and request concrete owner or adapter changes through
+        their public boundaries. Report the shared service behavior established
+        and identify remaining transport or persistence integration evidence
+        without adding another model store or compatibility wrapper.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Inspect the public registration lifecycle and compare discovery, typed
+        invocation and runtime invocation for the changed behavior. Follow access
+        checks and schemas to the actual handler. Look for duplicated validation,
+        stale registrations, same-name object substitution and domain policy
+        copied into the shared service.
+
+        Read exact fixture payloads and refusal observations. A passing handler
+        call count cannot prove correct input, validated output or scope. Confirm
+        disposal assertions test invocation as well as descriptions and that real
+        Cordis composition supports claims about plugin availability. Keep owner
+        persistence and adapter behavior distinct from this service evidence.
+
+        Return actionable findings to the responsible local activity, with the
+        plausible incorrect behavior that remains possible. Name foreign schema
+        work only when it is a real accepted dependency. Self-review is read-only
+        and does not register resources, run checks, mutate domain records or
+        replace the assembled independent assessment.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
