@@ -1,7 +1,54 @@
 id: platform
 kind: plugin
 purpose: |
-  Bind isolated gateway applications to the same authenticated project scope.
+  # Platform component purpose
+
+  ## Resolve one trusted scope for network application consumers
+
+  Platform composes the authenticated operator and verified project context used
+  by API and MCP. It binds trusted repository configuration, Catalog identity,
+  Data resources and application-facing services so the adapters reach the same
+  public behavior. Protocol-specific request handling remains with each app;
+  shared trust decisions belong here rather than being copied between transports.
+
+  Authentication establishes the operator from trusted deployment credentials.
+  Project resolution checks that operator's catalog selection and pinned source.
+  Platform-scoped resources and project-scoped resources retain their declared
+  distinction. A caller-provided path, remote or project ID cannot bypass the
+  trusted binding that resolves actual source and evidence access.
+
+  Owners contribute their resource schemas and handlers through public entries.
+  Platform composes those registrations and supplies authorized scope; Data
+  validates and dispatches them. Catalog retains verified selection, Architecture
+  captures versioned guidance, Planner supplies guide models and Coordination
+  supplies retained execution observations. Platform must not become a competing
+  owner of those records.
+
+  ## Keep read access and execution authority explicit
+
+  Revision-bound reads use the selected verified source or an authorized retained
+  execution revision. Refreshing the catalog must not make a prior receipt's
+  guide references point at new content. Evidence access resolves only through
+  the trusted project's declared roots, preserving artifact identity without
+  exposing arbitrary host files or credentials.
+
+  Hosted workflow availability depends on trusted project configuration and
+  provider admission. Commands and Host retain task execution, Coordination its
+  durable writer and Workflow its recovery. Platform routes authorized requests
+  to those services; it cannot manufacture admission from a successful data read
+  or allow external request fields to choose native bindings.
+
+  Database and secret handling support this trusted composition without becoming
+  model authority. Setup migrations remain with DB and model owners. Runtime
+  failures should identify the unavailable binding or service instead of silently
+  opening another store, falling back to unverified source or widening privileges.
+
+  Characteristic failures include adapters resolving different principals,
+  platform resources leaking into project scope, mutable revision reads and
+  evidence paths escaping a trusted mount. Verify the composed services with
+  distinct operators, projects, revisions and public registrations. Success means
+  both transports receive the same authorized context while domain ownership,
+  captured authority and native execution remain with their responsible services.
 objectives:
   - measure: API and MCP resolve the same verified project catalog identity and pinned revision.
 constraints:
@@ -9,14 +56,127 @@ constraints:
 owns:
   - packages/platform
 activities:
+  research:
+    role: researcher
+    profile: gpt-astra
+    instructions:
+      - |
+        Investigate the named authentication, binding, revision, resource or
+        assignment uncertainty from Platform's public composition. Follow the
+        trusted configuration, Catalog resolution and owner registration consumed
+        by both adapters. Identify the actual decision source before attributing
+        inconsistent results to HTTP or MCP.
+
+        For source questions, compare selected and retained revisions and the
+        capture used for each read. For evidence questions, trace the authorized
+        project and mount roots. For execution availability, distinguish hosted
+        configuration and provider admission from Commands and Coordination's
+        eventual task admission. Read the relevant retained diagnostic completely.
+
+        Return a complete source-backed report naming the responsible boundary,
+        supported conclusion and missing observation. A resolved Data scope does
+        not establish real Host execution. Research cannot change bindings, read
+        deployment secrets, enable a project or substitute another executable
+        composition.
+    operations: [read-file, list-files]
+    standards: [agent-operating-protocol]
+  documentation:
+    role: technical-writer
+    profile: gpt-sol
+    instructions:
+      - |
+        Describe how trusted operator credentials, verified project selection and
+        repository bindings produce the scope supplied to API and MCP. Explain
+        platform versus project resources, pinned and retained revision reads,
+        evidence mount requirements and unavailable-binding diagnostics.
+
+        Make execution decisions traceable without copying their policy. Document
+        how hosted configuration and provider admission make a request eligible,
+        while Commands, Host and Coordination retain actual execution admission
+        and recovery. Explain why request data cannot supply local paths, secrets
+        or native capability bindings.
+
+        Record changed trust-composition intent before implementation. Validate
+        examples against actual public bindings and resource registrations using
+        non-secret fixture data. Link domain and adapter procedures to their
+        owners. Distinguish isolated platform review from qualified real-project
+        operation and request owner documentation where the public responsibility
+        genuinely changes.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit]
+    standards: [agent-operating-protocol]
+  testing:
+    role: designer
+    profile: gpt-sol
+    instructions:
+      - |
+        Exercise the real Platform composition with explicit trusted bindings,
+        distinguishable operators, verified projects and committed revisions.
+        Resolve scope and invoke registered public resources rather than testing
+        only an authentication helper. Assert exact principal, project and source
+        identity delivered to each consumer.
+
+        Cover the affected refusals: unknown project, invalid credential, wrong
+        resource scope, unbound path, unavailable evidence root or unadmitted
+        provider. For retained reads, advance catalog selection and prove the
+        previous execution still resolves its authorized revision. For shared
+        adapter behavior, verify the common public composition instead of two
+        independent fakes that happen to return equal values.
+
+        Use real persisted state or committed source where the claim depends on
+        it, reserving actual transport and Host proof for assembled integration.
+        Preserve intended red and applicable quality observations. Identify a
+        missing owner registration or public operation as concrete supplier work
+        rather than implementing another model inside Platform's fixture.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
+    standards: [readable-typescript, agent-operating-protocol]
+    verification: [owner-format, owner-lint, repository-types, repository-build]
   implementation:
     role: systems-engineer
     profile: gpt-sol
     instructions:
       - |
-        Use one scoped trust composition for both network adapters. Retain
-        task admission and operator-facing activation with their accountable owners.
-    operations:
-      [list-files, read-file, checked-edit, owner-format, owner-lint, repository-types, owner-tests]
+        Implement the accepted shared trust behavior in Platform's existing
+        binding and composition path. Resolve authenticated operator and verified
+        project once for the consuming services. Mount owner resources through
+        public entries and preserve Data's common authorization and validation
+        rather than copying policy into each network adapter.
+
+        Keep selected source, authorized retained revisions and evidence roots
+        explicit. External fields cannot replace trusted credentials, directories,
+        image assignments or executable handlers. Preserve the distinction between
+        data access and hosted request eligibility; actual writer admission and
+        workflow lifecycle remain with their existing owners.
+
+        Obtain applicable mapped quality and public composition checks. Correct
+        owned binding and fixture defects locally, requesting a concrete Catalog,
+        Capacity, Commands or adapter contribution when required. Report the
+        resolved trust behavior and actual integration gaps. Do not use fallback
+        stores or unverified local source to conceal an unavailable deployment
+        prerequisite.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier, checked-edit, owner-format, owner-lint, repository-types, repository-build, owner-tests]
     standards: [readable-typescript, agent-operating-protocol]
-    verification: [owner-format, owner-lint, repository-types, owner-tests]
+    verification: [owner-format, owner-lint, repository-types, repository-build, owner-tests]
+  review:
+    role: self-reviewer
+    profile: gpt-sol
+    instructions:
+      - |
+        Trace changed authentication and project resolution through the production
+        composition and affected owner registrations. Inspect platform/project
+        scope separation, retained revision access, evidence roots and provider
+        eligibility. Look for request-selected native authority or duplicated
+        domain policy introduced to make an adapter convenient.
+
+        Review fixtures for genuinely different principals, projects and source
+        revisions. Assertions must reject the wrong binding and stale or mutable
+        source, not only report successful registration. Distinguish actual
+        committed-source and persistence proof from controlled service returns,
+        and keep transport parity separate from native Host qualification.
+
+        Return precise local findings and their applicable repair target while
+        preserving accepted ownership. A required owner-service change is named
+        through its public boundary. This review cannot rewrite trusted bindings,
+        enable execution, run checks or substitute for final independent
+        acceptance and deployment authority.
+    operations: [read-file, list-files, ask-question, request-research, request-supplier]
+    standards: [readable-typescript, agent-operating-protocol]
