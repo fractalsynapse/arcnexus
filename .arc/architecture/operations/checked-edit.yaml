@@ -1,4 +1,6 @@
 id: checked-edit
+purpose: >
+  Apply and retain a preimage-checked edit to one owned file while enforcing captured ownership and protected-source boundaries.
 kind: tool
 category: project-tool
 tool: edit
