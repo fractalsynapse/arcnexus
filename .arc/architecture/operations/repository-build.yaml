@@ -1,4 +1,6 @@
 id: repository-build
+purpose: >
+  Clean generated build output, compile the TypeScript project and build the web application.
 kind: command
 tool: check
 category: build
