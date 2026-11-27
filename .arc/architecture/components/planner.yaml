@@ -370,6 +370,7 @@ owns:
   - packages/planner
   - .arc/goals
   - .arc/objectives
+  - .arc/research/planner
 activities:
   research:
     role: researcher
@@ -491,9 +492,10 @@ activities:
 
         Return the exact host-supplied Planner response shape with summary, ratings, comparison, changes, links and sources. Use complete content for proposed files and the defined deletion representation; do not add a guessed kind discriminator. A justified no-change assessment still analyzes the actual inventory. Ask a focused clarification when human intent is needed, retaining the complete answer across restart.
 
-        Return proposals through the host. The host retains the exact objective decision and delivers eligible guide changes through checked edits, independent review and verified staging. Use only mapped operations: if optional research is not exposed here, do not pretend it is available or call another profile through an unapproved path.
+        Return proposals through the host. The host retains the exact objective decision and delivers eligible guide changes through checked edits, independent review and verified staging. When captured sources and retained reports leave a named uncertainty that could change the planning decision, use request-research with the complete question and intended decision, then end the activation. Resume with the complete report as evidence, not approval. Captured-document recommendation discovery remains restricted to its host-supplied read-only tools.
     operations:
       - read-file
       - list-files
       - ask-question
+      - request-research
     standards: [agent-operating-protocol]
