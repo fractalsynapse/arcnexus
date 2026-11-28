@@ -140,8 +140,8 @@ class OwnershipCli {
     const lines = output.split('\n');
     for (const finding of expected.findings) {
       const literal = /[\s]/.test(finding.path) ? JSON.stringify(finding.path) : finding.path;
-      position = lines.findIndex((line, index) =>
-        index > position && line.includes(finding.kind) && line.includes(literal),
+      position = lines.findIndex(
+        (line, index) => index > position && line.includes(finding.kind) && line.includes(literal),
       );
       assert.notEqual(position, -1, `ordered finding: ${literal}`);
       const line = lines[position]!;
