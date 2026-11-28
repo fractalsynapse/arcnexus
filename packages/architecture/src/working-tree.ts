@@ -1,7 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { git } from './source.js';
-import { load, read, sameRemote, projectCatalogPath, type Component, type Project } from './catalog.js';
+import {
+  load,
+  read,
+  sameRemote,
+  projectCatalogPath,
+  type Component,
+  type Project,
+} from './catalog.js';
 import { ownershipFindings, type OwnershipFinding } from './ownership.js';
 
 export interface OwnershipAudit {
@@ -26,7 +33,10 @@ export function checkOwnership(directory: string): OwnershipAudit {
     throw new Error('Git origin does not match the working-tree project remote');
   const components = load<Component>(source, 'components');
   for (const component of Object.values(components)) {
-    if (!Array.isArray(component.owns) || !component.owns.every((path) => typeof path === 'string'))
+    if (
+      !Array.isArray(component.owns) ||
+      !component.owns.every((path) => typeof path === 'string')
+    )
       throw new Error(`Invalid catalog ownership: ${component.id}`);
   }
   return {
