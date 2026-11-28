@@ -11,7 +11,7 @@ export async function runCheck(
   task: HostTask,
   id: string,
   signal: AbortSignal,
-  scope?: StewardScope,
+  scope?: StewardScope<string>,
 ) {
   signal.throwIfAborted();
   const worktree = task.worktree;
@@ -39,7 +39,7 @@ function prerequisiteFailure(
   task: HostTask,
   id: string,
   failure: CheckResult,
-  scope?: StewardScope,
+  scope?: StewardScope<string>,
 ): CheckResult {
   const result: CheckResult = {
     ...failure,
@@ -56,7 +56,7 @@ async function executeCheck(
   task: HostTask,
   id: string,
   signal: AbortSignal,
-  scope?: StewardScope,
+  scope?: StewardScope<string>,
   input?: string,
   dependencies?: string,
 ) {
