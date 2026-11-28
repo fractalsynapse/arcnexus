@@ -181,10 +181,7 @@ for (const kind of ['proposal', 'no-change'] as const) {
 }
 
 /** Require complete failure evidence at the accountable caller before either assessment is retained. */
-function assertFailedCaller(
-  fixture: ArchitectVerificationFixture,
-  task: HostTask,
-) {
+function assertFailedCaller(fixture: ArchitectVerificationFixture, task: HostTask) {
   const checks = task
     .observations<{ check?: CheckResult }>()
     .flatMap((event) => event.check ?? []);
