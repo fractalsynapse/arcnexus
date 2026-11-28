@@ -14,7 +14,11 @@ export function ownershipFindings(
     .validateCoverage(team.list(components), [...paths].sort())
     .map((finding) => {
       if (finding.kind === 'collision')
-        return { kind: finding.kind, path: finding.path, owners: finding.owners.map(({ id }) => id) };
+        return {
+          kind: finding.kind,
+          path: finding.path,
+          owners: finding.owners.map(({ id }) => id),
+        };
       return { kind: 'unowned', path: finding.path };
     });
 }
