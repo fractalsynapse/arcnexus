@@ -427,7 +427,7 @@ export class HostTask implements TaskSession {
   }
 
   /** Run a declared check and record its real exit, duration and transcript. */
-  async check(id: string, signal: AbortSignal, scope?: StewardScope) {
+  async check(id: string, signal: AbortSignal, scope?: StewardScope<string>) {
     this.journal.assertWriter();
     return runCheck(this, id, signal, scope);
   }
