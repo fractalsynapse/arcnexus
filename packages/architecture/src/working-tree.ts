@@ -1,14 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { git } from './source.js';
-import {
-  load,
-  read,
-  sameRemote,
-  projectCatalogPath,
-  type Component,
-  type Project,
-} from './catalog.js';
+import { load, readProject, type Component } from './catalog.js';
 import { ownershipFindings, type OwnershipFinding } from './ownership.js';
 
 export interface OwnershipAudit {
@@ -28,9 +21,7 @@ export function checkOwnership(directory: string): OwnershipAudit {
     paths,
     read: (path: string) => readFileSync(join(root, path), 'utf8'),
   };
-  const project = read<Project>(source, projectCatalogPath);
-  if (!project.id || !sameRemote(project.remote, remote))
-    throw new Error('Git origin does not match the working-tree project remote');
+  readProject(source, remote);
   const components = load<Component>(source, 'components');
   for (const component of Object.values(components)) {
     if (
