@@ -21,6 +21,8 @@ import { materializeEdits } from './formatter.js';
 import { CheckedEditOwnershipRefusal, StaleCheckedEdit } from './edits.js';
 import { InvalidCodexResponse } from './codex.js';
 import {
+  performChecks,
+  verifyActivity,
   checkFailureSignature,
   correctionMadeProgress,
   stewardInput,
@@ -111,7 +113,7 @@ async function completeSteward(
   before: number,
 ): Promise<ActivityOutcome> {
   const failed =
-    (await perform(task, scope, result, correction, signal)) ??
+    (await performChecks(task, scope, result.checks, correction, signal)) ??
     (await reconcileCheck(task, scope, correction, signal)) ??
     (await verifyActivity(task, scope, signal));
   const evidence = task.evidence.slice(before);
@@ -230,14 +232,6 @@ function stewardOperations(task: ReturnType<typeof hostTask>, scope: StewardScop
     team.list(task.capture.components, { component: scope.owner, activity: scope.activity })[0]
       ?.activities[scope.activity]?.operations ?? []
   ).map(operationID);
-}
-
-/** Require the architect-declared passing operations even when the model omits them. */
-function verifyActivity(task: HostTask, scope: StewardScope, signal: AbortSignal) {
-  const required =
-    task.capture.components[scope.owner]?.activities[scope.activity]?.verification ?? [];
-  const checks = required.map((id) => ({ id, expected: 'pass' as const }));
-  return perform(task, scope, { kind: 'completed', edits: [], checks }, undefined, signal);
 }
 
 /** Give the owner its exact failing check and log when activating correction work. */
@@ -418,34 +412,6 @@ function validateActivityTransition(
   );
 }
 
-/** Run the requested checks and stop at the first unexpected result. */
-async function perform(
-  task: ReturnType<typeof hostTask>,
-  scope: StewardScope,
-  result: Extract<StewardResult, { kind: 'completed' }>,
-  correction: StewardCheckFailure | undefined,
-  signal: AbortSignal,
-): Promise<StewardCheckFailure | undefined> {
-  for (const { id, expected } of result.checks) {
-    const check = await task.check(id, signal, { ...scope, expected });
-    signal.throwIfAborted();
-    if (check.status === 'not-applicable' && expected === 'pass' && id !== correction?.id) continue;
-    if (typeof check.status !== 'number')
-      throw new Error(
-        `Operation ${id} reported ${check.status}; expected ${expected}; evidence: ${check.log}`,
-      );
-    if (check.prerequisite || check.diagnostic || (check.status === 0) !== (expected === 'pass'))
-      return {
-        id,
-        expected,
-        status: check.status,
-        log: check.log,
-        activity: scope.activity,
-        ...(check.diagnostic ? { diagnostic: check.diagnostic } : {}),
-      };
-  }
-}
-
 /** Recheck retained obligations or changed inputs, preserving a fresh unchanged caller diagnostic. */
 async function reconcileCheck(
   task: HostTask,
@@ -458,10 +424,10 @@ async function reconcileCheck(
     pending &&
     (pending.log === correction?.log || correctionMadeProgress(task.observations(), pending.log))
   ) {
-    const result = await perform(
+    const result = await performChecks(
       task,
       scope,
-      { kind: 'completed', edits: [], checks: [pending] },
+      [pending],
       pending,
       signal,
     );
