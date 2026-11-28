@@ -99,6 +99,71 @@ filtering, ordering and repeated-lookup coverage. Current passing regressions an
 applicable Architecture quality evidence belong to later engineering activities;
 assembled independent assessment and delivery remain host responsibilities.
 
+## Working-tree ownership audit
+
+Accepted implementation intent for `ownership-audit-service`: expose a read-only
+audit through [Architecture's public entry](src/index.ts) for callers inspecting
+candidate ownership before adoption. This capability is not yet implemented at
+this documentation stage. It extends the ownership diagnostics above under the
+existing locked ARC-3, ARC-4 and ARC-16 obligations; it does not change the
+committed-source or authority boundaries of ARC-7 and ARC-8.
+
+The input is a directory within a Git working tree, including a nested directory.
+Resolve its repository root and canonical repository identity. Read the component
+catalog from that working tree, including modified declarations and newly added
+component definitions. The audited inventory is the union of Git index-tracked
+paths and nonignored untracked paths, relative to the repository root. Staged
+additions therefore participate before a commit exists; ignored untracked files
+do not. Tracked paths remain part of the index inventory even if their working
+files are absent. Do not substitute HEAD's tree or walk every filesystem entry.
+
+Preserve literal Git paths, including whitespace, newlines and pathspec
+metacharacters. A nested caller must receive the same repository-relative
+inventory and ownership findings as a caller at the root. The result identifies
+the resolved repository and the working-tree source of the declarations and
+inventory, keeping any committed revision identity distinct from those mutable
+inputs. It must not present candidate bytes as a committed snapshot or accepted
+authority.
+
+Use `Team.list` without eligibility or activity filtering and
+`Team.validateCoverage` through [Team's public entry](../team/src/index.ts).
+Refactor the existing ownership diagnostic responsibility for direct reuse by
+capture validation and the audit. Keep the ownership rules and diagnostic
+formatting canonical rather than implementing another matcher or copying the
+validation loop. Return all uncovered paths and all collisions, with every
+conflicting component ID, in deterministic path and component order. A covered
+inventory has no ownership findings. A malformed catalog or unreadable Git
+project is an explicit source error rather than a successful empty audit.
+
+Auditing reads candidate data without admitting a task, activating a provider,
+writing source or the Git index, committing, contacting upstream, or adopting
+architecture. `openProject` and `Architecture.capture` continue to read fixed
+committed objects; an existing capture remains immutable when working-tree
+declarations change. A successful candidate audit cannot grant edit authority,
+unlock a contract or update the active Team. Correct a reported declaration
+through the approved architecture route, or correct an owned candidate resource,
+then audit the changed inputs again. Adoption still follows the contract's
+recorded host boundary.
+
+Public regression evidence must use real temporary Git repositories through the
+Architecture public boundary. Distinguish a modified working-tree declaration
+from HEAD, include staged additions and nonignored untracked paths, exclude
+ignored untracked paths, and compare root and nested invocations. Include literal
+unusual filenames, multiple uncovered paths and collisions with all owner IDs;
+repeat unchanged inputs to establish complete deterministic output. Observe source
+and index state before and after auditing to establish the absence of writes.
+Retain separate regressions for immutable captures and `openProject` committed
+reads. Testing records the intended behavioral failure before implementation;
+later implementation obtains applicable passing owner evidence.
+
+Commands and CLI consume this service through their separately accountable
+contributions. Their protected interface changes require their own exact review;
+this intent supplies neither terminal policy nor foreign contract bytes. Execution
+separately enforces the approved updating activity's completion verification.
+Those prerequisites and the candidate-built command must be validated before
+recorded adoption; an installed host command does not demonstrate delivery.
+Independent assembled verification and staging delivery remain host responsibilities.
+
 ## Component discovery (#615)
 
 The source-linked index delivered through [PR #664](https://github.com/fractalsynapse/arcnexus/pull/664) follows the
