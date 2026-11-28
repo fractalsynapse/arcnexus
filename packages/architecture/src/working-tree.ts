@@ -24,10 +24,7 @@ export function checkOwnership(directory: string): OwnershipAudit {
   readProject(source, remote);
   const components = load<Component>(source, 'components');
   for (const component of Object.values(components)) {
-    if (
-      !Array.isArray(component.owns) ||
-      !component.owns.every((path) => typeof path === 'string')
-    )
+    if (!Array.isArray(component.owns) || !component.owns.every((path) => typeof path === 'string'))
       throw new Error(`Invalid catalog ownership: ${component.id}`);
   }
   return {
