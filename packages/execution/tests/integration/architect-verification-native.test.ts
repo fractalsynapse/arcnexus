@@ -54,7 +54,11 @@ for (const kind of ['proposal', 'no-change'] as const) {
 }
 
 test('candidate report parsing retains JSON values alongside complete process diagnostics', () => {
-  const report = { source: { revision: 'captured' }, paths: ['baseline', 'literal } café'], findings: [] };
+  const report = {
+    source: { revision: 'captured' },
+    paths: ['baseline', 'literal } café'],
+    findings: [],
+  };
   const json = JSON.stringify(report, null, 2);
   const warning = '(node:123) ExperimentalWarning: SQLite is an experimental feature\n';
   for (const log of [warning + json, json + '\n' + warning])
