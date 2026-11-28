@@ -13,6 +13,8 @@ export interface StewardScope<Activity extends string = StewardCheckFailure['act
   expected?: StewardCheckFailure['expected'];
 }
 
+type CheckFailure<Activity extends string> = Omit<StewardCheckFailure, 'activity'> & { activity: Activity };
+
 interface CheckEvent {
   feedback?: Feedback;
   check?: CheckResult;
@@ -34,8 +36,8 @@ interface AnswerEvent {
 }
 
 /** Reconstruct unresolved operations in order; passing another check cannot erase a failure. */
-export function pendingStewardCheck(events: readonly unknown[], scope: StewardScope, id?: string) {
-  const pending = new Map<string, StewardCheckFailure>();
+export function pendingStewardCheck<Activity extends string>(events: readonly unknown[], scope: StewardScope<Activity>, id?: string) {
+  const pending = new Map<string, CheckFailure<Activity>>();
   for (const event of events as readonly CheckEvent[]) {
     const feedback = event.feedback;
     if (
@@ -44,7 +46,7 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
       feedback.failedCheck?.activity === scope.activity &&
       !pending.has(feedback.failedCheck.id)
     )
-      pending.set(feedback.failedCheck.id, feedback.failedCheck);
+      pending.set(feedback.failedCheck.id, { ...feedback.failedCheck, activity: scope.activity });
     const repair = event.checkExpectationRepair;
     const prior = repair && pending.get(repair.id);
     if (
@@ -64,10 +66,10 @@ export function pendingStewardCheck(events: readonly unknown[], scope: StewardSc
 }
 
 /** Resolve each operation against its original pending expectation, including legacy feedback. */
-function observeCheck(
-  pending: Map<string, StewardCheckFailure>,
+function observeCheck<Activity extends string>(
+  pending: Map<string, CheckFailure<Activity>>,
   event: CheckEvent,
-  scope: StewardScope,
+  scope: StewardScope<Activity>,
 ) {
   const { check, scope: observed } = event;
   if (
@@ -171,7 +173,9 @@ export function repairCheckExpectation(task: HostTask, id: string, scope: Stewar
   const pending = pendingStewardCheck(task.observations(), scope, id);
   if (!pending || pending.expected === scope.expected) return;
   const redLog =
-    scope.expected === 'fail' ? establishedTestingRed(task, scope, pending) : undefined;
+    scope.expected === 'fail' && scope.activity === 'testing'
+      ? establishedTestingRed(task, { ...scope, activity: 'testing' }, { ...pending, activity: 'testing' })
+      : undefined;
   const unexpectedPass =
     scope.expected === 'pass' && pending.expected === 'fail' && pending.status === 0;
   if (!unexpectedPass && !redLog)
@@ -189,7 +193,7 @@ export function repairCheckExpectation(task: HostTask, id: string, scope: Stewar
 
 /** Run the requested checks and stop at the first unexpected result. */
 export async function performChecks<Activity extends string>(
-  task: ReturnType<typeof hostTask>,
+  task: HostTask,
   scope: StewardScope<Activity>,
   checks: readonly { id: string; expected: 'pass' | 'fail' }[],
   correction: { id: string } | undefined,
