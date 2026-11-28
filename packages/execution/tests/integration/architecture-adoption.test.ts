@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { accessSync, constants, copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { accessSync, constants, copyFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { Architecture } from '../../../architecture/src/index.js';
@@ -7,10 +7,12 @@ import { HostTask } from '../../src/index.js';
 import * as edits from '../../src/architecture-edits.js';
 import { AdoptionFixture } from '../fixtures/architecture-adoption.js';
 import { git } from '../../src/git.js';
+import { validateCheckExecutable } from '../../src/check.js';
 import { Clarifications } from '../../src/clarifications.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 const signal = new AbortController().signal;
+const native = { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' };
 
 /** Exercise host adoption through the exported production capability; absence is a meaningful red. */
 function adopt(fixture: AdoptionFixture, required = true, task = fixture.task) {
@@ -21,6 +23,7 @@ function adopt(fixture: AdoptionFixture, required = true, task = fixture.task) {
 
 test('approved architecture changes the next request in the same task while preserving its engineering base', async (context) => {
   const fixture = new AdoptionFixture(context);
+  fixture.controlAvailability(context);
   const baseline = fixture.task.capture;
   await fixture.approve();
   assert.equal(await adopt(fixture), true);
@@ -41,6 +44,7 @@ test('approved architecture changes the next request in the same task while pres
 
 test('restart restores the journaled architecture version without treating adoption as a changed approval baseline', async (context) => {
   const fixture = new AdoptionFixture(context);
+  fixture.controlAvailability(context);
   await fixture.approve();
   await adopt(fixture);
   const recovered = new HostTask(
@@ -69,6 +73,7 @@ test('unavailable handlers prevent adoption and preserve the prior resolved auth
 
 test('a missing command remains a prerequisite finding rather than activating its declaration', async (context) => {
   const fixture = new AdoptionFixture(context, 'check', './src/not-yet-implemented');
+  fixture.controlAvailability(context, 1, './src/not-yet-implemented');
   const before = fixture.task.capture;
   await fixture.approve();
   assert.equal(await adopt(fixture, false), false);
@@ -78,7 +83,7 @@ test('a missing command remains a prerequisite finding rather than activating it
 
 // Host /tmp is replaced by fresh tmpfs inside the production check boundary.
 // A real executable here defeats a host-only exists/access probe without changing confinement.
-test('a Host-only executable cannot authorize adoption outside the confined filesystem', async (context) => {
+test('a Host-only executable cannot authorize adoption outside the confined filesystem', native, async (context) => {
   const directory = mkdtempSync('/tmp/arcnexus-host-only-');
   context.after(() => rmSync(directory, { recursive: true, force: true }));
   const executable = join(directory, 'service-check');
@@ -87,23 +92,57 @@ test('a Host-only executable cannot authorize adoption outside the confined file
   const fixture = new AdoptionFixture(context, 'check', executable);
   const before = fixture.task.capture;
   await fixture.approve();
+  await assertNativeStartup(fixture);
   assert.equal(await adopt(fixture, false), false, 'Host-only availability must refuse adoption');
-  assert.equal(fixture.task.capture, before);
-  assert.equal(fixture.task.config.capture, before);
-  const pending = fixture.task
-    .observations<{ architecturePending?: { id: string; head: string; diagnostic: string } }>()
-    .findLast((event) => event.architecturePending)?.architecturePending;
-  assert(pending, 'retain the actual confined availability diagnostic');
-  assert.equal(pending.id, fixture.proposal.id);
-  assert.equal(pending.head, git(fixture.workspace, 'rev-parse', 'HEAD'));
-  assert(pending.diagnostic.includes(executable), pending.diagnostic);
-  assert.match(pending.diagnostic, /no such file|not found|unavailable|ENOENT/i);
-  await assert.rejects(adopt(fixture), {
-    message: `Architecture prerequisite unavailable: ${pending.diagnostic}`,
+  const first = assertUnavailable(fixture, executable);
+  await assert.rejects(adopt(fixture), (error: unknown) => {
+    const fresh = assertUnavailable(fixture, executable);
+    assert.notEqual(fresh.log, first.log, 'each probe retains its own complete observation');
+    assert.equal(readFileSync(first.log, 'utf8'), first.output);
+    assert(error instanceof Error);
+    assert.equal(error.message, 'Architecture prerequisite unavailable: ' + fresh.diagnostic);
+    return true;
   });
   assert.equal(fixture.task.capture, before);
+  assert.equal(fixture.task.config.capture, before);
   assert(!fixture.task.observations<any>().some((event) => event.architectureAdoption));
 });
+
+/** Reject a sandbox startup failure before interpreting a negative probe as executable absence. */
+async function assertNativeStartup(fixture: AdoptionFixture) {
+  const task = fixture.task;
+  const result = await validateCheckExecutable(
+    { executable: '/usr/bin/true', args: [], cwd: fixture.workspace, parameters: {} },
+    fixture.workspace,
+    task.config.common,
+    join(fixture.workspace, 'node_modules'),
+    task.artifact('availability-control.log'),
+    signal,
+  );
+  task.note({ availabilityControl: result });
+  console.log(JSON.stringify({ availabilityControl: result }));
+  assert.equal(result.status, 0, 'Native availability control failed: ' + readFileSync(result.log, 'utf8'));
+}
+
+/** Assert fresh failure correlation without assuming repeated probes have identical artifact names. */
+function assertUnavailable(fixture: AdoptionFixture, executable: string) {
+  const events = fixture.task.observations<any>();
+  const pending = events.findLast((event) => event.architecturePending)?.architecturePending;
+  const probe = events.findLast((event) => event.operationAvailability)?.operationAvailability;
+  assert(pending && probe, 'retain the actual confined availability observation and diagnostic');
+  const output = readFileSync(probe.log, 'utf8');
+  console.log(JSON.stringify({ pending, probe, output }));
+  assert.equal(pending.id, fixture.proposal.id);
+  assert.equal(pending.head, git(fixture.workspace, 'rev-parse', 'HEAD'));
+  assert.equal(probe.status, 1, output);
+  assert.equal(probe.command, '/usr/bin/bwrap');
+  assert.deepEqual(probe.args.slice(-2), ['operation-availability', executable]);
+  assert.doesNotMatch(output, /Creating new namespace failed|Can't mount|Permission denied/i);
+  assert(pending.diagnostic.includes(executable), pending.diagnostic);
+  assert(pending.diagnostic.includes(probe.log), pending.diagnostic);
+  assert.match(pending.diagnostic, /Unavailable operation executable/);
+  return { log: probe.log as string, diagnostic: pending.diagnostic as string, output };
+}
 
 test('candidate guidance outside the exact approved batch cannot grant itself authority', async (context) => {
   const fixture = new AdoptionFixture(context);
@@ -115,6 +154,7 @@ test('candidate guidance outside the exact approved batch cannot grant itself au
 
 test('a complete answered activity question survives an approved architecture transition', async (context) => {
   const fixture = new AdoptionFixture(context);
+  fixture.controlAvailability(context);
   await fixture.approve();
   const selection = { component: 'service', activity: 'implementation' };
   const data = { milestone: { id: 'service-work' }, acceptance: [{ id: 'service-result' }] };
@@ -136,7 +176,7 @@ test('a complete answered activity question survives an approved architecture tr
 
 test(
   'the adopted operation reaches the real confined command through the existing check path',
-  { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' },
+  native,
   async (context) => {
     const fixture = new AdoptionFixture(context);
     await fixture.approve();
