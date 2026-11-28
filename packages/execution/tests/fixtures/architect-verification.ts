@@ -4,13 +4,13 @@ import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Agent, type ActivationInput } from '../../../agent/src/index.js';
 import { ActivationTools } from '../../src/activation-tools.js';
 import type { HostTask } from '../../src/index.js';
 import type { CheckResult } from '../../src/check.js';
 import { LocalMcp } from '../../src/mcp.js';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { ProductionCheckFixture } from './production-check.js';
 
 export const audit = 'declared-audit';
@@ -25,20 +25,14 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
   /** Declare one binding as both a model tool and mandatory completion verification. */
   constructor(t: TestContext, native = false) {
     super(t);
-    this.update(catalog + '/project.yaml', (value) => { value.architect = selection; });
-    this.update(catalog + '/components/architecture.yaml', (value) => {
-      value.activities = { updating: {
-        role: 'assessor', profile: 'architecture', instructions: ['Assess without approving.'],
-        operations: [{ operation: audit, parameters: { entry: 'nested/command.mjs' } }],
-        verification: [audit], standards: [],
-      } };
-    });
-    this.update(catalog + '/execution-profiles/architecture.yaml', (value) => {
-      value.operationCategories.push('check');
-    });
+    this.configure();
     this.write(catalog + '/operations/' + audit + '.yaml', {
-      id: audit, category: 'check', tool: 'check', command: '/usr/bin/node',
-      args: [{ parameter: 'entry' }, 'success'], network: false,
+      id: audit,
+      category: 'check',
+      tool: 'check',
+      command: '/usr/bin/node',
+      args: [{ parameter: 'entry' }, 'success'],
+      network: false,
       parameters: { entry: { type: 'string', default: 'wrong-default.mjs' } },
     });
     if (native) this.candidateRuntime();
@@ -46,38 +40,80 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
     this.git('commit', '-m', 'Capture required Architect completion verification');
   }
 
-  /** Isolate the model response while leaving HostTask activation and completion enforcement real. */
-  respond(t: TestContext, kind: 'proposal' | 'no-change', before?: () => Promise<void>) {
-    t.mock.method(this.agent, 'activate', async (input: ActivationInput) => {
-      this.inputs.push(input);
-      await before?.();
-      return kind === 'proposal' ? {
-        kind, purpose: 'Clarify the baseline', consequences: ['A clearer guide'],
-        implementation: [], changes: [{ path: catalog + '/plan-template.md', content: 'Updated guide.\n' }],
-      } : {
-        kind, summary: 'The accepted baseline remains aligned.',
-        evidence: [{ path: 'baseline', quote: 'durable evidence' }],
+  /** Capture all actor mappings before admission rather than mutating live authority. */
+  private configure() {
+    this.update(catalog + '/project.yaml', (value) => {
+      value.architect = selection;
+    });
+    this.update(catalog + '/components/architecture.yaml', (value) => {
+      value.activities = {
+        updating: {
+          role: 'assessor',
+          profile: 'architecture',
+          instructions: ['Assess without approving.'],
+          operations: [{ operation: audit, parameters: { entry: 'nested/command.mjs' } }],
+          verification: [audit],
+          standards: [],
+        },
       };
+    });
+    this.update(catalog + '/execution-profiles/architecture.yaml', (value) => {
+      value.operationCategories.push('check');
     });
   }
 
-  /** Retain exact controlled check failures; these characterize caller handling, not native confinement. */
+  /** Isolate the model response while leaving HostTask activation and completion enforcement real. */
+  respond(t: TestContext, kind: 'proposal' | 'no-change') {
+    t.mock.method(this.agent, 'activate', async (input: ActivationInput) => {
+      this.inputs.push(input);
+      return kind === 'proposal'
+        ? {
+            kind,
+            purpose: 'Clarify the baseline',
+            consequences: ['A clearer guide'],
+            implementation: [],
+            changes: [
+              { path: catalog + '/plan-template.md', content: 'Updated guide.\n' },
+            ],
+          }
+        : {
+            kind,
+            summary: 'The accepted baseline remains aligned.',
+            evidence: [{ path: 'baseline', quote: 'durable evidence' }],
+          };
+    });
+  }
+
+  /** Retain exact controlled check failures; these characterize caller handling, not confinement. */
   controlled(t: TestContext, task: HostTask, status: number) {
     t.mock.method(task, 'check', async (...[id, _signal, scope]: Parameters<HostTask['check']>) => {
-      const log = task.store('controlled-audit.log', 'Uncovered literal path café\nComplete diagnostic.\n');
-      const result = { id, status, log, command: '/usr/bin/node',
-        args: ['nested/command.mjs', 'success'], cwd: task.worktree!, durationMs: 0 };
+      const log = task.store(
+        'controlled-audit.log',
+        'Uncovered literal path café\nComplete diagnostic.\n',
+      );
+      const result = {
+        id,
+        status,
+        log,
+        command: '/usr/bin/node',
+        args: ['nested/command.mjs', 'success'],
+        cwd: task.worktree!,
+        durationMs: 0,
+      };
       task.note({ check: result, scope });
       return result;
     });
   }
 
-  /** Invoke the declared check over the actual MCP transport with the request builder's binding. */
+  /** Invoke the declared check over actual MCP transport with the request builder's binding. */
   async direct(task: HostTask) {
     const view = this.agent.prepareRequest(task.capture, selection, { worktree: task.worktree! });
     const actions = new ActivationTools(task, selection, {}, new AbortController().signal);
-    const server = new LocalMcp(view.request.options.tools,
-      (tool, args) => actions.invoke(tool, args), () => {});
+    const server = new LocalMcp(
+      view.request.options.tools,
+      (tool, args) => actions.invoke(tool, args),
+      () => {},
+    );
     const client = new Client({ name: 'architect-check', version: '1' });
     try {
       await client.connect(new StreamableHTTPClientTransport(new URL(await server.start())));
@@ -90,7 +126,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
     }
   }
 
-  /** Copy this candidate's compiler output; the audit never uses an unrelated installed Host command. */
+  /** Copy this candidate's compiler output rather than using an unrelated installed Host command. */
   private candidateRuntime() {
     const dist = fileURLToPath(new URL('../../../../', import.meta.url));
     for (const path of ['apps', 'packages'])
