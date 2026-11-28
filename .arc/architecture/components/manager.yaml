@@ -85,7 +85,7 @@ purpose: |
 
   Optional research can settle a provider discovery question or an inherited-source uncertainty. The question should include enough context, and the returned report should remain complete. Read relevant prior reports first. A research result is evidence for the current decision; it cannot itself change the applicable instruction hierarchy. Archive it through the mapped component path when that capability is available.
 
-  Measure progress through fewer broken references, clearer decisions, valid source adoption and reduced repeated handoffs. The timeline should show actual activity, tool results, elapsed time and available profile usage. Unknown measurements stay unknown. A prompt rewrite is not yet an agent-quality improvement until later authorized execution shows better behavior. During the current review stop, deterministic validation is appropriate and another live run is not.
+  Measure progress through fewer broken references, clearer decisions, valid source adoption and reduced repeated handoffs. The timeline should show actual activity, tool results, elapsed time and available profile usage. Unknown measurements stay unknown. A prompt rewrite is not yet an agent-quality improvement until later authorized execution shows better behavior. Resolve any live-execution review hold from the current assignment and its recorded human decisions. A satisfied historical hold must not become a standing prohibition; a pending hold remains binding.
 
   Evolution and successful outcomes
 
@@ -153,7 +153,7 @@ activities:
     profile: gpt-sol
     instructions:
       - |
-        Write the accepted guidance change in its canonical directive, project-owned skill or referenced resource, using the guidance-maintenance procedure. Explain the decision the instruction governs, its scope and the path a reader follows to the authoritative charter, contract or architecture. Remove stale duplicate rules instead of layering contradictory reminders.
+        Write the accepted guidance change in its canonical directive, project-owned skill or referenced resource, using the guidance-maintenance procedure. Explain the decision the instruction governs, its scope and the path a reader follows to the authoritative charter, contract, architecture. Remove stale duplicate rules instead of layering contradictory reminders.
 
         Keep generic product behavior separate from ArcNexus repository policy. Another target project must not inherit this repository's release restrictions or component names through hardcoded product text. Maintain inherited skills byte-for-byte at the recorded Scaffold revision and put local procedure in project-owned skills. Guidance should direct agents to their selected activity and actual tools, not pretend that prose grants capabilities.
 
