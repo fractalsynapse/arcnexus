@@ -1,4 +1,9 @@
 import type { Context } from 'cordis';
+import { checkOwnership, type OwnershipAudit } from './working-tree.js';
+
+export type { OwnershipAudit } from './working-tree.js';
+export type { OwnershipFinding } from './ownership.js';
+export { ownershipDiagnostic } from './ownership.js';
 import { openProject, type ProjectSource } from './source.js';
 import { captureProject, type Capture } from './catalog.js';
 import type { ActivitySelection } from './activity.js';
@@ -30,6 +35,11 @@ declare module 'cordis' {
 
 /** Read the captured model and prepare its Codex request. */
 export class Architecture {
+  /** Inspect candidate ownership without changing committed capture or active authority. */
+  checkOwnership(directory: string): OwnershipAudit {
+    return checkOwnership(directory);
+  }
+
   /** Assess accepted guides through the real Agent and durable host approval path. */
   propose(
     agent: Agent,
