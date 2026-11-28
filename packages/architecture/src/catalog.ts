@@ -123,10 +123,7 @@ export interface Capture {
 
 /** Read project authority and verify accepted contract bytes at the same revision. */
 export function captureProject(source: ProjectSource): Capture {
-  const project = read<Project>(source, projectCatalogPath);
-  if (!project.id || !sameRemote(project.remote, source.remote)) {
-    throw new Error('Git origin does not match the captured project remote');
-  }
+  const project = readProject(source, source.remote);
   const contracts = read<{ contracts: Contract[] }>(source, project.contractRegistry).contracts;
   verifyLocks(source, contracts);
   return Object.freeze({
@@ -141,8 +138,16 @@ export function captureProject(source: ProjectSource): Capture {
   });
 }
 
+/** Read project identity consistently for committed capture and candidate inspection. */
+export function readProject(source: Pick<ProjectSource, 'read'>, remote: string): Project {
+  const project = read<Project>(source, projectCatalogPath);
+  if (!project.id || !sameRemote(project.remote, remote))
+    throw new Error('Git origin does not match the project remote');
+  return project;
+}
+
 /** Verify the declared HTTPS identity without allowing credentials in the request. */
-export function sameRemote(declared: string, actual: string) {
+function sameRemote(declared: string, actual: string) {
   if (declared !== actual) return false;
   try {
     const remote = new URL(declared);
