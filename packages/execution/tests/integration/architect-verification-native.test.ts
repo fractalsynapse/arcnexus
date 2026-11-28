@@ -79,8 +79,9 @@ async function rejectChangedInputs(
   assert.notEqual(failed.log, direct.log);
   assert.match(readFileSync(failed.log, 'utf8'), /unowned café.txt/);
   assert(existsSync(direct.log), 'historical passing evidence remains readable');
-  console.log(JSON.stringify({ direct, failed, runtime: process.versions,
-    candidate: task.capture.source.revision }));
+  console.log(
+    JSON.stringify({ direct, failed, runtime: process.versions, candidate: task.capture.source.revision }),
+  );
 }
 
 /** Read actual host observations, including reused checks and original failed logs. */
