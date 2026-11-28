@@ -129,9 +129,9 @@ export class ActivationTools {
       this.task.capture.components[this.selection.component]?.activities[this.selection.activity];
     if (expected !== 'pass' && activity?.verification?.includes(id))
       throw new Error(`Operation ${id} requires pass for declared activity verification`);
-    const scope: StewardScope = {
+    const scope: StewardScope<string> = {
       owner: this.selection.component,
-      activity: this.selection.activity as StewardScope['activity'],
+      activity: this.selection.activity,
       expected,
     };
     repairCheckExpectation(this.task, id, scope);
