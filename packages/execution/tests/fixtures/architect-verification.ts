@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
 import { Agent, type ActivationInput } from '../../../agent/src/index.js';
 import { ActivationTools } from '../../src/activation-tools.js';
+import type { HostTask } from '../../src/index.js';
 import type { CheckResult } from '../../src/check.js';
 import { LocalMcp } from '../../src/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -61,8 +62,8 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
   }
 
   /** Retain exact controlled check failures; these characterize caller handling, not native confinement. */
-  controlled(t: TestContext, task: Awaited<ReturnType<this['open']>>, status: number) {
-    t.mock.method(task, 'check', async (id, _signal, scope) => {
+  controlled(t: TestContext, task: HostTask, status: number) {
+    t.mock.method(task, 'check', async (...[id, _signal, scope]: Parameters<HostTask['check']>) => {
       const log = task.store('controlled-audit.log', 'Uncovered literal path café\nComplete diagnostic.\n');
       const result = { id, status, log, command: '/usr/bin/node',
         args: ['nested/command.mjs', 'success'], cwd: task.worktree!, durationMs: 0 };
@@ -72,7 +73,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
   }
 
   /** Invoke the declared check over the actual MCP transport with the request builder's binding. */
-  async direct(task: Awaited<ReturnType<this['open']>>) {
+  async direct(task: HostTask) {
     const view = this.agent.prepareRequest(task.capture, selection, { worktree: task.worktree! });
     const actions = new ActivationTools(task, selection, {}, new AbortController().signal);
     const server = new LocalMcp(view.request.options.tools,
