@@ -17,7 +17,7 @@ const signal = new AbortController().signal;
 // Real Git, candidate compiler output, Cordis CLI composition and Bubblewrap establish
 // command evidence. The controlled Agent establishes response handling, never live inference.
 for (const kind of ['proposal', 'no-change'] as const) {
-  test('Architect ' + kind + ' uses the MCP binding and rejects changed audit inputs', async (t) => {
+  test('Architect ' + kind + ' uses the MCP binding and rejects changed inputs', async (t) => {
     const fixture = new ArchitectVerificationFixture(t, true);
     const task = await fixture.open();
     fixture.diagnose(task);
