@@ -37,6 +37,7 @@ export async function refreshArchitecture(
   const capture = new Architecture().capture(task.config.capture.source.root, revision);
   validateAuthority(task, proposal, capture);
   validateRetainedWork(task, capture);
+  if (task.capture.source.revision === capture.source.revision) return true;
   try {
     validateCapture(capture);
     await validateAvailability(task, capture, signal);
