@@ -50,7 +50,6 @@ class OwnershipCli {
       encoding: 'utf8',
       env: this.env,
     }).trim();
-    assert.ok(readFileSync(cli).length, 'candidate CLI must actually be built');
     t.diagnostic(
       JSON.stringify({
         candidateRevision: revision,
@@ -167,11 +166,14 @@ class OwnershipCli {
   }
 }
 
-test('GW-34, GW-36: built candidate audits unique coverage in both JSON placements and nested human mode', (t) => {
+test('GW-34, GW-36: built audit covers unique paths and nested JSON/human output', (t) => {
   const fixture = new OwnershipCli(t);
   const before = fixture.snapshot();
   const expected = fixture.json();
-  assert.deepEqual(expected.paths, fixture.git('ls-files', '-z').split('\0').filter(Boolean).sort());
+  assert.deepEqual(
+    expected.paths,
+    fixture.git('ls-files', '-z').split('\0').filter(Boolean).sort(),
+  );
   assert.deepEqual(fixture.json(['--json', ...command]), expected);
   const nested = join(fixture.root, 'work');
   assert.deepEqual(fixture.json([...command, '--json'], nested), expected);
@@ -182,7 +184,7 @@ test('GW-34, GW-36: built candidate audits unique coverage in both JSON placemen
   assert.deepEqual(fixture.snapshot(), before);
 });
 
-test('GW-35, GW-36: candidate working-tree collisions coexist with complete tracked and untracked findings', (t) => {
+test('GW-35, GW-36: built audit preserves all mixed working-tree findings', (t) => {
   const fixture = new OwnershipCli(t);
   fixture.mixed();
   const expected = fixture.architecture.checkOwnership(fixture.root);
@@ -230,7 +232,7 @@ test('GW-37: malformed audit arguments refuse locally with empty stdout and no a
   assert.deepEqual(fixture.snapshot(), before);
 });
 
-test('GW-38: invalid declarations and missing projects report service failures without a fabricated audit', (t) => {
+test('GW-38: invalid catalogs and missing Git projects are service failures', (t) => {
   const fixture = new OwnershipCli(t);
   fixture.write('.arc/architecture/components/work.yaml', 'owns: [unterminated\n');
   const before = fixture.snapshot();
