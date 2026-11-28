@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { accessSync, constants, copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import test from 'node:test';
 import { Architecture } from '../../../architecture/src/index.js';
 import { HostTask } from '../../src/index.js';
@@ -72,6 +74,35 @@ test('a missing command remains a prerequisite finding rather than activating it
   assert.equal(await adopt(fixture, false), false);
   assert.equal(fixture.task.capture, before);
   await assert.rejects(adopt(fixture), /not-yet-implemented/);
+});
+
+// Host /tmp is replaced by fresh tmpfs inside the production check boundary.
+// A real executable here defeats a host-only exists/access probe without changing confinement.
+test('a Host-only executable cannot authorize adoption outside the confined filesystem', async (context) => {
+  const directory = mkdtempSync('/tmp/arcnexus-host-only-');
+  context.after(() => rmSync(directory, { recursive: true, force: true }));
+  const executable = join(directory, 'service-check');
+  copyFileSync('/usr/bin/true', executable);
+  accessSync(executable, constants.X_OK);
+  const fixture = new AdoptionFixture(context, 'check', executable);
+  const before = fixture.task.capture;
+  await fixture.approve();
+  assert.equal(await adopt(fixture, false), false, 'Host-only availability must refuse adoption');
+  assert.equal(fixture.task.capture, before);
+  assert.equal(fixture.task.config.capture, before);
+  const pending = fixture.task
+    .observations<{ architecturePending?: { id: string; head: string; diagnostic: string } }>()
+    .findLast((event) => event.architecturePending)?.architecturePending;
+  assert(pending, 'retain the actual confined availability diagnostic');
+  assert.equal(pending.id, fixture.proposal.id);
+  assert.equal(pending.head, git(fixture.workspace, 'rev-parse', 'HEAD'));
+  assert(pending.diagnostic.includes(executable), pending.diagnostic);
+  assert.match(pending.diagnostic, /no such file|not found|unavailable|ENOENT/i);
+  await assert.rejects(adopt(fixture), {
+    message: `Architecture prerequisite unavailable: ${pending.diagnostic}`,
+  });
+  assert.equal(fixture.task.capture, before);
+  assert(!fixture.task.observations<any>().some((event) => event.architectureAdoption));
 });
 
 test('candidate guidance outside the exact approved batch cannot grant itself authority', async (context) => {
