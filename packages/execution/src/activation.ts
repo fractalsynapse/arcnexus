@@ -230,16 +230,24 @@ async function verifyActorCompletion(
   if (
     architect?.component !== selection.component ||
     architect.activity !== selection.activity ||
-    !reply || typeof reply !== 'object' || !('kind' in reply) ||
+    !reply ||
+    typeof reply !== 'object' ||
+    !('kind' in reply) ||
     !['proposal', 'no-change'].includes(String(reply.kind))
-  ) return;
+  )
+    return;
   const scope = { owner: selection.component, activity: selection.activity };
   const failed = await verifyActivity(task, scope, signal);
   if (!failed) return;
-  const diagnostic = failed.diagnostic ??
+  const diagnostic =
+    failed.diagnostic ??
     `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
   throw new InvalidAgentResponse(`${diagnostic}; read failed check log: ${failed.log}`, {
-    identity: JSON.stringify([scope, failed.id, checkFailureSignature(failed.log),
-      stewardInput(task.observations())]),
+    identity: JSON.stringify([
+      scope,
+      failed.id,
+      checkFailureSignature(failed.log),
+      stewardInput(task.observations()),
+    ]),
   });
 }
