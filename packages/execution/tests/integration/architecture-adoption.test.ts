@@ -83,30 +83,34 @@ test('a missing command remains a prerequisite finding rather than activating it
 
 // Host /tmp is replaced by fresh tmpfs inside the production check boundary.
 // A real executable here defeats a host-only exists/access probe without changing confinement.
-test('a Host-only executable cannot authorize adoption outside the confined filesystem', native, async (context) => {
-  const directory = mkdtempSync('/tmp/arcnexus-host-only-');
-  context.after(() => rmSync(directory, { recursive: true, force: true }));
-  const executable = join(directory, 'service-check');
-  copyFileSync('/usr/bin/true', executable);
-  accessSync(executable, constants.X_OK);
-  const fixture = new AdoptionFixture(context, 'check', executable);
-  const before = fixture.task.capture;
-  await fixture.approve();
-  await assertNativeStartup(fixture);
-  assert.equal(await adopt(fixture, false), false, 'Host-only availability must refuse adoption');
-  const first = assertUnavailable(fixture, executable);
-  await assert.rejects(adopt(fixture), (error: unknown) => {
-    const fresh = assertUnavailable(fixture, executable);
-    assert.notEqual(fresh.log, first.log, 'each probe retains its own complete observation');
-    assert.equal(readFileSync(first.log, 'utf8'), first.output);
-    assert(error instanceof Error);
-    assert.equal(error.message, 'Architecture prerequisite unavailable: ' + fresh.diagnostic);
-    return true;
-  });
-  assert.equal(fixture.task.capture, before);
-  assert.equal(fixture.task.config.capture, before);
-  assert(!fixture.task.observations<any>().some((event) => event.architectureAdoption));
-});
+test(
+  'a Host-only executable cannot authorize adoption outside the confined filesystem',
+  native,
+  async (context) => {
+    const directory = mkdtempSync('/tmp/arcnexus-host-only-');
+    context.after(() => rmSync(directory, { recursive: true, force: true }));
+    const executable = join(directory, 'service-check');
+    copyFileSync('/usr/bin/true', executable);
+    accessSync(executable, constants.X_OK);
+    const fixture = new AdoptionFixture(context, 'check', executable);
+    const before = fixture.task.capture;
+    await fixture.approve();
+    await assertNativeStartup(fixture);
+    assert.equal(await adopt(fixture, false), false, 'Host-only availability must refuse adoption');
+    const first = assertUnavailable(fixture, executable);
+    await assert.rejects(adopt(fixture), (error: unknown) => {
+      const fresh = assertUnavailable(fixture, executable);
+      assert.notEqual(fresh.log, first.log, 'each probe retains its own complete observation');
+      assert.equal(readFileSync(first.log, 'utf8'), first.output);
+      assert(error instanceof Error);
+      assert.equal(error.message, 'Architecture prerequisite unavailable: ' + fresh.diagnostic);
+      return true;
+    });
+    assert.equal(fixture.task.capture, before);
+    assert.equal(fixture.task.config.capture, before);
+    assert(!fixture.task.observations<any>().some((event) => event.architectureAdoption));
+  },
+);
 
 /** Reject a sandbox startup failure before interpreting a negative probe as executable absence. */
 async function assertNativeStartup(fixture: AdoptionFixture) {
@@ -121,7 +125,11 @@ async function assertNativeStartup(fixture: AdoptionFixture) {
   );
   task.note({ availabilityControl: result });
   console.log(JSON.stringify({ availabilityControl: result }));
-  assert.equal(result.status, 0, 'Native availability control failed: ' + readFileSync(result.log, 'utf8'));
+  assert.equal(
+    result.status,
+    0,
+    'Native availability control failed: ' + readFileSync(result.log, 'utf8'),
+  );
 }
 
 /** Assert fresh failure correlation without assuming repeated probes have identical artifact names. */
