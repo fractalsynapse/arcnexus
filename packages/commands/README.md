@@ -9,8 +9,8 @@ inspection and activation preparation.
 ## Public boundary and exact round counts
 
 The public entry is [src/index.ts](src/index.ts). It registers
-`commandsPlugin` with required Agent and Workflow injections and exposes
-`inspect`, `runTask`, `planTask`, `runRound`, `updateArchitecture` and
+`commandsPlugin` with required Agent, Architecture and Workflow injections and exposes
+`inspect`, `checkOwnership`, `runTask`, `planTask`, `runRound`, `updateArchitecture` and
 `refine` on `Context['commands']`. Refinement delegates directly to
 `Workflow.refine`; its signature is derived from
 `Context['workflow']['refine']`. This SDK boundary does not establish assembled
@@ -42,6 +42,7 @@ or outcome union. The existing SDK preserves standalone operations:
 | Method | Owning public operation |
 | --- | --- |
 | `inspect(input: InspectionInput)` | `Agent.inspect` |
+| `checkOwnership(directory: string)` | `Architecture.checkOwnership`, returning `OwnershipAudit` |
 | `runTask(input: TaskInput, observer, signal)` | `Workflow.run` |
 | `planTask(directory, objective, observer, signal)` | `Workflow.run` with the selected planning mode |
 | `runRound(directory, observer, signal)` | `Workflow.round`, returning `RoundOutcome` |
@@ -53,6 +54,14 @@ It includes the directory and selected component and activity. Inspection
 returns the same complete prepared request and separate invocation options
 used by activation, with named unavailable placeholders. It performs no task
 admission or provider activation.
+
+`checkOwnership(directory)` accepts a project root or nested working directory.
+It returns Architecture's complete `OwnershipAudit`, including working-tree source
+identity, ordered inventory and every uncovered or colliding path with all owner
+identities. The method's type comes directly from Architecture's public service.
+It preserves validation errors and reads candidate declarations without changing
+source, Git state or captured authority. It does not enter Workflow or activate a
+provider, and needs no terminal handles, observer or exit-code convention.
 
 An undefined planning objective selects exploration; an explicit objective
 selects objective mode and retains the human submission. Internal refinement
