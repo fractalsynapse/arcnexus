@@ -142,7 +142,7 @@ function assertUnavailable(fixture: AdoptionFixture, executable: string) {
   console.log(JSON.stringify({ pending, probe, output }));
   assert.equal(pending.id, fixture.proposal.id);
   assert.equal(pending.head, git(fixture.workspace, 'rev-parse', 'HEAD'));
-  assert.equal(probe.status, 1, output);
+  assert.equal(probe.status, 127, output);
   assert.equal(probe.command, '/usr/bin/bwrap');
   assert.deepEqual(probe.args.slice(-2), ['operation-availability', executable]);
   assert.doesNotMatch(output, /Creating new namespace failed|Can't mount|Permission denied/i);
