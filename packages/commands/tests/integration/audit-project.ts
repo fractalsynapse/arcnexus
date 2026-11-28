@@ -1,7 +1,14 @@
-import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { TestContext } from 'node:test';
@@ -16,7 +23,12 @@ export class AuditProject {
   readonly architecture = new Architecture();
   readonly capture;
   readonly tracked: string[];
-  readonly candidatePaths = ['shared/first.ts', 'shared/second.ts', 'unowned/first.ts', 'unowned/second.ts'];
+  readonly candidatePaths = [
+    'shared/first.ts',
+    'shared/second.ts',
+    'unowned/first.ts',
+    'unowned/second.ts',
+  ];
   private readonly options = {
     cwd: this.root,
     env: {
@@ -59,14 +71,22 @@ export class AuditProject {
     const contract = '# Fixture authority\n';
     this.write('contract.md', contract);
     this.yaml('.arc/contracts.yaml', {
-      contracts: [{
-        id: 'fixture/project', owner: 'alpha', file: 'contract.md', stage: 'locked',
-        digest: createHash('sha256').update(contract).digest('hex'),
-        acceptedBy: 'fixture architect', acceptedAt: '2026-01-01',
-      }],
+      contracts: [
+        {
+          id: 'fixture/project',
+          owner: 'alpha',
+          file: 'contract.md',
+          stage: 'locked',
+          digest: createHash('sha256').update(contract).digest('hex'),
+          acceptedBy: 'fixture architect',
+          acceptedAt: '2026-01-01',
+        },
+      ],
     });
     this.yaml('.arc/architecture/project.yaml', {
-      id: 'commands-ownership', remote, contractRegistry: '.arc/contracts.yaml',
+      id: 'commands-ownership',
+      remote,
+      contractRegistry: '.arc/contracts.yaml',
       planTemplate: 'contract.md',
       director: { component: 'alpha', activity: 'testing' },
       verifier: { component: 'beta', activity: 'testing' },
@@ -76,7 +96,10 @@ export class AuditProject {
   /** Declare ownership without granting any activity or provider capability to this read-only scenario. */
   component(id: string, owns: string[]) {
     this.yaml(`.arc/architecture/components/${id}.yaml`, {
-      id, purpose: `Maintain ${id} resources.`, owns, activities: {},
+      id,
+      purpose: `Maintain ${id} resources.`,
+      owns,
+      activities: {},
     });
   }
 
@@ -98,13 +121,17 @@ export class AuditProject {
 
   /** Retain all source and Git metadata bytes and timestamps to detect writes or worktree creation. */
   snapshot() {
-    return readdirSync(this.root, { recursive: true, encoding: 'utf8' }).sort().map((path) => {
-      const absolute = join(this.root, path);
-      const stat = lstatSync(absolute);
-      return {
-        path, mode: stat.mode, modified: stat.mtimeMs,
-        content: stat.isFile() ? readFileSync(absolute).toString('base64') : null,
-      };
-    });
+    return readdirSync(this.root, { recursive: true, encoding: 'utf8' })
+      .sort()
+      .map((path) => {
+        const absolute = join(this.root, path);
+        const stat = lstatSync(absolute);
+        return {
+          path,
+          mode: stat.mode,
+          modified: stat.mtimeMs,
+          content: stat.isFile() ? readFileSync(absolute).toString('base64') : null,
+        };
+      });
   }
 }
