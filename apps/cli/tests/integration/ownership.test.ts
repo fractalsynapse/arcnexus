@@ -130,14 +130,29 @@ class OwnershipCli {
       position = result.stdout.indexOf(literal, position + 1);
       assert.notEqual(position, -1, `complete ordered inventory: ${literal}`);
     }
+    this.humanFindings(result.stdout, expected);
+    if (!expected.findings.length) assert.match(result.stdout, /no ownership findings/i);
+  }
+
+  /** Correlate each finding with its path and all owners, rejecting inventory-only matches. */
+  private humanFindings(output: string, expected: OwnershipAudit) {
+    let position = -1;
+    const lines = output.split('\n');
     for (const finding of expected.findings) {
       const literal = /[\s]/.test(finding.path) ? JSON.stringify(finding.path) : finding.path;
-      assert.ok(result.stdout.includes(literal), literal);
-      assert.ok(result.stdout.includes(finding.kind), finding.kind);
-      if (finding.kind === 'collision')
-        for (const owner of finding.owners) assert.ok(result.stdout.includes(owner), owner);
+      position = lines.findIndex((line, index) =>
+        index > position && line.includes(finding.kind) && line.includes(literal),
+      );
+      assert.notEqual(position, -1, `ordered finding: ${literal}`);
+      const line = lines[position]!;
+      if (finding.kind !== 'collision') continue;
+      let ownerPosition = line.indexOf(literal) + literal.length;
+      for (const owner of finding.owners) {
+        ownerPosition = line.indexOf(owner, ownerPosition);
+        assert.notEqual(ownerPosition, -1, `finding ${literal} retains owner ${owner}`);
+        ownerPosition += owner.length;
+      }
     }
-    if (!expected.findings.length) assert.match(result.stdout, /no ownership findings/i);
   }
 
   /** Create simultaneous uncovered tracked/untracked paths and uncommitted catalog collisions. */
