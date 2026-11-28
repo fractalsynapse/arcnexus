@@ -414,7 +414,10 @@ activities:
       - ask-question
       - request-research
       - request-supplier
+      - architecture-ownership
     standards: [agent-operating-protocol]
+    verification:
+      - architecture-ownership
   research:
     role: researcher
     profile: gpt-astra

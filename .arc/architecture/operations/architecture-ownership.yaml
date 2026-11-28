@@ -1,0 +1,12 @@
+id: architecture-ownership
+purpose: >
+  Audit Git working-tree steward ownership against the working-tree component catalog and report every uncovered path and conflicting owner.
+kind: command
+tool: check
+category: cli-check
+command: arcnexus
+args:
+- architecture
+- check-ownership
+cwd: .
+network: false
