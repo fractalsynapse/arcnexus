@@ -8,10 +8,9 @@ authority:
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
   approvalRecord: 'Exact proposal intent
-    d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c; architect
-    approval and named-editor delegation are required in Codex chat before
-    application.'
-  approvedBase: 92b3fe4e86e0b4a99185aa66d831af0545942444
+    012d99fceb5535ab0107ac98adf59878bd20312a432aecf92170495309a29a99; human
+    approval is required and recorded in Coordination before host application.'
+  approvedBase: cfacdfce5e70592ae08b55b7c49ec9eb37052aa3
 contracts:
   - id: arcnexus/project
     type: project
@@ -28,7 +27,8 @@ contracts:
         digest: cf2d0a0092edaa0077caad848bb0057b1c2185d7c3be9d656cc418ec5b581886
         file: docs/interface/arcnexus-project.md
         revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
-        note: Superseded after exact approval of unified Plan and documentation directories.
+        note: Superseded after exact approval of unified Plan and documentation
+          directories.
       - stage: locked
         digest: c0ce39bfc5f818057c93c0bb3f0e78a6ab6a228ae4116e4f99510e0d20d11373
         file: docs/interface/arcnexus-project.md
@@ -146,7 +146,8 @@ contracts:
         digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
         file: apps/cli/contract.md
         revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
-        note: Superseded after exact approval of unified Plan and documentation directories.
+        note: Superseded after exact approval of unified Plan and documentation
+          directories.
       - stage: locked
         digest: d91b96a7422e556d7db5ef737dba086f4a4c01c18e448cd5acf58a29af20f2a8
         file: apps/cli/contract.md
@@ -912,8 +913,8 @@ contracts:
     dependsOn:
       - arcnexus/agent
       - arcnexus/workflow
-    digest: 10fab582e3a67d82b425dc2f805beea3bd8b8c51c1e865bd6d12545719f5107c
-    scenarios: 6
+    digest: 39e35da987ec5d677a207dc423a91c7254d869cf74ae8f79215e7f7811c29fdf
+    scenarios: 8
     history:
       - stage: proposed
         digest: 0dfa918ae22379adb7423b42e776d110293c77b345f89bed86b6bacf1ff694ec
@@ -946,6 +947,25 @@ contracts:
         revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
         note: Replaced by human-reviewed proposal intent
           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+      - id: arcnexus/commands
+        type: library
+        file: packages/commands/contract.md
+        owner: commands
+        stage: proposed
+        dependsOn:
+          - arcnexus/agent
+          - arcnexus/workflow
+        digest: 10fab582e3a67d82b425dc2f805beea3bd8b8c51c1e865bd6d12545719f5107c
+        scenarios: 6
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: cfacdfce5e70592ae08b55b7c49ec9eb37052aa3
+        note: Replaced by human-reviewed proposal intent
+          012d99fceb5535ab0107ac98adf59878bd20312a432aecf92170495309a29a99.
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'
@@ -1028,7 +1048,8 @@ contracts:
         digest: 63c678e57c25bc787c9b58663ac808c7f5c568b48ac498f52ba0a3ea09b5fbb5
         file: packages/workflow/contract.md
         revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
-        note: Superseded after exact approval of unified Plan and documentation directories.
+        note: Superseded after exact approval of unified Plan and documentation
+          directories.
       - stage: proposed
         digest: 38b6fa5ba062a23e019d8d59e4b91a186a149f61653646376bfd2de0d0b9b62e
         file: packages/workflow/contract.md
@@ -1085,7 +1106,8 @@ contracts:
         digest: 28a7861f97d6c377fca173880910645f12425765a6bc5f17236d4364b7ad178d
         file: packages/planner/contract.md
         revision: 92b3fe4e86e0b4a99185aa66d831af0545942444
-        note: Superseded after exact approval of unified Plan and documentation directories.
+        note: Superseded after exact approval of unified Plan and documentation
+          directories.
       - stage: proposed
         digest: c54ffae731571ffcc09d7e156610ac72091772013fc185141224fae8b5300762
         file: packages/planner/contract.md
