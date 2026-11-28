@@ -142,7 +142,7 @@ export function captureProject(source: ProjectSource): Capture {
 }
 
 /** Verify the declared HTTPS identity without allowing credentials in the request. */
-function sameRemote(declared: string, actual: string) {
+export function sameRemote(declared: string, actual: string) {
   if (declared !== actual) return false;
   try {
     const remote = new URL(declared);
@@ -159,7 +159,10 @@ function sameRemote(declared: string, actual: string) {
 }
 
 /** Validate component-owned definitions in filename order. */
-function load<T extends Definition>(source: ProjectSource, family: string) {
+export function load<T extends Definition>(
+  source: Pick<ProjectSource, 'paths' | 'read'>,
+  family: string,
+) {
   const prefix = `${catalogRoot}/${family}/`;
   const paths = source.paths
     .filter((path) => path.startsWith(prefix) && path.endsWith('.yaml'))
@@ -186,7 +189,7 @@ function freeze<T>(value: T): T {
 }
 
 /** Read an authored mapping from the fixed source, with the path in diagnostics. */
-function read<T>(source: ProjectSource, path: string): T {
+export function read<T>(source: Pick<ProjectSource, 'read'>, path: string): T {
   const definition: unknown = parse(source.read(path));
   if (!definition || typeof definition !== 'object' || Array.isArray(definition)) {
     throw new Error(`Expected a catalog mapping: ${path}`);
