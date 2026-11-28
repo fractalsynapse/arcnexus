@@ -30,7 +30,7 @@ function audit(directory: string): OwnershipAudit {
 
 /** Retain every fixture byte and modification timestamp, including Git metadata and the index. */
 function snapshot(root: string) {
-  return readdirSync(root, { recursive: true })
+  return readdirSync(root, { recursive: true, encoding: 'utf8' })
     .sort()
     .map((path) => {
       const absolute = join(root, path);
