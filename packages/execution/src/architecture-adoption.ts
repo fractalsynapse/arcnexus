@@ -1,5 +1,4 @@
-import { accessSync, constants, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join } from 'node:path';
 import {
   Architecture,
   validateCapture,
@@ -9,7 +8,7 @@ import {
 import { team } from '../../team/src/index.js';
 import type { Plan } from '../../direction/src/index.js';
 import { approvedArchitecture, applyArchitecture } from './architecture-edits.js';
-import { checkCommand, checkEnvironment } from './check.js';
+import { checkCommand, validateCheckExecutable } from './check.js';
 import { git, gitSource } from './git.js';
 import { isNativeGuidance, isTargetCodexConfig } from './host-config.js';
 import type { HostTask } from './index.js';
@@ -40,7 +39,7 @@ export async function refreshArchitecture(
   validateRetainedWork(task, capture);
   try {
     validateCapture(capture);
-    validateAvailability(capture, task.worktree);
+    await validateAvailability(task, capture, signal);
   } catch (error) {
     return pending(task, id, head, error, required);
   }
@@ -88,21 +87,27 @@ function pending(task: HostTask, id: string, head: string, error: unknown, requi
 }
 
 /** Check executable availability in the actual confined environment; full behavioral acceptance remains mandatory. */
-function validateAvailability(capture: Capture, worktree: string) {
+async function validateAvailability(task: HostTask, capture: Capture, signal: AbortSignal) {
+  const worktree = task.worktree!;
   for (const component of team.list(capture.components)) {
     for (const [activity, mapping] of Object.entries(component.activities)) {
       for (const binding of mapping.operations) {
         const id = typeof binding === 'string' ? binding : binding.operation;
         if (!capture.operations[id]?.command) continue;
         const command = checkCommand(capture, worktree, id, component.id, activity);
-        const executable = command.executable.includes('/')
-          ? resolve(command.cwd, command.executable)
-          : checkEnvironment.PATH.split(':')
-              .map((path) => resolve(path, command.executable))
-              .find(existsSync);
-        if (!executable)
-          throw new Error(`Unavailable operation executable: ${id} (${command.executable})`);
-        accessSync(executable, constants.X_OK);
+        const result = await validateCheckExecutable(
+          command,
+          worktree,
+          task.config.common,
+          join(capture.source.root, 'node_modules'),
+          task.artifact('operation-availability.log'),
+          signal,
+        );
+        task.note({ operationAvailability: { id, owner: component.id, activity, ...result } });
+        if (result.status !== 0)
+          throw new Error(
+            `Unavailable operation executable: ${id} (${command.executable}); exit ${result.status}; ${result.stderr || result.stdout}; evidence: ${result.log}`,
+          );
       }
     }
   }
