@@ -8,9 +8,9 @@ authority:
   editorDelegation: Explicit architect approval for a named change and base,
     applied by a named editor or the trusted host.
   approvalRecord: 'Exact proposal intent
-    012d99fceb5535ab0107ac98adf59878bd20312a432aecf92170495309a29a99; human
+    89aa378a484772e8c0971526b33371f06c9a25d0060f42adbff4fea1941cfdb8; human
     approval is required and recorded in Coordination before host application.'
-  approvedBase: cfacdfce5e70592ae08b55b7c49ec9eb37052aa3
+  approvedBase: f8539918568f3944ee4a7e2356f5b4514add6a52
 contracts:
   - id: arcnexus/project
     type: project
@@ -134,13 +134,13 @@ contracts:
     file: apps/cli/contract.md
     owner: cli-app
     stage: locked
-    digest: 26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2
+    digest: e1fc53562d77e1fde8ed17e2bcd85db5ab0346708acc53214f15a76751cb6129
     dependsOn:
       - arcnexus/project
       - arcnexus/commands
-    scenarios: 25
+    scenarios: 30
     acceptedBy: Adrian Webb (architect)
-    acceptedAt: '2026-11-26'
+    acceptedAt: '2026-11-28'
     history:
       - stage: locked
         digest: ce61c0eed36f1eb3e12d983c72d07d54df12491535d0bf71ac8555595f54a24b
@@ -284,10 +284,34 @@ contracts:
         revision: 32a59d7149170a2bac76592b5d59d1c95b0dab02
         note: Replaced by human-reviewed proposal intent
           9cdcb32d0c8a79eb407e2daef7a073d9e0428e4770672205b3898db154a8da8b.
+      - id: arcnexus/cli-gateway
+        type: gateway
+        file: apps/cli/contract.md
+        owner: cli-app
+        stage: locked
+        digest: 26ebd18abc462c5218d00de8c8955340b899c2c9771fba6399f59ae4b8abb5b2
+        dependsOn:
+          - arcnexus/project
+          - arcnexus/commands
+        scenarios: 25
+        acceptedBy: Adrian Webb (architect)
+        acceptedAt: 2026-11-26
+        approvalRecord: Exact proposal intent
+          d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
+          architect approval and named-editor delegation are required in Codex
+          chat before application.
+        amendmentRecord: "Architect approved the exact self-healing refinement amendment
+          in Codex chat for issue #615. Base:
+          fc6df1e8755764adfc133fbc2776257a9c6e1bbb."
+        efficiencyAmendmentRecord: Conditional on exact human approval in Codex chat for
+          issue 615; approved host/editor delegation must be recorded before
+          this proposal is applied.
+        revision: f8539918568f3944ee4a7e2356f5b4514add6a52
+        note: Replaced by human-reviewed proposal intent
+          89aa378a484772e8c0971526b33371f06c9a25d0060f42adbff4fea1941cfdb8.
     approvalRecord: 'Exact proposal intent
-      d142800428057eee126fb4cd129c5e6d9e597723c012ba3c081ee7e61c90cc8c;
-      architect approval and named-editor delegation are required in Codex chat
-      before application.'
+      89aa378a484772e8c0971526b33371f06c9a25d0060f42adbff4fea1941cfdb8;
+      foreground human approval recorded in Coordination.'
     amendmentRecord: 'Architect approved the exact self-healing refinement amendment
       in Codex chat for issue #615. Base:
       fc6df1e8755764adfc133fbc2776257a9c6e1bbb.'

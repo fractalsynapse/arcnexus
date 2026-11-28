@@ -5,7 +5,7 @@ Stage: **locked**. See the [registry](../../docs/interface/registry.yaml) for au
 ## Obligations
 
 The CLI app owns terminal input, output and exit codes. Its Cordis adapter
-delegates structured inspection and task operations to the shared
+delegates structured inspection, ownership audit and task operations to the shared
 [Commands SDK](../../packages/commands/contract.md). The CLI exposes
 `arcnexus inspect <component> <activity>` and `arcnexus task run "<goal>"` for
 the project resolved from the working directory. Bare `arcnexus task run`
@@ -28,9 +28,10 @@ use checked edits, independent review and verified staging. Goal changes proceed
 without a human approval prompt.
 
 `--json` is a general CLI output option, accepted once before the command or
-after its positional arguments. Inspection prints one structured JSON result on
-stdout. Long-running task, planning, architecture and refinement commands stream
-ordered JSONL observations on stdout followed by a typed terminal result record.
+after its positional arguments. Inspection and ownership audit each print one
+structured JSON result on stdout. Long-running task, planning, architecture update
+and refinement commands stream ordered JSONL observations on stdout followed by a
+typed terminal result record.
 Human mode renders those same observations live, including acting component,
 activity, operations and outcomes. Complete messages and evidence remain available
 as emitted or by their authorized file references. Commands use the same positional
@@ -76,8 +77,10 @@ through the existing activity mappings. Assembled-candidate checks remain requir
 for changes. A completed mapping or an already recorded objective may exit 0
 without a new staging merge. Missing project setup is reported as a prerequisite.
 Exit 1 represents a failed or blocked run, exit 2 invalid or unavailable input,
-and exit 130 cancellation. Refuse a second active task in the same project. Other
-verbs, option modes and launch surfaces are reserved for later qualification.
+and exit 130 cancellation. Refuse a second active task in the same project.
+`arcnexus architecture check-ownership` is an available command with the separate
+read-only audit output and exit meanings defined below. Other verbs, option modes
+and launch surfaces are reserved for later qualification.
 
 The Data SDK, a platform-bound CLI mode, OpenAPI and MCP gateways, and registered
 Host launchers may be implemented and verified against isolated test projects
@@ -105,6 +108,74 @@ A later invocation resumes unfinished refinement before starting new rounds;
 changing the requested total while that invocation is unfinished is refused.
 No answer, an unknown response or elapsed time supplies approval.
 
+## Working-tree ownership audit
+
+`arcnexus architecture check-ownership` audits the Git project's current
+working-tree ownership declarations. It accepts no positional arguments after
+`check-ownership` and no command-specific options. The general output option permits
+exactly these forms:
+
+- `arcnexus architecture check-ownership`
+- `arcnexus --json architecture check-ownership`
+- `arcnexus architecture check-ownership --json`
+
+The CLI passes its current working directory to `Commands.checkOwnership(directory)`.
+Commands delegates to the public Architecture service for repository discovery,
+project identity validation, Git inventory and ownership rules. Invocation from a
+nested project directory resolves the same repository as invocation from its root.
+The audit uses working-tree catalog declarations and the complete inventory of
+tracked paths and nonignored untracked paths supplied by Architecture. It does not
+require a clean working tree or substitute committed declarations for candidate
+working-tree declarations.
+
+Human mode prints the resolved source identity, complete audited path inventory
+and every finding on stdout. Source identity includes the working-tree kind,
+repository root, remote and HEAD revision. Each unowned finding identifies its
+complete path. Each collision identifies its complete path and every colliding
+owner identity. Paths and owner identities must remain unambiguous, including
+when their text contains whitespace or control characters. A successful audit
+with no findings explicitly reports that no ownership findings were found.
+
+JSON mode prints one JSON object containing the complete SDK audit result,
+including `source`, `paths` and `findings`. It is not a task observation stream.
+The CLI preserves the SDK's fields, path inventory, finding order and owner order
+without filtering, truncation or summarization. Each `unowned` finding retains
+its `path`; each `collision` finding retains its `path` and complete `owners`.
+Human mode preserves the same information and order. The HEAD revision identifies
+the repository's HEAD, not a claim that mutable declarations or untracked paths
+are committed there. Neither representation declares candidate architecture
+approved or adopted.
+
+A completed audit exits 0 when `findings` is empty and exits 1 when it contains
+any findings. Both outcomes print the complete audit result on stdout and leave
+stderr empty. If discovery, project validation or audit execution fails, the CLI
+exits 1, prints the service diagnostic on stderr and leaves stdout empty. An
+invalid project or declaration must not become an empty successful result.
+An unavailable command handler is exit 2 with a stderr diagnostic and empty
+stdout; recognizing the spelling alone cannot produce a successful audit.
+
+Missing command words, extra positional arguments, unknown options, duplicated
+`--json` or a `--json` between command words are refused with exit 2, a stderr
+diagnostic and empty stdout. Parsing finishes before dispatch, project service
+invocation or task admission. For example,
+`arcnexus architecture --json check-ownership` and
+`arcnexus architecture check-ownership extra` are input refusals.
+
+Discovery and auditing are local and read-only. They do not change project source,
+the Git index, catalog declarations or active captured authority, and do not admit
+a task, acquire the task lane, create a worktree, write durable task state,
+activate a provider or contact an upstream service. The audit asks no questions
+and has no approval or resumable task lifecycle. The foreground task cancellation
+and recovery obligations above continue to apply to task operations; auditing
+does not start such an operation.
+
+These obligations define the intended CLI capability. Contract approval alone
+does not establish implementation or qualification. Delivery evidence must
+exercise the actual CLI built from the assembled candidate against real temporary
+Git projects, identify that candidate's revision and actual built entry point,
+and demonstrate the scenarios below. An installed command from the Host image
+cannot establish delivery of this candidate's CLI.
+
 ## Acceptance scenarios
 
 | ID | Observation |
@@ -122,7 +193,7 @@ No answer, an unknown response or elapsed time supplies approval.
 | GW-18 | A runtime-only value appears as a named placeholder and is never filled with invented content. The rendered header and the JSON result both list the placeholders used. |
 | GW-19 | Objective and architecture review retain the question, exact proposal and human answer. Goal changes and routine technical repairs proceed through applicable checks without a human approval prompt. Unavailable external prerequisites remain named holds. |
 | GW-20 | `inspect` with an unknown component or an activity outside the declared set is exit 2 naming the valid values. |
-| GW-22 | Inspection, task execution, goal planning, architecture updates and refinement delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress, questions and results into its transport. |
+| GW-22 | Inspection, ownership audit, task execution, goal planning, architecture updates and refinement delegate through the same structured SDK available to in-process callers. The CLI alone translates terminal arguments, progress, questions and results into its transport. |
 | GW-23 | Bare `inspect`, an invocation with only one positional argument, and an invocation with extra arguments each exit 2 without effects. |
 | GW-24 | `inspect director planning` and `inspect reviewer assessment` resolve the captured special actor bindings. `inspect direction planning` remains a valid component and activity selection. |
 | GW-25 | Inspection prints the full ordered context and request from the activation builder. With matching inputs the payload matches the Codex adapter's input. Before admission it prints `<goal>` and names unavailable task-only values. |
@@ -134,6 +205,11 @@ No answer, an unknown response or elapsed time supplies approval.
 | GW-31 | Human and JSONL task modes display observations before completion from the same structured observer. JSONL stdout contains only typed event/result records in order; inspect --json remains one result and exit semantics remain unchanged. |
 | GW-32 | A running task exposes actor/activity, operations, elapsed time and available profile-level usage/cost with evidence links. Cancellation and restart preserve the recorded timeline and unknown measurements are not reported as zero. |
 | GW-33 | An authorized CLI or MCP command and the matching API operation use the same scoped application service. A gateway disconnect preserves the active command, and reconnect resumes its retained ordered observations. |
+| GW-34 | The actual built CLI delegates `architecture check-ownership` through Commands composed with the public Architecture service. A real temporary Git project with unique ownership coverage prints its complete audit and exits 0. Both permitted --json placements produce the same single structured result. Evidence identifies the assembled candidate revision and actual built entry point. |
+| GW-35 | An audit containing uncovered tracked and nonignored untracked paths exits 1 and reports every path. Working-tree catalog collisions are audited even when the committed catalog differs; each collision reports all owner identities. Human and JSON output preserve the complete inventory, source identity and findings supplied by Commands, including coexisting uncovered paths and collisions. |
+| GW-36 | Root and nested-directory audit invocations resolve the same project. Source, Git index and catalog remain unchanged, active authority is not adopted from the candidate, and there is no task admission, task-lane acquisition, durable task write, worktree creation, question, provider activation or upstream effect. |
+| GW-37 | Missing command words, extra positionals, unknown options and duplicated or misplaced --json exit 2 with stderr diagnostics and empty stdout before audit dispatch or admission. An unavailable handler reports unavailability rather than simulated success. |
+| GW-38 | Discovery, invalid project or declaration, and audit execution failures exit 1 with the service diagnostic on stderr and empty stdout. A completed audit with findings instead retains its complete result on stdout; neither condition is converted into a clean audit. |
 
 ## Deferred
 
