@@ -26,6 +26,7 @@ class OwnershipCli {
     GIT_CONFIG_GLOBAL: '/dev/null',
     GIT_CONFIG_NOSYSTEM: '1',
     GIT_OPTIONAL_LOCKS: '0',
+    NODE_NO_WARNINGS: '1',
   };
 
   /** Complete unique coverage before committing the independently authored baseline. */
@@ -34,15 +35,21 @@ class OwnershipCli {
     const roots = readdirSync(this.root).filter((path) => !['.git', '.arc'].includes(path));
     this.component('work', roots);
     this.git('add', '.');
-    this.git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
-      'commit', '-qm', 'Complete ownership baseline');
+    this.git(
+      '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'Complete ownership baseline',
+    );
     assert.deepEqual(this.architecture.checkOwnership(this.root).findings, []);
     const revision = execFileSync('git', ['rev-parse', 'HEAD'], {
-      cwd: candidate, encoding: 'utf8', env: this.env,
+      cwd: candidate,
+      encoding: 'utf8',
+      env: this.env,
     }).trim();
     assert.ok(readFileSync(cli).length, 'candidate CLI must actually be built');
-    t.diagnostic(JSON.stringify({ candidateRevision: revision, entryPoint: cli,
-      node: process.version, project: this.root, environment: this.env }));
+    t.diagnostic(
+      JSON.stringify({ candidateRevision: revision, entryPoint: cli,
+        node: process.version, project: this.root, environment: this.env }),
+    );
   }
 
   /** Preserve the full component declaration while changing only fixture ownership. */
@@ -66,7 +73,9 @@ class OwnershipCli {
   /** Run Node with the candidate's absolute built entry point, never an installed launcher. */
   run(args = command, directory = this.root) {
     const result = spawnSync(process.execPath, [cli, ...args], {
-      cwd: directory, env: this.env, encoding: 'utf8',
+      cwd: directory,
+      env: this.env,
+      encoding: 'utf8',
     });
     assert.ifError(result.error);
     assert.equal(result.signal, null);
@@ -86,12 +95,18 @@ class OwnershipCli {
 
   /** Retain all source and Git metadata bytes so task admission and index writes are visible. */
   snapshot() {
-    return readdirSync(this.root, { recursive: true, encoding: 'utf8' }).sort().map((path) => {
-      const absolute = join(this.root, path);
-      const stat = lstatSync(absolute);
-      return { path, mode: stat.mode, modified: stat.mtimeMs,
-        content: stat.isFile() ? readFileSync(absolute).toString('base64') : null };
-    });
+    return readdirSync(this.root, { recursive: true, encoding: 'utf8' })
+      .sort()
+      .map((path) => {
+        const absolute = join(this.root, path);
+        const stat = lstatSync(absolute);
+        return {
+          path,
+          mode: stat.mode,
+          modified: stat.mtimeMs,
+          content: stat.isFile() ? readFileSync(absolute).toString('base64') : null,
+        };
+      });
   }
 
   /** Assert complete readable source, inventory and finding identities in service order. */
@@ -121,8 +136,10 @@ class OwnershipCli {
     this.write(uncovered[0]!);
     this.write(shared);
     this.git('add', '--', uncovered[0]!, shared);
-    this.git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
-      'commit', '-qm', 'Tracked inventory additions');
+    this.git(
+      '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'Tracked inventory additions',
+    );
     for (const path of uncovered.slice(1)) this.write(path);
     this.component('plan', ['.arc', 'work/shared']);
     this.component('review', ['review', 'work/shared']);
@@ -158,8 +175,11 @@ test('GW-35, GW-36: candidate working-tree collisions coexist with complete trac
     ...[...uncovered].sort().map((path) => ({ kind: 'unowned', path })),
     { kind: 'collision', path: shared, owners: ['plan', 'review', 'work'] },
   ]);
-  assert.deepEqual(expected.paths, [...fixture.git('ls-files', '-z').split('\0').filter(Boolean),
-    '.gitignore', ...uncovered.slice(1)].sort());
+  assert.deepEqual(
+    expected.paths,
+    [...fixture.git('ls-files', '-z').split('\0').filter(Boolean),
+      '.gitignore', ...uncovered.slice(1)].sort(),
+  );
   const before = fixture.snapshot();
   fixture.json();
   fixture.json(['--json', ...command], join(fixture.root, 'work/shared'));
@@ -173,9 +193,14 @@ test('GW-37: malformed audit arguments refuse locally with empty stdout and no a
   fixture.write('.arc/architecture/components/work.yaml', 'owns: [unterminated\n');
   const before = fixture.snapshot();
   const malformed = [
-    [], ['architecture'], [...command, 'extra'], [...command, '--unknown'],
-    ['architecture', '--json', 'check-ownership'], ['--json', ...command, '--json'],
-    [...command, '--json', '--json'], [...command, '--json', 'extra'],
+    [],
+    ['architecture'],
+    [...command, 'extra'],
+    [...command, '--unknown'],
+    ['architecture', '--json', 'check-ownership'],
+    ['--json', ...command, '--json'],
+    [...command, '--json', '--json'],
+    [...command, '--json', 'extra'],
   ];
   for (const args of malformed) {
     const result = fixture.run(args);
