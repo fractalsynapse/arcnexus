@@ -149,8 +149,6 @@ test('candidate changes leave committed openProject reads and existing immutable
   assert.equal(JSON.stringify(project.capture), captured);
   assert.ok(Object.isFrozen(project.capture.components.zeta!.owns));
   assert.deepEqual(snapshot(project.root), before);
-  assert.equal(source.read(path), committed);
-  assert.equal(JSON.stringify(project.capture), captured);
 });
 
 test('malformed working-tree catalogs and unreadable Git projects are explicit source errors', (t) => {
