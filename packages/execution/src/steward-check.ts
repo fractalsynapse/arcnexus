@@ -7,9 +7,9 @@ import { establishedTestingRed } from './testing-red.js';
 import type { Clarification } from './clarifications.js';
 import type { ResearchResult } from './research.js';
 
-export interface StewardScope {
+export interface StewardScope<Activity extends string = StewardCheckFailure['activity']> {
   owner: string;
-  activity: StewardCheckFailure['activity'];
+  activity: Activity;
   expected?: StewardCheckFailure['expected'];
 }
 
@@ -186,3 +186,41 @@ export function repairCheckExpectation(task: HostTask, id: string, scope: Stewar
     },
   });
 }
+
+/** Run the requested checks and stop at the first unexpected result. */
+export async function performChecks<Activity extends string>(
+  task: ReturnType<typeof hostTask>,
+  scope: StewardScope<Activity>,
+  checks: readonly { id: string; expected: 'pass' | 'fail' }[],
+  correction: { id: string } | undefined,
+  signal: AbortSignal,
+): Promise<(Omit<StewardCheckFailure, 'activity'> & { activity: Activity }) | undefined> {
+  for (const { id, expected } of checks) {
+    const check = await task.check(id, signal, { ...scope, expected });
+    signal.throwIfAborted();
+    if (check.status === 'not-applicable' && expected === 'pass' && id !== correction?.id) continue;
+    if (typeof check.status !== 'number')
+      throw new Error(
+        `Operation ${id} reported ${check.status}; expected ${expected}; evidence: ${check.log}`,
+      );
+    if (check.prerequisite || check.diagnostic || (check.status === 0) !== (expected === 'pass'))
+      return {
+        id,
+        expected,
+        status: check.status,
+        log: check.log,
+        activity: scope.activity,
+        ...(check.diagnostic ? { diagnostic: check.diagnostic } : {}),
+      };
+  }
+}
+
+
+/** Require the architect-declared passing operations even when the model omits them. */
+export function verifyActivity<Activity extends string>(task: HostTask, scope: StewardScope<Activity>, signal: AbortSignal) {
+  const required =
+    task.capture.components[scope.owner]?.activities[scope.activity]?.verification ?? [];
+  const checks = required.map((id) => ({ id, expected: 'pass' as const }));
+  return performChecks(task, scope, checks, undefined, signal);
+}
+
