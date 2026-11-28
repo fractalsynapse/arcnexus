@@ -9,7 +9,7 @@ import type { StewardScope } from './steward-check.js';
 
 export interface CheckObservation {
   check?: CheckResult;
-  scope?: StewardScope;
+  scope?: StewardScope<string>;
   checkInput?: string;
 }
 
@@ -17,7 +17,7 @@ export interface CheckObservation {
 export function checkInput(
   task: HostTask,
   id: string,
-  scope?: StewardScope,
+  scope?: StewardScope<string>,
   dependencies?: string,
 ) {
   const worktree = task.worktree!;
