@@ -79,7 +79,12 @@ async function rejectChangedInputs(
   assert.match(readFileSync(failed.log, 'utf8'), /unowned café.txt/);
   assert(existsSync(direct.log), 'historical passing evidence remains readable');
   console.log(
-    JSON.stringify({ direct, failed, runtime: process.versions, candidate: task.capture.source.revision }),
+    JSON.stringify({
+      direct,
+      failed,
+      runtime: process.versions,
+      candidate: task.capture.source.revision,
+    }),
   );
 }
 
