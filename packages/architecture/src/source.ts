@@ -105,7 +105,7 @@ function historyEntries(history: string) {
 }
 
 /** Run a local read and expose failures without leaking command output or credentials. */
-function git(directory: string, ...args: string[]): string {
+export function git(directory: string, ...args: string[]): string {
   try {
     return execFileSync('/usr/bin/git', ['--no-replace-objects', ...args], {
       cwd: directory,
