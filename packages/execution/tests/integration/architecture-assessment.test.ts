@@ -182,9 +182,7 @@ for (const kind of ['proposal', 'no-change'] as const) {
 
 /** Require complete failure evidence at the accountable caller before either assessment is retained. */
 function assertFailedCaller(fixture: ArchitectVerificationFixture, task: HostTask) {
-  const checks = task
-    .observations<{ check?: CheckResult }>()
-    .flatMap((event) => event.check ?? []);
+  const checks = task.observations<{ check?: CheckResult }>().flatMap((event) => event.check ?? []);
   assert(checks.length > 0, 'completion must execute the omitted check');
   assert(checks.every((check) => check.id === audit && check.status === 37));
   assert.match(
