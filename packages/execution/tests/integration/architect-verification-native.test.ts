@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import type { CheckResult } from '../../src/check.js';
 import type { HostTask } from '../../src/index.js';
-import { ArchitectVerificationFixture, audit } from '../fixtures/architect-verification.js';
+import { ArchitectVerificationFixture } from '../fixtures/architect-verification.js';
 
 export const suite = {
   owner: 'execution',
