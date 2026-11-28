@@ -129,7 +129,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
     const dist = fileURLToPath(new URL('../../../../', import.meta.url));
     for (const path of ['apps', 'packages'])
       cpSync(join(dist, path), join(this.root, 'runtime', path), { recursive: true });
-    this.write('runtime/package.json', { type: 'module' });
+    this.write('runtime/package.json', JSON.stringify({ type: 'module' }));
     // The normal check mounts these prepared dependencies read-only at a real destination.
     cpSync(join(dist, '..', 'node_modules'), join(this.root, 'node_modules'), {
       recursive: true,
