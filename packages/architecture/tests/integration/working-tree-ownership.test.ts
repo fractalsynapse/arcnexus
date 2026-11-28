@@ -89,6 +89,7 @@ function candidateInventory(project: OwnershipProject) {
 test('working-tree audit includes candidate declarations, index additions and literal untracked paths from nested callers', (t) => {
   const project = new OwnershipProject(t);
   prepareCandidate(project);
+  const before = snapshot(project.root);
   const observed = audit(project.root);
   assert.deepEqual(observed.source, {
     kind: 'working-tree',
@@ -104,6 +105,7 @@ test('working-tree audit includes candidate declarations, index additions and li
       .map((path) => ({ kind: 'unowned', path })),
   );
   assert.deepEqual(audit(join(project.root, 'src/beta')), observed);
+  assert.deepEqual(snapshot(project.root), before);
 });
 
 test('working-tree audit returns every mixed finding and every conflicting owner in deterministic order', (t) => {
@@ -133,7 +135,7 @@ test('working-tree audit is read-only and a uniquely owned inventory has no find
   assert.deepEqual(snapshot(project.root), before);
 });
 
-test('candidate auditing leaves committed openProject reads and existing immutable captures unchanged', (t) => {
+test('candidate changes leave committed openProject reads and existing immutable captures unchanged', (t) => {
   const project = new OwnershipProject(t);
   const source = openProject(project.root);
   const path = '.arc/architecture/components/zeta.yaml';
@@ -146,7 +148,6 @@ test('candidate auditing leaves committed openProject reads and existing immutab
   assert.deepEqual(new Architecture().capture(project.root).components, project.capture.components);
   assert.equal(JSON.stringify(project.capture), captured);
   assert.ok(Object.isFrozen(project.capture.components.zeta!.owns));
-  audit(project.root);
   assert.deepEqual(snapshot(project.root), before);
   assert.equal(source.read(path), committed);
   assert.equal(JSON.stringify(project.capture), captured);
