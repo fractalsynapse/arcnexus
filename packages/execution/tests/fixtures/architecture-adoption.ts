@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -39,6 +41,22 @@ export class AdoptionFixture {
     context.after(() => {
       this.parent.journal.close();
       rmSync(this.root, { recursive: true, force: true });
+    });
+  }
+
+  /** Control only the availability subprocess for deterministic authority and recovery characterization. */
+  controlAvailability(context: TestContext, status = 0, executable = '/usr/bin/true') {
+    const spawn = childProcess.spawn;
+    const mock = context.mock.method(childProcess, 'spawn', (command, args, options) => {
+      assert.equal(command, '/usr/bin/bwrap');
+      assert.equal(args?.at(-2), 'operation-availability');
+      assert.equal(args?.at(-1), executable);
+      return spawn(status === 0 ? '/usr/bin/true' : '/usr/bin/false', [], options);
+    });
+    syncBuiltinESMExports();
+    context.after(() => {
+      mock.mock.restore();
+      syncBuiltinESMExports();
     });
   }
 
