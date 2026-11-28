@@ -154,4 +154,3 @@ export class OwnershipProject {
     writeFileSync(join(this.root, path), content);
   }
 }
-
