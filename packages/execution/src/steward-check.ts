@@ -53,8 +53,10 @@ export function pendingStewardCheck<Activity extends string>(
       !pending.has(feedback.failedCheck.id)
     )
       pending.set(feedback.failedCheck.id, { ...feedback.failedCheck, activity: scope.activity });
-    if (event.checkExpectationRepair?.scope.owner === scope.owner &&
-        event.checkExpectationRepair.scope.activity === scope.activity)
+    if (
+      event.checkExpectationRepair?.scope.owner === scope.owner &&
+      event.checkExpectationRepair.scope.activity === scope.activity
+    )
       observeExpectationRepair(pending, event);
     observeCheck(pending, event, scope);
   }
@@ -78,7 +80,6 @@ function observeExpectationRepair<Activity extends string>(
         repair.redLog))
   )
     pending.set(repair.id, { ...prior, expected: repair.expected ?? 'pass' });
-
 }
 
 /** Resolve each operation against its original pending expectation, including legacy feedback. */
