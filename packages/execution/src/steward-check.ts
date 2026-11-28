@@ -16,7 +16,7 @@ export interface StewardScope<Activity extends string = StewardCheckFailure['act
 interface CheckEvent {
   feedback?: Feedback;
   check?: CheckResult;
-  scope?: StewardScope;
+  scope?: StewardScope<string>;
   owner?: string;
   checkExpectationRepair?: {
     scope: StewardScope;
@@ -167,7 +167,7 @@ export function stewardReplyInput(events: readonly unknown[]) {
 }
 
 /** Correct a prediction against actual evidence, retaining every required recheck and original result. */
-export function repairCheckExpectation(task: HostTask, id: string, scope: StewardScope) {
+export function repairCheckExpectation(task: HostTask, id: string, scope: StewardScope<string>) {
   const pending = pendingStewardCheck(task.observations(), scope, id);
   if (!pending || pending.expected === scope.expected) return;
   const redLog =
