@@ -23,7 +23,7 @@ for (const kind of ['proposal', 'no-change'] as const) {
     fixture.diagnose(task);
     const direct = await fixture.direct(task);
     assert.equal(direct.status, 0, readFileSync(direct.log, 'utf8'));
-    const report = JSON.parse(readFileSync(direct.log, 'utf8'));
+    const report = parseReport(readFileSync(direct.log, 'utf8'));
     assert.deepEqual(report.findings, []);
     assert(report.paths.includes('baseline'));
     fixture.respond(t, kind);
