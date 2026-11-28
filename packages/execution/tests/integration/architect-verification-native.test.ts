@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import type { CheckResult } from '../../src/check.js';
@@ -93,24 +93,23 @@ async function rejectChangedInputs(
   task: HostTask,
   direct: CheckResult,
 ) {
-  writeFileSync(join(task.worktree!, 'unowned café.txt'), 'Changed audited Git inventory\n');
-  await assert.rejects(
-    fixture.architecture.propose(fixture.agent, task, 'changed', signal),
-    /declared-audit|exited 1|ownership|uncovered/i,
-  );
-  const failed = observations(task).findLast((check) => check.status === 1);
-  assert(failed, 'fresh ownership failure must replace applicability of the earlier pass');
-  assert.notEqual(failed.log, direct.log);
-  assert.match(readFileSync(failed.log, 'utf8'), /unowned café.txt/);
-  assert(existsSync(direct.log), 'historical passing evidence remains readable');
-  console.log(
-    JSON.stringify({
-      direct,
-      failed,
-      runtime: process.versions,
-      candidate: task.capture.source.revision,
-    }),
-  );
+  try {
+    writeFileSync(join(task.worktree!, 'unowned café.txt'), 'Changed audited Git inventory\n');
+    await assert.rejects(
+      fixture.architecture.propose(fixture.agent, task, 'changed', signal),
+      /declared-audit|exited 1|ownership|uncovered/i,
+    );
+    const failed = observations(task).findLast((check) => check.status === 1);
+    assert(failed, 'fresh ownership failure must replace applicability of the earlier pass');
+    assert.notEqual(failed.log, direct.log);
+    assert.match(readFileSync(failed.log, 'utf8'), /unowned café.txt/);
+    assert(existsSync(direct.log), 'historical passing evidence remains readable');
+    const runtime = process.versions;
+    const candidate = task.capture.source.revision;
+    console.log(JSON.stringify({ direct, failed, runtime, candidate }));
+  } finally {
+    rmSync(join(task.worktree!, 'unowned café.txt'), { force: true });
+  }
 }
 
 /** Read actual host observations, including reused checks and original failed logs. */
