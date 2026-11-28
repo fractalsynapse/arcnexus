@@ -17,6 +17,7 @@ declare module 'cordis' {
   interface Context {
     commands: {
       inspect: Context['agent']['inspect'];
+      checkOwnership: Context['architecture']['checkOwnership'];
       planTask(
         directory: string,
         objective: string | undefined,
@@ -41,11 +42,12 @@ declare module 'cordis' {
 }
 
 export const commandsPlugin = {
-  inject: ['agent', 'workflow'],
+  inject: ['agent', 'architecture', 'workflow'],
   /** Delegate structured commands to their owning application services. */
   apply(context: Context) {
     context.provide('commands', {
       inspect: (input: InspectionInput) => context.agent.inspect(input),
+      checkOwnership: (directory) => context.architecture.checkOwnership(directory),
       planTask: (directory, objective, observer, signal) =>
         context.workflow.run(
           {
