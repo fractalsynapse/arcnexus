@@ -194,7 +194,7 @@ function freeze<T>(value: T): T {
 }
 
 /** Read an authored mapping from the fixed source, with the path in diagnostics. */
-export function read<T>(source: Pick<ProjectSource, 'read'>, path: string): T {
+function read<T>(source: Pick<ProjectSource, 'read'>, path: string): T {
   const definition: unknown = parse(source.read(path));
   if (!definition || typeof definition !== 'object' || Array.isArray(definition)) {
     throw new Error(`Expected a catalog mapping: ${path}`);
