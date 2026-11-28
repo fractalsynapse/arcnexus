@@ -103,8 +103,8 @@ assembled independent assessment and delivery remain host responsibilities.
 
 Accepted implementation intent for `ownership-audit-service`: expose a read-only
 audit through [Architecture's public entry](src/index.ts) for callers inspecting
-candidate ownership before adoption. This capability is not yet implemented at
-this documentation stage. It extends the ownership diagnostics above under the
+candidate ownership before adoption. The service is available as
+`new Architecture().checkOwnership(directory)`. It extends the ownership diagnostics above under the
 existing locked ARC-3, ARC-4 and ARC-16 obligations; it does not change the
 committed-source or authority boundaries of ARC-7 and ARC-8.
 
@@ -163,6 +163,35 @@ separately enforces the approved updating activity's completion verification.
 Those prerequisites and the candidate-built command must be validated before
 recorded adoption; an installed host command does not demonstrate delivery.
 Independent assembled verification and staging delivery remain host responsibilities.
+
+### Implementation ledger (#762)
+
+The Architecture steward's `ownership-audit-service` contribution adds
+`Architecture.checkOwnership(directory): OwnershipAudit`. The public result holds
+`source: { kind: 'working-tree', root, remote, revision }`, sorted `paths` and
+complete `findings`. Here `revision` identifies HEAD for reference; it does not
+identify the mutable declaration bytes. Unowned findings contain `kind` and
+`path`; collisions also contain every conflicting component ID in `owners`.
+The public `ownershipDiagnostic(findings)` renders the complete refusal for
+consumers needing text.
+
+The owned implementation changes are in `src/index.ts`, `src/working-tree.ts`,
+`src/ownership.ts`, `src/catalog.ts`, `src/source.ts` and `src/validation.ts`.
+The earlier documentation and Testing contributions supply the intent and real-Git
+regressions. Checked-edit receipts retain each preimage and resulting owned diff.
+
+The simplification replaces capture validation's inline Team coverage and message
+loop with shared structured findings and one renderer. Candidate inspection reuses
+the same catalog mapping reader, definition loader, canonical remote validation
+and local read-only Git invocation. It introduces no second ownership matcher,
+component roster, capture type, lock loader or task execution path. Committed
+capture still loads fixed Git objects and verifies its existing locks.
+
+The public regressions retain separate assertions for candidate declaration
+changes, literal inventory, nested invocation, all collision IDs, no writes and
+committed-source preservation. Commands, CLI and completion enforcement remain
+the subsequent accepted contributions; independent assessment, runtime adoption
+and staging delivery remain host obligations.
 
 ## Component discovery (#615)
 
