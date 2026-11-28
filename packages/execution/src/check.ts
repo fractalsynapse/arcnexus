@@ -55,6 +55,30 @@ export async function check(
   return qualityObservation(capture, worktree, owner, result, stdout);
 }
 
+/** Probe the resolved executable inside the same filesystem and PATH used by operation checks. */
+export async function validateCheckExecutable(
+  command: ReturnType<typeof checkCommand>,
+  worktree: string,
+  common: string,
+  dependencies: string,
+  log: string,
+  signal: AbortSignal,
+) {
+  const args = [
+    ...checkMounts(worktree, common, dependencies),
+    '--chdir',
+    command.cwd,
+    '--',
+    '/usr/bin/sh',
+    '-ec',
+    'executable=$(command -v -- "$1") && test -f "$executable" && test -x "$executable"',
+    'operation-availability',
+    command.executable,
+  ];
+  const result = await execute('/usr/bin/bwrap', args, { cwd: worktree, log, signal });
+  return { ...result, command: '/usr/bin/bwrap', args, cwd: worktree, log };
+}
+
 /** Check the captured prerequisite only for optional, owner-scoped operations. */
 export function ownerTestInapplicability(
   capture: Capture,
