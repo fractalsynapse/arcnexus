@@ -47,12 +47,16 @@ export class AdoptionFixture {
   /** Control only the availability subprocess for deterministic authority and recovery characterization. */
   controlAvailability(context: TestContext, status = 0, executable = '/usr/bin/true') {
     const spawn = childProcess.spawn;
-    const mock = context.mock.method(childProcess, 'spawn', (...[command, args, options]: Parameters<typeof childProcess.spawn>) => {
-      assert.equal(command, '/usr/bin/bwrap');
-      assert.equal(args?.at(-2), 'operation-availability');
-      assert.equal(args?.at(-1), executable);
-      return spawn(status === 0 ? '/usr/bin/true' : '/usr/bin/false', [], options);
-    });
+    const mock = context.mock.method(
+      childProcess,
+      'spawn',
+      (...[command, args, options]: Parameters<typeof childProcess.spawn>) => {
+        assert.equal(command, '/usr/bin/bwrap');
+        assert.equal(args?.at(-2), 'operation-availability');
+        assert.equal(args?.at(-1), executable);
+        return spawn(status === 0 ? '/usr/bin/true' : '/usr/bin/false', [], options);
+      },
+    );
     syncBuiltinESMExports();
     context.after(() => {
       mock.mock.restore();
