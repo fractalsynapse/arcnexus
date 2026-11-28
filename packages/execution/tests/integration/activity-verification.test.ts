@@ -9,6 +9,7 @@ import { activities, type Milestone } from '../../../direction/src/index.js';
 import { ActivationTools } from '../../src/activation-tools.js';
 import { steward } from '../../src/index.js';
 import { StewardFixture } from '../fixtures/steward.js';
+import { ArchitectVerificationFixture, selection } from '../fixtures/architect-verification.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
@@ -110,4 +111,20 @@ test('a successful process exit with invalid scope returns to its same steward f
   assert.equal(outcome.kind, 'repair');
   assert.equal(outcome.kind === 'repair' && outcome.activity, 'implementation');
   assert.match(outcome.kind === 'repair' ? outcome.reason : '', /selection binding mismatch/);
+});
+
+test('Architect supplier handoff preserves the request without claiming required verification', async (t) => {
+  const fixture = new ArchitectVerificationFixture(t);
+  const task = await fixture.open();
+  const request = {
+    kind: 'supplier',
+    owner: 'work',
+    milestone: 'distinct-prerequisite',
+    reason: 'A distinct public contribution is required.',
+    question: 'Provide the missing behavior.',
+  };
+  t.mock.method(fixture.agent, 'activate', async () => request);
+  const reply = await task.activate(fixture.agent, selection, {}, new AbortController().signal);
+  assert.deepEqual(reply, request);
+  assert(!task.observations<{ check?: unknown }>().some((event) => event.check));
 });
