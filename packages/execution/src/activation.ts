@@ -230,10 +230,7 @@ async function verifyActorCompletion(
   if (
     architect?.component !== selection.component ||
     architect.activity !== selection.activity ||
-    !reply ||
-    typeof reply !== 'object' ||
-    !('kind' in reply) ||
-    !['proposal', 'no-change'].includes(String(reply.kind))
+    !['proposal', 'no-change'].includes(String((reply as { kind?: unknown } | null)?.kind))
   )
     return;
   const scope = { owner: selection.component, activity: selection.activity };
