@@ -1,9 +1,5 @@
 import type { Context } from 'cordis';
 import { checkOwnership, type OwnershipAudit } from './working-tree.js';
-
-export type { OwnershipAudit } from './working-tree.js';
-export type { OwnershipFinding } from './ownership.js';
-export { ownershipDiagnostic } from './ownership.js';
 import { openProject, type ProjectSource } from './source.js';
 import { captureProject, type Capture } from './catalog.js';
 import type { ActivitySelection } from './activity.js';
@@ -12,6 +8,10 @@ import type { Agent } from '../../agent/src/index.js';
 import type { HostTask } from '../../execution/src/index.js';
 import { ArchitectureAssessment } from './assessment.js';
 import type { DocumentationSettings } from './documentation-settings.js';
+
+export type { OwnershipAudit } from './working-tree.js';
+export type { OwnershipFinding } from './ownership.js';
+export { ownershipDiagnostic } from './ownership.js';
 
 export { projectCatalogPath } from './catalog.js';
 export { openProject, type ProjectSource } from './source.js';
