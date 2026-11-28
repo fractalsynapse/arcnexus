@@ -13,7 +13,9 @@ export interface StewardScope<Activity extends string = StewardCheckFailure['act
   expected?: StewardCheckFailure['expected'];
 }
 
-type CheckFailure<Activity extends string> = Omit<StewardCheckFailure, 'activity'> & { activity: Activity };
+type CheckFailure<Activity extends string> = Omit<StewardCheckFailure, 'activity'> & {
+  activity: Activity;
+};
 
 interface CheckEvent {
   feedback?: Feedback;
@@ -36,7 +38,11 @@ interface AnswerEvent {
 }
 
 /** Reconstruct unresolved operations in order; passing another check cannot erase a failure. */
-export function pendingStewardCheck<Activity extends string>(events: readonly unknown[], scope: StewardScope<Activity>, id?: string) {
+export function pendingStewardCheck<Activity extends string>(
+  events: readonly unknown[],
+  scope: StewardScope<Activity>,
+  id?: string,
+) {
   const pending = new Map<string, CheckFailure<Activity>>();
   for (const event of events as readonly CheckEvent[]) {
     const feedback = event.feedback;
@@ -174,7 +180,11 @@ export function repairCheckExpectation(task: HostTask, id: string, scope: Stewar
   if (!pending || pending.expected === scope.expected) return;
   const redLog =
     scope.expected === 'fail' && scope.activity === 'testing'
-      ? establishedTestingRed(task, { ...scope, activity: 'testing' }, { ...pending, activity: 'testing' })
+      ? establishedTestingRed(
+          task,
+          { ...scope, activity: 'testing' },
+          { ...pending, activity: 'testing' },
+        )
       : undefined;
   const unexpectedPass =
     scope.expected === 'pass' && pending.expected === 'fail' && pending.status === 0;
@@ -198,7 +208,7 @@ export async function performChecks<Activity extends string>(
   checks: readonly { id: string; expected: 'pass' | 'fail' }[],
   correction: { id: string } | undefined,
   signal: AbortSignal,
-): Promise<(Omit<StewardCheckFailure, 'activity'> & { activity: Activity }) | undefined> {
+): Promise<CheckFailure<Activity> | undefined> {
   for (const { id, expected } of checks) {
     const check = await task.check(id, signal, { ...scope, expected });
     signal.throwIfAborted();
@@ -219,12 +229,14 @@ export async function performChecks<Activity extends string>(
   }
 }
 
-
 /** Require the architect-declared passing operations even when the model omits them. */
-export function verifyActivity<Activity extends string>(task: HostTask, scope: StewardScope<Activity>, signal: AbortSignal) {
+export function verifyActivity<Activity extends string>(
+  task: HostTask,
+  scope: StewardScope<Activity>,
+  signal: AbortSignal,
+) {
   const required =
     task.capture.components[scope.owner]?.activities[scope.activity]?.verification ?? [];
   const checks = required.map((id) => ({ id, expected: 'pass' as const }));
   return performChecks(task, scope, checks, undefined, signal);
 }
-
