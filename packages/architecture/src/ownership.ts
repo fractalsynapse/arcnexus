@@ -2,8 +2,15 @@ import { team } from '../../team/src/index.js';
 import type { Component } from './catalog.js';
 
 export type OwnershipFinding =
-  | { kind: 'unowned'; path: string }
-  | { kind: 'collision'; path: string; owners: string[] };
+  | {
+      kind: 'unowned';
+      path: string;
+    }
+  | {
+      kind: 'collision';
+      path: string;
+      owners: string[];
+    };
 
 /** Preserve complete Team decisions in deterministic inventory and component order. */
 export function ownershipFindings(
