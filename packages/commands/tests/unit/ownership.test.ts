@@ -8,7 +8,7 @@ import { Workflow } from '../../../workflow/src/index.js';
 import { commandsPlugin } from '../../src/index.js';
 import { AuditProject, remote } from '../integration/audit-project.js';
 
-export const suite = { owner: 'commands', level: 'integration', tags: ['regression'] } as const;
+export const suite = { owner: 'commands', level: 'unit', tags: ['regression'] } as const;
 
 /** Reject every task lifecycle entry so an ownership query cannot silently admit work or invoke a provider. */
 class ForbiddenWorkflow extends Workflow {
