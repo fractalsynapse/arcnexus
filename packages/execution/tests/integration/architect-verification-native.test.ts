@@ -21,40 +21,48 @@ const native = { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' };
 // Real Git, candidate compiler output, Cordis CLI composition and Bubblewrap establish
 // command evidence. The controlled Agent establishes response handling, never live inference.
 for (const kind of ['proposal', 'no-change'] as const) {
-  test('Architect ' + kind + ' uses the MCP binding and rejects changed inputs', native, async (t) => {
-    const fixture = new ArchitectVerificationFixture(t, true);
-    const task = await fixture.open();
-    fixture.diagnose(task);
-    const direct = await fixture.direct(task);
-    assert.equal(direct.status, 0, readFileSync(direct.log, 'utf8'));
-    const report = parseReport(readFileSync(direct.log, 'utf8'));
-    assert.deepEqual(report.findings, []);
-    assert(report.paths.includes('baseline'));
-    fixture.respond(t, kind);
-    task.ask = async () => 'skip';
-    await fixture.architecture.propose(fixture.agent, task, 'unchanged', signal);
-    assertParity(task, direct);
-    await rejectChangedInputs(fixture, task, direct);
-    assert.equal(readFileSync(join(task.worktree!, 'baseline'), 'utf8'), 'durable evidence\n');
-  });
+  test(
+    'Architect ' + kind + ' uses the MCP binding and rejects changed inputs',
+    native,
+    async (t) => {
+      const fixture = new ArchitectVerificationFixture(t, true);
+      const task = await fixture.open();
+      fixture.diagnose(task);
+      const direct = await fixture.direct(task);
+      assert.equal(direct.status, 0, readFileSync(direct.log, 'utf8'));
+      const report = parseReport(readFileSync(direct.log, 'utf8'));
+      assert.deepEqual(report.findings, []);
+      assert(report.paths.includes('baseline'));
+      fixture.respond(t, kind);
+      task.ask = async () => 'skip';
+      await fixture.architecture.propose(fixture.agent, task, 'unchanged', signal);
+      assertParity(task, direct);
+      await rejectChangedInputs(fixture, task, direct);
+      assert.equal(readFileSync(join(task.worktree!, 'baseline'), 'utf8'), 'durable evidence\n');
+    },
+  );
 
-  test('Architect ' + kind + ' cannot complete with an unavailable executable', native, async (t) => {
-    const fixture = new ArchitectVerificationFixture(t, true, '/missing/approved-audit-executable');
-    const task = await fixture.open();
-    fixture.respond(t, kind);
-    await assert.rejects(
-      fixture.architecture.propose(fixture.agent, task, undefined, signal),
-      /declared-audit|approved-audit-executable|exited/,
-    );
-    const failed = observations(task).findLast(
-      (check) => typeof check.status === 'number' && check.status !== 0,
-    );
-    assert(failed, 'an unavailable executable must retain its real failure');
-    assert.equal(failed.command, '/missing/approved-audit-executable');
-    assert.match(readFileSync(failed.log, 'utf8'), /approved-audit-executable/);
-    assert(!task.observations<any>().some((event) => event.architectureAdoption));
-    assert.equal(task.capture.source.revision, task.config.capture.source.revision);
-  });
+  test(
+    'Architect ' + kind + ' cannot complete with an unavailable executable',
+    native,
+    async (t) => {
+      const fixture = new ArchitectVerificationFixture(t, true, '/missing/approved-audit-executable');
+      const task = await fixture.open();
+      fixture.respond(t, kind);
+      await assert.rejects(
+        fixture.architecture.propose(fixture.agent, task, undefined, signal),
+        /declared-audit|approved-audit-executable|exited/,
+      );
+      const failed = observations(task).findLast(
+        (check) => typeof check.status === 'number' && check.status !== 0,
+      );
+      assert(failed, 'an unavailable executable must retain its real failure');
+      assert.equal(failed.command, '/missing/approved-audit-executable');
+      assert.match(readFileSync(failed.log, 'utf8'), /approved-audit-executable/);
+      assert(!task.observations<any>().some((event) => event.architectureAdoption));
+      assert.equal(task.capture.source.revision, task.config.capture.source.revision);
+    },
+  );
 }
 
 test('candidate report parsing retains JSON values alongside complete process diagnostics', () => {
