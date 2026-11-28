@@ -25,6 +25,7 @@ class ArchitectureDeliveryScenario {
   /** Substitute agent and delivery ports only; preserve real guide application, Git and Coordination. */
   constructor(t: TestContext) {
     this.fixture = new AdoptionFixture(t);
+    this.fixture.controlAvailability(t);
     t.mock.method(this.fixture.task, 'cleanup', () => {});
     t.mock.method(this.fixture.parent, 'close', () => {});
     this.workflow = new Workflow(this.services());
