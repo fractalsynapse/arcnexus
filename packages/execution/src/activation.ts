@@ -1,5 +1,5 @@
 import { rmSync } from 'node:fs';
-import type { Agent } from '../../agent/src/index.js';
+import { InvalidAgentResponse, type Agent } from '../../agent/src/index.js';
 import type {
   ActivitySelection,
   AgentInspection,
@@ -15,6 +15,7 @@ import { ActivationTools } from './activation-tools.js';
 import { LocalMcp } from './mcp.js';
 import { retainedEvidence } from './context-evidence.js';
 import { NativeObservation } from './native-observation.js';
+import { checkFailureSignature, stewardInput, verifyActivity } from './steward-check.js';
 
 type ActivityData = Omit<TaskContext, 'worktree'>;
 export type ContextRefresh = (input: ActivityData) => Promise<ActivityData>;
@@ -97,11 +98,13 @@ function actorInvoker(
     const context = invocationContext(task, current, invoked ? observed : undefined);
     observed = task.evidence.length;
     if (caller) invoked = true;
-    return agent.activate(
+    const reply = await agent.activate(
       { capture: task.capture, selection, task: context },
       (view, cancellation) => invokeCodex(task, view, context, cancellation),
       signal,
     );
+    await verifyActorCompletion(task, selection, reply, signal);
+    return reply;
   };
 }
 
@@ -214,4 +217,29 @@ function localTools(task: HostTask, view: AgentInspection, actions: ActivationTo
       );
     },
   );
+}
+
+/** Enforce declared Architect completion before its caller can retain an assessment or approval proposal. */
+async function verifyActorCompletion(
+  task: HostTask,
+  selection: ActivitySelection,
+  reply: unknown,
+  signal: AbortSignal,
+) {
+  const architect = task.capture.project.architect;
+  if (
+    architect?.component !== selection.component ||
+    architect.activity !== selection.activity ||
+    !reply || typeof reply !== 'object' || !('kind' in reply) ||
+    !['proposal', 'no-change'].includes(String(reply.kind))
+  ) return;
+  const scope = { owner: selection.component, activity: selection.activity };
+  const failed = await verifyActivity(task, scope, signal);
+  if (!failed) return;
+  const diagnostic = failed.diagnostic ??
+    `Operation ${failed.id} exited ${failed.status}; expected ${failed.expected}`;
+  throw new InvalidAgentResponse(`${diagnostic}; read failed check log: ${failed.log}`, {
+    identity: JSON.stringify([scope, failed.id, checkFailureSignature(failed.log),
+      stewardInput(task.observations())]),
+  });
 }
