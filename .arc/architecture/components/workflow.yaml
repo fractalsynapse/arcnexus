@@ -465,7 +465,7 @@ activities:
 
         When self-review requests realistic regressions, write the owned tests and fixtures through this activity's checked operations if no earlier applicable Testing target exists. Do not return repair/implementation to obtain another activation or declare the missing earlier Step a blocker. Continue the actual correction with the latest diagnostic, including real-Planner behavior and distinguishable resumed observations.
 
-        Obtain affected public tests and required passing owner quality checks. Preserve declared authority, pending approvals, cancellation and publication reconciliation. The separate live qualification remains paused until the architect reviews D; controlled fixture success is not live evidence. Return completion only when the assigned contribution and requested regressions are actually supported.
+        Obtain affected public tests and required passing owner quality checks. Preserve declared authority, pending approvals, cancellation and publication reconciliation. Follow docs/plans/self-development-mvp.md and the current assignment's recorded human decisions for live qualification authorization; controlled fixture success is not live evidence. Return completion only when the assigned contribution and requested regressions are actually supported.
     operations:
       - read-file
       - list-files
