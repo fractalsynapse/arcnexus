@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { ownershipFindings, ownershipDiagnostic } from './ownership.js';
 import { team } from '../../team/src/index.js';
 import type { Capture } from './catalog.js';
 import { buildCodexRequest } from './request.js';
@@ -36,13 +37,6 @@ export function validateCapture(capture: Capture) {
 
 /** Refuse the complete captured inventory with every Team path and conflicting owner intact. */
 function validateOwnership(capture: Capture) {
-  const coverage = team.validateCoverage(team.list(capture.components), capture.source.paths);
-  if (coverage.length) {
-    const diagnostics = coverage.map((finding) => {
-      const owners = finding.kind === 'collision' ? finding.owners.map(({ id }) => id) : [];
-      const detail = owners.length ? ` (${owners.join(', ')})` : '';
-      return `Architecture ownership ${finding.kind}: ${finding.path}${detail}`;
-    });
-    throw new Error(diagnostics.join('\n'));
-  }
+  const findings = ownershipFindings(capture.components, capture.source.paths);
+  if (findings.length) throw new Error(ownershipDiagnostic(findings));
 }
