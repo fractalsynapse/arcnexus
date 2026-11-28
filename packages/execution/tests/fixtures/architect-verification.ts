@@ -30,7 +30,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
       id: audit,
       category: 'check',
       tool: 'check',
-      command: '/usr/bin/node',
+      command,
       args: [{ parameter: 'entry' }, 'success'],
       network: false,
       parameters: { entry: { type: 'string', default: 'wrong-default.mjs' } },
