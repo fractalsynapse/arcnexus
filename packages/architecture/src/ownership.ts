@@ -19,8 +19,10 @@ export function ownershipFindings(
 
 /** Render the same complete ownership refusal for captured and candidate findings. */
 export function ownershipDiagnostic(findings: readonly OwnershipFinding[]): string {
-  return findings.map((finding) => {
-    const detail = finding.kind === 'collision' ? ` (${finding.owners.join(', ')})` : '';
-    return `Architecture ownership ${finding.kind}: ${finding.path}${detail}`;
-  }).join('\n');
+  return findings
+    .map((finding) => {
+      const detail = finding.kind === 'collision' ? ` (${finding.owners.join(', ')})` : '';
+      return `Architecture ownership ${finding.kind}: ${finding.path}${detail}`;
+    })
+    .join('\n');
 }
