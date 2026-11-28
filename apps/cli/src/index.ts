@@ -22,6 +22,8 @@ function parseOutputOption(args: string[]) {
 async function main(args: string[]) {
   const { positionals, json } = parseOutputOption(args);
   const [command, component, activity, ...extra] = positionals;
+  if (command === 'architecture' && component === 'check-ownership')
+    return runOwnership(activity, extra, json);
   if (command === 'platform') return runPlatform(component, activity, extra, json);
   if (command === 'task' || command === 'architecture')
     return runCommand(command, component, activity, extra, json);
@@ -43,6 +45,42 @@ async function main(args: string[]) {
   const commands = await mountCommands();
   const result = commands.inspect({ component, activity, directory: process.cwd() });
   printInspection(result, json);
+}
+
+/** Validate the read-only audit before composing its shared Commands service. */
+async function runOwnership(activity: string | undefined, extra: string[], json: boolean) {
+  if (activity !== undefined || extra.length)
+    throw new Error('Usage: arcnexus architecture check-ownership');
+  const commands = await mountCommands();
+  if (typeof commands.checkOwnership !== 'function')
+    throw new Error('Command unavailable in this build: architecture check-ownership');
+  try {
+    const result = await commands.checkOwnership(process.cwd());
+    console.log(json ? JSON.stringify(result, null, 2) : renderOwnership(result));
+    process.exitCode = result.findings.length ? 1 : 0;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+}
+
+/** Preserve source identity, literal paths and every owner in the SDK's audit order. */
+function renderOwnership(result: Awaited<ReturnType<Context['commands']['checkOwnership']>>) {
+  const findings = result.findings.map((finding) =>
+    [
+      finding.kind,
+      JSON.stringify(finding.path),
+      ...(finding.kind === 'collision' ? finding.owners.map((owner) => JSON.stringify(owner)) : []),
+    ].join(' '),
+  );
+  return [
+    'Source:',
+    JSON.stringify(result.source, null, 2),
+    'Paths:',
+    ...result.paths.map((path) => JSON.stringify(path)),
+    'Findings:',
+    ...(findings.length ? findings : ['No ownership findings']),
+  ].join('\n');
 }
 
 /** Route explicit hosted inspection through REST while reusing terminal rendering. */
