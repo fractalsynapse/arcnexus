@@ -53,6 +53,23 @@ for (const kind of ['proposal', 'no-change'] as const) {
   });
 }
 
+test('candidate report parsing retains JSON values alongside complete process diagnostics', () => {
+  const report = { source: { revision: 'captured' }, paths: ['baseline', 'literal } café'], findings: [] };
+  const json = JSON.stringify(report, null, 2);
+  const warning = '(node:123) ExperimentalWarning: SQLite is an experimental feature\n';
+  for (const log of [warning + json, json + '\n' + warning])
+    assert.deepEqual(parseReport(log), report);
+  assert.throws(() => parseReport(warning), /Missing ownership JSON report/);
+  assert.throws(() => parseReport('{\ninvalid\n}\n' + warning), SyntaxError);
+});
+
+/** Read the CLI's pretty-printed JSON object without rewriting the combined stdout/stderr log. */
+function parseReport(log: string) {
+  const report = log.match(/^\{[\s\S]*?^\}/m)?.[0];
+  assert(report, 'Missing ownership JSON report in complete command log:\n' + log);
+  return JSON.parse(report);
+}
+
 /** Require automatic completion to resolve the same command, parameters and directory as MCP. */
 function assertParity(task: HostTask, direct: CheckResult) {
   const completed = observations(task);
