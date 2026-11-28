@@ -53,22 +53,32 @@ export function pendingStewardCheck<Activity extends string>(
       !pending.has(feedback.failedCheck.id)
     )
       pending.set(feedback.failedCheck.id, { ...feedback.failedCheck, activity: scope.activity });
-    const repair = event.checkExpectationRepair;
-    const prior = repair && pending.get(repair.id);
-    if (
-      repair?.scope.owner === scope.owner &&
-      repair.scope.activity === scope.activity &&
-      prior?.log === repair.log &&
-      ((prior.expected === 'fail' && prior.status === 0 && !repair.redLog) ||
-        (prior.expected === 'pass' &&
-          prior.status > 0 &&
-          repair.expected === 'fail' &&
-          repair.redLog))
-    )
-      pending.set(repair.id, { ...prior, expected: repair.expected ?? 'pass' });
+    if (event.checkExpectationRepair?.scope.owner === scope.owner &&
+        event.checkExpectationRepair.scope.activity === scope.activity)
+      observeExpectationRepair(pending, event);
     observeCheck(pending, event, scope);
   }
   return id ? pending.get(id) : [...pending.values()].at(-1);
+}
+
+/** Apply only an acknowledged expectation correction to the original unresolved observation. */
+function observeExpectationRepair<Activity extends string>(
+  pending: Map<string, CheckFailure<Activity>>,
+  event: CheckEvent,
+) {
+  const repair = event.checkExpectationRepair;
+  const prior = repair && pending.get(repair.id);
+  if (
+    repair &&
+    prior?.log === repair.log &&
+    ((prior.expected === 'fail' && prior.status === 0 && !repair.redLog) ||
+      (prior.expected === 'pass' &&
+        prior.status > 0 &&
+        repair.expected === 'fail' &&
+        repair.redLog))
+  )
+    pending.set(repair.id, { ...prior, expected: repair.expected ?? 'pass' });
+
 }
 
 /** Resolve each operation against its original pending expectation, including legacy feedback. */
