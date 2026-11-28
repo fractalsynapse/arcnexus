@@ -35,9 +35,8 @@ for (const kind of ['proposal', 'no-change'] as const) {
   });
 
   test('Architect ' + kind + ' cannot complete with an unavailable executable', async (t) => {
-    const fixture = new ArchitectVerificationFixture(t, true);
+    const fixture = new ArchitectVerificationFixture(t, true, '/missing/approved-audit-executable');
     const task = await fixture.open();
-    task.capture.operations[audit]!.command = '/missing/approved-audit-executable';
     fixture.respond(t, kind);
     await assert.rejects(
       fixture.architecture.propose(fixture.agent, task, undefined, signal),
