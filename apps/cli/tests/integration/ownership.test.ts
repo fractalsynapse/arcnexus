@@ -30,7 +30,7 @@ class OwnershipCli {
   };
 
   /** Complete unique coverage before committing the independently authored baseline. */
-  constructor(t: TestContext) {
+  constructor(private readonly t: TestContext) {
     t.after(() => rmSync(this.root, { recursive: true, force: true }));
     const roots = readdirSync(this.root).filter((path) => !['.git', '.arc'].includes(path));
     this.component('work', roots);
@@ -86,6 +86,16 @@ class OwnershipCli {
       env: this.env,
       encoding: 'utf8',
     });
+    this.t.diagnostic(
+      JSON.stringify({
+        entryPoint: cli,
+        args,
+        directory,
+        status: result.status,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      }),
+    );
     assert.ifError(result.error);
     assert.equal(result.signal, null);
     return result;
