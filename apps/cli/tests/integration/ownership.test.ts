@@ -36,8 +36,13 @@ class OwnershipCli {
     this.component('work', roots);
     this.git('add', '.');
     this.git(
-      '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
-      'commit', '-qm', 'Complete ownership baseline',
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.invalid',
+      'commit',
+      '-qm',
+      'Complete ownership baseline',
     );
     assert.deepEqual(this.architecture.checkOwnership(this.root).findings, []);
     const revision = execFileSync('git', ['rev-parse', 'HEAD'], {
@@ -47,8 +52,13 @@ class OwnershipCli {
     }).trim();
     assert.ok(readFileSync(cli).length, 'candidate CLI must actually be built');
     t.diagnostic(
-      JSON.stringify({ candidateRevision: revision, entryPoint: cli,
-        node: process.version, project: this.root, environment: this.env }),
+      JSON.stringify({
+        candidateRevision: revision,
+        entryPoint: cli,
+        node: process.version,
+        project: this.root,
+        environment: this.env,
+      }),
     );
   }
 
@@ -137,8 +147,13 @@ class OwnershipCli {
     this.write(shared);
     this.git('add', '--', uncovered[0]!, shared);
     this.git(
-      '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
-      'commit', '-qm', 'Tracked inventory additions',
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.invalid',
+      'commit',
+      '-qm',
+      'Tracked inventory additions',
     );
     for (const path of uncovered.slice(1)) this.write(path);
     this.component('plan', ['.arc', 'work/shared']);
@@ -177,8 +192,11 @@ test('GW-35, GW-36: candidate working-tree collisions coexist with complete trac
   ]);
   assert.deepEqual(
     expected.paths,
-    [...fixture.git('ls-files', '-z').split('\0').filter(Boolean),
-      '.gitignore', ...uncovered.slice(1)].sort(),
+    [
+      ...fixture.git('ls-files', '-z').split('\0').filter(Boolean),
+      '.gitignore',
+      ...uncovered.slice(1),
+    ].sort(),
   );
   const before = fixture.snapshot();
   fixture.json();
