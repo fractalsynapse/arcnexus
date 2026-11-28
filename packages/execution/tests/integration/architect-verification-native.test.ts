@@ -13,11 +13,15 @@ export const suite = {
 } as const;
 
 const signal = new AbortController().signal;
+const native = { skip: process.env.ARCNEXUS_NATIVE_TESTS !== '1' };
+
+// These cases require the trusted Host: ordinary owner checks deny nested user namespaces.
+// A skipped case supplies no native evidence; select it explicitly for the implementation checkpoint.
 
 // Real Git, candidate compiler output, Cordis CLI composition and Bubblewrap establish
 // command evidence. The controlled Agent establishes response handling, never live inference.
 for (const kind of ['proposal', 'no-change'] as const) {
-  test('Architect ' + kind + ' uses the MCP binding and rejects changed inputs', async (t) => {
+  test('Architect ' + kind + ' uses the MCP binding and rejects changed inputs', native, async (t) => {
     const fixture = new ArchitectVerificationFixture(t, true);
     const task = await fixture.open();
     fixture.diagnose(task);
@@ -34,7 +38,7 @@ for (const kind of ['proposal', 'no-change'] as const) {
     assert.equal(readFileSync(join(task.worktree!, 'baseline'), 'utf8'), 'durable evidence\n');
   });
 
-  test('Architect ' + kind + ' cannot complete with an unavailable executable', async (t) => {
+  test('Architect ' + kind + ' cannot complete with an unavailable executable', native, async (t) => {
     const fixture = new ArchitectVerificationFixture(t, true, '/missing/approved-audit-executable');
     const task = await fixture.open();
     fixture.respond(t, kind);
