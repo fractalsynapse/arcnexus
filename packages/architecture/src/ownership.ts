@@ -10,16 +10,18 @@ export function ownershipFindings(
   components: Readonly<Record<string, Component>>,
   paths: readonly string[],
 ): OwnershipFinding[] {
-  const coverage = team.validateCoverage(team.list(components), [...paths].sort());
-  return coverage.map((finding) => {
-    if (finding.kind === 'collision')
-      return {
-        kind: finding.kind,
-        path: finding.path,
-        owners: finding.owners.map(({ id }) => id),
-      };
-    return { kind: 'unowned', path: finding.path };
-  });
+  const members = team.list(components);
+  const findings: OwnershipFinding[] = [];
+  for (const finding of team.validateCoverage(members, [...paths].sort())) {
+    const { kind, path } = finding;
+    if (kind === 'collision') {
+      const owners = finding.owners.map(({ id }) => id);
+      findings.push({ kind, path, owners });
+    } else {
+      findings.push({ kind: 'unowned', path });
+    }
+  }
+  return findings;
 }
 
 /** Render the same complete ownership refusal for captured and candidate findings. */
