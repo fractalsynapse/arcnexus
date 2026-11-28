@@ -70,7 +70,9 @@ class OwnershipConsumer {
 function expectedAudit(project: AuditProject): OwnershipAudit {
   return {
     source: {
-      kind: 'working-tree', root: project.root, remote,
+      kind: 'working-tree',
+      root: project.root,
+      remote,
       revision: project.capture.source.revision,
     },
     paths: [...project.tracked, ...project.candidatePaths].sort(),
@@ -91,11 +93,19 @@ test('nonterminal SDK preserves every candidate finding, nested source identity 
   const captured = JSON.stringify(project.capture);
   const before = project.snapshot();
   assert.deepEqual(consumer.context.architecture.checkOwnership(project.root), expected);
+  const delegated = t.mock.method(consumer.context.architecture, 'checkOwnership');
   assert.deepEqual(consumer.withoutTerminal(t, project.root), expected);
   assert.deepEqual(consumer.withoutTerminal(t, join(project.root, 'nested')), expected);
+  assert.deepEqual(
+    delegated.mock.calls.map((call) => call.arguments),
+    [[project.root], [join(project.root, 'nested')]],
+  );
   assert.deepEqual(project.snapshot(), before);
   assert.equal(JSON.stringify(project.capture), captured);
-  assert.deepEqual(consumer.context.architecture.capture(project.root).components, project.capture.components);
+  assert.deepEqual(
+    consumer.context.architecture.capture(project.root).components,
+    project.capture.components,
+  );
   assert.deepEqual(consumer.workflow.calls, []);
 });
 
@@ -114,7 +124,8 @@ test('nonterminal SDK preserves Architecture validation errors instead of fabric
     }
     assert.ok(original instanceof Error, 'Fixture must reach a genuine Architecture source error');
     assert.throws(() => consumer.withoutTerminal(t, directory), {
-      name: original.name, message: original.message,
+      name: original.name,
+      message: original.message,
     });
   }
   assert.deepEqual(project.snapshot(), before);
