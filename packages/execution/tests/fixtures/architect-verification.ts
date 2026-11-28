@@ -130,7 +130,11 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
     for (const path of ['apps', 'packages'])
       cpSync(join(dist, path), join(this.root, 'runtime', path), { recursive: true });
     this.write('runtime/package.json', { type: 'module' });
-    symlinkSync(join(dist, '..', 'node_modules'), join(this.root, 'node_modules'), 'dir');
+    // The normal check mounts these prepared dependencies read-only at a real destination.
+    cpSync(join(dist, '..', 'node_modules'), join(this.root, 'node_modules'), {
+      recursive: true,
+      dereference: true,
+    });
     this.write('.gitignore', 'node_modules/\n');
     this.update(catalog + '/components/work.yaml', (value) => {
       value.owns.push('runtime', '.gitignore');
