@@ -72,9 +72,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
             purpose: 'Clarify the baseline',
             consequences: ['A clearer guide'],
             implementation: [],
-            changes: [
-              { path: catalog + '/plan-template.md', content: 'Updated guide.\n' },
-            ],
+            changes: [{ path: catalog + '/plan-template.md', content: 'Updated guide.\n' }],
           }
         : {
             kind,
