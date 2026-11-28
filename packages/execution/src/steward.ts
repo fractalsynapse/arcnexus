@@ -424,13 +424,7 @@ async function reconcileCheck(
     pending &&
     (pending.log === correction?.log || correctionMadeProgress(task.observations(), pending.log))
   ) {
-    const result = await performChecks(
-      task,
-      scope,
-      [pending],
-      pending,
-      signal,
-    );
+    const result = await performChecks(task, scope, [pending], pending, signal);
     if (result) return result;
   }
   return task.pendingCheck(scope);
