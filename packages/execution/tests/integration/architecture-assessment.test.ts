@@ -7,6 +7,8 @@ import { ArchitectureFixture } from '../fixtures/architecture.js';
 import type { HostTask } from '../../src/index.js';
 import { Architecture } from '../../../architecture/src/index.js';
 import { decodeCodexAnswer } from '../../src/codex.js';
+import type { CheckResult } from '../../src/check.js';
+import { ArchitectVerificationFixture, audit } from '../fixtures/architect-verification.js';
 
 export const suite = { owner: 'execution', level: 'integration', tags: ['regression'] } as const;
 
@@ -145,3 +147,38 @@ test('Architect requires JSON explicitly and repairs distinct native findings wi
   assert.equal((await fixture.assess()).kind, 'no-change');
   assert.equal(calls, 3);
 });
+
+for (const kind of ['proposal', 'no-change'] as const) {
+  test('EX-27: Architect ' + kind + ' cannot omit a failing required check', async (t) => {
+    const fixture = new ArchitectVerificationFixture(t);
+    const task = await fixture.open();
+    fixture.controlled(t, task, 37);
+    fixture.respond(t, kind);
+    await assert.rejects(
+      fixture.architecture.propose(fixture.agent, task, undefined, signal),
+      /declared-audit|exited 37|Uncovered/,
+    );
+    const checks = task.observations<{ check?: CheckResult }>().flatMap((event) => event.check ?? []);
+    assert(checks.length > 0, 'completion must execute the omitted check');
+    assert(checks.every((check) => check.id === audit && check.status === 37));
+    assert.match(readFileSync(checks[0]!.log, 'utf8'), /Uncovered literal path café\nComplete diagnostic/);
+    assert(!task.observations<any>().some((event) => event.architectureProposal || event.architectureAssessment));
+    assert(fixture.inputs.some((input) => JSON.stringify(input.task).includes(checks[0]!.log)),
+      'the accountable Architect must receive the actual failed check log');
+  });
+
+  test('EX-27: Architect ' + kind + ' checks before accepting assessment or requesting approval', async (t) => {
+    const fixture = new ArchitectVerificationFixture(t);
+    const task = await fixture.open();
+    fixture.controlled(t, task, 0);
+    fixture.respond(t, kind);
+    task.ask = async () => {
+      assert(task.observations<any>().some((event) => event.check?.id === audit));
+      return 'skip';
+    };
+    assert.equal((await fixture.architecture.propose(fixture.agent, task, undefined, signal)).kind, 'no-change');
+    assert(task.observations<any>().some((event) => event.check?.status === 0),
+      'a declaration or response alone cannot establish passing verification');
+    assert.equal(task.capture, task.config.capture);
+  });
+}
