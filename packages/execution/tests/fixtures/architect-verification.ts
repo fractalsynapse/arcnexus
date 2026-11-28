@@ -23,7 +23,7 @@ export class ArchitectVerificationFixture extends ProductionCheckFixture {
   readonly inputs: ActivationInput[] = [];
 
   /** Declare one binding as both a model tool and mandatory completion verification. */
-  constructor(t: TestContext, native = false) {
+  constructor(t: TestContext, native = false, command = '/usr/bin/node') {
     super(t);
     this.configure();
     this.write(catalog + '/operations/' + audit + '.yaml', {
